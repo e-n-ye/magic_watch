@@ -1,0 +1,24 @@
+Generate a small premium smartwatch weather icon for Magic Watch.
+
+Target:
+- icon only, not a full UI screenshot
+- condition: partly cloudy day
+- use on a rounded-square AMOLED smartwatch quick page
+- readable at very small size
+
+Style:
+- clean geometric shapes
+- one soft yellow sun disk
+- two simple cloud forms
+- premium wearable OS feel
+- no outlines unless necessary
+- no text
+- transparent or plain dark background
+- strong silhouette readability
+
+Constraints:
+- avoid realistic painting
+- avoid emoji style
+- avoid decorative gradients that disappear at small size
+- keep the icon compact and centered
+- the icon should still read clearly when scaled down into a small top-right weather card area

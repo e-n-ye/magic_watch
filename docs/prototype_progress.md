@@ -1,5 +1,58 @@
 # Prototype Progress
 
+## 2026-05-14: Web Visual Sandbox + Home Ring Cleanup
+
+### What Changed
+
+- Started a dedicated Web visual sandbox for the weather shortcut surface:
+  - `prototypes/web_visual_sandbox/home_ring_weather/`
+- Locked the sandbox to a LVGL-friendly rule set instead of using web-only effects.
+- Added two screen presets so the page can be pressure-tested against small geometry changes.
+- Tightened the current LVGL home-ring surfaces:
+  - removed visible `Home Ring x/4` copy from the shortcut pages
+  - weakened the bottom pager dots
+  - stopped generic pages from reserving visual space for empty subtitle text
+  - simplified the Weather bottom cards to label + value + progress only
+- Added a dedicated workflow doc:
+  - `docs/web_visual_sandbox_workflow.md`
+
+### Why This Step Matters
+
+- We now have a reusable middle layer between "reference screenshot" and "LVGL code".
+- This should reduce the current failure mode where layout intent gets lost during direct simulator editing.
+- The cleanup pass also makes the current LVGL shell less noisy while we prepare the stronger visual spec path.
+
+### Current Boundary
+
+- The Web sandbox is a design contract, not a production UI runtime.
+- LVGL remains the final implementation target.
+- The other three home-ring pages still need a later dedicated visual pass.
+
+## 2026-05-14: Weather Shortcut Layout Variant v1
+
+### What Changed
+
+- Kept `HomeShortcutPage` as the reusable home-ring baseline for generic shortcut surfaces.
+- Added `WeatherShortcutPage` as the first dedicated layout variant for the home ring.
+- Switched `HomeShortcutWeather` registration from the generic 4-metric template to the new specialized page.
+- Landed the current approved visual structure in simulator code:
+  - top weather hero card
+  - bottom sleep / steps dual cards
+  - weak pager dots
+  - obvious black outer breathing room
+- Used relative sizing derived from screen dimensions instead of locking the page to one fixed pixel composition.
+
+### Why This Step Matters
+
+- We now have our first real proof that the home ring should be built as "shared skeleton + small number of high-value variants", not as one rigid template forced onto every page.
+- This is the first time the generated visual workflow has been closed back into simulator UI structure, instead of staying only as reference imagery.
+
+### Current Boundary
+
+- This page is still a shell surface with mock data, not a live Weather / Sleep / Steps service page.
+- The Weather page has been specialized, but the other three home-ring pages still use the generic template.
+- The current implementation focuses on proportion and visual hierarchy first; icon polish and richer card internals can come in later rounds.
+
 ## 2026-05-14: Home Shortcut Template + Visual Workflow
 
 ### What Changed

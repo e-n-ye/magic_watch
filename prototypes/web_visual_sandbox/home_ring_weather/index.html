@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Magic Watch Weather Sandbox</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="workspace">
+    <section class="control-panel">
+      <div class="panel-block">
+        <p class="eyebrow">Magic Watch</p>
+        <h1>Weather Shortcut Sandbox</h1>
+        <p class="summary">用于锁定 Weather / Sleep / Steps 页面的比例、安全区、文字预算和图标槽位。</p>
+      </div>
+
+      <div class="panel-block">
+        <p class="label">屏幕预设</p>
+        <div class="preset-row">
+          <button type="button" class="preset-button is-active" data-preset="square-197">1.97 AMOLED</button>
+          <button type="button" class="preset-button" data-preset="taller-alt">Taller Alt</button>
+        </div>
+      </div>
+
+      <div class="panel-block">
+        <p class="label">当前参数</p>
+        <dl class="spec-list">
+          <div><dt>Watch</dt><dd id="spec-watch"></dd></div>
+          <div><dt>Safe</dt><dd id="spec-safe"></dd></div>
+          <div><dt>Hero</dt><dd id="spec-hero"></dd></div>
+          <div><dt>Gap</dt><dd id="spec-gap"></dd></div>
+          <div><dt>Type</dt><dd id="spec-type"></dd></div>
+        </dl>
+      </div>
+
+      <div class="panel-block">
+        <p class="label">内容预算</p>
+        <ul class="budget-list">
+          <li>顶部只保留温度、区间、单图标</li>
+          <li>底部两卡只保留值与极短标签</li>
+          <li>不出现页码说明和解释性副标题</li>
+          <li>所有尺寸由比例变量推导</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="preview-panel">
+      <div class="watch-preview">
+        <div class="watch-shell">
+          <div class="watch-screen">
+            <div class="surface-stage">
+              <section class="hero-card">
+                <div class="hero-copy">
+                  <div class="temperature">23C</div>
+                  <div class="range">30C / 18C</div>
+                </div>
+                <div class="icon-slot">
+                  <img
+                    id="weather-icon-image"
+                    class="weather-icon-image"
+                    src="../../../.agents/generated/weather-icon-cloud-sun/latest.png"
+                    alt="Weather icon">
+                  <div id="weather-icon-fallback" class="weather-icon-fallback" aria-hidden="true">
+                    <span class="sun"></span>
+                    <span class="cloud cloud-back"></span>
+                    <span class="cloud cloud-front"></span>
+                  </div>
+                </div>
+              </section>
+
+              <div class="metric-grid">
+                <section class="metric-card metric-card-sleep">
+                  <p class="metric-label">Sleep</p>
+                  <p class="metric-value">7h 36m</p>
+                  <div class="metric-bar">
+                    <span class="metric-fill metric-fill-sleep"></span>
+                  </div>
+                </section>
+
+                <section class="metric-card metric-card-steps">
+                  <p class="metric-label">Steps</p>
+                  <p class="metric-value">7645</p>
+                  <div class="metric-bar">
+                    <span class="metric-fill metric-fill-steps"></span>
+                  </div>
+                </section>
+              </div>
+            </div>
+
+            <div class="pager" aria-hidden="true">
+              <span class="pager-dot"></span>
+              <span class="pager-dot"></span>
+              <span class="pager-dot"></span>
+              <span class="pager-dot pager-dot-active"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="status-row">
+        <span id="icon-status" class="status-pill">Weather icon: fallback</span>
+        <span class="status-pill">LVGL-friendly only</span>
+      </div>
+    </section>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>

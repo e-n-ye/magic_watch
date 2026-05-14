@@ -87,6 +87,104 @@ lv_color_t accent_for_home_shortcut(PageId page_id) {
   }
 }
 
+lv_coord_t scale_by_ratio(lv_coord_t total, int numerator, int denominator) {
+  return static_cast<lv_coord_t>((static_cast<long long>(total) * numerator) / denominator);
+}
+
+lv_coord_t clamp_coord(lv_coord_t value, lv_coord_t minimum, lv_coord_t maximum) {
+  return std::max(minimum, std::min(maximum, value));
+}
+
+bool has_text(const char* text) {
+  return text != nullptr && text[0] != '\0';
+}
+
+lv_obj_t* create_pager_dot(lv_obj_t* parent, lv_color_t color, lv_opa_t opa, bool active) {
+  lv_obj_t* dot = lv_obj_create(parent);
+  if (dot == nullptr) {
+    return nullptr;
+  }
+
+  ui_prepare_box(dot);
+  lv_obj_set_size(dot, active ? 9 : 7, active ? 9 : 7);
+  lv_obj_set_style_radius(dot, LV_RADIUS_CIRCLE, 0);
+  lv_obj_set_style_bg_color(dot, color, 0);
+  lv_obj_set_style_bg_opa(dot, active ? LV_OPA_70 : opa, 0);
+  return dot;
+}
+
+struct HomeSurfaceLayout {
+  lv_coord_t screen_w;
+  lv_coord_t screen_h;
+  lv_coord_t safe_margin_x;
+  lv_coord_t chip_top;
+  lv_coord_t chip_left;
+  lv_coord_t stage_top;
+  lv_coord_t stage_w;
+  lv_coord_t stage_h;
+  lv_coord_t stage_radius;
+  lv_coord_t stage_pad;
+  lv_coord_t stage_gap;
+  lv_coord_t title_h;
+  lv_coord_t hero_h;
+  lv_coord_t card_gap;
+  lv_coord_t card_w;
+  lv_coord_t card_h;
+  lv_coord_t pager_bottom;
+};
+
+HomeSurfaceLayout make_home_surface_layout() {
+  const lv_coord_t screen_w = static_cast<lv_coord_t>(lv_display_get_horizontal_resolution(nullptr));
+  const lv_coord_t screen_h = static_cast<lv_coord_t>(lv_display_get_vertical_resolution(nullptr));
+  const lv_coord_t safe_margin_x = clamp_coord(scale_by_ratio(screen_w, 6, 100), 10, 16);
+  const lv_coord_t chip_top = clamp_coord(scale_by_ratio(screen_h, 6, 100), 10, 14);
+  const lv_coord_t stage_top = clamp_coord(scale_by_ratio(screen_h, 15, 100), 34, 42);
+  const lv_coord_t stage_w = screen_w - safe_margin_x * 2;
+  const lv_coord_t stage_h = clamp_coord(scale_by_ratio(screen_h, 72, 100), 162, 182);
+  const lv_coord_t stage_radius = clamp_coord(scale_by_ratio(stage_w, 10, 100), 22, 28);
+  const lv_coord_t stage_pad = clamp_coord(scale_by_ratio(stage_w, 7, 100), 12, 16);
+  const lv_coord_t stage_gap = clamp_coord(scale_by_ratio(stage_h, 4, 100), 8, 12);
+  const lv_coord_t title_h = clamp_coord(scale_by_ratio(stage_h, 8, 100), 16, 20);
+  const lv_coord_t hero_h = clamp_coord(scale_by_ratio(stage_h, 32, 100), 54, 64);
+  const lv_coord_t card_gap = clamp_coord(scale_by_ratio(stage_w, 4, 100), 8, 12);
+  const lv_coord_t available_h = stage_h - stage_pad * 2 - title_h - hero_h - stage_gap * 2;
+  const lv_coord_t card_w = (stage_w - stage_pad * 2 - card_gap) / 2;
+  const lv_coord_t card_h = (available_h - card_gap) / 2;
+  const lv_coord_t pager_bottom = clamp_coord(scale_by_ratio(screen_h, 4, 100), 8, 12);
+  return {screen_w,
+          screen_h,
+          safe_margin_x,
+          chip_top,
+          safe_margin_x,
+          stage_top,
+          stage_w,
+          stage_h,
+          stage_radius,
+          stage_pad,
+          stage_gap,
+          title_h,
+          hero_h,
+          card_gap,
+          card_w,
+          card_h,
+          pager_bottom};
+}
+
+void set_single_line_label(lv_obj_t* label, lv_coord_t width) {
+  lv_obj_set_width(label, width);
+  lv_label_set_long_mode(label, LV_LABEL_LONG_DOT);
+}
+
+void style_home_surface_stage(lv_obj_t* stage, lv_coord_t width, lv_coord_t height, lv_coord_t radius, lv_color_t bg_color) {
+  ui_prepare_box(stage);
+  ui_apply_surface(stage, SurfaceStyle::Panel);
+  lv_obj_set_size(stage, width, height);
+  lv_obj_set_style_bg_color(stage, bg_color, 0);
+  lv_obj_set_style_border_width(stage, 0, 0);
+  lv_obj_set_style_radius(stage, radius, 0);
+  lv_obj_set_style_pad_all(stage, 0, 0);
+}
+
 }  // namespace
 
 WatchfacePage::WatchfacePage(DataCenter& data_center) : PageBase(data_center) {}
@@ -436,63 +534,69 @@ lv_obj_t* HomeShortcutPage::build() {
   }
   ui_prepare_box(root);
   ui_apply_surface(root, SurfaceStyle::Screen);
+  const auto layout = make_home_surface_layout();
+  lv_obj_set_size(root, layout.screen_w, layout.screen_h);
 
   const lv_color_t accent = accent_for_home_shortcut(config_.page_id);
   const lv_color_t panel_bg = color_for_home_shortcut(config_.page_id);
+  const bool show_orbit_label = has_text(config_.orbit_label);
+  const bool show_subtitle = has_text(config_.subtitle);
 
-  lv_obj_t* orbit_chip = lv_obj_create(root);
   lv_obj_t* title = lv_label_create(root);
-  lv_obj_t* subtitle = lv_label_create(root);
-  lv_obj_t* hero_card = lv_obj_create(root);
+  lv_obj_t* stage = lv_obj_create(root);
+  lv_obj_t* hero_card = lv_obj_create(stage);
   lv_obj_t* hero_tag = lv_obj_create(hero_card);
   lv_obj_t* hero_tag_label = lv_label_create(hero_tag);
   lv_obj_t* hero_value = lv_label_create(hero_card);
-  lv_obj_t* hero_title = lv_label_create(hero_card);
-  lv_obj_t* hero_detail = lv_label_create(hero_card);
-  lv_obj_t* metric_grid = lv_obj_create(root);
-  if (orbit_chip == nullptr || title == nullptr || subtitle == nullptr || hero_card == nullptr || hero_tag == nullptr ||
-      hero_tag_label == nullptr || hero_value == nullptr || hero_title == nullptr || hero_detail == nullptr ||
-      metric_grid == nullptr) {
+  lv_obj_t* hero_meta = lv_label_create(hero_card);
+  lv_obj_t* metric_grid = lv_obj_create(stage);
+  if (title == nullptr || stage == nullptr || hero_card == nullptr || hero_tag == nullptr || hero_tag_label == nullptr ||
+      hero_value == nullptr || hero_meta == nullptr || metric_grid == nullptr) {
     return nullptr;
   }
-
-  ui_prepare_box(orbit_chip);
-  ui_apply_surface(orbit_chip, SurfaceStyle::Chip);
-  lv_obj_set_size(orbit_chip, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-  lv_obj_set_style_border_color(orbit_chip, accent, 0);
-  lv_obj_set_style_bg_color(orbit_chip, lv_color_mix(panel_bg, lv_color_hex(0x05080F), LV_OPA_60), 0);
-  lv_obj_align(orbit_chip, LV_ALIGN_TOP_LEFT, 12, 12);
 
   ui_prepare_label(title);
   ui_apply_text(title, TextStyle::Title);
   lv_obj_set_style_text_color(title, lv_color_hex(0xF8FAFC), 0);
-  lv_obj_align(title, LV_ALIGN_TOP_LEFT, 14, 52);
+  lv_obj_set_style_text_font(title, &lv_font_montserrat_14, 0);
+  lv_obj_align(title, LV_ALIGN_TOP_LEFT, layout.safe_margin_x + 6, layout.stage_top + 8);
   lv_label_set_text(title, config_.title);
 
-  ui_prepare_label(subtitle);
-  ui_apply_text(subtitle, TextStyle::Muted);
-  lv_obj_set_width(subtitle, 208);
-  lv_label_set_long_mode(subtitle, LV_LABEL_LONG_WRAP);
-  lv_obj_align_to(subtitle, title, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 6);
-  lv_label_set_text(subtitle, config_.subtitle);
+  if (show_orbit_label) {
+    lv_obj_t* orbit_chip = lv_obj_create(root);
+    lv_obj_t* orbit_label = orbit_chip == nullptr ? nullptr : lv_label_create(orbit_chip);
+    if (orbit_chip == nullptr || orbit_label == nullptr) {
+      return nullptr;
+    }
+    ui_prepare_box(orbit_chip);
+    ui_apply_surface(orbit_chip, SurfaceStyle::Chip);
+    lv_obj_set_size(orbit_chip, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+    lv_obj_set_style_border_color(orbit_chip, accent, 0);
+    lv_obj_set_style_bg_color(orbit_chip, lv_color_mix(panel_bg, lv_color_hex(0x05080F), LV_OPA_60), 0);
+    lv_obj_align(orbit_chip, LV_ALIGN_TOP_LEFT, layout.chip_left, layout.chip_top);
 
-  lv_obj_t* orbit_label = lv_label_create(orbit_chip);
-  if (orbit_label == nullptr) {
-    return nullptr;
+    ui_prepare_label(orbit_label);
+    ui_apply_text(orbit_label, TextStyle::Accent);
+    lv_obj_set_style_text_color(orbit_label, accent, 0);
+    lv_label_set_text(orbit_label, config_.orbit_label);
+    lv_obj_center(orbit_label);
   }
-  ui_prepare_label(orbit_label);
-  ui_apply_text(orbit_label, TextStyle::Accent);
-  lv_obj_set_style_text_color(orbit_label, accent, 0);
-  lv_label_set_text(orbit_label, config_.orbit_label);
-  lv_obj_center(orbit_label);
+
+  style_home_surface_stage(stage,
+                           layout.stage_w,
+                           layout.stage_h,
+                           layout.stage_radius,
+                           lv_color_mix(panel_bg, lv_color_hex(0x03060B), LV_OPA_30));
+  lv_obj_align(stage, LV_ALIGN_TOP_MID, 0, layout.stage_top);
 
   ui_prepare_box(hero_card);
   ui_apply_surface(hero_card, SurfaceStyle::Panel);
-  lv_obj_set_size(hero_card, 220, 88);
-  lv_obj_align(hero_card, LV_ALIGN_TOP_MID, 0, 96);
+  lv_obj_set_size(hero_card, layout.stage_w - layout.stage_pad * 2, layout.hero_h);
+  lv_obj_align(hero_card, LV_ALIGN_TOP_MID, 0, layout.stage_pad + layout.title_h + layout.stage_gap);
   lv_obj_set_style_bg_color(hero_card, panel_bg, 0);
   lv_obj_set_style_border_color(hero_card, lv_color_mix(accent, lv_color_hex(0xFFFFFF), LV_OPA_20), 0);
-  lv_obj_set_style_pad_all(hero_card, 14, 0);
+  lv_obj_set_style_radius(hero_card, clamp_coord(scale_by_ratio(layout.stage_w, 9, 100), 20, 24), 0);
+  lv_obj_set_style_pad_all(hero_card, 12, 0);
 
   ui_prepare_box(hero_tag);
   ui_apply_surface(hero_tag, SurfaceStyle::Chip);
@@ -509,35 +613,33 @@ lv_obj_t* HomeShortcutPage::build() {
 
   ui_prepare_label(hero_value);
   ui_apply_text(hero_value, TextStyle::HeroSoft);
-  lv_obj_set_style_text_font(hero_value, &lv_font_montserrat_26, 0);
+  lv_obj_set_style_text_font(hero_value, &lv_font_montserrat_22, 0);
   lv_obj_set_style_text_color(hero_value, accent, 0);
-  lv_obj_align(hero_value, LV_ALIGN_TOP_LEFT, 0, 30);
+  set_single_line_label(hero_value, layout.stage_w - layout.stage_pad * 2 - 24);
+  lv_obj_align(hero_value, LV_ALIGN_BOTTOM_LEFT, 0, show_subtitle ? -24 : -10);
   lv_label_set_text(hero_value, config_.focus_value);
 
-  ui_prepare_label(hero_title);
-  ui_apply_text(hero_title, TextStyle::Title);
-  lv_obj_set_style_text_color(hero_title, lv_color_hex(0xF8FAFC), 0);
-  lv_obj_align(hero_title, LV_ALIGN_TOP_RIGHT, 0, 30);
-  lv_label_set_text(hero_title, config_.title);
-
-  ui_prepare_label(hero_detail);
-  ui_apply_text(hero_detail, TextStyle::Tiny);
-  lv_obj_set_width(hero_detail, 208);
-  lv_label_set_long_mode(hero_detail, LV_LABEL_LONG_WRAP);
-  lv_obj_set_style_text_align(hero_detail, LV_TEXT_ALIGN_LEFT, 0);
-  lv_obj_align(hero_detail, LV_ALIGN_BOTTOM_LEFT, 0, 0);
-  lv_label_set_text(hero_detail, config_.focus_detail);
+  ui_prepare_label(hero_meta);
+  ui_apply_text(hero_meta, TextStyle::Muted);
+  lv_obj_set_style_text_color(hero_meta, lv_color_hex(0xB8C4D6), 0);
+  set_single_line_label(hero_meta, layout.stage_w - layout.stage_pad * 2 - 24);
+  lv_obj_align(hero_meta, LV_ALIGN_BOTTOM_LEFT, 0, -12);
+  lv_label_set_text(hero_meta, config_.subtitle);
+  if (!show_subtitle) {
+    lv_obj_add_flag(hero_meta, LV_OBJ_FLAG_HIDDEN);
+  }
 
   ui_prepare_box(metric_grid);
-  lv_obj_set_size(metric_grid, 220, 98);
-  lv_obj_align(metric_grid, LV_ALIGN_BOTTOM_MID, 0, -12);
-  lv_obj_set_layout(metric_grid, LV_LAYOUT_GRID);
-  static lv_coord_t columns[] = {106, 106, LV_GRID_TEMPLATE_LAST};
-  static lv_coord_t rows[] = {45, 45, LV_GRID_TEMPLATE_LAST};
-  lv_obj_set_grid_dsc_array(metric_grid, columns, rows);
+  lv_obj_set_size(metric_grid,
+                  layout.stage_w - layout.stage_pad * 2,
+                  layout.card_h * 2 + layout.card_gap);
+  lv_obj_align(metric_grid, LV_ALIGN_BOTTOM_MID, 0, -layout.stage_pad);
+  lv_obj_set_layout(metric_grid, LV_LAYOUT_FLEX);
+  lv_obj_set_flex_flow(metric_grid, LV_FLEX_FLOW_ROW_WRAP);
+  lv_obj_set_flex_align(metric_grid, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
   lv_obj_set_style_pad_all(metric_grid, 0, 0);
-  lv_obj_set_style_pad_row(metric_grid, 8, 0);
-  lv_obj_set_style_pad_column(metric_grid, 8, 0);
+  lv_obj_set_style_pad_row(metric_grid, layout.card_gap, 0);
+  lv_obj_set_style_pad_column(metric_grid, layout.card_gap, 0);
   lv_obj_set_style_bg_opa(metric_grid, LV_OPA_TRANSP, 0);
   lv_obj_set_style_border_width(metric_grid, 0, 0);
 
@@ -556,29 +658,234 @@ lv_obj_t* HomeShortcutPage::build() {
 
     ui_prepare_box(card);
     ui_apply_surface(card, SurfaceStyle::PanelSubtle);
-    lv_obj_set_grid_cell(card, LV_GRID_ALIGN_STRETCH, col, 1, LV_GRID_ALIGN_STRETCH, row, 1);
+    lv_obj_set_size(card, layout.card_w, layout.card_h);
     lv_obj_set_style_bg_color(card, lv_color_mix(panel_bg, lv_color_hex(0x05080F), LV_OPA_50), 0);
     lv_obj_set_style_border_color(card, lv_color_mix(accent, lv_color_hex(0x203040), LV_OPA_30), 0);
     lv_obj_set_style_pad_all(card, 10, 0);
+    lv_obj_set_style_radius(card, clamp_coord(scale_by_ratio(layout.card_w, 17, 100), 16, 20), 0);
     lv_obj_remove_flag(card, LV_OBJ_FLAG_SCROLLABLE);
 
     ui_prepare_label(label);
     ui_apply_text(label, TextStyle::Tiny);
+    lv_obj_set_style_text_color(label, lv_color_hex(0xB2C1D4), 0);
+    set_single_line_label(label, layout.card_w - 20);
     lv_label_set_text(label, metric.label);
     lv_obj_align(label, LV_ALIGN_TOP_LEFT, 0, 0);
 
     ui_prepare_label(value);
-    ui_apply_text(value, TextStyle::Body);
+    ui_apply_text(value, TextStyle::Title);
+    lv_obj_set_style_text_font(value, &lv_font_montserrat_14, 0);
     lv_obj_set_style_text_color(value, accent, 0);
+    set_single_line_label(value, layout.card_w - 20);
     lv_label_set_text(value, metric.value);
-    lv_obj_align(value, LV_ALIGN_LEFT_MID, 0, -2);
+    lv_obj_align(value, LV_ALIGN_BOTTOM_LEFT, 0, -6);
 
     ui_prepare_label(detail);
-    ui_apply_text(detail, TextStyle::Tiny);
-    lv_obj_set_width(detail, 82);
-    lv_label_set_long_mode(detail, LV_LABEL_LONG_WRAP);
+    ui_apply_text(detail, TextStyle::Muted);
+    lv_obj_set_style_text_color(detail, lv_color_hex(0x7E90A7), 0);
+    set_single_line_label(detail, layout.card_w - 20);
     lv_label_set_text(detail, metric.detail);
-    lv_obj_align(detail, LV_ALIGN_BOTTOM_LEFT, 0, 0);
+    if (has_text(metric.detail)) {
+      lv_obj_align(detail, LV_ALIGN_TOP_LEFT, 0, 18);
+    } else {
+      lv_obj_add_flag(detail, LV_OBJ_FLAG_HIDDEN);
+    }
+  }
+
+  return root;
+}
+
+WeatherShortcutPage::WeatherShortcutPage(DataCenter& data_center) : PageBase(data_center) {}
+
+PageId WeatherShortcutPage::id() const {
+  return PageId::HomeShortcutWeather;
+}
+
+const char* WeatherShortcutPage::name() const {
+  return page_name(PageId::HomeShortcutWeather);
+}
+
+lv_obj_t* WeatherShortcutPage::build() {
+  lv_obj_t* root = lv_obj_create(nullptr);
+  if (root == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_box(root);
+  ui_apply_surface(root, SurfaceStyle::Screen);
+  const auto layout = make_home_surface_layout();
+  lv_obj_set_size(root, layout.screen_w, layout.screen_h);
+
+  const lv_coord_t hero_h = clamp_coord(scale_by_ratio(layout.stage_h, 44, 100), 72, 82);
+  const lv_coord_t bottom_card_h = layout.stage_h - layout.stage_pad * 2 - hero_h - layout.stage_gap;
+  const lv_coord_t bottom_card_w = (layout.stage_w - layout.stage_pad * 2 - layout.card_gap) / 2;
+  const lv_coord_t card_radius = clamp_coord(scale_by_ratio(bottom_card_w, 14, 100), 20, 24);
+  const lv_coord_t card_pad = clamp_coord(scale_by_ratio(bottom_card_w, 10, 100), 12, 16);
+
+  const lv_color_t stage_bg = lv_color_hex(0x040812);
+  const lv_color_t weather_bg = lv_color_hex(0x0E2B56);
+  const lv_color_t weather_accent = lv_color_hex(0x7EC8FF);
+  const lv_color_t sleep_bg = lv_color_hex(0x3A1B69);
+  const lv_color_t sleep_accent = lv_color_hex(0xC06CFF);
+  const lv_color_t steps_bg = lv_color_hex(0x054A42);
+  const lv_color_t steps_accent = lv_color_hex(0x19F57A);
+
+  lv_obj_t* stage = lv_obj_create(root);
+  lv_obj_t* hero_card = lv_obj_create(stage);
+  lv_obj_t* sleep_card = lv_obj_create(stage);
+  lv_obj_t* steps_card = lv_obj_create(stage);
+  lv_obj_t* pager = lv_obj_create(root);
+  if (stage == nullptr || hero_card == nullptr || sleep_card == nullptr || steps_card == nullptr || pager == nullptr) {
+    return nullptr;
+  }
+
+  style_home_surface_stage(stage, layout.stage_w, layout.stage_h, layout.stage_radius, stage_bg);
+  lv_obj_align(stage, LV_ALIGN_TOP_MID, 0, layout.stage_top);
+  lv_obj_set_style_shadow_width(stage, 20, 0);
+  lv_obj_set_style_shadow_opa(stage, LV_OPA_20, 0);
+
+  ui_prepare_box(hero_card);
+  ui_apply_surface(hero_card, SurfaceStyle::Panel);
+  lv_obj_set_size(hero_card, layout.stage_w - layout.stage_pad * 2, hero_h);
+  lv_obj_align(hero_card, LV_ALIGN_TOP_MID, 0, layout.stage_pad);
+  lv_obj_set_style_bg_color(hero_card, weather_bg, 0);
+  lv_obj_set_style_border_color(hero_card, lv_color_mix(weather_accent, lv_color_hex(0xFFFFFF), LV_OPA_20), 0);
+  lv_obj_set_style_radius(hero_card, clamp_coord(scale_by_ratio(layout.stage_w, 10, 100), 22, 26), 0);
+  lv_obj_set_style_pad_all(hero_card, 0, 0);
+
+  lv_obj_t* temp_label = lv_label_create(hero_card);
+  lv_obj_t* range_label = lv_label_create(hero_card);
+  lv_obj_t* icon_sun = lv_obj_create(hero_card);
+  lv_obj_t* icon_cloud_back = lv_obj_create(hero_card);
+  lv_obj_t* icon_cloud_front = lv_obj_create(hero_card);
+  if (temp_label == nullptr || range_label == nullptr || icon_sun == nullptr || icon_cloud_back == nullptr ||
+      icon_cloud_front == nullptr) {
+    return nullptr;
+  }
+
+  ui_prepare_label(temp_label);
+  ui_apply_text(temp_label, TextStyle::Hero);
+  lv_obj_set_style_text_font(temp_label, &lv_font_montserrat_34, 0);
+  lv_obj_set_style_text_color(temp_label, lv_color_hex(0xFFFFFF), 0);
+  set_single_line_label(temp_label, bottom_card_w);
+  lv_label_set_text(temp_label, "23C");
+  lv_obj_align(temp_label, LV_ALIGN_TOP_LEFT, card_pad, 12);
+
+  ui_prepare_label(range_label);
+  ui_apply_text(range_label, TextStyle::Title);
+  lv_obj_set_style_text_font(range_label, &lv_font_montserrat_16, 0);
+  lv_obj_set_style_text_color(range_label, lv_color_hex(0xC8D7EE), 0);
+  set_single_line_label(range_label, bottom_card_w);
+  lv_label_set_text(range_label, "30C / 18C");
+  lv_obj_align_to(range_label, temp_label, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 2);
+
+  const lv_coord_t hero_icon_size = clamp_coord(scale_by_ratio(hero_h, 30, 100), 22, 26);
+  ui_prepare_box(icon_sun);
+  lv_obj_set_size(icon_sun, hero_icon_size, hero_icon_size);
+  lv_obj_set_style_bg_color(icon_sun, lv_color_hex(0xFFD86B), 0);
+  lv_obj_set_style_bg_opa(icon_sun, LV_OPA_COVER, 0);
+  lv_obj_set_style_radius(icon_sun, LV_RADIUS_CIRCLE, 0);
+  lv_obj_align(icon_sun, LV_ALIGN_TOP_RIGHT, -card_pad - 8, 12);
+
+  ui_prepare_box(icon_cloud_back);
+  lv_obj_set_size(icon_cloud_back, hero_icon_size + 8, hero_icon_size - 4);
+  lv_obj_set_style_bg_color(icon_cloud_back, lv_color_hex(0xEAF2FF), 0);
+  lv_obj_set_style_bg_opa(icon_cloud_back, LV_OPA_COVER, 0);
+  lv_obj_set_style_radius(icon_cloud_back, LV_RADIUS_CIRCLE, 0);
+  lv_obj_align(icon_cloud_back, LV_ALIGN_TOP_RIGHT, -card_pad - 28, 30);
+
+  ui_prepare_box(icon_cloud_front);
+  lv_obj_set_size(icon_cloud_front, hero_icon_size + 14, hero_icon_size - 4);
+  lv_obj_set_style_bg_color(icon_cloud_front, lv_color_hex(0xF6FAFF), 0);
+  lv_obj_set_style_bg_opa(icon_cloud_front, LV_OPA_COVER, 0);
+  lv_obj_set_style_radius(icon_cloud_front, LV_RADIUS_CIRCLE, 0);
+  lv_obj_align(icon_cloud_front, LV_ALIGN_TOP_RIGHT, -card_pad - 8, 34);
+
+  for (lv_obj_t* card : {sleep_card, steps_card}) {
+    ui_prepare_box(card);
+    ui_apply_surface(card, SurfaceStyle::PanelSubtle);
+    lv_obj_set_size(card, bottom_card_w, bottom_card_h);
+    lv_obj_set_style_radius(card, card_radius, 0);
+    lv_obj_set_style_pad_all(card, 0, 0);
+  }
+  lv_obj_align(sleep_card, LV_ALIGN_TOP_LEFT, layout.stage_pad, layout.stage_pad + hero_h + layout.stage_gap);
+  lv_obj_align(steps_card, LV_ALIGN_TOP_RIGHT, -layout.stage_pad, layout.stage_pad + hero_h + layout.stage_gap);
+  lv_obj_set_style_bg_color(sleep_card, sleep_bg, 0);
+  lv_obj_set_style_border_color(sleep_card, lv_color_mix(sleep_accent, lv_color_hex(0xFFFFFF), LV_OPA_20), 0);
+  lv_obj_set_style_bg_color(steps_card, steps_bg, 0);
+  lv_obj_set_style_border_color(steps_card, lv_color_mix(steps_accent, lv_color_hex(0xFFFFFF), LV_OPA_20), 0);
+
+  auto build_metric_card = [&](lv_obj_t* card, lv_color_t accent, const char* value, const char* detail, lv_coord_t progress_width)
+      -> bool {
+    lv_obj_t* value_label = lv_label_create(card);
+    lv_obj_t* detail_label = lv_label_create(card);
+    lv_obj_t* progress_track = lv_obj_create(card);
+    lv_obj_t* progress_fill = lv_obj_create(progress_track);
+    if (value_label == nullptr || detail_label == nullptr || progress_track == nullptr || progress_fill == nullptr) {
+      return false;
+    }
+
+    ui_prepare_label(value_label);
+    ui_apply_text(value_label, TextStyle::HeroSoft);
+    lv_obj_set_style_text_font(value_label, &lv_font_montserrat_20, 0);
+    lv_obj_set_style_text_color(value_label, lv_color_hex(0xFFFFFF), 0);
+    set_single_line_label(value_label, bottom_card_w - card_pad * 2);
+    lv_label_set_text(value_label, value);
+    lv_obj_align(value_label, LV_ALIGN_BOTTOM_LEFT, card_pad, -28);
+
+    ui_prepare_label(detail_label);
+    ui_apply_text(detail_label, TextStyle::Muted);
+    lv_obj_set_style_text_font(detail_label, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_color(detail_label, lv_color_hex(0xB7C5D6), 0);
+    set_single_line_label(detail_label, bottom_card_w - card_pad * 2);
+    lv_label_set_text(detail_label, detail);
+    lv_obj_align(detail_label, LV_ALIGN_TOP_LEFT, card_pad, 12);
+
+    ui_prepare_box(progress_track);
+    lv_obj_set_size(progress_track, bottom_card_w - card_pad * 2, 14);
+    lv_obj_set_style_bg_color(progress_track, lv_color_mix(accent, lv_color_hex(0x10161F), LV_OPA_20), 0);
+    lv_obj_set_style_bg_opa(progress_track, LV_OPA_40, 0);
+    lv_obj_set_style_radius(progress_track, LV_RADIUS_CIRCLE, 0);
+    lv_obj_align(progress_track, LV_ALIGN_BOTTOM_LEFT, card_pad, -12);
+
+    ui_prepare_box(progress_fill);
+    lv_obj_set_size(progress_fill, progress_width, 14);
+    lv_obj_set_style_bg_color(progress_fill, accent, 0);
+    lv_obj_set_style_bg_opa(progress_fill, LV_OPA_COVER, 0);
+    lv_obj_set_style_radius(progress_fill, LV_RADIUS_CIRCLE, 0);
+    lv_obj_align(progress_fill, LV_ALIGN_LEFT_MID, 0, 0);
+    return true;
+  };
+
+  if (!build_metric_card(
+          sleep_card,
+          sleep_accent,
+          "7h 36m",
+          "Sleep",
+          clamp_coord(scale_by_ratio(bottom_card_w - card_pad * 2, 72, 100), 42, bottom_card_w - card_pad * 2)) ||
+      !build_metric_card(
+          steps_card,
+          steps_accent,
+          "7645",
+          "Steps",
+          clamp_coord(scale_by_ratio(bottom_card_w - card_pad * 2, 65, 100), 42, bottom_card_w - card_pad * 2))) {
+    return nullptr;
+  }
+
+  ui_prepare_box(pager);
+  ui_set_flex_row(pager, 0, 8, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+  lv_obj_set_size(pager, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+  lv_obj_set_style_bg_opa(pager, LV_OPA_TRANSP, 0);
+  lv_obj_align(pager, LV_ALIGN_BOTTOM_MID, 0, -layout.pager_bottom);
+
+  const std::array<bool, 4> active_dots {{false, false, false, true}};
+  for (bool active : active_dots) {
+    lv_obj_t* dot = create_pager_dot(pager, lv_color_hex(0xFFFFFF), LV_OPA_10, active);
+    if (dot == nullptr) {
+      return nullptr;
+    }
+    if (!active) {
+      lv_obj_set_style_bg_color(dot, lv_color_hex(0xB9C5D5), 0);
+    }
   }
 
   return root;
