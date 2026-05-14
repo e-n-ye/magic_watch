@@ -104,6 +104,39 @@ class WeatherShortcutPage : public PageBase {
   lv_obj_t* build() override;
 };
 
+class PaymentsShortcutPage : public PageBase {
+ public:
+  explicit PaymentsShortcutPage(DataCenter& data_center);
+
+  PageId id() const override;
+  const char* name() const override;
+
+ protected:
+  lv_obj_t* build() override;
+};
+
+class NfcShortcutPage : public PageBase {
+ public:
+  explicit NfcShortcutPage(DataCenter& data_center);
+
+  PageId id() const override;
+  const char* name() const override;
+
+ protected:
+  lv_obj_t* build() override;
+};
+
+class HealthShortcutPage : public PageBase {
+ public:
+  explicit HealthShortcutPage(DataCenter& data_center);
+
+  PageId id() const override;
+  const char* name() const override;
+
+ protected:
+  lv_obj_t* build() override;
+};
+
 class NotificationsPage : public PageBase {
  public:
   explicit NotificationsPage(DataCenter& data_center);

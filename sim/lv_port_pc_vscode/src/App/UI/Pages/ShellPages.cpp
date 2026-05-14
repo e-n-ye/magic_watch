@@ -157,6 +157,46 @@ const char* steps_icon_asset_path() {
   return path.empty() ? nullptr : path.c_str();
 }
 
+const char* payment_alipay_asset_path() {
+  static const std::string path = resolve_lvgl_asset_path("assets/generated_icons/payment_alipay.png");
+  return path.empty() ? nullptr : path.c_str();
+}
+
+const char* payment_wechat_asset_path() {
+  static const std::string path = resolve_lvgl_asset_path("assets/generated_icons/payment_wechat.png");
+  return path.empty() ? nullptr : path.c_str();
+}
+
+const char* health_heart_asset_path() {
+  static const std::string path = resolve_lvgl_asset_path("assets/generated_icons/health_heart.png");
+  return path.empty() ? nullptr : path.c_str();
+}
+
+const char* health_spo2_asset_path() {
+  static const std::string path = resolve_lvgl_asset_path("assets/generated_icons/health_spo2.png");
+  return path.empty() ? nullptr : path.c_str();
+}
+
+const char* health_breathe_asset_path() {
+  static const std::string path = resolve_lvgl_asset_path("assets/generated_icons/health_breathe.png");
+  return path.empty() ? nullptr : path.c_str();
+}
+
+const char* health_stress_asset_path() {
+  static const std::string path = resolve_lvgl_asset_path("assets/generated_icons/health_stress.png");
+  return path.empty() ? nullptr : path.c_str();
+}
+
+const char* nfc_school_card_asset_path() {
+  static const std::string path = resolve_lvgl_asset_path("assets/generated_icons/nfc_school_card.png");
+  return path.empty() ? nullptr : path.c_str();
+}
+
+const char* nfc_school_card_inner_asset_path() {
+  static const std::string path = resolve_lvgl_asset_path("assets/generated_icons/nfc_school_card_inner.png");
+  return path.empty() ? nullptr : path.c_str();
+}
+
 bool file_exists(const char* path) {
   if (!has_text(path)) {
     return false;
@@ -253,6 +293,86 @@ void style_home_surface_stage(lv_obj_t* stage, lv_coord_t width, lv_coord_t heig
   lv_obj_set_style_border_width(stage, 0, 0);
   lv_obj_set_style_radius(stage, radius, 0);
   lv_obj_set_style_pad_all(stage, 0, 0);
+}
+
+lv_obj_t* create_home_stage_root(lv_obj_t* root, const HomeSurfaceLayout& layout, lv_color_t stage_bg) {
+  lv_obj_t* stage = lv_obj_create(root);
+  if (stage == nullptr) {
+    return nullptr;
+  }
+  style_home_surface_stage(stage, layout.stage_w, layout.stage_h, layout.stage_radius, stage_bg);
+  lv_obj_align(stage, LV_ALIGN_TOP_MID, 0, layout.stage_top);
+  lv_obj_set_style_shadow_width(stage, 0, 0);
+  lv_obj_set_style_shadow_opa(stage, LV_OPA_TRANSP, 0);
+  return stage;
+}
+
+lv_obj_t* create_home_pager(lv_obj_t* root, const HomeSurfaceLayout& layout, std::size_t active_index) {
+  lv_obj_t* pager = lv_obj_create(root);
+  if (pager == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_box(pager);
+  ui_set_flex_row(pager, 0, 8, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+  lv_obj_set_size(pager, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+  lv_obj_set_style_bg_opa(pager, LV_OPA_TRANSP, 0);
+  lv_obj_align(pager, LV_ALIGN_BOTTOM_MID, 0, -layout.pager_bottom);
+
+  for (std::size_t index = 0; index < 4; ++index) {
+    const bool active = index == active_index;
+    lv_obj_t* dot = create_pager_dot(pager, lv_color_hex(0xFFFFFF), LV_OPA_10, active);
+    if (dot == nullptr) {
+      return nullptr;
+    }
+    if (!active) {
+      lv_obj_set_style_bg_color(dot, lv_color_hex(0xB9C5D5), 0);
+    }
+  }
+  return pager;
+}
+
+lv_obj_t* create_contain_image(lv_obj_t* parent,
+                               const char* path,
+                               lv_coord_t width,
+                               lv_coord_t height,
+                               lv_align_t align,
+                               lv_coord_t x,
+                               lv_coord_t y) {
+  lv_obj_t* image = lv_image_create(parent);
+  if (image == nullptr) {
+    return nullptr;
+  }
+  lv_obj_set_size(image, width, height);
+  lv_image_set_inner_align(image, LV_IMAGE_ALIGN_CONTAIN);
+  if (file_exists(path)) {
+    lv_image_set_src(image, path);
+  } else {
+    lv_obj_add_flag(image, LV_OBJ_FLAG_HIDDEN);
+  }
+  lv_obj_align(image, align, x, y);
+  return image;
+}
+
+lv_obj_t* create_cover_image(lv_obj_t* parent,
+                             const char* path,
+                             lv_coord_t width,
+                             lv_coord_t height,
+                             lv_align_t align,
+                             lv_coord_t x,
+                             lv_coord_t y) {
+  lv_obj_t* image = lv_image_create(parent);
+  if (image == nullptr) {
+    return nullptr;
+  }
+  lv_obj_set_size(image, width, height);
+  lv_image_set_inner_align(image, LV_IMAGE_ALIGN_COVER);
+  if (file_exists(path)) {
+    lv_image_set_src(image, path);
+  } else {
+    lv_obj_add_flag(image, LV_OBJ_FLAG_HIDDEN);
+  }
+  lv_obj_align(image, align, x, y);
+  return image;
 }
 
 }  // namespace
@@ -1047,6 +1167,290 @@ lv_obj_t* WeatherShortcutPage::build() {
     if (!active) {
       lv_obj_set_style_bg_color(dot, lv_color_hex(0xB9C5D5), 0);
     }
+  }
+
+  return root;
+}
+
+PaymentsShortcutPage::PaymentsShortcutPage(DataCenter& data_center) : PageBase(data_center) {}
+
+PageId PaymentsShortcutPage::id() const {
+  return PageId::HomeShortcutPayments;
+}
+
+const char* PaymentsShortcutPage::name() const {
+  return page_name(PageId::HomeShortcutPayments);
+}
+
+lv_obj_t* PaymentsShortcutPage::build() {
+  lv_obj_t* root = lv_obj_create(nullptr);
+  if (root == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_box(root);
+  ui_apply_surface(root, SurfaceStyle::Screen);
+  const auto layout = make_home_surface_layout();
+  lv_obj_set_size(root, layout.screen_w, layout.screen_h);
+
+  const lv_color_t stage_bg = lv_color_hex(0x040812);
+  const lv_color_t tile_bg = lv_color_hex(0x0C1424);
+  const lv_color_t tile_border = lv_color_hex(0x1E375A);
+  const lv_color_t music_bg = lv_color_hex(0x4BE7E8);
+  const lv_color_t music_fg = lv_color_hex(0xF7FFFE);
+
+  lv_obj_t* stage = create_home_stage_root(root, layout, stage_bg);
+  lv_obj_t* pager = create_home_pager(root, layout, 0);
+  if (stage == nullptr || pager == nullptr) {
+    return nullptr;
+  }
+
+  const lv_coord_t small_w = 106;
+  const lv_coord_t small_h = 106;
+  const lv_coord_t top_y = 15;
+  const lv_coord_t music_y = 136;
+  const lv_coord_t card_gap = 8;
+
+  lv_obj_t* alipay_card = lv_obj_create(stage);
+  lv_obj_t* wechat_card = lv_obj_create(stage);
+  lv_obj_t* music_card = lv_obj_create(stage);
+  if (alipay_card == nullptr || wechat_card == nullptr || music_card == nullptr) {
+    return nullptr;
+  }
+
+  for (lv_obj_t* card : {alipay_card, wechat_card}) {
+    ui_prepare_box(card);
+    ui_apply_surface(card, SurfaceStyle::PanelSubtle);
+    lv_obj_set_size(card, small_w, small_h);
+    lv_obj_set_style_radius(card, 24, 0);
+    lv_obj_set_style_pad_all(card, 0, 0);
+    lv_obj_set_style_bg_color(card, tile_bg, 0);
+    lv_obj_set_style_border_color(card, tile_border, 0);
+  }
+  lv_obj_align(alipay_card, LV_ALIGN_TOP_LEFT, 0, top_y);
+  lv_obj_align(wechat_card, LV_ALIGN_TOP_LEFT, small_w + card_gap, top_y);
+
+  auto build_payment_tile = [&](lv_obj_t* card, const char* icon_path, const char* label_text) -> bool {
+    lv_obj_t* icon = create_contain_image(card, icon_path, 44, 44, LV_ALIGN_TOP_LEFT, 12, 12);
+    lv_obj_t* label = lv_label_create(card);
+    if (icon == nullptr || label == nullptr) {
+      return false;
+    }
+    ui_prepare_label(label);
+    ui_apply_text(label, TextStyle::Title);
+    lv_obj_set_style_text_font(label, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_color(label, lv_color_hex(0xF8FAFC), 0);
+    lv_obj_set_width(label, 84);
+    lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP);
+    lv_label_set_text(label, label_text);
+    lv_obj_align(label, LV_ALIGN_BOTTOM_LEFT, 12, -14);
+    return true;
+  };
+
+  if (!build_payment_tile(alipay_card, payment_alipay_asset_path(), "Alipay") ||
+      !build_payment_tile(wechat_card, payment_wechat_asset_path(), "WeChat Pay")) {
+    return nullptr;
+  }
+
+  ui_prepare_box(music_card);
+  ui_apply_surface(music_card, SurfaceStyle::Panel);
+  lv_obj_set_size(music_card, 220, 106);
+  lv_obj_align(music_card, LV_ALIGN_TOP_LEFT, 0, music_y);
+  lv_obj_set_style_radius(music_card, 24, 0);
+  lv_obj_set_style_pad_all(music_card, 0, 0);
+  lv_obj_set_style_bg_color(music_card, music_bg, 0);
+  lv_obj_set_style_border_width(music_card, 0, 0);
+
+  lv_obj_t* music_status = lv_label_create(music_card);
+  lv_obj_t* music_prev = lv_label_create(music_card);
+  lv_obj_t* music_play = lv_label_create(music_card);
+  lv_obj_t* music_next = lv_label_create(music_card);
+  if (music_status == nullptr || music_prev == nullptr || music_play == nullptr || music_next == nullptr) {
+    return nullptr;
+  }
+
+  ui_prepare_label(music_status);
+  ui_apply_text(music_status, TextStyle::Title);
+  lv_obj_set_style_text_font(music_status, &lv_font_montserrat_14, 0);
+  lv_obj_set_style_text_color(music_status, music_fg, 0);
+  lv_obj_set_width(music_status, 180);
+  lv_label_set_long_mode(music_status, LV_LABEL_LONG_DOT);
+  lv_label_set_text(music_status, "Phone not playing");
+  lv_obj_align(music_status, LV_ALIGN_TOP_LEFT, 16, 16);
+
+  for (lv_obj_t* control : {music_prev, music_play, music_next}) {
+    ui_prepare_label(control);
+    ui_apply_text(control, TextStyle::Hero);
+    lv_obj_set_style_text_color(control, music_fg, 0);
+  }
+  lv_obj_set_style_text_font(music_prev, &lv_font_montserrat_18, 0);
+  lv_obj_set_style_text_font(music_play, &lv_font_montserrat_22, 0);
+  lv_obj_set_style_text_font(music_next, &lv_font_montserrat_18, 0);
+  lv_label_set_text(music_prev, LV_SYMBOL_PREV);
+  lv_label_set_text(music_play, LV_SYMBOL_PLAY);
+  lv_label_set_text(music_next, LV_SYMBOL_NEXT);
+  lv_obj_align(music_prev, LV_ALIGN_BOTTOM_LEFT, 24, -16);
+  lv_obj_align(music_play, LV_ALIGN_BOTTOM_MID, 0, -12);
+  lv_obj_align(music_next, LV_ALIGN_BOTTOM_RIGHT, -24, -16);
+
+  return root;
+}
+
+NfcShortcutPage::NfcShortcutPage(DataCenter& data_center) : PageBase(data_center) {}
+
+PageId NfcShortcutPage::id() const {
+  return PageId::HomeShortcutNfc;
+}
+
+const char* NfcShortcutPage::name() const {
+  return page_name(PageId::HomeShortcutNfc);
+}
+
+lv_obj_t* NfcShortcutPage::build() {
+  lv_obj_t* root = lv_obj_create(nullptr);
+  if (root == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_box(root);
+  ui_apply_surface(root, SurfaceStyle::Screen);
+  const auto layout = make_home_surface_layout();
+  lv_obj_set_size(root, layout.screen_w, layout.screen_h);
+
+  const lv_color_t stage_bg = lv_color_hex(0x040812);
+  const lv_color_t card_bg = lv_color_hex(0x0A101A);
+
+  lv_obj_t* stage = create_home_stage_root(root, layout, stage_bg);
+  lv_obj_t* pager = create_home_pager(root, layout, 1);
+  if (stage == nullptr || pager == nullptr) {
+    return nullptr;
+  }
+
+  lv_obj_t* title = lv_label_create(stage);
+  lv_obj_t* subtitle = lv_label_create(stage);
+  lv_obj_t* card = lv_obj_create(stage);
+  if (title == nullptr || subtitle == nullptr || card == nullptr) {
+    return nullptr;
+  }
+
+  ui_prepare_label(title);
+  ui_apply_text(title, TextStyle::HeroSoft);
+  lv_obj_set_style_text_font(title, &lv_font_montserrat_34, 0);
+  lv_obj_set_style_text_color(title, lv_color_hex(0xF8FAFC), 0);
+  lv_obj_set_width(title, 220);
+  lv_obj_set_style_text_align(title, LV_TEXT_ALIGN_CENTER, 0);
+  lv_label_set_text(title, "School");
+  lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 18);
+
+  ui_prepare_label(subtitle);
+  ui_apply_text(subtitle, TextStyle::Title);
+  lv_obj_set_style_text_font(subtitle, &lv_font_montserrat_16, 0);
+  lv_obj_set_style_text_color(subtitle, lv_color_hex(0x3B82F6), 0);
+  lv_obj_set_width(subtitle, 220);
+  lv_obj_set_style_text_align(subtitle, LV_TEXT_ALIGN_CENTER, 0);
+  lv_label_set_text(subtitle, "Tap card reader");
+  lv_obj_align(subtitle, LV_ALIGN_TOP_MID, 0, 62);
+
+  ui_prepare_box(card);
+  ui_apply_surface(card, SurfaceStyle::PanelSubtle);
+  lv_obj_set_size(card, 188, 150);
+  lv_obj_align(card, LV_ALIGN_TOP_MID, 0, 96);
+  lv_obj_set_style_radius(card, 24, 0);
+  lv_obj_set_style_pad_all(card, 0, 0);
+  lv_obj_set_style_bg_color(card, card_bg, 0);
+  lv_obj_set_style_border_width(card, 0, 0);
+  lv_obj_set_style_clip_corner(card, true, 0);
+
+  const char* nfc_asset_path = nfc_school_card_inner_asset_path();
+  if (!file_exists(nfc_asset_path)) {
+    nfc_asset_path = nfc_school_card_asset_path();
+  }
+
+  if (create_cover_image(card, nfc_asset_path, 188, 150, LV_ALIGN_CENTER, 0, 0) == nullptr) {
+    return nullptr;
+  }
+
+  return root;
+}
+
+HealthShortcutPage::HealthShortcutPage(DataCenter& data_center) : PageBase(data_center) {}
+
+PageId HealthShortcutPage::id() const {
+  return PageId::HomeShortcutHealth;
+}
+
+const char* HealthShortcutPage::name() const {
+  return page_name(PageId::HomeShortcutHealth);
+}
+
+lv_obj_t* HealthShortcutPage::build() {
+  lv_obj_t* root = lv_obj_create(nullptr);
+  if (root == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_box(root);
+  ui_apply_surface(root, SurfaceStyle::Screen);
+  const auto layout = make_home_surface_layout();
+  lv_obj_set_size(root, layout.screen_w, layout.screen_h);
+
+  const lv_color_t stage_bg = lv_color_hex(0x040812);
+  lv_obj_t* stage = create_home_stage_root(root, layout, stage_bg);
+  lv_obj_t* pager = create_home_pager(root, layout, 2);
+  if (stage == nullptr || pager == nullptr) {
+    return nullptr;
+  }
+
+  struct HealthTile {
+    const char* icon_path;
+    const char* value;
+    lv_color_t bg;
+    bool emphasize;
+  };
+
+  const std::array<HealthTile, 4> tiles {{
+      {health_heart_asset_path(), "--", lv_color_hex(0x0D1222), false},
+      {health_spo2_asset_path(), "--", lv_color_hex(0xFF4F72), false},
+      {health_breathe_asset_path(), "Breathe", lv_color_hex(0x4DBDFF), true},
+      {health_stress_asset_path(), "--", lv_color_hex(0x0D1222), false},
+  }};
+
+  const lv_coord_t tile_w = 106;
+  const lv_coord_t tile_h = 106;
+  const lv_coord_t tile_gap = 8;
+  const lv_coord_t start_y = 15;
+
+  for (std::size_t index = 0; index < tiles.size(); ++index) {
+    const auto& tile = tiles[index];
+    const lv_coord_t x = static_cast<lv_coord_t>((index % 2) * (tile_w + tile_gap));
+    const lv_coord_t y = static_cast<lv_coord_t>(start_y + (index / 2) * (tile_h + tile_gap));
+    lv_obj_t* card = lv_obj_create(stage);
+    if (card == nullptr) {
+      return nullptr;
+    }
+    ui_prepare_box(card);
+    ui_apply_surface(card, SurfaceStyle::PanelSubtle);
+    lv_obj_set_size(card, tile_w, tile_h);
+    lv_obj_align(card, LV_ALIGN_TOP_LEFT, x, y);
+    lv_obj_set_style_radius(card, 24, 0);
+    lv_obj_set_style_pad_all(card, 0, 0);
+    lv_obj_set_style_bg_color(card, tile.bg, 0);
+    lv_obj_set_style_border_width(card, 0, 0);
+
+    const lv_coord_t icon_size = tile.emphasize ? 54 : 44;
+    if (create_contain_image(card, tile.icon_path, icon_size, icon_size, LV_ALIGN_TOP_LEFT, 14, 12) == nullptr) {
+      return nullptr;
+    }
+
+    lv_obj_t* value = lv_label_create(card);
+    if (value == nullptr) {
+      return nullptr;
+    }
+    ui_prepare_label(value);
+    ui_apply_text(value, TextStyle::Title);
+    lv_obj_set_style_text_font(value, tile.emphasize ? &lv_font_montserrat_18 : &lv_font_montserrat_16, 0);
+    lv_obj_set_style_text_color(value, tile.emphasize ? lv_color_hex(0xD7FBFF) : lv_color_hex(0xF8FAFC), 0);
+    lv_obj_set_width(value, 78);
+    lv_label_set_long_mode(value, LV_LABEL_LONG_DOT);
+    lv_label_set_text(value, tile.value);
+    lv_obj_align(value, LV_ALIGN_BOTTOM_LEFT, 12, -14);
   }
 
   return root;

@@ -9,9 +9,6 @@ namespace twsim::app {
 namespace {
 
 using MenuItem = MenuPage::Item;
-using ShortcutMetric = HomeShortcutPage::Metric;
-using ShortcutConfig = HomeShortcutPage::Config;
-
 std::vector<MenuItem> settings_items() {
   return {
       {"Display", {NavigationAction::Push, PageId::SettingDisplay}, "Brightness and screen"},
@@ -36,60 +33,6 @@ std::vector<MenuItem> timing_items() {
 std::vector<MenuItem> game_items() {
   return {
       {"2048", {NavigationAction::Push, PageId::Game2048}, "Puzzle placeholder"},
-  };
-}
-
-ShortcutConfig payments_shortcut_config() {
-  return {
-      PageId::HomeShortcutPayments,
-      "",
-      "Payments",
-      "",
-      "Now",
-      "2 ready",
-      "",
-      {{
-          {"WeChat", "Ready", ""},
-          {"Alipay", "Ready", ""},
-          {"Music", "Play", ""},
-          {"Recent", "2", ""},
-      }},
-  };
-}
-
-ShortcutConfig nfc_shortcut_config() {
-  return {
-      PageId::HomeShortcutNfc,
-      "",
-      "NFC",
-      "",
-      "Ready",
-      "Transit",
-      "",
-      {{
-          {"Transit", "Metro", ""},
-          {"Door", "Office", ""},
-          {"Phone", "Tap", ""},
-          {"Wallet", "1", ""},
-      }},
-  };
-}
-
-ShortcutConfig health_shortcut_config() {
-  return {
-      PageId::HomeShortcutHealth,
-      "",
-      "Health",
-      "",
-      "Heart",
-      "74 bpm",
-      "",
-      {{
-          {"SpO2", "98%", ""},
-          {"Breath", "3m", ""},
-          {"Mood", "Calm", ""},
-          {"Stress", "Low", ""},
-      }},
   };
 }
 
@@ -128,17 +71,17 @@ void Application::register_pages() {
   page_manager_.register_page(
       PageId::HomeShortcutPayments,
       [this]() {
-        return std::make_unique<HomeShortcutPage>(data_center_, payments_shortcut_config());
+        return std::make_unique<PaymentsShortcutPage>(data_center_);
       });
   page_manager_.register_page(
       PageId::HomeShortcutNfc,
       [this]() {
-        return std::make_unique<HomeShortcutPage>(data_center_, nfc_shortcut_config());
+        return std::make_unique<NfcShortcutPage>(data_center_);
       });
   page_manager_.register_page(
       PageId::HomeShortcutHealth,
       [this]() {
-        return std::make_unique<HomeShortcutPage>(data_center_, health_shortcut_config());
+        return std::make_unique<HealthShortcutPage>(data_center_);
       });
   page_manager_.register_page(
       PageId::HomeShortcutWeather,
