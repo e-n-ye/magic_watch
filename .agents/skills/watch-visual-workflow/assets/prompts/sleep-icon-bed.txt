@@ -1,0 +1,22 @@
+Generate a small premium smartwatch sleep icon for Magic Watch.
+
+Target:
+- icon only, not a full UI screenshot
+- use on a rounded-square AMOLED smartwatch quick page
+- readable at very small size
+- inspired by the clean, simple visual language of Xiaomi watch shortcut icons
+
+Style:
+- single bed symbol
+- soft white icon on transparent or plain dark background
+- compact silhouette
+- premium wearable OS feel
+- no text
+- no border unless absolutely necessary
+
+Constraints:
+- avoid realistic rendering
+- avoid emoji look
+- avoid decorative gradients
+- keep the icon centered and balanced inside a small square card
+- the icon should stay clear after strong downscaling

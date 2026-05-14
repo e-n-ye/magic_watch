@@ -136,21 +136,21 @@ struct HomeSurfaceLayout {
 HomeSurfaceLayout make_home_surface_layout() {
   const lv_coord_t screen_w = static_cast<lv_coord_t>(lv_display_get_horizontal_resolution(nullptr));
   const lv_coord_t screen_h = static_cast<lv_coord_t>(lv_display_get_vertical_resolution(nullptr));
-  const lv_coord_t safe_margin_x = clamp_coord(scale_by_ratio(screen_w, 6, 100), 10, 16);
-  const lv_coord_t chip_top = clamp_coord(scale_by_ratio(screen_h, 6, 100), 10, 14);
-  const lv_coord_t stage_top = clamp_coord(scale_by_ratio(screen_h, 15, 100), 34, 42);
+  const lv_coord_t safe_margin_x = clamp_coord(scale_by_ratio(screen_w, 4, 100), 8, 10);
+  const lv_coord_t chip_top = clamp_coord(scale_by_ratio(screen_h, 4, 100), 8, 12);
+  const lv_coord_t stage_top = clamp_coord(scale_by_ratio(screen_h, 5, 100), 14, 18);
   const lv_coord_t stage_w = screen_w - safe_margin_x * 2;
-  const lv_coord_t stage_h = clamp_coord(scale_by_ratio(screen_h, 72, 100), 162, 182);
-  const lv_coord_t stage_radius = clamp_coord(scale_by_ratio(stage_w, 10, 100), 22, 28);
-  const lv_coord_t stage_pad = clamp_coord(scale_by_ratio(stage_w, 7, 100), 12, 16);
-  const lv_coord_t stage_gap = clamp_coord(scale_by_ratio(stage_h, 4, 100), 8, 12);
+  const lv_coord_t stage_h = clamp_coord(scale_by_ratio(screen_h, 86, 100), 230, 258);
+  const lv_coord_t stage_radius = clamp_coord(scale_by_ratio(stage_w, 10, 100), 22, 26);
+  const lv_coord_t stage_pad = clamp_coord(scale_by_ratio(stage_w, 3, 100), 6, 10);
+  const lv_coord_t stage_gap = clamp_coord(scale_by_ratio(stage_h, 2, 100), 4, 8);
   const lv_coord_t title_h = clamp_coord(scale_by_ratio(stage_h, 8, 100), 16, 20);
   const lv_coord_t hero_h = clamp_coord(scale_by_ratio(stage_h, 32, 100), 54, 64);
-  const lv_coord_t card_gap = clamp_coord(scale_by_ratio(stage_w, 4, 100), 8, 12);
+  const lv_coord_t card_gap = clamp_coord(scale_by_ratio(stage_w, 3, 100), 6, 10);
   const lv_coord_t available_h = stage_h - stage_pad * 2 - title_h - hero_h - stage_gap * 2;
   const lv_coord_t card_w = (stage_w - stage_pad * 2 - card_gap) / 2;
   const lv_coord_t card_h = (available_h - card_gap) / 2;
-  const lv_coord_t pager_bottom = clamp_coord(scale_by_ratio(screen_h, 4, 100), 8, 12);
+  const lv_coord_t pager_bottom = clamp_coord(scale_by_ratio(screen_h, 2, 100), 2, 8);
   return {screen_w,
           screen_h,
           safe_margin_x,
@@ -715,11 +715,11 @@ lv_obj_t* WeatherShortcutPage::build() {
   const auto layout = make_home_surface_layout();
   lv_obj_set_size(root, layout.screen_w, layout.screen_h);
 
-  const lv_coord_t hero_h = clamp_coord(scale_by_ratio(layout.stage_h, 44, 100), 72, 82);
-  const lv_coord_t bottom_card_h = layout.stage_h - layout.stage_pad * 2 - hero_h - layout.stage_gap;
+  const lv_coord_t hero_h = clamp_coord((layout.stage_w - layout.stage_pad * 2 - layout.card_gap) / 2, 98, 108);
   const lv_coord_t bottom_card_w = (layout.stage_w - layout.stage_pad * 2 - layout.card_gap) / 2;
-  const lv_coord_t card_radius = clamp_coord(scale_by_ratio(bottom_card_w, 14, 100), 20, 24);
-  const lv_coord_t card_pad = clamp_coord(scale_by_ratio(bottom_card_w, 10, 100), 12, 16);
+  const lv_coord_t bottom_card_h = bottom_card_w;
+  const lv_coord_t card_radius = clamp_coord(scale_by_ratio(bottom_card_w, 16, 100), 20, 24);
+  const lv_coord_t card_pad = clamp_coord(scale_by_ratio(bottom_card_w, 10, 100), 11, 13);
 
   const lv_color_t stage_bg = lv_color_hex(0x040812);
   const lv_color_t weather_bg = lv_color_hex(0x0E2B56);
@@ -740,8 +740,8 @@ lv_obj_t* WeatherShortcutPage::build() {
 
   style_home_surface_stage(stage, layout.stage_w, layout.stage_h, layout.stage_radius, stage_bg);
   lv_obj_align(stage, LV_ALIGN_TOP_MID, 0, layout.stage_top);
-  lv_obj_set_style_shadow_width(stage, 20, 0);
-  lv_obj_set_style_shadow_opa(stage, LV_OPA_20, 0);
+  lv_obj_set_style_shadow_width(stage, 0, 0);
+  lv_obj_set_style_shadow_opa(stage, LV_OPA_TRANSP, 0);
 
   ui_prepare_box(hero_card);
   ui_apply_surface(hero_card, SurfaceStyle::Panel);
@@ -764,41 +764,41 @@ lv_obj_t* WeatherShortcutPage::build() {
 
   ui_prepare_label(temp_label);
   ui_apply_text(temp_label, TextStyle::Hero);
-  lv_obj_set_style_text_font(temp_label, &lv_font_montserrat_34, 0);
+  lv_obj_set_style_text_font(temp_label, &lv_font_montserrat_28, 0);
   lv_obj_set_style_text_color(temp_label, lv_color_hex(0xFFFFFF), 0);
   set_single_line_label(temp_label, bottom_card_w);
   lv_label_set_text(temp_label, "23C");
-  lv_obj_align(temp_label, LV_ALIGN_TOP_LEFT, card_pad, 12);
+  lv_obj_align(temp_label, LV_ALIGN_TOP_LEFT, card_pad, 14);
 
   ui_prepare_label(range_label);
   ui_apply_text(range_label, TextStyle::Title);
-  lv_obj_set_style_text_font(range_label, &lv_font_montserrat_16, 0);
+  lv_obj_set_style_text_font(range_label, &lv_font_montserrat_12, 0);
   lv_obj_set_style_text_color(range_label, lv_color_hex(0xC8D7EE), 0);
   set_single_line_label(range_label, bottom_card_w);
   lv_label_set_text(range_label, "30C / 18C");
   lv_obj_align_to(range_label, temp_label, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 2);
 
-  const lv_coord_t hero_icon_size = clamp_coord(scale_by_ratio(hero_h, 30, 100), 22, 26);
+  const lv_coord_t hero_icon_size = clamp_coord(scale_by_ratio(hero_h, 42, 100), 32, 40);
   ui_prepare_box(icon_sun);
   lv_obj_set_size(icon_sun, hero_icon_size, hero_icon_size);
   lv_obj_set_style_bg_color(icon_sun, lv_color_hex(0xFFD86B), 0);
   lv_obj_set_style_bg_opa(icon_sun, LV_OPA_COVER, 0);
   lv_obj_set_style_radius(icon_sun, LV_RADIUS_CIRCLE, 0);
-  lv_obj_align(icon_sun, LV_ALIGN_TOP_RIGHT, -card_pad - 8, 12);
+  lv_obj_align(icon_sun, LV_ALIGN_TOP_RIGHT, -card_pad - 4, 22);
 
   ui_prepare_box(icon_cloud_back);
-  lv_obj_set_size(icon_cloud_back, hero_icon_size + 8, hero_icon_size - 4);
+  lv_obj_set_size(icon_cloud_back, hero_icon_size + 10, hero_icon_size - 2);
   lv_obj_set_style_bg_color(icon_cloud_back, lv_color_hex(0xEAF2FF), 0);
   lv_obj_set_style_bg_opa(icon_cloud_back, LV_OPA_COVER, 0);
   lv_obj_set_style_radius(icon_cloud_back, LV_RADIUS_CIRCLE, 0);
-  lv_obj_align(icon_cloud_back, LV_ALIGN_TOP_RIGHT, -card_pad - 28, 30);
+  lv_obj_align(icon_cloud_back, LV_ALIGN_TOP_RIGHT, -card_pad - 26, 44);
 
   ui_prepare_box(icon_cloud_front);
-  lv_obj_set_size(icon_cloud_front, hero_icon_size + 14, hero_icon_size - 4);
+  lv_obj_set_size(icon_cloud_front, hero_icon_size + 16, hero_icon_size);
   lv_obj_set_style_bg_color(icon_cloud_front, lv_color_hex(0xF6FAFF), 0);
   lv_obj_set_style_bg_opa(icon_cloud_front, LV_OPA_COVER, 0);
   lv_obj_set_style_radius(icon_cloud_front, LV_RADIUS_CIRCLE, 0);
-  lv_obj_align(icon_cloud_front, LV_ALIGN_TOP_RIGHT, -card_pad - 8, 34);
+  lv_obj_align(icon_cloud_front, LV_ALIGN_TOP_RIGHT, -card_pad - 8, 48);
 
   for (lv_obj_t* card : {sleep_card, steps_card}) {
     ui_prepare_box(card);
@@ -814,19 +814,75 @@ lv_obj_t* WeatherShortcutPage::build() {
   lv_obj_set_style_bg_color(steps_card, steps_bg, 0);
   lv_obj_set_style_border_color(steps_card, lv_color_mix(steps_accent, lv_color_hex(0xFFFFFF), LV_OPA_20), 0);
 
-  auto build_metric_card = [&](lv_obj_t* card, lv_color_t accent, const char* value, const char* detail, lv_coord_t progress_width)
+  auto build_metric_card = [&](lv_obj_t* card, lv_color_t accent, const char* value, const char* detail, bool sleep_icon)
       -> bool {
+    lv_obj_t* icon_root = lv_obj_create(card);
     lv_obj_t* value_label = lv_label_create(card);
     lv_obj_t* detail_label = lv_label_create(card);
-    lv_obj_t* progress_track = lv_obj_create(card);
-    lv_obj_t* progress_fill = lv_obj_create(progress_track);
-    if (value_label == nullptr || detail_label == nullptr || progress_track == nullptr || progress_fill == nullptr) {
+    if (icon_root == nullptr || value_label == nullptr || detail_label == nullptr) {
       return false;
+    }
+
+    ui_prepare_box(icon_root);
+    lv_obj_set_size(icon_root, 26, 26);
+    lv_obj_set_style_bg_opa(icon_root, LV_OPA_TRANSP, 0);
+    lv_obj_set_style_border_width(icon_root, 0, 0);
+    lv_obj_align(icon_root, LV_ALIGN_TOP_LEFT, card_pad + 2, 14);
+
+    if (sleep_icon) {
+      lv_obj_t* bed_frame = lv_obj_create(icon_root);
+      lv_obj_t* bed_head = lv_obj_create(icon_root);
+      lv_obj_t* bed_pillow = lv_obj_create(icon_root);
+      if (bed_frame == nullptr || bed_head == nullptr || bed_pillow == nullptr) {
+        return false;
+      }
+      for (lv_obj_t* part : {bed_frame, bed_head, bed_pillow}) {
+        ui_prepare_box(part);
+        lv_obj_set_style_bg_color(part, lv_color_hex(0xF8FBFF), 0);
+        lv_obj_set_style_bg_opa(part, LV_OPA_90, 0);
+        lv_obj_set_style_border_width(part, 0, 0);
+      }
+      lv_obj_set_size(bed_frame, 21, 6);
+      lv_obj_set_style_radius(bed_frame, 3, 0);
+      lv_obj_align(bed_frame, LV_ALIGN_BOTTOM_MID, 0, -4);
+
+      lv_obj_set_size(bed_head, 5, 14);
+      lv_obj_set_style_radius(bed_head, 3, 0);
+      lv_obj_align(bed_head, LV_ALIGN_TOP_LEFT, 1, 6);
+
+      lv_obj_set_size(bed_pillow, 14, 7);
+      lv_obj_set_style_radius(bed_pillow, 4, 0);
+      lv_obj_align(bed_pillow, LV_ALIGN_TOP_LEFT, 7, 8);
+    } else {
+      lv_obj_t* foot = lv_obj_create(icon_root);
+      lv_obj_t* toe1 = lv_obj_create(icon_root);
+      lv_obj_t* toe2 = lv_obj_create(icon_root);
+      lv_obj_t* toe3 = lv_obj_create(icon_root);
+      if (foot == nullptr || toe1 == nullptr || toe2 == nullptr || toe3 == nullptr) {
+        return false;
+      }
+      for (lv_obj_t* part : {foot, toe1, toe2, toe3}) {
+        ui_prepare_box(part);
+        lv_obj_set_style_bg_color(part, lv_color_hex(0xF8FBFF), 0);
+        lv_obj_set_style_bg_opa(part, LV_OPA_90, 0);
+        lv_obj_set_style_border_width(part, 0, 0);
+        lv_obj_set_style_radius(part, LV_RADIUS_CIRCLE, 0);
+      }
+      lv_obj_set_size(foot, 10, 18);
+      lv_obj_align(foot, LV_ALIGN_TOP_LEFT, 10, 4);
+      lv_obj_set_style_transform_rotation(foot, -220, 0);
+
+      lv_obj_set_size(toe1, 4, 4);
+      lv_obj_align(toe1, LV_ALIGN_TOP_LEFT, 17, 3);
+      lv_obj_set_size(toe2, 4, 4);
+      lv_obj_align(toe2, LV_ALIGN_TOP_LEFT, 20, 6);
+      lv_obj_set_size(toe3, 4, 4);
+      lv_obj_align(toe3, LV_ALIGN_TOP_LEFT, 22, 10);
     }
 
     ui_prepare_label(value_label);
     ui_apply_text(value_label, TextStyle::HeroSoft);
-    lv_obj_set_style_text_font(value_label, &lv_font_montserrat_20, 0);
+    lv_obj_set_style_text_font(value_label, &lv_font_montserrat_14, 0);
     lv_obj_set_style_text_color(value_label, lv_color_hex(0xFFFFFF), 0);
     set_single_line_label(value_label, bottom_card_w - card_pad * 2);
     lv_label_set_text(value_label, value);
@@ -834,25 +890,11 @@ lv_obj_t* WeatherShortcutPage::build() {
 
     ui_prepare_label(detail_label);
     ui_apply_text(detail_label, TextStyle::Muted);
-    lv_obj_set_style_text_font(detail_label, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_font(detail_label, &lv_font_montserrat_12, 0);
     lv_obj_set_style_text_color(detail_label, lv_color_hex(0xB7C5D6), 0);
     set_single_line_label(detail_label, bottom_card_w - card_pad * 2);
     lv_label_set_text(detail_label, detail);
-    lv_obj_align(detail_label, LV_ALIGN_TOP_LEFT, card_pad, 12);
-
-    ui_prepare_box(progress_track);
-    lv_obj_set_size(progress_track, bottom_card_w - card_pad * 2, 14);
-    lv_obj_set_style_bg_color(progress_track, lv_color_mix(accent, lv_color_hex(0x10161F), LV_OPA_20), 0);
-    lv_obj_set_style_bg_opa(progress_track, LV_OPA_40, 0);
-    lv_obj_set_style_radius(progress_track, LV_RADIUS_CIRCLE, 0);
-    lv_obj_align(progress_track, LV_ALIGN_BOTTOM_LEFT, card_pad, -12);
-
-    ui_prepare_box(progress_fill);
-    lv_obj_set_size(progress_fill, progress_width, 14);
-    lv_obj_set_style_bg_color(progress_fill, accent, 0);
-    lv_obj_set_style_bg_opa(progress_fill, LV_OPA_COVER, 0);
-    lv_obj_set_style_radius(progress_fill, LV_RADIUS_CIRCLE, 0);
-    lv_obj_align(progress_fill, LV_ALIGN_LEFT_MID, 0, 0);
+    lv_obj_align(detail_label, LV_ALIGN_BOTTOM_LEFT, card_pad, -12);
     return true;
   };
 
@@ -861,13 +903,13 @@ lv_obj_t* WeatherShortcutPage::build() {
           sleep_accent,
           "7h 36m",
           "Sleep",
-          clamp_coord(scale_by_ratio(bottom_card_w - card_pad * 2, 72, 100), 42, bottom_card_w - card_pad * 2)) ||
+          true) ||
       !build_metric_card(
           steps_card,
           steps_accent,
           "7645",
           "Steps",
-          clamp_coord(scale_by_ratio(bottom_card_w - card_pad * 2, 65, 100), 42, bottom_card_w - card_pad * 2))) {
+          false)) {
     return nullptr;
   }
 

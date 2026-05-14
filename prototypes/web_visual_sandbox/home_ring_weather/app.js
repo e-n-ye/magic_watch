@@ -1,32 +1,49 @@
 const presets = {
-  "square-197": {
+  "xiaomi-197": {
     watchWidth: 240,
     watchHeight: 296,
-    safeInsetX: 14,
-    safeInsetTop: 40,
-    safeInsetBottom: 22,
+    safeInsetX: 10,
+    safeInsetTop: 16,
+    safeInsetBottom: 10,
     stageRadius: 28,
-    cardGap: 12,
-    heroRatio: 0.45,
+    cardGap: 8,
+    heroRatio: 1,
     metricFontScale: 1,
   },
   "taller-alt": {
     watchWidth: 252,
     watchHeight: 312,
-    safeInsetX: 15,
-    safeInsetTop: 42,
-    safeInsetBottom: 24,
-    stageRadius: 30,
-    cardGap: 12,
-    heroRatio: 0.44,
-    metricFontScale: 1.03,
+    safeInsetX: 11,
+    safeInsetTop: 18,
+    safeInsetBottom: 12,
+    stageRadius: 29,
+    cardGap: 9,
+    heroRatio: 1,
+    metricFontScale: 1.02,
   },
 };
 
 const root = document.documentElement;
-const iconImage = document.getElementById("weather-icon-image");
-const iconFallback = document.getElementById("weather-icon-fallback");
-const iconStatus = document.getElementById("icon-status");
+const iconBindings = [
+  {
+    image: document.getElementById("weather-icon-image"),
+    fallback: document.getElementById("weather-icon-fallback"),
+    status: document.getElementById("weather-icon-status"),
+    label: "Weather",
+  },
+  {
+    image: document.getElementById("sleep-icon-image"),
+    fallback: document.getElementById("sleep-icon-fallback"),
+    status: document.getElementById("sleep-icon-status"),
+    label: "Sleep",
+  },
+  {
+    image: document.getElementById("steps-icon-image"),
+    fallback: document.getElementById("steps-icon-fallback"),
+    status: document.getElementById("steps-icon-status"),
+    label: "Steps",
+  },
+];
 
 function setCssVar(name, value) {
   root.style.setProperty(name, value);
@@ -39,8 +56,7 @@ function applyPreset(name) {
   }
 
   const stageHeight = preset.watchHeight - preset.safeInsetTop - preset.safeInsetBottom;
-  const innerStageHeight = stageHeight - preset.cardGap * 2;
-  const heroHeight = Math.round((innerStageHeight - preset.cardGap) * preset.heroRatio);
+  const heroHeight = Math.round((preset.watchWidth - preset.safeInsetX * 2 - preset.cardGap) / 2);
 
   setCssVar("--watch-width", preset.watchWidth);
   setCssVar("--watch-height", preset.watchHeight);
@@ -65,23 +81,33 @@ function applyPreset(name) {
   });
 }
 
-function showFallbackIcon() {
-  iconImage.classList.add("is-hidden");
-  iconFallback.classList.remove("is-hidden");
-  iconStatus.textContent = "Weather icon: fallback";
-}
-
-function showGeneratedIcon() {
-  iconImage.classList.remove("is-hidden");
-  iconFallback.classList.add("is-hidden");
-  iconStatus.textContent = "Weather icon: generated asset";
-}
-
 document.querySelectorAll(".preset-button").forEach((button) => {
   button.addEventListener("click", () => applyPreset(button.dataset.preset));
 });
 
-iconImage.addEventListener("load", showGeneratedIcon);
-iconImage.addEventListener("error", showFallbackIcon);
+for (const binding of iconBindings) {
+  const showFallback = () => {
+    binding.image.classList.add("is-hidden");
+    binding.fallback.classList.remove("is-hidden");
+    binding.status.textContent = `${binding.label} icon: fallback`;
+  };
 
-applyPreset("square-197");
+  const showGenerated = () => {
+    binding.image.classList.remove("is-hidden");
+    binding.fallback.classList.add("is-hidden");
+    binding.status.textContent = `${binding.label} icon: generated asset`;
+  };
+
+  binding.image.addEventListener("load", showGenerated);
+  binding.image.addEventListener("error", showFallback);
+
+  if (binding.image.complete && binding.image.naturalWidth > 0) {
+    showGenerated();
+  } else if (binding.image.complete) {
+    showFallback();
+  } else {
+    showFallback();
+  }
+}
+
+applyPreset("xiaomi-197");

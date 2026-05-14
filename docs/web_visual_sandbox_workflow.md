@@ -16,6 +16,11 @@
 
 - `prototypes/web_visual_sandbox/home_ring_weather/index.html`
 
+当前视觉基线：
+
+- 先以接近小米参考图的 `240 x 296` 圆角方屏比例作为审美基线
+- 这不是最终硬件绑定，只是当前统一网页沙盘和 LVGL 模拟器的参考尺寸
+
 ## 明确决策
 
 ### 决策 1：Web 沙盘是视觉规格中间层

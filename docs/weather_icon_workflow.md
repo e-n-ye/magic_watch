@@ -42,6 +42,11 @@ Current expected stable outputs:
 - `latest.json`
 - `latest.png`
 
+Additional generated icon topics now available:
+
+- `.agents/generated/sleep-icon-bed/latest.png`
+- `.agents/generated/steps-icon-foot/latest.png`
+
 Review each round for:
 
 1. silhouette readability at small size
@@ -69,3 +74,8 @@ Current judgment:
 - this icon should first be used in the Web visual sandbox as a reference asset
 - the next review should focus on small-size silhouette readability after downscaling
 - do not rush to integrate it into LVGL runtime until the page-level visual spec is stable
+
+Follow-up judgment for the second round:
+
+- sleep and steps should also prefer generated bitmap icons over hand-built placeholder geometry
+- if a page still uses hand-built shapes, treat that as a temporary fallback rather than the intended final direction
