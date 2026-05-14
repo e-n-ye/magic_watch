@@ -1,5 +1,60 @@
 # Prototype Progress
 
+## 2026-05-14: Home Shortcut Template + Visual Workflow
+
+### What Changed
+
+- Replaced the 4 home-ring shortcut placeholders with a reusable `HomeShortcutPage` template.
+- Unified the four pages around the same structure:
+  - orbit label
+  - title and subtitle
+  - one focus card
+  - four compact metric cards
+- Kept the current home-ring behavior intact while improving the skeleton quality of the surfaces.
+- Added a project-scoped image workflow:
+  - `.agents/skills/watch-visual-workflow/`
+  - Right Code image-generation script
+  - Right Code chat-analysis script
+  - reusable prompt templates
+  - local config example and generated-output convention
+
+### Why This Step Matters
+
+- The home ring is no longer just four unrelated placeholder pages.
+- We now have a stable surface template that can later absorb real service data with smaller code churn.
+- Visual exploration is no longer trapped in chat memory; it has become a repo-level workflow.
+
+### Current Boundary
+
+- The 4 shortcut pages are still shell surfaces, not real business implementations.
+- The new image workflow is scaffolded and documented, but it was not live-tested against the remote API because no project key is configured in this session.
+
+## 2026-05-14: Weather Shortcut Visual Brief v1
+
+### What Changed
+
+- Locked the first visual exploration target to `Weather / Steps / Sleep`.
+- Used the Xiaomi reference set to extract a concrete layout direction instead of writing a generic image prompt.
+- Added:
+  - `docs/weather_shortcut_visual_direction.md`
+  - a tighter Weather-page prompt
+  - a dedicated screenshot-analysis prompt
+- Ran the first actual `gpt-image-2` generation round for the Weather shortcut surface.
+- Stored the first round result under:
+  - `.agents/generated/home-shortcut-weather-round1/20260514_125859_image_generation.json`
+  - `.agents/generated/home-shortcut-weather-round1/20260514_125859_image_generation.png`
+
+### Important Design Correction
+
+- The earlier prompt language assumed a round watch display.
+- For the current simulator and the current Xiaomi reference set, that assumption is not ideal.
+- The first visual generation round should target a rounded-square watch safe area first, then later evaluate portability to other hardware shapes.
+
+### Current Boundary
+
+- This is still a first-round mood-and-structure image, not a production asset.
+- We have now crossed from “workflow scaffold only” into “first real generated reference exists”.
+
 ## 2026-05-14: Baseline Freeze Note
 
 The simulator now has a first coherent v0 shell baseline.

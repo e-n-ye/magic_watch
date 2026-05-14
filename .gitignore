@@ -20,3 +20,7 @@ Desktop.ini
 *.log
 *.tmp
 *.bak
+
+# Local AI workflow config and generated assets
+.agents/config/right_code.env
+.agents/generated/

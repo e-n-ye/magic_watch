@@ -62,6 +62,37 @@ class LauncherPage : public PageBase {
   std::vector<Item> items_;
 };
 
+class HomeShortcutPage : public PageBase {
+ public:
+  struct Metric {
+    const char* label;
+    const char* value;
+    const char* detail;
+  };
+
+  struct Config {
+    PageId page_id;
+    const char* orbit_label;
+    const char* title;
+    const char* subtitle;
+    const char* focus_label;
+    const char* focus_value;
+    const char* focus_detail;
+    std::array<Metric, 4> metrics;
+  };
+
+  HomeShortcutPage(DataCenter& data_center, Config config);
+
+  PageId id() const override;
+  const char* name() const override;
+
+ protected:
+  lv_obj_t* build() override;
+
+ private:
+  Config config_;
+};
+
 class NotificationsPage : public PageBase {
  public:
   explicit NotificationsPage(DataCenter& data_center);

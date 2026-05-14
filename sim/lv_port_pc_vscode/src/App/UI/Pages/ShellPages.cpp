@@ -57,6 +57,36 @@ void style_overlay_card(lv_obj_t* obj, lv_color_t color, lv_opa_t opa, lv_coord_
   lv_obj_set_style_radius(obj, radius, 0);
 }
 
+lv_color_t color_for_home_shortcut(PageId page_id) {
+  switch (page_id) {
+    case PageId::HomeShortcutPayments:
+      return lv_color_hex(0x1C2E46);
+    case PageId::HomeShortcutNfc:
+      return lv_color_hex(0x17343A);
+    case PageId::HomeShortcutHealth:
+      return lv_color_hex(0x321E3A);
+    case PageId::HomeShortcutWeather:
+      return lv_color_hex(0x253422);
+    default:
+      return lv_color_hex(0x182230);
+  }
+}
+
+lv_color_t accent_for_home_shortcut(PageId page_id) {
+  switch (page_id) {
+    case PageId::HomeShortcutPayments:
+      return lv_color_hex(0x7CC4FF);
+    case PageId::HomeShortcutNfc:
+      return lv_color_hex(0x67E8F9);
+    case PageId::HomeShortcutHealth:
+      return lv_color_hex(0xF9A8D4);
+    case PageId::HomeShortcutWeather:
+      return lv_color_hex(0xB7F07A);
+    default:
+      return lv_color_hex(0x93C5FD);
+  }
+}
+
 }  // namespace
 
 WatchfacePage::WatchfacePage(DataCenter& data_center) : PageBase(data_center) {}
@@ -385,6 +415,172 @@ lv_obj_t* LauncherPage::build() {
   }
 
   bind_input();
+  return root;
+}
+
+HomeShortcutPage::HomeShortcutPage(DataCenter& data_center, Config config)
+    : PageBase(data_center), config_(config) {}
+
+PageId HomeShortcutPage::id() const {
+  return config_.page_id;
+}
+
+const char* HomeShortcutPage::name() const {
+  return page_name(config_.page_id);
+}
+
+lv_obj_t* HomeShortcutPage::build() {
+  lv_obj_t* root = lv_obj_create(nullptr);
+  if (root == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_box(root);
+  ui_apply_surface(root, SurfaceStyle::Screen);
+
+  const lv_color_t accent = accent_for_home_shortcut(config_.page_id);
+  const lv_color_t panel_bg = color_for_home_shortcut(config_.page_id);
+
+  lv_obj_t* orbit_chip = lv_obj_create(root);
+  lv_obj_t* title = lv_label_create(root);
+  lv_obj_t* subtitle = lv_label_create(root);
+  lv_obj_t* hero_card = lv_obj_create(root);
+  lv_obj_t* hero_tag = lv_obj_create(hero_card);
+  lv_obj_t* hero_tag_label = lv_label_create(hero_tag);
+  lv_obj_t* hero_value = lv_label_create(hero_card);
+  lv_obj_t* hero_title = lv_label_create(hero_card);
+  lv_obj_t* hero_detail = lv_label_create(hero_card);
+  lv_obj_t* metric_grid = lv_obj_create(root);
+  if (orbit_chip == nullptr || title == nullptr || subtitle == nullptr || hero_card == nullptr || hero_tag == nullptr ||
+      hero_tag_label == nullptr || hero_value == nullptr || hero_title == nullptr || hero_detail == nullptr ||
+      metric_grid == nullptr) {
+    return nullptr;
+  }
+
+  ui_prepare_box(orbit_chip);
+  ui_apply_surface(orbit_chip, SurfaceStyle::Chip);
+  lv_obj_set_size(orbit_chip, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+  lv_obj_set_style_border_color(orbit_chip, accent, 0);
+  lv_obj_set_style_bg_color(orbit_chip, lv_color_mix(panel_bg, lv_color_hex(0x05080F), LV_OPA_60), 0);
+  lv_obj_align(orbit_chip, LV_ALIGN_TOP_LEFT, 12, 12);
+
+  ui_prepare_label(title);
+  ui_apply_text(title, TextStyle::Title);
+  lv_obj_set_style_text_color(title, lv_color_hex(0xF8FAFC), 0);
+  lv_obj_align(title, LV_ALIGN_TOP_LEFT, 14, 52);
+  lv_label_set_text(title, config_.title);
+
+  ui_prepare_label(subtitle);
+  ui_apply_text(subtitle, TextStyle::Muted);
+  lv_obj_set_width(subtitle, 208);
+  lv_label_set_long_mode(subtitle, LV_LABEL_LONG_WRAP);
+  lv_obj_align_to(subtitle, title, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 6);
+  lv_label_set_text(subtitle, config_.subtitle);
+
+  lv_obj_t* orbit_label = lv_label_create(orbit_chip);
+  if (orbit_label == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_label(orbit_label);
+  ui_apply_text(orbit_label, TextStyle::Accent);
+  lv_obj_set_style_text_color(orbit_label, accent, 0);
+  lv_label_set_text(orbit_label, config_.orbit_label);
+  lv_obj_center(orbit_label);
+
+  ui_prepare_box(hero_card);
+  ui_apply_surface(hero_card, SurfaceStyle::Panel);
+  lv_obj_set_size(hero_card, 220, 88);
+  lv_obj_align(hero_card, LV_ALIGN_TOP_MID, 0, 96);
+  lv_obj_set_style_bg_color(hero_card, panel_bg, 0);
+  lv_obj_set_style_border_color(hero_card, lv_color_mix(accent, lv_color_hex(0xFFFFFF), LV_OPA_20), 0);
+  lv_obj_set_style_pad_all(hero_card, 14, 0);
+
+  ui_prepare_box(hero_tag);
+  ui_apply_surface(hero_tag, SurfaceStyle::Chip);
+  lv_obj_set_size(hero_tag, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+  lv_obj_set_style_bg_color(hero_tag, lv_color_mix(accent, lv_color_hex(0x05080F), LV_OPA_70), 0);
+  lv_obj_set_style_border_width(hero_tag, 0, 0);
+  lv_obj_align(hero_tag, LV_ALIGN_TOP_LEFT, 0, 0);
+
+  ui_prepare_label(hero_tag_label);
+  ui_apply_text(hero_tag_label, TextStyle::Tiny);
+  lv_obj_set_style_text_color(hero_tag_label, lv_color_hex(0xF8FAFC), 0);
+  lv_label_set_text(hero_tag_label, config_.focus_label);
+  lv_obj_center(hero_tag_label);
+
+  ui_prepare_label(hero_value);
+  ui_apply_text(hero_value, TextStyle::HeroSoft);
+  lv_obj_set_style_text_font(hero_value, &lv_font_montserrat_26, 0);
+  lv_obj_set_style_text_color(hero_value, accent, 0);
+  lv_obj_align(hero_value, LV_ALIGN_TOP_LEFT, 0, 30);
+  lv_label_set_text(hero_value, config_.focus_value);
+
+  ui_prepare_label(hero_title);
+  ui_apply_text(hero_title, TextStyle::Title);
+  lv_obj_set_style_text_color(hero_title, lv_color_hex(0xF8FAFC), 0);
+  lv_obj_align(hero_title, LV_ALIGN_TOP_RIGHT, 0, 30);
+  lv_label_set_text(hero_title, config_.title);
+
+  ui_prepare_label(hero_detail);
+  ui_apply_text(hero_detail, TextStyle::Tiny);
+  lv_obj_set_width(hero_detail, 208);
+  lv_label_set_long_mode(hero_detail, LV_LABEL_LONG_WRAP);
+  lv_obj_set_style_text_align(hero_detail, LV_TEXT_ALIGN_LEFT, 0);
+  lv_obj_align(hero_detail, LV_ALIGN_BOTTOM_LEFT, 0, 0);
+  lv_label_set_text(hero_detail, config_.focus_detail);
+
+  ui_prepare_box(metric_grid);
+  lv_obj_set_size(metric_grid, 220, 98);
+  lv_obj_align(metric_grid, LV_ALIGN_BOTTOM_MID, 0, -12);
+  lv_obj_set_layout(metric_grid, LV_LAYOUT_GRID);
+  static lv_coord_t columns[] = {106, 106, LV_GRID_TEMPLATE_LAST};
+  static lv_coord_t rows[] = {45, 45, LV_GRID_TEMPLATE_LAST};
+  lv_obj_set_grid_dsc_array(metric_grid, columns, rows);
+  lv_obj_set_style_pad_all(metric_grid, 0, 0);
+  lv_obj_set_style_pad_row(metric_grid, 8, 0);
+  lv_obj_set_style_pad_column(metric_grid, 8, 0);
+  lv_obj_set_style_bg_opa(metric_grid, LV_OPA_TRANSP, 0);
+  lv_obj_set_style_border_width(metric_grid, 0, 0);
+
+  for (std::size_t index = 0; index < config_.metrics.size(); ++index) {
+    const auto& metric = config_.metrics[index];
+    const auto row = static_cast<lv_coord_t>(index / 2);
+    const auto col = static_cast<lv_coord_t>(index % 2);
+
+    lv_obj_t* card = lv_obj_create(metric_grid);
+    lv_obj_t* label = lv_label_create(card);
+    lv_obj_t* value = lv_label_create(card);
+    lv_obj_t* detail = lv_label_create(card);
+    if (card == nullptr || label == nullptr || value == nullptr || detail == nullptr) {
+      return nullptr;
+    }
+
+    ui_prepare_box(card);
+    ui_apply_surface(card, SurfaceStyle::PanelSubtle);
+    lv_obj_set_grid_cell(card, LV_GRID_ALIGN_STRETCH, col, 1, LV_GRID_ALIGN_STRETCH, row, 1);
+    lv_obj_set_style_bg_color(card, lv_color_mix(panel_bg, lv_color_hex(0x05080F), LV_OPA_50), 0);
+    lv_obj_set_style_border_color(card, lv_color_mix(accent, lv_color_hex(0x203040), LV_OPA_30), 0);
+    lv_obj_set_style_pad_all(card, 10, 0);
+    lv_obj_remove_flag(card, LV_OBJ_FLAG_SCROLLABLE);
+
+    ui_prepare_label(label);
+    ui_apply_text(label, TextStyle::Tiny);
+    lv_label_set_text(label, metric.label);
+    lv_obj_align(label, LV_ALIGN_TOP_LEFT, 0, 0);
+
+    ui_prepare_label(value);
+    ui_apply_text(value, TextStyle::Body);
+    lv_obj_set_style_text_color(value, accent, 0);
+    lv_label_set_text(value, metric.value);
+    lv_obj_align(value, LV_ALIGN_LEFT_MID, 0, -2);
+
+    ui_prepare_label(detail);
+    ui_apply_text(detail, TextStyle::Tiny);
+    lv_obj_set_width(detail, 82);
+    lv_label_set_long_mode(detail, LV_LABEL_LONG_WRAP);
+    lv_label_set_text(detail, metric.detail);
+    lv_obj_align(detail, LV_ALIGN_BOTTOM_LEFT, 0, 0);
+  }
+
   return root;
 }
 

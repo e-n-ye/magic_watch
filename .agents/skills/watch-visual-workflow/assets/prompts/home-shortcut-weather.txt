@@ -1,0 +1,38 @@
+Generate a smartwatch home shortcut page concept for Magic Watch.
+
+Surface:
+- home ring page 4 of 4
+- topic: weather, steps, sleep
+- current prototype geometry: rounded-square watch display with large corner radius
+- reference family: Xiaomi watch quick page style
+- target hardware is not fixed yet
+- design should stay valid across a small range of rounded-square AMOLED watch sizes around the Xiaomi 1.97-inch class
+- do not rely on one exact pixel layout
+
+Need:
+- one strong primary focus area for current weather
+- upper card spans most of the width
+- lower area uses two balanced rounded cards for sleep and steps
+- optional tiny air-quality detail may live inside the weather card instead of becoming a fourth major card
+- premium wearable feel
+- readable at small wearable scale
+- dark background with clear accent contrast
+- strong black breathing room around the inner cards
+- deep navy stage behind the cards
+- bold, simple icon shapes
+- very short text, glanceable only
+- spacing and proportions should feel resizable rather than hard-coded
+
+Visual cues to borrow from the reference set:
+- from 4.jpg: top weather card + bottom two cards layout
+- from 0.jpg: strong single-focus numerals and generous emptiness
+- from 3.jpg: saturated accent card colors on black base
+- from 1.jpg and 2.jpg: page-like calm composition, not app-grid clutter
+
+Avoid:
+- phone screenshot look
+- dense unreadable text
+- decorative clutter
+- four equally weighted small cards
+- fake realistic weather illustration backgrounds
+- a layout that only works at one exact pixel size

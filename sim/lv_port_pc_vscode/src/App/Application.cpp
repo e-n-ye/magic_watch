@@ -9,6 +9,8 @@ namespace twsim::app {
 namespace {
 
 using MenuItem = MenuPage::Item;
+using ShortcutMetric = HomeShortcutPage::Metric;
+using ShortcutConfig = HomeShortcutPage::Config;
 
 std::vector<MenuItem> settings_items() {
   return {
@@ -34,6 +36,78 @@ std::vector<MenuItem> timing_items() {
 std::vector<MenuItem> game_items() {
   return {
       {"2048", {NavigationAction::Push, PageId::Game2048}, "Puzzle placeholder"},
+  };
+}
+
+ShortcutConfig payments_shortcut_config() {
+  return {
+      PageId::HomeShortcutPayments,
+      "Home Ring 1/4",
+      "Payments",
+      "Fast payment and media control surface.",
+      "Focus",
+      "3 cards",
+      "Keep the page shallow: primary actions first, detail later.",
+      {{
+          {"WeChat", "Ready", "Scan and pay"},
+          {"Alipay", "Ready", "Transit and QR"},
+          {"Music", "Resume", "Playback control"},
+          {"Recent", "2", "Pinned shortcuts"},
+      }},
+  };
+}
+
+ShortcutConfig nfc_shortcut_config() {
+  return {
+      PageId::HomeShortcutNfc,
+      "Home Ring 2/4",
+      "NFC",
+      "Identity, transit and nearby tap scenarios.",
+      "Focus",
+      "Transit",
+      "This page should later bind to card presence, recent taps and access policies.",
+      {{
+          {"Transit", "Shenzhen", "Metro card"},
+          {"Door", "Office", "Access pass"},
+          {"Phone", "Tap", "Pair / handoff"},
+          {"Wallet", "1 card", "Preferred default"},
+      }},
+  };
+}
+
+ShortcutConfig health_shortcut_config() {
+  return {
+      PageId::HomeShortcutHealth,
+      "Home Ring 3/4",
+      "Health",
+      "Short-cycle body status, not the full health app.",
+      "Focus",
+      "74 bpm",
+      "The home ring should surface quick-glance health, while deeper trends stay in dedicated apps.",
+      {{
+          {"SpO2", "98%", "Latest sample"},
+          {"Breath", "3 min", "Training shortcut"},
+          {"Mood", "Calm", "Self check-in"},
+          {"Stress", "Low", "Morning baseline"},
+      }},
+  };
+}
+
+ShortcutConfig weather_shortcut_config() {
+  return {
+      PageId::HomeShortcutWeather,
+      "Home Ring 4/4",
+      "Weather",
+      "Daily context, movement and sleep in one glance.",
+      "Focus",
+      "24C",
+      "This surface is a good candidate for future generated background visuals and mood-aware themes.",
+      {{
+          {"Weather", "Cloudy", "Light wind"},
+          {"Steps", "6421", "68% of goal"},
+          {"Sleep", "7h 18m", "Above baseline"},
+          {"AQI", "42", "Good outdoors"},
+      }},
   };
 }
 
@@ -72,35 +146,22 @@ void Application::register_pages() {
   page_manager_.register_page(
       PageId::HomeShortcutPayments,
       [this]() {
-        return std::make_unique<PlaceholderPage>(data_center_,
-                                                 PageId::HomeShortcutPayments,
-                                                 "Shortcut 1",
-                                                 "WeChat Pay / Alipay / Music\nPrototype home-ring surface.",
-                                                 false);
+        return std::make_unique<HomeShortcutPage>(data_center_, payments_shortcut_config());
       });
   page_manager_.register_page(
       PageId::HomeShortcutNfc,
       [this]() {
-        return std::make_unique<PlaceholderPage>(
-            data_center_, PageId::HomeShortcutNfc, "Shortcut 2", "NFC prototype home-ring surface.", false);
+        return std::make_unique<HomeShortcutPage>(data_center_, nfc_shortcut_config());
       });
   page_manager_.register_page(
       PageId::HomeShortcutHealth,
       [this]() {
-        return std::make_unique<PlaceholderPage>(data_center_,
-                                                 PageId::HomeShortcutHealth,
-                                                 "Shortcut 3",
-                                                 "Heart rate / SpO2 / Breath / Mood\nPrototype home-ring surface.",
-                                                 false);
+        return std::make_unique<HomeShortcutPage>(data_center_, health_shortcut_config());
       });
   page_manager_.register_page(
       PageId::HomeShortcutWeather,
       [this]() {
-        return std::make_unique<PlaceholderPage>(data_center_,
-                                                 PageId::HomeShortcutWeather,
-                                                 "Shortcut 4",
-                                                 "Weather / Steps / Sleep\nPrototype home-ring surface.",
-                                                 false);
+        return std::make_unique<HomeShortcutPage>(data_center_, weather_shortcut_config());
       });
   page_manager_.register_page(PageId::Launcher, [this]() { return std::make_unique<LauncherPage>(data_center_); });
   page_manager_.register_page(PageId::Notifications,

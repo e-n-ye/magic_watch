@@ -1,0 +1,13 @@
+Please analyze this Xiaomi-style smartwatch shortcut reference set for Magic Watch.
+
+Target surface:
+- home ring page 4 of 4
+- topic: weather, steps, sleep
+
+Return:
+1. the dominant layout skeleton
+2. which card should be primary
+3. which two metrics deserve secondary cards
+4. which details should stay tiny or be merged into the weather card
+5. what black-space and safe-margin rules are visible
+6. which parts are polish only and should not overcomplicate the v0 simulator

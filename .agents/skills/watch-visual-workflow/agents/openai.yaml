@@ -1,0 +1,7 @@
+interface:
+  display_name: "Watch Visual Workflow"
+  short_description: "Generate and analyze Magic Watch image references."
+  default_prompt: "Use $watch-visual-workflow to generate or analyze visual assets for Magic Watch."
+
+policy:
+  allow_implicit_invocation: true

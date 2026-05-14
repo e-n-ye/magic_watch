@@ -1,0 +1,10 @@
+Please analyze this smartwatch image for Magic Watch.
+Focus on the home-ring shortcut surface.
+
+Return:
+1. page title and primary focus
+2. top, middle and bottom hierarchy
+3. which elements are quick actions versus passive metrics
+4. what can be reduced into a v0 simulator shell
+5. color and material language
+6. what should remain image-driven versus data-driven
