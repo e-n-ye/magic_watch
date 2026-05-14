@@ -93,6 +93,17 @@ class HomeShortcutPage : public PageBase {
   Config config_;
 };
 
+class WeatherShortcutPage : public PageBase {
+ public:
+  explicit WeatherShortcutPage(DataCenter& data_center);
+
+  PageId id() const override;
+  const char* name() const override;
+
+ protected:
+  lv_obj_t* build() override;
+};
+
 class NotificationsPage : public PageBase {
  public:
   explicit NotificationsPage(DataCenter& data_center);

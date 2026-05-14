@@ -21,7 +21,7 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  if (!device->initialize({240, 240, "T-Watch S3 Plus / MDA Simulator"})) {
+  if (!device->initialize({240, 296, "T-Watch S3 Plus / MDA Simulator"})) {
     return 1;
   }
 

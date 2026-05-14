@@ -5,6 +5,7 @@ Target:
 - condition: partly cloudy day
 - use on a rounded-square AMOLED smartwatch quick page
 - readable at very small size
+- intended final visible size: about one third to one half of a wide weather card
 
 Style:
 - clean geometric shapes
@@ -13,12 +14,16 @@ Style:
 - premium wearable OS feel
 - no outlines unless necessary
 - no text
-- transparent or plain dark background
+- pure flat #00ff00 chroma-key background for later background removal
 - strong silhouette readability
 
 Constraints:
 - avoid realistic painting
 - avoid emoji style
 - avoid decorative gradients that disappear at small size
+- avoid glow, halo, bloom, mist, vignette, or any atmospheric background effect
+- keep the icon itself compact, centered, and with generous empty padding around it
+- do not place any dark panel, card, or shadow behind the icon
+- do not use #00ff00 anywhere inside the icon
 - keep the icon compact and centered
 - the icon should still read clearly when scaled down into a small top-right weather card area

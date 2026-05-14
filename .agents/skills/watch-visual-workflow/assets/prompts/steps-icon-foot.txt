@@ -5,10 +5,11 @@ Target:
 - use on a rounded-square AMOLED smartwatch quick page
 - readable at very small size
 - inspired by the clean, simple visual language of Xiaomi watch shortcut icons
+- intended final visible size: about the top-left quarter area of a small square shortcut card
 
 Style:
 - single stylized footprint symbol
-- soft white icon on transparent or plain dark background
+- soft white icon on pure flat #00ff00 chroma-key background for later background removal
 - compact silhouette
 - premium wearable OS feel
 - no text
@@ -18,5 +19,9 @@ Constraints:
 - avoid realistic rendering
 - avoid emoji look
 - avoid decorative gradients
+- avoid glow, halo, bloom, fog, drop shadow, or any luminous background wash
+- do not add any surrounding tile, panel, or frame
+- keep the icon centered with generous empty padding
+- do not use #00ff00 anywhere inside the icon
 - keep the icon centered and balanced inside a small square card
 - the icon should stay clear after strong downscaling
