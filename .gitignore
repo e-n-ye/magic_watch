@@ -1,0 +1,22 @@
+# Build outputs
+build/
+bin/
+out/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+compile_commands.json
+
+# Editor and OS noise
+.vscode/
+.idea/
+*.user
+*.suo
+*.swp
+Thumbs.db
+Desktop.ini
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
