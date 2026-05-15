@@ -10,6 +10,8 @@ const char* page_name(PageId page_id) {
       return "Launcher";
     case PageId::Notifications:
       return "Notifications";
+    case PageId::NotificationWakePreview:
+      return "NotificationWakePreview";
     case PageId::QuickSettings:
       return "QuickSettings";
     case PageId::PowerMenu:

@@ -1,7 +1,10 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
+#include <string>
 #include <variant>
+#include <vector>
 
 #include "App/UI/PageId.h"
 
@@ -11,6 +14,10 @@ enum class EventId {
   TimeUpdated,
   BatteryChanged,
   MotionUpdated,
+  NotificationsChanged,
+  NotificationToastRequested,
+  NotificationWakeRequested,
+  ShellPreviewRequested,
   NavigationRequested,
   InputRequested,
 };
@@ -40,6 +47,34 @@ struct MotionModel {
   std::int16_t z_mg {0};
 };
 
+enum class NotificationCategory {
+  Message,
+  BatteryLow,
+};
+
+struct NotificationItem {
+  std::string id;
+  NotificationCategory category {NotificationCategory::Message};
+  std::string source_label;
+  std::string title;
+  std::string body;
+  std::string time_text;
+  std::string badge_text;
+};
+
+struct NotificationCenterModel {
+  std::vector<NotificationItem> items;
+  bool wake_on_notification {true};
+  std::optional<std::string> active_toast_notification_id;
+};
+
+struct ShellPreviewModel {
+  PageId page_id {PageId::Watchface};
+  std::int16_t progress {0};
+  bool active {false};
+  bool commit {false};
+};
+
 enum class NavigationAction {
   SetRoot,
   Push,
@@ -50,6 +85,7 @@ enum class NavigationAction {
   OpenLauncher,
   OpenNotifications,
   OpenQuickSettings,
+  OpenNotificationWakePreview,
   OpenPowerMenu,
   PowerOff,
   Restart,
@@ -69,6 +105,11 @@ enum class InputAction {
   TouchActivity,
   ScrollDrag,
   ScrollFlick,
+  ScrollRelease,
+  TopEdgeProgress,
+  TopEdgeCancel,
+  BottomEdgeProgress,
+  BottomEdgeCancel,
   EdgeBackProgress,
   EdgeBackCancel,
   NavigateBack,
@@ -81,10 +122,20 @@ enum class InputAction {
 struct InputCommand {
   InputAction action {InputAction::MainButtonShortPress};
   std::int16_t value {0};
+  std::int16_t x {0};
+  std::int16_t y {0};
 };
 
 using EventPayload =
-    std::variant<std::monostate, TimeModel, BatteryModel, MotionModel, NavigationCommand, InputCommand>;
+    std::variant<std::monostate,
+                 TimeModel,
+                 BatteryModel,
+                 MotionModel,
+                 NotificationItem,
+                 NotificationCenterModel,
+                 ShellPreviewModel,
+                 NavigationCommand,
+                 InputCommand>;
 
 struct Event {
   EventId id;

@@ -17,13 +17,13 @@ namespace {
 constexpr int kMinSpreadIndex = 0;
 constexpr int kMaxSpreadIndex = 8;
 constexpr lv_coord_t kDigitAssetCanvas = 220;
-constexpr lv_coord_t kGlyphStageWidth = 280;
+constexpr lv_coord_t kGlyphStageWidth = 242;
 constexpr lv_coord_t kGlyphStageHeight = 280;
 constexpr lv_coord_t kDigitTop = 2;
 constexpr lv_coord_t kDigitVisibleTop = 0;
 constexpr lv_coord_t kDigitVisibleHeight = 280;
-constexpr lv_coord_t kSingleVisibleWidth = 150;
-constexpr lv_coord_t kDualVisibleWidth = 150;
+constexpr lv_coord_t kSingleVisibleWidth = 110;
+constexpr lv_coord_t kDualVisibleWidth = 160;
 constexpr float kInnerSliceRatio = 0.31f;
 constexpr float kOuterSliceRatio = 0.28f;
 constexpr float kSliceInsetRatio = 0.18f;

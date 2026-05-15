@@ -90,6 +90,8 @@ PageTransition open_transition_for(PageId page_id) {
   switch (page_id) {
     case PageId::Notifications:
       return PageTransition::MoveUp;
+    case PageId::NotificationWakePreview:
+      return PageTransition::Fade;
     case PageId::QuickSettings:
       return PageTransition::MoveDown;
     case PageId::PowerMenu:
@@ -101,9 +103,11 @@ PageTransition open_transition_for(PageId page_id) {
 PageTransition close_transition_for(PageId page_id) {
   switch (page_id) {
     case PageId::Notifications:
-      return PageTransition::MoveDown;
+      return PageTransition::None;
+    case PageId::NotificationWakePreview:
+      return PageTransition::Fade;
     case PageId::QuickSettings:
-      return PageTransition::MoveUp;
+      return PageTransition::None;
     case PageId::PowerMenu:
     default:
       return PageTransition::Fade;
@@ -119,6 +123,9 @@ AppStateMachine::AppStateMachine(DataCenter& data_center, PageManager& page_mana
                              [this](const Event& event) { handle_event(event); });
   input_subscription_ =
       data_center_.subscribe(EventId::InputRequested,
+                             [this](const Event& event) { handle_event(event); });
+  notification_wake_subscription_ =
+      data_center_.subscribe(EventId::NotificationWakeRequested,
                              [this](const Event& event) { handle_event(event); });
 }
 
@@ -141,6 +148,13 @@ void AppStateMachine::handle_event(const Event& event) {
 
   if (const auto* input = std::get_if<InputCommand>(&event.payload)) {
     handle_input(*input);
+    return;
+  }
+
+  if (event.id == EventId::NotificationWakeRequested) {
+    if (const auto* item = std::get_if<NotificationItem>(&event.payload)) {
+      handle_notification_wake_request(*item);
+    }
   }
 }
 
@@ -192,6 +206,9 @@ void AppStateMachine::handle_navigation(const NavigationCommand& command) {
     case NavigationAction::OpenQuickSettings:
       open_shell_surface(ShellSurface::QuickSettings);
       return;
+    case NavigationAction::OpenNotificationWakePreview:
+      open_shell_surface(ShellSurface::NotificationWakePreview);
+      return;
     case NavigationAction::OpenPowerMenu:
       open_shell_surface(ShellSurface::PowerMenu);
       return;
@@ -212,6 +229,10 @@ void AppStateMachine::handle_navigation(const NavigationCommand& command) {
 
 void AppStateMachine::handle_input(const InputCommand& command) {
   static EdgeBackOverlay overlay;
+
+  if (power_state_ == PowerState::Running && notification_screen_off_timer_ != nullptr) {
+    cancel_notification_screen_off(true);
+  }
 
   switch (command.action) {
     case InputAction::MainButtonShortPress:
@@ -251,11 +272,64 @@ void AppStateMachine::handle_input(const InputCommand& command) {
       return;
     case InputAction::OpenNotifications:
       if (power_state_ == PowerState::Running) {
+        if (page_manager_.temporary_page_id() && *page_manager_.temporary_page_id() == PageId::Notifications &&
+            !notifications_pull_preview_active_) {
+          return;
+        }
+        if (page_manager_.temporary_page_id() && *page_manager_.temporary_page_id() == PageId::Notifications &&
+            notifications_pull_preview_active_) {
+          data_center_.publish_shell_preview({PageId::Notifications, 220, true, true});
+          notifications_pull_preview_active_ = false;
+          return;
+        }
+        notifications_pull_preview_active_ = false;
         open_shell_surface(ShellSurface::Notifications);
       }
       return;
+    case InputAction::TopEdgeProgress:
+      if (power_state_ == PowerState::Running) {
+        if (page_manager_.temporary_page_id() && *page_manager_.temporary_page_id() == PageId::Notifications &&
+            !notifications_pull_preview_active_) {
+          return;
+        }
+        preview_notifications_pull(command.value);
+      }
+      return;
+    case InputAction::TopEdgeCancel:
+      if (page_manager_.temporary_page_id() && *page_manager_.temporary_page_id() == PageId::Notifications &&
+          !notifications_pull_preview_active_) {
+        return;
+      }
+      cancel_notifications_pull_preview();
+      return;
+    case InputAction::BottomEdgeProgress:
+      if (power_state_ == PowerState::Running) {
+        if (page_manager_.temporary_page_id() && *page_manager_.temporary_page_id() == PageId::QuickSettings &&
+            !quick_settings_pull_preview_active_) {
+          return;
+        }
+        preview_quick_settings_pull(command.value);
+      }
+      return;
+    case InputAction::BottomEdgeCancel:
+      if (page_manager_.temporary_page_id() && *page_manager_.temporary_page_id() == PageId::QuickSettings &&
+          !quick_settings_pull_preview_active_) {
+        return;
+      }
+      cancel_quick_settings_pull_preview();
+      return;
     case InputAction::OpenQuickSettings:
       if (power_state_ == PowerState::Running) {
+        if (page_manager_.temporary_page_id() && *page_manager_.temporary_page_id() == PageId::QuickSettings &&
+            !quick_settings_pull_preview_active_) {
+          return;
+        }
+        if (page_manager_.temporary_page_id() && *page_manager_.temporary_page_id() == PageId::QuickSettings &&
+            quick_settings_pull_preview_active_) {
+          data_center_.publish_shell_preview({PageId::QuickSettings, 220, true, true});
+          quick_settings_pull_preview_active_ = false;
+          return;
+        }
         open_shell_surface(ShellSurface::QuickSettings);
       }
       return;
@@ -304,6 +378,7 @@ void AppStateMachine::handle_input(const InputCommand& command) {
 }
 
 void AppStateMachine::boot_to_home(PageTransition transition) {
+  cancel_notification_screen_off(true);
   if (page_manager_.set_root(PageId::Watchface, transition)) {
     power_state_ = PowerState::Running;
     shell_surface_ = ShellSurface::None;
@@ -316,6 +391,7 @@ void AppStateMachine::return_home(PageTransition transition) {
 }
 
 void AppStateMachine::enter_screen_off() {
+  cancel_notification_screen_off(true);
   if (page_manager_.set_root(PageId::ScreenOff, PageTransition::Fade)) {
     power_state_ = PowerState::ScreenOff;
     shell_surface_ = ShellSurface::None;
@@ -323,6 +399,7 @@ void AppStateMachine::enter_screen_off() {
 }
 
 void AppStateMachine::enter_powered_off() {
+  cancel_notification_screen_off(true);
   if (page_manager_.set_root(PageId::PoweredOff, PageTransition::Fade)) {
     power_state_ = PowerState::PoweredOff;
     shell_surface_ = ShellSurface::None;
@@ -333,7 +410,9 @@ void AppStateMachine::open_shell_surface(ShellSurface surface) {
   if (power_state_ == PowerState::PoweredOff) {
     return;
   }
-  if (power_state_ == PowerState::ScreenOff && surface != ShellSurface::PowerMenu) {
+  if (power_state_ == PowerState::ScreenOff &&
+      surface != ShellSurface::PowerMenu &&
+      surface != ShellSurface::NotificationWakePreview) {
     return;
   }
 
@@ -341,6 +420,9 @@ void AppStateMachine::open_shell_surface(ShellSurface surface) {
   switch (surface) {
     case ShellSurface::Notifications:
       target = PageId::Notifications;
+      break;
+    case ShellSurface::NotificationWakePreview:
+      target = PageId::NotificationWakePreview;
       break;
     case ShellSurface::QuickSettings:
       target = PageId::QuickSettings;
@@ -371,8 +453,78 @@ void AppStateMachine::close_shell_surface() {
     return;
   }
 
+  const bool was_notification_wake_preview = *temporary == PageId::NotificationWakePreview;
   if (page_manager_.dismiss_temporary(close_transition_for(*temporary))) {
     shell_surface_ = ShellSurface::None;
+    notifications_pull_preview_active_ = false;
+    quick_settings_pull_preview_active_ = false;
+    if (was_notification_wake_preview && notification_wake_session_active_) {
+      schedule_notification_screen_off();
+    }
+  }
+}
+
+void AppStateMachine::preview_notifications_pull(std::int16_t progress) {
+  const auto stack_top = page_manager_.stack_top_page_id();
+  if (power_state_ != PowerState::Running || !stack_top || *stack_top != PageId::Watchface) {
+    return;
+  }
+
+  const auto temporary = page_manager_.temporary_page_id();
+  if (!temporary) {
+    if (page_manager_.show_temporary(PageId::Notifications, PageTransition::None)) {
+      shell_surface_ = ShellSurface::Notifications;
+      notifications_pull_preview_active_ = true;
+    }
+  } else if (*temporary != PageId::Notifications) {
+    return;
+  } else {
+    notifications_pull_preview_active_ = true;
+  }
+
+  data_center_.publish_shell_preview({PageId::Notifications, progress, true, false});
+}
+
+void AppStateMachine::cancel_notifications_pull_preview() {
+  if (!notifications_pull_preview_active_) {
+    return;
+  }
+  notifications_pull_preview_active_ = false;
+
+  if (page_manager_.temporary_page_id() && *page_manager_.temporary_page_id() == PageId::Notifications) {
+    data_center_.publish_shell_preview({PageId::Notifications, 0, false, false});
+  }
+}
+
+void AppStateMachine::preview_quick_settings_pull(std::int16_t progress) {
+  const auto stack_top = page_manager_.stack_top_page_id();
+  if (power_state_ != PowerState::Running || !stack_top || *stack_top != PageId::Watchface) {
+    return;
+  }
+
+  const auto temporary = page_manager_.temporary_page_id();
+  if (!temporary) {
+    if (page_manager_.show_temporary(PageId::QuickSettings, PageTransition::None)) {
+      shell_surface_ = ShellSurface::QuickSettings;
+      quick_settings_pull_preview_active_ = true;
+    }
+  } else if (*temporary != PageId::QuickSettings) {
+    return;
+  } else {
+    quick_settings_pull_preview_active_ = true;
+  }
+
+  data_center_.publish_shell_preview({PageId::QuickSettings, progress, true, false});
+}
+
+void AppStateMachine::cancel_quick_settings_pull_preview() {
+  if (!quick_settings_pull_preview_active_) {
+    return;
+  }
+  quick_settings_pull_preview_active_ = false;
+
+  if (page_manager_.temporary_page_id() && *page_manager_.temporary_page_id() == PageId::QuickSettings) {
+    data_center_.publish_shell_preview({PageId::QuickSettings, 0, false, false});
   }
 }
 
@@ -460,6 +612,9 @@ void AppStateMachine::sync_shell_surface() {
     case PageId::Notifications:
       shell_surface_ = ShellSurface::Notifications;
       break;
+    case PageId::NotificationWakePreview:
+      shell_surface_ = ShellSurface::NotificationWakePreview;
+      break;
     case PageId::QuickSettings:
       shell_surface_ = ShellSurface::QuickSettings;
       break;
@@ -470,6 +625,69 @@ void AppStateMachine::sync_shell_surface() {
       shell_surface_ = ShellSurface::None;
       break;
   }
+}
+
+void AppStateMachine::handle_notification_wake_request(const NotificationItem& item) {
+  if (power_state_ == PowerState::PoweredOff) {
+    return;
+  }
+
+  const auto notifications = data_center_.notifications();
+  const bool wake_on_notification = !notifications || notifications->wake_on_notification;
+
+  if (power_state_ == PowerState::ScreenOff) {
+    if (!wake_on_notification) {
+      return;
+    }
+
+    cancel_notification_screen_off(false);
+    if (!page_manager_.set_root(PageId::Watchface, PageTransition::None)) {
+      return;
+    }
+
+    power_state_ = PowerState::Running;
+    shell_surface_ = ShellSurface::None;
+    home_surface_index_ = 0;
+    notification_wake_session_active_ = true;
+    open_shell_surface(ShellSurface::NotificationWakePreview);
+    return;
+  }
+
+  if (page_manager_.temporary_page_id() && *page_manager_.temporary_page_id() == PageId::NotificationWakePreview) {
+    return;
+  }
+
+  if (power_state_ == PowerState::Running) {
+    data_center_.show_toast_for(item.id);
+  }
+}
+
+void AppStateMachine::schedule_notification_screen_off() {
+  cancel_notification_screen_off(false);
+  notification_screen_off_timer_ = lv_timer_create(&AppStateMachine::notification_screen_off_timer_cb, 5000U, this);
+  if (notification_screen_off_timer_ != nullptr) {
+    lv_timer_set_repeat_count(notification_screen_off_timer_, 1);
+  }
+}
+
+void AppStateMachine::cancel_notification_screen_off(bool clear_session) {
+  if (notification_screen_off_timer_ != nullptr) {
+    lv_timer_del(notification_screen_off_timer_);
+    notification_screen_off_timer_ = nullptr;
+  }
+  if (clear_session) {
+    notification_wake_session_active_ = false;
+  }
+}
+
+void AppStateMachine::notification_screen_off_timer_cb(lv_timer_t* timer) {
+  auto* self = static_cast<AppStateMachine*>(lv_timer_get_user_data(timer));
+  if (self == nullptr) {
+    return;
+  }
+
+  self->notification_screen_off_timer_ = nullptr;
+  self->enter_screen_off();
 }
 
 }  // namespace twsim::app

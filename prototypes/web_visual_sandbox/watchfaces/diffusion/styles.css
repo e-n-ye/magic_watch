@@ -180,10 +180,12 @@ h1 {
 
 .watch-preview {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   min-height: 780px;
   padding: 24px;
+  gap: 18px;
 }
 
 .watch-shell {
@@ -193,6 +195,61 @@ h1 {
     linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 24%),
     #050b13;
   border: 1px solid rgba(188, 205, 230, 0.12);
+}
+
+.audit-panel {
+  width: min(100%, 920px);
+  padding: 16px 18px 18px;
+  border: 1px solid rgba(160, 188, 224, 0.12);
+  border-radius: 8px;
+  background: rgba(10, 18, 31, 0.92);
+}
+
+.audit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.hour-audit-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.audit-card {
+  padding: 10px;
+  border: 1px solid rgba(140, 169, 209, 0.14);
+  border-radius: 8px;
+  background: #07101c;
+}
+
+.audit-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  color: #dce8f7;
+  font-size: 13px;
+}
+
+.audit-chip {
+  color: #8fb0d8;
+  font-size: 11px;
+}
+
+.audit-watch {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 240 / 296;
+  border-radius: 18px;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(13, 24, 43, 0.42), transparent 26%),
+    radial-gradient(circle at center, rgba(59, 130, 246, 0.10), transparent 54%),
+    #030711;
 }
 
 .watch-screen {
@@ -313,6 +370,11 @@ h1 {
   z-index: 1;
 }
 
+.layer-surface {
+  position: absolute;
+  inset: 0;
+}
+
 .hour-slice {
   overflow: hidden;
   z-index: 2;
@@ -337,6 +399,16 @@ h1 {
   filter:
     brightness(1.02)
     drop-shadow(0 0 22px rgba(176, 214, 255, 0.26));
+}
+
+.audit-watch .battery-row,
+.audit-watch .hour-stage,
+.audit-watch .minute-label {
+  position: absolute;
+}
+
+.audit-watch .hour-empty {
+  display: none;
 }
 
 .digit-blur-inner {

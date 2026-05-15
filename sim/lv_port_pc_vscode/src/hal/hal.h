@@ -62,6 +62,11 @@ struct TouchSample {
     TouchActivity,
     ScrollDrag,
     ScrollFlick,
+    ScrollRelease,
+    TopEdgeProgress,
+    TopEdgeCancel,
+    BottomEdgeProgress,
+    BottomEdgeCancel,
     EdgeBackProgress,
     EdgeBackCancel,
     EdgeBackCommit,
@@ -85,6 +90,15 @@ struct MotionSample {
   std::int16_t z_mg {0};
 };
 
+struct DebugSample {
+  enum class Action {
+    InjectMessageNotification,
+    InjectBatteryLowNotification,
+  };
+
+  Action action {Action::InjectMessageNotification};
+};
+
 enum class EventKind {
   TimeUpdated,
   BatteryChanged,
@@ -92,9 +106,11 @@ enum class EventKind {
   CrownUpdated,
   TouchUpdated,
   MotionUpdated,
+  DebugAction,
 };
 
-using EventPayload = std::variant<TimeSample, BatterySample, ButtonSample, CrownSample, TouchSample, MotionSample>;
+using EventPayload =
+    std::variant<TimeSample, BatterySample, ButtonSample, CrownSample, TouchSample, MotionSample, DebugSample>;
 
 struct Event {
   EventKind kind;

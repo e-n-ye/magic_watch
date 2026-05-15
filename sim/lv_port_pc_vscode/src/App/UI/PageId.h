@@ -6,6 +6,7 @@ enum class PageId {
   Watchface,
   Launcher,
   Notifications,
+  NotificationWakePreview,
   QuickSettings,
   PowerMenu,
   ScreenOff,

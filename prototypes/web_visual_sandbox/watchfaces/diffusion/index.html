@@ -181,11 +181,36 @@
               <div id="hour-empty" class="hour-empty">--</div>
 
               <div id="hour-group" class="digit-group">
-                <div class="hour-slice slice-left-outer"><img class="digit-image digit-blur-outer" alt="left outer layer"></div>
-                <div class="hour-slice slice-left-inner"><img class="digit-image digit-blur-inner" alt="left inner layer"></div>
-                <div class="hour-core"><img class="digit-image digit-core-image" alt="core digit layer"></div>
-                <div class="hour-slice slice-right-inner"><img class="digit-image digit-blur-inner" alt="right inner layer"></div>
-                <div class="hour-slice slice-right-outer"><img class="digit-image digit-blur-outer" alt="right outer layer"></div>
+                <div class="hour-slice slice-left-outer">
+                  <div class="layer-surface">
+                    <img class="digit-image digit-left digit-blur-outer" alt="left outer left digit">
+                    <img class="digit-image digit-right digit-blur-outer" alt="left outer right digit">
+                  </div>
+                </div>
+                <div class="hour-slice slice-left-inner">
+                  <div class="layer-surface">
+                    <img class="digit-image digit-left digit-blur-inner" alt="left inner left digit">
+                    <img class="digit-image digit-right digit-blur-inner" alt="left inner right digit">
+                  </div>
+                </div>
+                <div class="hour-core">
+                  <div class="layer-surface">
+                    <img class="digit-image digit-left digit-core-image" alt="core left digit">
+                    <img class="digit-image digit-right digit-core-image" alt="core right digit">
+                  </div>
+                </div>
+                <div class="hour-slice slice-right-inner">
+                  <div class="layer-surface">
+                    <img class="digit-image digit-left digit-blur-inner" alt="right inner left digit">
+                    <img class="digit-image digit-right digit-blur-inner" alt="right inner right digit">
+                  </div>
+                </div>
+                <div class="hour-slice slice-right-outer">
+                  <div class="layer-surface">
+                    <img class="digit-image digit-left digit-blur-outer" alt="right outer left digit">
+                    <img class="digit-image digit-right digit-blur-outer" alt="right outer right digit">
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -195,6 +220,13 @@
             </div>
           </div>
         </div>
+        <section class="audit-panel">
+          <div class="audit-header">
+            <p class="label">Hour Audit</p>
+            <span class="helper-text">1-12 quick scan with current LVGL digit assets</span>
+          </div>
+          <div id="hour-audit-grid" class="hour-audit-grid"></div>
+        </section>
       </div>
     </section>
   </main>

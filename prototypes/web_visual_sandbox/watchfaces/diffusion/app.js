@@ -5,11 +5,11 @@ const basePreset = {
   safeInsetTop: 20,
   safeInsetBottom: 16,
   layout: {
-    batteryRow: { x: 92, y: 10, width: 52.62444682060918, height: 18, fontSize: 17, iconSize: 15, gap: 4 },
+    batteryRow: { x: 92, y: 10, width: 52.62444682060918, height: 18, fontSize: 15, iconSize: 15, gap: 4 },
     hourStage: { x: 0, y: 0, width: 240, height: 296 },
-    digitBox: { x: 0, y: 2, width: 280, height: 280 },
-    hourGlyph: { fontSize: 280, singleTextLength: 150, dualTextLength: 227 },
-    minuteLabel: { x: 75.68766070015823, y: 234.3122620401503, width: 95.37539866000792, height: 27.5611943112144, fontSize: 33.04641800892504 }
+    digitBox: { x: 0, y: 2, width: 242, height: 280 },
+    hourGlyph: { fontSize: 273, singleTextLength: 110, dualTextLength: 160 },
+    minuteLabel: { x: 75.68766070015823, y: 234.3122620401503, width: 95.37539866000792, height: 27.5611943112144, fontSize: 42 }
   },
   diffusion: {
     innerWidthRatio: 0.31,
@@ -82,7 +82,7 @@ const presets = {
 
 const state = {
   preset: "xiaomi-197",
-  hourText: "12",
+  hourText: "1",
   minuteText: "24",
   batteryPercent: 21,
   spreadIndex: 8,
@@ -110,6 +110,7 @@ const hourStage = document.getElementById("hour-stage");
 const hourEmpty = document.getElementById("hour-empty");
 const minuteLabel = document.getElementById("minute-label");
 const minuteTextNode = document.getElementById("minute-text");
+const hourAuditGrid = document.getElementById("hour-audit-grid");
 
 const editableNodes = {
   batteryRow,
@@ -121,15 +122,25 @@ const hourGroup = document.getElementById("hour-group");
 const hourLayers = {
   node: hourGroup,
   core: hourGroup.querySelector(".hour-core"),
-  coreImage: hourGroup.querySelector(".hour-core img"),
+  coreSurface: hourGroup.querySelector(".hour-core .layer-surface"),
+  coreLeftImage: hourGroup.querySelector(".hour-core .digit-left"),
+  coreRightImage: hourGroup.querySelector(".hour-core .digit-right"),
   leftOuter: hourGroup.querySelector(".slice-left-outer"),
-  leftOuterImage: hourGroup.querySelector(".slice-left-outer img"),
+  leftOuterSurface: hourGroup.querySelector(".slice-left-outer .layer-surface"),
+  leftOuterLeftImage: hourGroup.querySelector(".slice-left-outer .digit-left"),
+  leftOuterRightImage: hourGroup.querySelector(".slice-left-outer .digit-right"),
   leftInner: hourGroup.querySelector(".slice-left-inner"),
-  leftInnerImage: hourGroup.querySelector(".slice-left-inner img"),
+  leftInnerSurface: hourGroup.querySelector(".slice-left-inner .layer-surface"),
+  leftInnerLeftImage: hourGroup.querySelector(".slice-left-inner .digit-left"),
+  leftInnerRightImage: hourGroup.querySelector(".slice-left-inner .digit-right"),
   rightInner: hourGroup.querySelector(".slice-right-inner"),
-  rightInnerImage: hourGroup.querySelector(".slice-right-inner img"),
+  rightInnerSurface: hourGroup.querySelector(".slice-right-inner .layer-surface"),
+  rightInnerLeftImage: hourGroup.querySelector(".slice-right-inner .digit-left"),
+  rightInnerRightImage: hourGroup.querySelector(".slice-right-inner .digit-right"),
   rightOuter: hourGroup.querySelector(".slice-right-outer"),
-  rightOuterImage: hourGroup.querySelector(".slice-right-outer img")
+  rightOuterSurface: hourGroup.querySelector(".slice-right-outer .layer-surface"),
+  rightOuterLeftImage: hourGroup.querySelector(".slice-right-outer .digit-left"),
+  rightOuterRightImage: hourGroup.querySelector(".slice-right-outer .digit-right")
 };
 
 const sliderMap = {
@@ -158,34 +169,26 @@ let spreadAnimationFrame = null;
 const SPREAD_MIN = 0;
 const SPREAD_MAX = 8;
 const SPREAD_OVERSHOOT = 0.55;
+const DIGIT_ASSET_CANVAS = 220;
+const DIGIT_BOUNDS = [
+  { x: 73, y: 37, width: 75, height: 133 },
+  { x: 88, y: 39, width: 37, height: 129 },
+  { x: 72, y: 38, width: 76, height: 131 },
+  { x: 70, y: 37, width: 76, height: 133 },
+  { x: 69, y: 39, width: 84, height: 129 },
+  { x: 74, y: 38, width: 73, height: 131 },
+  { x: 74, y: 38, width: 73, height: 131 },
+  { x: 73, y: 39, width: 72, height: 129 },
+  { x: 71, y: 37, width: 79, height: 133 },
+  { x: 74, y: 38, width: 73, height: 131 }
+];
 
 function digitAsset(digit) {
-  return `../../../../assets/watchface_digits/diffusion_svg/${digit}.svg`;
+  return `../../../../assets/watchface_digits/diffusion_png/${digit}.png`;
 }
 
-function hourAsset(hourText) {
-  const clean = (hourText || "").replace(/[^\d]/g, "").slice(0, 2) || "--";
-  const svgWidth = 420;
-  const svgHeight = 260;
-  const textLength = clean.length > 1 ? state.layout.hourGlyph.dualTextLength : state.layout.hourGlyph.singleTextLength;
-  const fontSize = state.layout.hourGlyph.fontSize;
-  const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="${svgWidth}" height="${svgHeight}" viewBox="0 0 ${svgWidth} ${svgHeight}">
-      <rect width="100%" height="100%" fill="none"/>
-      <text
-        x="50%"
-        y="50%"
-        text-anchor="middle"
-        dominant-baseline="central"
-        fill="#F5F7FB"
-        font-family="Bahnschrift, Segoe UI, Arial, sans-serif"
-        font-size="${fontSize}"
-        font-weight="700"
-        letter-spacing="0"
-        textLength="${textLength}"
-        lengthAdjust="spacingAndGlyphs">${clean}</text>
-    </svg>`;
-  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+function digitBounds(digit) {
+  return DIGIT_BOUNDS[digit] || { x: 0, y: 0, width: DIGIT_ASSET_CANVAS, height: DIGIT_ASSET_CANVAS };
 }
 
 function clamp(value, min, max) {
@@ -211,6 +214,43 @@ function currentPreset() {
   return presets[state.preset];
 }
 
+function createAuditCard(hour) {
+  const card = document.createElement("article");
+  card.className = "audit-card";
+  card.innerHTML = `
+    <div class="audit-card-header">
+      <span>${hour}:24</span>
+      <span class="audit-chip">${hour < 10 ? "single" : "dual"}</span>
+    </div>
+    <div class="audit-watch">
+      <div class="battery-row"><span class="battery-icon" aria-hidden="true">
+        <svg viewBox="0 0 12 18" focusable="false" aria-hidden="true">
+          <path d="M6.9 0 1.8 9.1h3.1L3.8 18l6.4-9.6H7.1z" fill="currentColor"></path>
+        </svg>
+      </span><span>21%</span></div>
+      <div class="hour-stage">
+        <div class="digit-group">
+          <div class="hour-slice slice-left-outer"><div class="layer-surface"><img class="digit-image digit-left digit-blur-outer" alt=""><img class="digit-image digit-right digit-blur-outer" alt=""></div></div>
+          <div class="hour-slice slice-left-inner"><div class="layer-surface"><img class="digit-image digit-left digit-blur-inner" alt=""><img class="digit-image digit-right digit-blur-inner" alt=""></div></div>
+          <div class="hour-core"><div class="layer-surface"><img class="digit-image digit-left digit-core-image" alt=""><img class="digit-image digit-right digit-core-image" alt=""></div></div>
+          <div class="hour-slice slice-right-inner"><div class="layer-surface"><img class="digit-image digit-left digit-blur-inner" alt=""><img class="digit-image digit-right digit-blur-inner" alt=""></div></div>
+          <div class="hour-slice slice-right-outer"><div class="layer-surface"><img class="digit-image digit-left digit-blur-outer" alt=""><img class="digit-image digit-right digit-blur-outer" alt=""></div></div>
+        </div>
+      </div>
+      <div class="minute-label"><span class="node-text">24</span></div>
+    </div>`;
+  return card;
+}
+
+function ensureAuditGrid() {
+  if (!hourAuditGrid || hourAuditGrid.childElementCount > 0) {
+    return;
+  }
+  for (let hour = 1; hour <= 12; hour += 1) {
+    hourAuditGrid.appendChild(createAuditCard(hour));
+  }
+}
+
 function renderBattery() {
   const rect = state.layout.batteryRow;
   setRect(batteryRow, rect);
@@ -221,14 +261,72 @@ function renderBattery() {
   batteryText.textContent = `${state.batteryPercent}%`;
 }
 
-function applySlice(slotNode, imageNode, slotX, slotWidth, imageX, opacity, digitRect) {
+function renderHourSurface(surfaceNode, leftImageNode, rightImageNode, digits, digitRect) {
+  const clean = (digits || "").replace(/[^\d]/g, "").slice(0, 2);
+  if (!clean) {
+    surfaceNode.style.display = "none";
+    return;
+  }
+
+  surfaceNode.style.display = "block";
+  surfaceNode.style.left = "0px";
+  surfaceNode.style.top = "0px";
+  surfaceNode.style.width = `${digitRect.width}px`;
+  surfaceNode.style.height = `${digitRect.height}px`;
+
+  const leftDigit = Number(clean[0]);
+  const rightDigit = clean.length > 1 ? Number(clean[1]) : null;
+  const leftBounds = digitBounds(leftDigit);
+  const rightBounds = rightDigit !== null ? digitBounds(rightDigit) : null;
+  const singleVisibleWidth = state.layout.hourGlyph.singleTextLength;
+  const dualVisibleWidth = state.layout.hourGlyph.dualTextLength;
+  const targetVisibleWidth = clean.length > 1 ? dualVisibleWidth : singleVisibleWidth;
+  const targetVisibleHeight = Math.min(digitRect.height, state.layout.hourGlyph.fontSize);
+  const topInset = Math.round((digitRect.height - targetVisibleHeight) / 2);
+  const leftScaleY = targetVisibleHeight / leftBounds.height;
+  const rightScaleY = rightBounds ? targetVisibleHeight / rightBounds.height : 0;
+  const normalizedTotalWidth =
+    leftBounds.width * leftScaleY + (rightBounds ? rightBounds.width * rightScaleY : 0);
+  const widthScale = normalizedTotalWidth > 0 ? targetVisibleWidth / normalizedTotalWidth : 1;
+  const leftVisibleWidth = Math.round(leftBounds.width * leftScaleY * widthScale);
+  const rightVisibleWidth = rightBounds ? Math.round(rightBounds.width * rightScaleY * widthScale) : 0;
+  const groupVisibleWidth = leftVisibleWidth + rightVisibleWidth;
+  const groupLeft = Math.round((digitRect.width - groupVisibleWidth) / 2);
+  const leftRenderWidth = Math.round(DIGIT_ASSET_CANVAS * leftScaleY * widthScale);
+  const rightRenderWidth = rightBounds ? Math.round(DIGIT_ASSET_CANVAS * rightScaleY * widthScale) : 0;
+  const leftX = Math.round(groupLeft - leftBounds.x * leftScaleY * widthScale);
+  const rightX = rightBounds
+    ? Math.round(groupLeft + leftVisibleWidth - rightBounds.x * rightScaleY * widthScale)
+    : 0;
+
+  leftImageNode.src = digitAsset(leftDigit);
+  leftImageNode.style.display = "block";
+  leftImageNode.style.left = `${leftX}px`;
+  leftImageNode.style.top = `${topInset}px`;
+  leftImageNode.style.width = `${leftRenderWidth}px`;
+  leftImageNode.style.height = `${targetVisibleHeight}px`;
+
+  if (rightDigit !== null) {
+    rightImageNode.src = digitAsset(rightDigit);
+    rightImageNode.style.display = "block";
+    rightImageNode.style.left = `${rightX}px`;
+    rightImageNode.style.top = `${topInset}px`;
+    rightImageNode.style.width = `${rightRenderWidth}px`;
+    rightImageNode.style.height = `${targetVisibleHeight}px`;
+  } else {
+    rightImageNode.style.display = "none";
+    rightImageNode.removeAttribute("src");
+  }
+}
+
+function applySlice(slotNode, surfaceNode, slotX, slotWidth, imageX, opacity, digitRect) {
   slotNode.style.left = `${slotX}px`;
   slotNode.style.width = `${slotWidth}px`;
   slotNode.style.height = `${digitRect.height}px`;
   slotNode.style.opacity = String(opacity);
-  imageNode.style.left = `${imageX}px`;
-  imageNode.style.width = `${digitRect.width}px`;
-  imageNode.style.height = `${digitRect.height}px`;
+  surfaceNode.style.left = `${imageX}px`;
+  surfaceNode.style.width = `${digitRect.width}px`;
+  surfaceNode.style.height = `${digitRect.height}px`;
 }
 
 function renderHour() {
@@ -245,7 +343,6 @@ function renderHour() {
   }
 
   hourEmpty.style.display = "none";
-  const src = hourAsset(state.hourText);
   const startX = Math.round((stageRect.width - digitRect.width) / 2) + digitRect.x;
   const startY = Math.round((stageRect.height - digitRect.height) / 2) + digitRect.y;
   const innerWidth = Math.round(digitRect.width * state.diffusion.innerWidthRatio);
@@ -268,19 +365,31 @@ function renderHour() {
   hourLayers.core.style.left = "0px";
   hourLayers.core.style.width = `${digitRect.width}px`;
   hourLayers.core.style.height = `${digitRect.height}px`;
-  hourLayers.coreImage.src = src;
-  hourLayers.coreImage.style.left = "0px";
-  hourLayers.coreImage.style.width = `${digitRect.width}px`;
-  hourLayers.coreImage.style.height = `${digitRect.height}px`;
-
-  hourLayers.leftOuterImage.src = src;
-  hourLayers.leftInnerImage.src = src;
-  hourLayers.rightInnerImage.src = src;
-  hourLayers.rightOuterImage.src = src;
+  renderHourSurface(hourLayers.coreSurface, hourLayers.coreLeftImage, hourLayers.coreRightImage, digits, digitRect);
+  renderHourSurface(hourLayers.leftOuterSurface,
+    hourLayers.leftOuterLeftImage,
+    hourLayers.leftOuterRightImage,
+    digits,
+    digitRect);
+  renderHourSurface(hourLayers.leftInnerSurface,
+    hourLayers.leftInnerLeftImage,
+    hourLayers.leftInnerRightImage,
+    digits,
+    digitRect);
+  renderHourSurface(hourLayers.rightInnerSurface,
+    hourLayers.rightInnerLeftImage,
+    hourLayers.rightInnerRightImage,
+    digits,
+    digitRect);
+  renderHourSurface(hourLayers.rightOuterSurface,
+    hourLayers.rightOuterLeftImage,
+    hourLayers.rightOuterRightImage,
+    digits,
+    digitRect);
 
   applySlice(
     hourLayers.leftOuter,
-    hourLayers.leftOuterImage,
+    hourLayers.leftOuterSurface,
     baseOverlap - outerShift,
     outerWidth,
     -cropInset,
@@ -289,7 +398,7 @@ function renderHour() {
   );
   applySlice(
     hourLayers.leftInner,
-    hourLayers.leftInnerImage,
+    hourLayers.leftInnerSurface,
     baseOverlap - innerShift,
     innerWidth,
     -cropInset,
@@ -298,7 +407,7 @@ function renderHour() {
   );
   applySlice(
     hourLayers.rightInner,
-    hourLayers.rightInnerImage,
+    hourLayers.rightInnerSurface,
     digitRect.width - innerWidth - baseOverlap + innerShift,
     innerWidth,
     -(digitRect.width - innerWidth - cropInset),
@@ -307,7 +416,7 @@ function renderHour() {
   );
   applySlice(
     hourLayers.rightOuter,
-    hourLayers.rightOuterImage,
+    hourLayers.rightOuterSurface,
     digitRect.width - outerWidth - baseOverlap + outerShift,
     outerWidth,
     -(digitRect.width - outerWidth - cropInset),
@@ -382,6 +491,7 @@ function cancelSpreadAnimation() {
 function renderSpreadOnly() {
   spreadValue.textContent = formatSpreadValue(state.displaySpread);
   renderHour();
+  renderAuditGrid();
 }
 
 function animateSpreadValue(from, to, duration, easing, onDone) {
@@ -481,6 +591,118 @@ function exportSpec() {
   );
 }
 
+function renderAuditGrid() {
+  if (!hourAuditGrid) {
+    return;
+  }
+  ensureAuditGrid();
+
+  const cards = hourAuditGrid.querySelectorAll(".audit-card");
+  cards.forEach((card, index) => {
+    const hour = String(index + 1);
+    const watch = card.querySelector(".audit-watch");
+    const battery = card.querySelector(".battery-row");
+    const icon = card.querySelector(".battery-icon");
+    const minute = card.querySelector(".minute-label .node-text");
+    const minuteWrap = card.querySelector(".minute-label");
+    const stage = card.querySelector(".hour-stage");
+    const group = card.querySelector(".digit-group");
+    const layers = {
+      core: card.querySelector(".hour-core"),
+      coreSurface: card.querySelector(".hour-core .layer-surface"),
+      coreLeft: card.querySelector(".hour-core .digit-left"),
+      coreRight: card.querySelector(".hour-core .digit-right"),
+      leftOuter: card.querySelector(".slice-left-outer"),
+      leftOuterSurface: card.querySelector(".slice-left-outer .layer-surface"),
+      leftOuterLeft: card.querySelector(".slice-left-outer .digit-left"),
+      leftOuterRight: card.querySelector(".slice-left-outer .digit-right"),
+      leftInner: card.querySelector(".slice-left-inner"),
+      leftInnerSurface: card.querySelector(".slice-left-inner .layer-surface"),
+      leftInnerLeft: card.querySelector(".slice-left-inner .digit-left"),
+      leftInnerRight: card.querySelector(".slice-left-inner .digit-right"),
+      rightInner: card.querySelector(".slice-right-inner"),
+      rightInnerSurface: card.querySelector(".slice-right-inner .layer-surface"),
+      rightInnerLeft: card.querySelector(".slice-right-inner .digit-left"),
+      rightInnerRight: card.querySelector(".slice-right-inner .digit-right"),
+      rightOuter: card.querySelector(".slice-right-outer"),
+      rightOuterSurface: card.querySelector(".slice-right-outer .layer-surface"),
+      rightOuterLeft: card.querySelector(".slice-right-outer .digit-left"),
+      rightOuterRight: card.querySelector(".slice-right-outer .digit-right")
+    };
+
+    const stageRect = state.layout.hourStage;
+    const digitRect = state.layout.digitBox;
+    const innerWidth = Math.round(digitRect.width * state.diffusion.innerWidthRatio);
+    const outerWidth = Math.round(digitRect.width * state.diffusion.outerWidthRatio);
+    const cropInset = Math.round(digitRect.width * state.diffusion.sliceInsetRatio);
+    const baseOverlap = Math.round(digitRect.width * 0.10);
+    const spreadRatio = clamp(Math.abs(state.displaySpread), 0, SPREAD_MAX + SPREAD_OVERSHOOT) / SPREAD_MAX;
+    const signedSpreadRatio = clamp(state.displaySpread, -SPREAD_OVERSHOOT, SPREAD_MAX + SPREAD_OVERSHOOT) / SPREAD_MAX;
+    const innerShift = Math.round(state.diffusion.innerShift * signedSpreadRatio);
+    const outerShift = Math.round(state.diffusion.outerShift * signedSpreadRatio);
+    const innerOpacity = clamp(state.diffusion.innerOpacity * spreadRatio, 0, 1);
+    const outerOpacity = clamp(state.diffusion.outerOpacity * spreadRatio, 0, 1);
+    const startX = Math.round((stageRect.width - digitRect.width) / 2) + digitRect.x;
+    const startY = Math.round((stageRect.height - digitRect.height) / 2) + digitRect.y;
+
+    battery.style.left = `${state.layout.batteryRow.x}px`;
+    battery.style.top = `${state.layout.batteryRow.y}px`;
+    battery.style.width = `${state.layout.batteryRow.width}px`;
+    battery.style.height = `${state.layout.batteryRow.height}px`;
+    battery.style.fontSize = `${state.layout.batteryRow.fontSize}px`;
+    battery.style.gap = `${state.layout.batteryRow.gap}px`;
+    icon.style.width = `${state.layout.batteryRow.iconSize}px`;
+    icon.style.height = `${state.layout.batteryRow.iconSize}px`;
+
+    stage.style.left = `${stageRect.x}px`;
+    stage.style.top = `${stageRect.y}px`;
+    stage.style.width = `${stageRect.width}px`;
+    stage.style.height = `${stageRect.height}px`;
+
+    group.style.left = `${startX}px`;
+    group.style.top = `${startY}px`;
+    group.style.width = `${digitRect.width}px`;
+    group.style.height = `${digitRect.height}px`;
+
+    layers.core.style.left = "0px";
+    layers.core.style.width = `${digitRect.width}px`;
+    layers.core.style.height = `${digitRect.height}px`;
+    renderHourSurface(layers.coreSurface, layers.coreLeft, layers.coreRight, hour, digitRect);
+    renderHourSurface(layers.leftOuterSurface, layers.leftOuterLeft, layers.leftOuterRight, hour, digitRect);
+    renderHourSurface(layers.leftInnerSurface, layers.leftInnerLeft, layers.leftInnerRight, hour, digitRect);
+    renderHourSurface(layers.rightInnerSurface, layers.rightInnerLeft, layers.rightInnerRight, hour, digitRect);
+    renderHourSurface(layers.rightOuterSurface, layers.rightOuterLeft, layers.rightOuterRight, hour, digitRect);
+
+    applySlice(layers.leftOuter, layers.leftOuterSurface, baseOverlap - outerShift, outerWidth, -cropInset, outerOpacity, digitRect);
+    applySlice(layers.leftInner, layers.leftInnerSurface, baseOverlap - innerShift, innerWidth, -cropInset, innerOpacity, digitRect);
+    applySlice(
+      layers.rightInner,
+      layers.rightInnerSurface,
+      digitRect.width - innerWidth - baseOverlap + innerShift,
+      innerWidth,
+      -(digitRect.width - innerWidth - cropInset),
+      innerOpacity,
+      digitRect
+    );
+    applySlice(
+      layers.rightOuter,
+      layers.rightOuterSurface,
+      digitRect.width - outerWidth - baseOverlap + outerShift,
+      outerWidth,
+      -(digitRect.width - outerWidth - cropInset),
+      outerOpacity,
+      digitRect
+    );
+
+    minuteWrap.style.left = `${state.layout.minuteLabel.x}px`;
+    minuteWrap.style.top = `${state.layout.minuteLabel.y}px`;
+    minuteWrap.style.width = `${state.layout.minuteLabel.width}px`;
+    minuteWrap.style.height = `${state.layout.minuteLabel.height}px`;
+    minute.style.fontSize = `${state.layout.minuteLabel.fontSize}px`;
+    minute.textContent = "24";
+  });
+}
+
 function render() {
   const preset = currentPreset();
   setCssVar("--watch-width", preset.watchWidth);
@@ -502,6 +724,7 @@ function render() {
   renderBattery();
   renderHour();
   renderMinute();
+  renderAuditGrid();
   updateOutputs();
   exportSpec();
 }
