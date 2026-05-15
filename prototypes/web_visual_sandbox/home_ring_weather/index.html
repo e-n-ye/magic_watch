@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Magic Watch Weather Sandbox</title>
+  <title>Magic Watch Home Ring Sandbox</title>
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
@@ -11,12 +11,14 @@
     <section class="control-panel">
       <div class="panel-block">
         <p class="eyebrow">Magic Watch</p>
-        <h1>Weather Shortcut Sandbox</h1>
-        <p class="summary">把主页环第 4 页做成可直接拖拽和调尺寸的视觉沙盘，先把参数调准，再回译到 LVGL。</p>
+        <h1>Home Ring Sandbox</h1>
+        <p class="summary">
+          Tune the homepage ring in the browser first, then send the exported numbers back for LVGL translation.
+        </p>
       </div>
 
       <div class="panel-block">
-        <p class="label">屏幕预设</p>
+        <p class="label">Screen Preset</p>
         <div class="preset-row">
           <button type="button" class="preset-button is-active" data-preset="xiaomi-197">Xiaomi 1.97</button>
           <button type="button" class="preset-button" data-preset="taller-alt">Taller Alt</button>
@@ -24,29 +26,44 @@
       </div>
 
       <div class="panel-block">
-        <p class="label">编辑模式</p>
-        <div class="action-row">
-          <button type="button" id="toggle-edit-mode" class="action-button">开启布局编辑</button>
-          <button type="button" id="reset-layout" class="action-button action-button-secondary">重置当前预设</button>
+        <p class="label">Surface</p>
+        <div class="surface-row">
+          <button type="button" class="surface-button" data-surface="payments">Payments</button>
+          <button type="button" class="surface-button is-active" data-surface="nfc">NFC</button>
+          <button type="button" class="surface-button" data-surface="health">Health</button>
+          <button type="button" class="surface-button" data-surface="weather">Weather</button>
         </div>
-        <p class="helper-text">开启后：拖动组件移动位置，拉右下角圆点调整大小。图标保持正方形，睡眠和步数组件保持正方形。</p>
       </div>
 
       <div class="panel-block">
-        <p class="label">当前参数</p>
+        <p class="label">Edit Mode</p>
+        <div class="action-row">
+          <button type="button" id="toggle-edit-mode" class="action-button">Enable Layout Edit</button>
+          <button type="button" id="reset-layout" class="action-button action-button-secondary">Reset Current Surface</button>
+        </div>
+        <p class="helper-text">
+          Drag a node to move it. Drag the cyan handle in the lower-right corner to resize it.
+          Text blocks can also change font size while resizing.
+        </p>
+      </div>
+
+      <div class="panel-block">
+        <p class="label">Current Spec</p>
         <dl class="spec-list">
           <div><dt>Watch</dt><dd id="spec-watch"></dd></div>
-          <div><dt>Safe</dt><dd id="spec-safe"></dd></div>
+          <div><dt>Surface</dt><dd id="spec-surface"></dd></div>
           <div><dt>Stage</dt><dd id="spec-stage"></dd></div>
-          <div><dt>Gap</dt><dd id="spec-gap"></dd></div>
-          <div><dt>Type</dt><dd id="spec-type"></dd></div>
+          <div><dt>Safe</dt><dd id="spec-safe"></dd></div>
+          <div><dt>Focus</dt><dd id="spec-focus"></dd></div>
         </dl>
       </div>
 
       <div class="panel-block">
-        <p class="label">布局参数</p>
+        <p class="label">Export Layout</p>
         <textarea id="layout-export" class="layout-export" readonly spellcheck="false"></textarea>
-        <p class="helper-text">把这里的参数直接发回给我，我就按这组值回译到 LVGL。</p>
+        <p class="helper-text">
+          Send the JSON back to me after you finish tuning the current surface.
+        </p>
       </div>
     </section>
 
@@ -55,90 +72,177 @@
         <div class="watch-shell">
           <div id="watch-screen" class="watch-screen">
             <div id="surface-stage" class="surface-stage">
-              <section id="hero-card" class="hero-card editable-node" data-node="heroCard" data-label="天气卡">
-                <span class="edit-handle" aria-hidden="true"></span>
-                <div id="temperature-node" class="text-node text-node-temperature editable-node" data-node="temperature" data-label="温度文字">
+              <section class="surface-view" data-surface="weather">
+                <section class="hero-card editable-node hero-weather" data-node="heroCard" data-label="Weather Card">
                   <span class="edit-handle" aria-hidden="true"></span>
-                  <span class="temperature-text">23C</span>
-                </div>
-                <div id="range-node" class="text-node text-node-range editable-node" data-node="range" data-label="温区文字">
-                  <span class="edit-handle" aria-hidden="true"></span>
-                  <span class="range-text">30C / 18C</span>
-                </div>
-                <div id="weather-icon-slot" class="icon-slot editable-node editable-node-icon" data-node="weatherIcon" data-label="天气图标">
-                  <span class="edit-handle" aria-hidden="true"></span>
-                  <img
-                    id="weather-icon-image"
-                    class="weather-icon-image"
-                    src="../../../assets/generated_icons/weather_cloud_sun.png"
-                    alt="Weather icon">
-                  <div id="weather-icon-fallback" class="weather-icon-fallback is-hidden" aria-hidden="true">
-                    <span class="sun"></span>
-                    <span class="cloud cloud-back"></span>
-                    <span class="cloud cloud-front"></span>
+                  <div class="text-node editable-node" data-node="temperature" data-role="text" data-label="Temperature Text">
+                    <span class="edit-handle" aria-hidden="true"></span>
+                    <span class="node-text temperature-text">23C</span>
                   </div>
-                </div>
+                  <div class="text-node editable-node" data-node="range" data-role="text" data-label="Temperature Range">
+                    <span class="edit-handle" aria-hidden="true"></span>
+                    <span class="node-text range-text">30C / 18C</span>
+                  </div>
+                  <div class="icon-slot editable-node" data-node="weatherIcon" data-lock="square" data-label="Weather Icon">
+                    <span class="edit-handle" aria-hidden="true"></span>
+                    <img class="node-image" src="../../../assets/generated_icons/weather_cloud_sun.png" alt="Weather icon">
+                  </div>
+                </section>
+
+                <section class="metric-card metric-card-sleep editable-node" data-node="sleepCard" data-lock="square" data-label="Sleep Card">
+                  <span class="edit-handle" aria-hidden="true"></span>
+                  <div class="metric-icon-slot editable-node" data-node="sleepIcon" data-lock="square" data-label="Sleep Icon">
+                    <span class="edit-handle" aria-hidden="true"></span>
+                    <img class="node-image" src="../../../assets/generated_icons/sleep_bed.png" alt="Sleep icon">
+                  </div>
+                  <div class="text-node editable-node" data-node="sleepValue" data-role="text" data-label="Sleep Value">
+                    <span class="edit-handle" aria-hidden="true"></span>
+                    <span class="node-text metric-value-text">7h 36m</span>
+                  </div>
+                </section>
+
+                <section class="metric-card metric-card-steps editable-node" data-node="stepsCard" data-lock="square" data-label="Steps Card">
+                  <span class="edit-handle" aria-hidden="true"></span>
+                  <div class="metric-icon-slot editable-node" data-node="stepsIcon" data-lock="square" data-label="Steps Icon">
+                    <span class="edit-handle" aria-hidden="true"></span>
+                    <img class="node-image" src="../../../assets/generated_icons/steps_foot.png" alt="Steps icon">
+                  </div>
+                  <div class="text-node editable-node" data-node="stepsValue" data-role="text" data-label="Steps Value">
+                    <span class="edit-handle" aria-hidden="true"></span>
+                    <span class="node-text metric-value-text metric-value-strong">7645</span>
+                  </div>
+                </section>
               </section>
 
-              <section id="sleep-card" class="metric-card metric-card-sleep editable-node" data-node="sleepCard" data-label="睡眠卡">
-                <span class="edit-handle" aria-hidden="true"></span>
-                <div id="sleep-icon-slot" class="metric-icon-slot editable-node editable-node-icon" data-node="sleepIcon" data-label="睡眠图标">
+              <section class="surface-view is-active" data-surface="nfc">
+                <div class="text-node page-text editable-node" data-node="title" data-role="text" data-label="NFC Title">
                   <span class="edit-handle" aria-hidden="true"></span>
-                  <img
-                    id="sleep-icon-image"
-                    class="metric-icon-image"
-                    src="../../../assets/generated_icons/sleep_bed.png"
-                    alt="Sleep icon">
-                  <div id="sleep-icon-fallback" class="metric-icon metric-icon-sleep is-hidden" aria-hidden="true">
-                    <span class="bed-frame"></span>
-                    <span class="bed-head"></span>
-                    <span class="bed-pillow"></span>
+                  <span class="node-text page-title">School</span>
+                </div>
+                <div class="text-node page-text editable-node" data-node="subtitle" data-role="text" data-label="NFC Subtitle">
+                  <span class="edit-handle" aria-hidden="true"></span>
+                  <span class="node-text page-subtitle">Tap card reader</span>
+                </div>
+                <section class="nfc-card editable-node" data-node="nfcCard" data-label="NFC Card">
+                  <span class="edit-handle" aria-hidden="true"></span>
+                  <div class="nfc-image-slot editable-node" data-node="nfcImage" data-can-overflow="true" data-label="NFC Image">
+                    <span class="edit-handle" aria-hidden="true"></span>
+                    <img class="node-image node-image-cover" src="../../../assets/generated_icons/nfc_school_card_inner.png" alt="NFC card image">
                   </div>
-                </div>
-                <div id="sleep-value-node" class="text-node text-node-metric-value editable-node" data-node="sleepValue" data-label="睡眠数值">
-                  <span class="edit-handle" aria-hidden="true"></span>
-                  <span class="metric-value-text">7h 36m</span>
-                </div>
+                </section>
               </section>
 
-              <section id="steps-card" class="metric-card metric-card-steps editable-node" data-node="stepsCard" data-label="步数卡">
-                <span class="edit-handle" aria-hidden="true"></span>
-                <div id="steps-icon-slot" class="metric-icon-slot editable-node editable-node-icon" data-node="stepsIcon" data-label="步数图标">
+              <section class="surface-view" data-surface="payments">
+                <section class="payment-card editable-node" data-node="alipayCard" data-lock="square" data-label="Alipay Card">
                   <span class="edit-handle" aria-hidden="true"></span>
-                  <img
-                    id="steps-icon-image"
-                    class="metric-icon-image"
-                    src="../../../assets/generated_icons/steps_foot.png"
-                    alt="Steps icon">
-                  <div id="steps-icon-fallback" class="metric-icon metric-icon-steps is-hidden" aria-hidden="true">
-                    <span class="foot-main"></span>
-                    <span class="toe toe-1"></span>
-                    <span class="toe toe-2"></span>
-                    <span class="toe toe-3"></span>
+                  <div class="payment-icon-slot editable-node" data-node="alipayIcon" data-lock="square" data-label="Alipay Icon">
+                    <span class="edit-handle" aria-hidden="true"></span>
+                    <img class="node-image" src="../../../assets/generated_icons/payment_alipay.png" alt="Alipay icon">
                   </div>
-                </div>
-                <div id="steps-value-node" class="text-node text-node-metric-value editable-node" data-node="stepsValue" data-label="步数数值">
+                  <div class="text-node editable-node" data-node="alipayLabel" data-role="text" data-label="Alipay Label">
+                    <span class="edit-handle" aria-hidden="true"></span>
+                    <span class="node-text payment-label-text">Alipay</span>
+                  </div>
+                </section>
+
+                <section class="payment-card editable-node" data-node="wechatCard" data-lock="square" data-label="WeChat Card">
                   <span class="edit-handle" aria-hidden="true"></span>
-                  <span class="metric-value-text">7645</span>
-                </div>
+                  <div class="payment-icon-slot editable-node" data-node="wechatIcon" data-lock="square" data-label="WeChat Icon">
+                    <span class="edit-handle" aria-hidden="true"></span>
+                    <img class="node-image" src="../../../assets/generated_icons/payment_wechat_green.png" alt="WeChat icon">
+                  </div>
+                  <div class="text-node editable-node" data-node="wechatLabel" data-role="text" data-label="WeChat Label">
+                    <span class="edit-handle" aria-hidden="true"></span>
+                    <span class="node-text payment-label-text payment-label-wechat">WeChat<br>Pay</span>
+                  </div>
+                </section>
+
+                <section class="music-card editable-node" data-node="musicCard" data-label="Music Card">
+                  <span class="edit-handle" aria-hidden="true"></span>
+                  <div class="text-node editable-node" data-node="musicStatus" data-role="text" data-label="Music Status">
+                    <span class="edit-handle" aria-hidden="true"></span>
+                    <span class="node-text music-status-text">Phone not playing</span>
+                  </div>
+                  <div class="text-node icon-text-node editable-node" data-node="musicPrev" data-role="text" data-label="Prev Icon">
+                    <span class="edit-handle" aria-hidden="true"></span>
+                    <span class="node-text music-control-text">◀</span>
+                  </div>
+                  <div class="text-node icon-text-node editable-node" data-node="musicPlay" data-role="text" data-label="Play Icon">
+                    <span class="edit-handle" aria-hidden="true"></span>
+                    <span class="node-text music-control-text music-control-play">▶</span>
+                  </div>
+                  <div class="text-node icon-text-node editable-node" data-node="musicNext" data-role="text" data-label="Next Icon">
+                    <span class="edit-handle" aria-hidden="true"></span>
+                    <span class="node-text music-control-text">▶</span>
+                  </div>
+                </section>
+              </section>
+
+              <section class="surface-view" data-surface="health">
+                <section class="health-card editable-node" data-node="heartCard" data-lock="square" data-label="Heart Card">
+                  <span class="edit-handle" aria-hidden="true"></span>
+                  <div class="health-icon-slot editable-node" data-node="heartIcon" data-lock="square" data-label="Heart Icon">
+                    <span class="edit-handle" aria-hidden="true"></span>
+                    <img class="node-image" src="../../../assets/generated_icons/health_heart.png" alt="Heart icon">
+                  </div>
+                  <div class="text-node editable-node" data-node="heartValue" data-role="text" data-label="Heart Value">
+                    <span class="edit-handle" aria-hidden="true"></span>
+                    <span class="node-text health-value-text">--</span>
+                  </div>
+                </section>
+
+                <section class="health-card health-card-accent editable-node" data-node="spo2Card" data-lock="square" data-label="SpO2 Card">
+                  <span class="edit-handle" aria-hidden="true"></span>
+                  <div class="health-icon-slot editable-node" data-node="spo2Icon" data-lock="square" data-label="SpO2 Icon">
+                    <span class="edit-handle" aria-hidden="true"></span>
+                    <img class="node-image" src="../../../assets/generated_icons/health_spo2.png" alt="SpO2 icon">
+                  </div>
+                  <div class="text-node editable-node" data-node="spo2Value" data-role="text" data-label="SpO2 Value">
+                    <span class="edit-handle" aria-hidden="true"></span>
+                    <span class="node-text health-value-text">--</span>
+                  </div>
+                </section>
+
+                <section class="health-card health-card-breathe editable-node" data-node="breatheCard" data-lock="square" data-label="Breathe Card">
+                  <span class="edit-handle" aria-hidden="true"></span>
+                  <div class="health-icon-slot editable-node" data-node="breatheIcon" data-lock="square" data-label="Breathe Icon">
+                    <span class="edit-handle" aria-hidden="true"></span>
+                    <img class="node-image" src="../../../assets/generated_icons/health_breathe.png" alt="Breathe icon">
+                  </div>
+                  <div class="text-node editable-node" data-node="breatheLabel" data-role="text" data-label="Breathe Label">
+                    <span class="edit-handle" aria-hidden="true"></span>
+                    <span class="node-text breathe-label-text">Breathe</span>
+                  </div>
+                </section>
+
+                <section class="health-card editable-node" data-node="stressCard" data-lock="square" data-label="Stress Card">
+                  <span class="edit-handle" aria-hidden="true"></span>
+                  <div class="health-icon-slot editable-node" data-node="stressIcon" data-lock="square" data-label="Stress Icon">
+                    <span class="edit-handle" aria-hidden="true"></span>
+                    <img class="node-image" src="../../../assets/generated_icons/health_stress.png" alt="Stress icon">
+                  </div>
+                  <div class="text-node editable-node" data-node="stressValue" data-role="text" data-label="Stress Value">
+                    <span class="edit-handle" aria-hidden="true"></span>
+                    <span class="node-text health-value-text">--</span>
+                  </div>
+                </section>
               </section>
             </div>
 
             <div class="pager" aria-hidden="true">
-              <span class="pager-dot"></span>
-              <span class="pager-dot"></span>
-              <span class="pager-dot"></span>
-              <span class="pager-dot pager-dot-active"></span>
+              <span class="pager-dot" data-index="0"></span>
+              <span class="pager-dot" data-index="1"></span>
+              <span class="pager-dot" data-index="2"></span>
+              <span class="pager-dot" data-index="3"></span>
             </div>
           </div>
         </div>
       </div>
 
       <div class="status-row">
-        <span id="weather-icon-status" class="status-pill">天气图标：占位图形</span>
-        <span id="sleep-icon-status" class="status-pill">睡眠图标：占位图形</span>
-        <span id="steps-icon-status" class="status-pill">步数图标：占位图形</span>
-        <span id="edit-status" class="status-pill">编辑模式：关闭</span>
+        <span class="status-pill">Browser first, LVGL second.</span>
+        <span id="edit-status" class="status-pill">Edit mode: off</span>
+        <span id="surface-status" class="status-pill">Surface: NFC</span>
       </div>
     </section>
   </main>

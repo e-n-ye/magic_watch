@@ -1,143 +1,242 @@
-const presets = {
-  "xiaomi-197": {
-    watchWidth: 240,
-    watchHeight: 296,
-    safeInsetX: 10,
-    safeInsetTop: 20,
-    safeInsetBottom: 16,
-    stageRadius: 28,
-    metricFontScale: 1,
-    layout: {
-      heroCard: { x: 0, y: 15.483870967741934, width: 220, height: 110 },
-      temperature: { x: 18, y: 20.258064516129032, width: 85.29032258064515, height: 40.903225806451616, fontSize: 35.016129032258064 },
-      range: { x: 21.870967741935484, y: 65.22580645161291, width: 73.29032258064515, height: 24, fontSize: 11.661290322580646 },
-      weatherIcon: { x: 140.2258064516129, y: 17.032258064516128, width: 73, height: 73 },
-      sleepCard: { x: 0.9677419354838709, y: 135.67741935483872, width: 106, height: 106 },
-      stepsCard: { x: 114, y: 135.6774193548387, width: 106, height: 106 },
-      sleepIcon: { x: 0, y: 0, width: 58.387096774193544, height: 58.387096774193544 },
-      stepsIcon: { x: 0, y: 0, width: 58.387096774193544, height: 58.387096774193544 },
-      sleepValue: { x: 12.129032258064516, y: 68.38709677419355, width: 71.41935483870968, height: 24, fontSize: 13.774193548387096 },
-      stepsValue: { x: 12.451612903225808, y: 70.32258064516128, width: 75.09677419354838, height: 30.06451612903226, fontSize: 16.822580645161292 }
+const surfaceOrder = ["payments", "nfc", "health", "weather"];
+
+const basePreset = {
+  watchWidth: 240,
+  watchHeight: 296,
+  safeInsetX: 10,
+  safeInsetTop: 20,
+  safeInsetBottom: 16,
+  stageRadius: 28,
+  surfaces: {
+    weather: {
+      focus: "Weather / Steps / Sleep",
+      layout: {
+        heroCard: { x: 0, y: 15.48, width: 220, height: 110 },
+        temperature: { x: 18.0, y: 20.26, width: 85.29, height: 40.9, fontSize: 35.02 },
+        range: { x: 21.87, y: 65.23, width: 73.29, height: 24, fontSize: 11.66 },
+        weatherIcon: { x: 140.23, y: 17.03, width: 73, height: 73 },
+        sleepCard: { x: 0.97, y: 135.68, width: 106, height: 106 },
+        stepsCard: { x: 114.0, y: 135.68, width: 106, height: 106 },
+        sleepIcon: { x: 0, y: 0, width: 58.39, height: 58.39 },
+        stepsIcon: { x: 0, y: 0, width: 58.39, height: 58.39 },
+        sleepValue: { x: 12.13, y: 68.39, width: 71.42, height: 24, fontSize: 13.77 },
+        stepsValue: { x: 12.45, y: 70.32, width: 75.1, height: 30.06, fontSize: 16.82 }
+      }
+    },
+    payments: {
+      focus: "Alipay / WeChat / Music",
+      layout: {
+        alipayCard: { x: 0, y: 15, width: 106, height: 106 },
+        wechatCard: { x: 114, y: 15, width: 106, height: 106 },
+        musicCard: { x: 0, y: 136, width: 220, height: 106 },
+        alipayIcon: { x: 2.39, y: 1.74, width: 49.29, height: 49.29 },
+        wechatIcon: { x: 7.23, y: 4.97, width: 40.26, height: 40.26 },
+        alipayLabel: { x: 16, y: 72, width: 72, height: 20, fontSize: 15.5 },
+        wechatLabel: { x: 16, y: 58, width: 74, height: 36, fontSize: 15.5 },
+        musicStatus: { x: 16, y: 16, width: 182, height: 20, fontSize: 13.5 },
+        musicPrev: { x: 21, y: 63, width: 24, height: 24, fontSize: 27 },
+        musicPlay: { x: 92, y: 55, width: 36, height: 36, fontSize: 38 },
+        musicNext: { x: 176, y: 63, width: 24, height: 24, fontSize: 27 }
+      }
+    },
+    nfc: {
+      focus: "Title / Subtitle / Large Card",
+      layout: {
+        title: { x: 56.97, y: 17.74, width: 92.52, height: 18.32, fontSize: 21.81 },
+        subtitle: { x: 29.61, y: 47.23, width: 151.1, height: 18, fontSize: 11.48 },
+        nfcCard: { x: 6, y: 74.97, width: 208, height: 119.87 },
+        nfcImage: { x: -1.87, y: -4.06, width: 209.48, height: 124.32 }
+      }
+    },
+    health: {
+      focus: "Heart / SpO2 / Breathe / Stress",
+      layout: {
+        heartCard: { x: 0, y: 15, width: 106, height: 106 },
+        spo2Card: { x: 114, y: 15, width: 106, height: 106 },
+        breatheCard: { x: 0, y: 129, width: 106, height: 106 },
+        stressCard: { x: 114, y: 129, width: 106, height: 106 },
+        heartIcon: { x: 18, y: 16, width: 36, height: 36 },
+        spo2Icon: { x: 18, y: 12, width: 40, height: 40 },
+        breatheIcon: { x: 13.74, y: 13.29, width: 38.58, height: 38.58 },
+        stressIcon: { x: 18, y: 16, width: 44, height: 44 },
+        heartValue: { x: 12, y: 74, width: 52, height: 18, fontSize: 15 },
+        spo2Value: { x: 12, y: 74, width: 52, height: 18, fontSize: 15 },
+        breatheLabel: { x: 14, y: 76, width: 72, height: 20, fontSize: 14 },
+        stressValue: { x: 12, y: 74, width: 52, height: 18, fontSize: 15 }
+      }
     }
-  },
-  "taller-alt": {
-    watchWidth: 252,
-    watchHeight: 312,
+  }
+};
+
+function deepClone(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function scaleRect(rect, xRatio, yRatio) {
+  const scaled = {
+    x: Number((rect.x * xRatio).toFixed(2)),
+    y: Number((rect.y * yRatio).toFixed(2)),
+    width: Number((rect.width * xRatio).toFixed(2)),
+    height: Number((rect.height * yRatio).toFixed(2))
+  };
+  if (typeof rect.fontSize === "number") {
+    scaled.fontSize = Number((rect.fontSize * ((xRatio + yRatio) / 2)).toFixed(2));
+  }
+  return scaled;
+}
+
+function scaleSurfaceLayout(layout, xRatio, yRatio) {
+  const next = {};
+  for (const [name, rect] of Object.entries(layout)) {
+    next[name] = scaleRect(rect, xRatio, yRatio);
+  }
+  return next;
+}
+
+const tallerPreset = (() => {
+  const width = 252;
+  const height = 312;
+  const stageWidthRatio = (width - 11 * 2) / (basePreset.watchWidth - basePreset.safeInsetX * 2);
+  const stageHeightRatio = (height - 22 - 18) / (basePreset.watchHeight - basePreset.safeInsetTop - basePreset.safeInsetBottom);
+  const surfaces = {};
+  for (const [surfaceName, surfaceSpec] of Object.entries(basePreset.surfaces)) {
+    surfaces[surfaceName] = {
+      focus: surfaceSpec.focus,
+      layout: scaleSurfaceLayout(surfaceSpec.layout, stageWidthRatio, stageHeightRatio)
+    };
+  }
+  return {
+    watchWidth: width,
+    watchHeight: height,
     safeInsetX: 11,
     safeInsetTop: 22,
     safeInsetBottom: 18,
     stageRadius: 29,
-    metricFontScale: 1.02,
-    layout: {
-      heroCard: { x: 0, y: 16.32, width: 230, height: 116.12 },
-      temperature: { x: 18.98, y: 21.36, width: 89.91, height: 43.67, fontSize: 36.9 },
-      range: { x: 23.08, y: 69.14, width: 77.25, height: 24.96, fontSize: 12.29 },
-      weatherIcon: { x: 146.49, y: 17.96, width: 76.65, height: 76.65 },
-      sleepCard: { x: 1.02, y: 143.03, width: 111.3, height: 111.3 },
-      stepsCard: { x: 119.7, y: 143.03, width: 111.3, height: 111.3 },
-      sleepIcon: { x: 0, y: 0, width: 61.31, height: 61.31 },
-      stepsIcon: { x: 0, y: 0, width: 61.31, height: 61.31 },
-      sleepValue: { x: 12.74, y: 72.09, width: 74.99, height: 24.96, fontSize: 14.46 },
-      stepsValue: { x: 13.07, y: 74.13, width: 78.85, height: 31.27, fontSize: 17.66 }
-    }
-  }
+    surfaces
+  };
+})();
+
+const presets = {
+  "xiaomi-197": basePreset,
+  "taller-alt": tallerPreset
 };
 
-const editableNodes = {
-  heroCard: document.getElementById("hero-card"),
-  temperature: document.getElementById("temperature-node"),
-  range: document.getElementById("range-node"),
-  weatherIcon: document.getElementById("weather-icon-slot"),
-  sleepCard: document.getElementById("sleep-card"),
-  stepsCard: document.getElementById("steps-card"),
-  sleepIcon: document.getElementById("sleep-icon-slot"),
-  stepsIcon: document.getElementById("steps-icon-slot"),
-  sleepValue: document.getElementById("sleep-value-node"),
-  stepsValue: document.getElementById("steps-value-node")
-};
-
-const iconBindings = [
-  {
-    image: document.getElementById("weather-icon-image"),
-    fallback: document.getElementById("weather-icon-fallback"),
-    status: document.getElementById("weather-icon-status"),
-    label: "天气"
-  },
-  {
-    image: document.getElementById("sleep-icon-image"),
-    fallback: document.getElementById("sleep-icon-fallback"),
-    status: document.getElementById("sleep-icon-status"),
-    label: "睡眠"
-  },
-  {
-    image: document.getElementById("steps-icon-image"),
-    fallback: document.getElementById("steps-icon-fallback"),
-    status: document.getElementById("steps-icon-status"),
-    label: "步数"
-  }
-];
-
-const watchScreen = document.getElementById("watch-screen");
+const root = document.documentElement;
 const surfaceStage = document.getElementById("surface-stage");
 const layoutExport = document.getElementById("layout-export");
 const editStatus = document.getElementById("edit-status");
+const surfaceStatus = document.getElementById("surface-status");
 const toggleEditButton = document.getElementById("toggle-edit-mode");
 const resetLayoutButton = document.getElementById("reset-layout");
-const root = document.documentElement;
+const pagerDots = Array.from(document.querySelectorAll(".pager-dot"));
+
+const surfaceViews = Object.fromEntries(
+  Array.from(document.querySelectorAll(".surface-view")).map((node) => [node.dataset.surface, node])
+);
+
+const editableNodesBySurface = {};
+for (const [surfaceName, surfaceView] of Object.entries(surfaceViews)) {
+  editableNodesBySurface[surfaceName] = Object.fromEntries(
+    Array.from(surfaceView.querySelectorAll("[data-node]")).map((node) => [node.dataset.node, node])
+  );
+}
 
 let currentPresetName = "xiaomi-197";
+let currentSurfaceName = "nfc";
 let editModeEnabled = false;
 let activePointer = null;
-let layoutState = structuredClone(presets[currentPresetName].layout);
+let presetState = {};
 
 function setCssVar(name, value) {
   root.style.setProperty(name, value);
 }
 
-function cloneLayout(layout) {
-  return JSON.parse(JSON.stringify(layout));
+function getStageDimensions(preset) {
+  return {
+    width: preset.watchWidth - preset.safeInsetX * 2,
+    height: preset.watchHeight - preset.safeInsetTop - preset.safeInsetBottom
+  };
 }
 
-function updateSpecPanel(preset) {
+function clonePresetSurfaces(preset) {
+  const next = {};
+  for (const [surfaceName, surfaceSpec] of Object.entries(preset.surfaces)) {
+    next[surfaceName] = deepClone(surfaceSpec.layout);
+  }
+  return next;
+}
+
+function ensurePresetState(name) {
+  if (!presetState[name]) {
+    presetState[name] = clonePresetSurfaces(presets[name]);
+  }
+}
+
+function currentLayout() {
+  ensurePresetState(currentPresetName);
+  return presetState[currentPresetName][currentSurfaceName];
+}
+
+function currentNodes() {
+  return editableNodesBySurface[currentSurfaceName];
+}
+
+function applyNodeRect(node, rect) {
+  node.style.left = `${rect.x}px`;
+  node.style.top = `${rect.y}px`;
+  node.style.width = `${rect.width}px`;
+  node.style.height = `${rect.height}px`;
+  if (typeof rect.fontSize === "number") {
+    const textNode = node.querySelector(":scope > .node-text");
+    if (textNode) {
+      textNode.style.fontSize = `${rect.fontSize}px`;
+      textNode.style.lineHeight = "1";
+    }
+  }
+}
+
+function renderSurface() {
+  const layout = currentLayout();
+  const nodes = currentNodes();
+  for (const [nodeName, rect] of Object.entries(layout)) {
+    if (nodes[nodeName]) {
+      applyNodeRect(nodes[nodeName], rect);
+    }
+  }
+}
+
+function setActiveSurface(surfaceName) {
+  currentSurfaceName = surfaceName;
+  for (const [name, node] of Object.entries(surfaceViews)) {
+    node.classList.toggle("is-active", name === surfaceName);
+  }
+  document.querySelectorAll(".surface-button").forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.surface === surfaceName);
+  });
+  pagerDots.forEach((dot) => dot.classList.remove("pager-dot-active"));
+  const activeDot = pagerDots[surfaceOrder.indexOf(surfaceName)];
+  if (activeDot) {
+    activeDot.classList.add("pager-dot-active");
+  }
+  surfaceStatus.textContent = `Surface: ${surfaceName.toUpperCase()}`;
+}
+
+function updateSpecPanel() {
+  const preset = presets[currentPresetName];
+  const dims = getStageDimensions(preset);
   document.getElementById("spec-watch").textContent = `${preset.watchWidth} x ${preset.watchHeight}`;
+  document.getElementById("spec-surface").textContent = currentSurfaceName.toUpperCase();
+  document.getElementById("spec-stage").textContent = `${dims.width} x ${dims.height}`;
   document.getElementById("spec-safe").textContent =
     `${preset.safeInsetX} / ${preset.safeInsetTop} / ${preset.safeInsetBottom}`;
-  document.getElementById("spec-stage").textContent =
-    `${preset.watchWidth - preset.safeInsetX * 2} x ${preset.watchHeight - preset.safeInsetTop - preset.safeInsetBottom}`;
-  document.getElementById("spec-gap").textContent =
-    `${(layoutState.stepsCard.x - (layoutState.sleepCard.x + layoutState.sleepCard.width)).toFixed(2)}px`;
-  document.getElementById("spec-type").textContent = `${preset.metricFontScale.toFixed(2)}x`;
-}
-
-function applyPreset(name) {
-  const preset = presets[name];
-  if (!preset) {
-    return;
-  }
-
-  currentPresetName = name;
-  layoutState = cloneLayout(preset.layout);
-
-  setCssVar("--watch-width", preset.watchWidth);
-  setCssVar("--watch-height", preset.watchHeight);
-  setCssVar("--safe-inset-x", preset.safeInsetX);
-  setCssVar("--safe-inset-top", preset.safeInsetTop);
-  setCssVar("--safe-inset-bottom", preset.safeInsetBottom);
-  setCssVar("--stage-radius", preset.stageRadius);
-  setCssVar("--metric-font-scale", preset.metricFontScale);
-
-  renderLayout();
-  updateSpecPanel(preset);
-
-  document.querySelectorAll(".preset-button").forEach((button) => {
-    button.classList.toggle("is-active", button.dataset.preset === name);
-  });
+  document.getElementById("spec-focus").textContent = preset.surfaces[currentSurfaceName].focus;
 }
 
 function exportLayout() {
   layoutExport.value = JSON.stringify(
     {
       preset: currentPresetName,
+      surface: currentSurfaceName,
       watch: {
         width: presets[currentPresetName].watchWidth,
         height: presets[currentPresetName].watchHeight,
@@ -145,53 +244,68 @@ function exportLayout() {
         safeInsetTop: presets[currentPresetName].safeInsetTop,
         safeInsetBottom: presets[currentPresetName].safeInsetBottom
       },
-      layout: layoutState
+      layout: currentLayout()
     },
     null,
     2
   );
 }
 
-function applyNodeRect(nodeName, rect) {
-  const node = editableNodes[nodeName];
-  if (!node) {
-    return;
-  }
-
-  node.style.left = `${rect.x}px`;
-  node.style.top = `${rect.y}px`;
-  node.style.right = "auto";
-  node.style.bottom = "auto";
-  node.style.width = `${rect.width}px`;
-  node.style.height = `${rect.height}px`;
-
-  if (typeof rect.fontSize === "number") {
-    const text = node.querySelector(":scope > span:last-child");
-    if (text) {
-      text.style.fontSize = `${rect.fontSize}px`;
-      text.style.lineHeight = "1";
-    }
-  }
+function renderAll() {
+  const preset = presets[currentPresetName];
+  setCssVar("--watch-width", preset.watchWidth);
+  setCssVar("--watch-height", preset.watchHeight);
+  setCssVar("--safe-inset-x", preset.safeInsetX);
+  setCssVar("--safe-inset-top", preset.safeInsetTop);
+  setCssVar("--safe-inset-bottom", preset.safeInsetBottom);
+  setCssVar("--stage-radius", preset.stageRadius);
+  setActiveSurface(currentSurfaceName);
+  renderSurface();
+  updateSpecPanel();
+  exportLayout();
 }
 
-function renderLayout() {
-  for (const [name, rect] of Object.entries(layoutState)) {
-    applyNodeRect(name, rect);
-  }
-  exportLayout();
-  updateSpecPanel(presets[currentPresetName]);
+function applyPreset(name) {
+  currentPresetName = name;
+  ensurePresetState(name);
+  document.querySelectorAll(".preset-button").forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.preset === name);
+  });
+  renderAll();
 }
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
 }
 
-function isSquareNode(nodeName) {
-  return ["sleepCard", "stepsCard", "sleepIcon", "stepsIcon", "weatherIcon"].includes(nodeName);
+function nodeAllowsOverflow(node) {
+  return node.dataset.canOverflow === "true";
 }
 
-function isTextNode(nodeName) {
-  return ["temperature", "range", "sleepValue", "stepsValue"].includes(nodeName);
+function nodeIsSquare(node) {
+  return node.dataset.lock === "square";
+}
+
+function nodeIsText(node) {
+  return node.dataset.role === "text";
+}
+
+function getNodeBounds(nodeName) {
+  const node = currentNodes()[nodeName];
+  const preset = presets[currentPresetName];
+  const stage = getStageDimensions(preset);
+  const parentNode = node.parentElement.closest("[data-node]");
+
+  if (!parentNode) {
+    return { width: stage.width, height: stage.height, offsetX: 0, offsetY: 0 };
+  }
+
+  const parentRect = currentLayout()[parentNode.dataset.node];
+  if (!parentRect) {
+    return { width: stage.width, height: stage.height, offsetX: 0, offsetY: 0 };
+  }
+
+  return { width: parentRect.width, height: parentRect.height, offsetX: parentRect.x, offsetY: parentRect.y };
 }
 
 function beginInteraction(event, nodeName, mode) {
@@ -199,7 +313,8 @@ function beginInteraction(event, nodeName, mode) {
     return;
   }
 
-  const rect = layoutState[nodeName];
+  const node = currentNodes()[nodeName];
+  const rect = currentLayout()[nodeName];
   activePointer = {
     pointerId: event.pointerId,
     nodeName,
@@ -208,7 +323,7 @@ function beginInteraction(event, nodeName, mode) {
     startY: event.clientY,
     startRect: { ...rect }
   };
-  editableNodes[nodeName].classList.add(mode === "drag" ? "dragging" : "resizing");
+  node.classList.add(mode === "drag" ? "dragging" : "resizing");
   event.preventDefault();
 }
 
@@ -217,31 +332,40 @@ function updateInteraction(event) {
     return;
   }
 
-  const preset = presets[currentPresetName];
-  const stageWidth = preset.watchWidth - preset.safeInsetX * 2;
-  const stageHeight = preset.watchHeight - preset.safeInsetTop - preset.safeInsetBottom;
+  const node = currentNodes()[activePointer.nodeName];
+  const bounds = getNodeBounds(activePointer.nodeName);
   const scale = parseFloat(getComputedStyle(root).getPropertyValue("--preview-scale"));
   const dx = (event.clientX - activePointer.startX) / scale;
   const dy = (event.clientY - activePointer.startY) / scale;
   const rect = { ...activePointer.startRect };
+  const allowOverflow = nodeAllowsOverflow(node);
 
   if (activePointer.mode === "drag") {
-    rect.x = clamp(activePointer.startRect.x + dx, 0, stageWidth - rect.width);
-    rect.y = clamp(activePointer.startRect.y + dy, 0, stageHeight - rect.height);
+    const minX = allowOverflow ? -rect.width * 0.5 : 0;
+    const minY = allowOverflow ? -rect.height * 0.5 : 0;
+    const maxX = allowOverflow ? bounds.width - rect.width * 0.2 : bounds.width - rect.width;
+    const maxY = allowOverflow ? bounds.height - rect.height * 0.2 : bounds.height - rect.height;
+    rect.x = clamp(activePointer.startRect.x + dx, minX, maxX);
+    rect.y = clamp(activePointer.startRect.y + dy, minY, maxY);
   } else {
-    const delta = isSquareNode(activePointer.nodeName) ? Math.max(dx, dy) : dx;
-    rect.width = clamp(activePointer.startRect.width + delta, 24, stageWidth - rect.x);
-    rect.height = isSquareNode(activePointer.nodeName)
-      ? rect.width
-      : clamp(activePointer.startRect.height + dy, 24, stageHeight - rect.y);
+    if (nodeIsSquare(node)) {
+      const delta = Math.max(dx, dy);
+      rect.width = clamp(activePointer.startRect.width + delta, 20, allowOverflow ? bounds.width * 1.8 : bounds.width - rect.x);
+      rect.height = rect.width;
+    } else {
+      rect.width = clamp(activePointer.startRect.width + dx, 20, allowOverflow ? bounds.width * 1.8 : bounds.width - rect.x);
+      rect.height = clamp(activePointer.startRect.height + dy, 18, allowOverflow ? bounds.height * 1.8 : bounds.height - rect.y);
+    }
 
-    if (isTextNode(activePointer.nodeName)) {
-      rect.fontSize = clamp(activePointer.startRect.fontSize + dy * 0.35, 8, 44);
+    if (nodeIsText(node) && typeof activePointer.startRect.fontSize === "number") {
+      rect.fontSize = clamp(activePointer.startRect.fontSize + dy * 0.35, 8, 48);
     }
   }
 
-  layoutState[activePointer.nodeName] = rect;
-  renderLayout();
+  currentLayout()[activePointer.nodeName] = rect;
+  renderSurface();
+  updateSpecPanel();
+  exportLayout();
 }
 
 function endInteraction(event) {
@@ -249,16 +373,13 @@ function endInteraction(event) {
     return;
   }
 
-  editableNodes[activePointer.nodeName].classList.remove("dragging", "resizing");
+  const node = currentNodes()[activePointer.nodeName];
+  node.classList.remove("dragging", "resizing");
   activePointer = null;
 }
 
-function wireEditableNode(nodeName) {
-  const node = editableNodes[nodeName];
-  if (!node) {
-    return;
-  }
-
+function wireEditableNode(node) {
+  const nodeName = node.dataset.node;
   const handle = node.querySelector(":scope > .edit-handle");
 
   node.addEventListener("pointerdown", (event) => {
@@ -282,49 +403,33 @@ function toggleEditMode() {
   editModeEnabled = !editModeEnabled;
   surfaceStage.classList.toggle("edit-mode", editModeEnabled);
   toggleEditButton.classList.toggle("is-active", editModeEnabled);
-  toggleEditButton.textContent = editModeEnabled ? "关闭布局编辑" : "开启布局编辑";
-  editStatus.textContent = `编辑模式：${editModeEnabled ? "开启" : "关闭"}`;
+  toggleEditButton.textContent = editModeEnabled ? "Disable Layout Edit" : "Enable Layout Edit";
+  editStatus.textContent = `Edit mode: ${editModeEnabled ? "on" : "off"}`;
 }
 
 function resetLayout() {
-  layoutState = cloneLayout(presets[currentPresetName].layout);
-  renderLayout();
-}
-
-for (const binding of iconBindings) {
-  const showFallback = () => {
-    binding.image.classList.add("is-hidden");
-    binding.fallback.classList.remove("is-hidden");
-    binding.status.textContent = `${binding.label}图标：占位图形`;
-  };
-
-  const showGenerated = () => {
-    binding.image.classList.remove("is-hidden");
-    binding.fallback.classList.add("is-hidden");
-    binding.status.textContent = `${binding.label}图标：已加载 PNG`;
-  };
-
-  binding.image.addEventListener("load", showGenerated);
-  binding.image.addEventListener("error", showFallback);
-
-  if (binding.image.complete && binding.image.naturalWidth > 0) {
-    showGenerated();
-  } else if (binding.image.complete) {
-    showFallback();
-  } else {
-    showFallback();
-  }
+  presetState[currentPresetName][currentSurfaceName] = deepClone(presets[currentPresetName].surfaces[currentSurfaceName].layout);
+  renderAll();
 }
 
 document.querySelectorAll(".preset-button").forEach((button) => {
   button.addEventListener("click", () => applyPreset(button.dataset.preset));
 });
 
+document.querySelectorAll(".surface-button").forEach((button) => {
+  button.addEventListener("click", () => {
+    currentSurfaceName = button.dataset.surface;
+    renderAll();
+  });
+});
+
 toggleEditButton.addEventListener("click", toggleEditMode);
 resetLayoutButton.addEventListener("click", resetLayout);
 
-for (const nodeName of Object.keys(editableNodes)) {
-  wireEditableNode(nodeName);
+for (const surfaceNodes of Object.values(editableNodesBySurface)) {
+  for (const node of Object.values(surfaceNodes)) {
+    wireEditableNode(node);
+  }
 }
 
 window.addEventListener("pointermove", updateInteraction);

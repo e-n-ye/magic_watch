@@ -20,6 +20,9 @@ Desktop.ini
 *.log
 *.tmp
 *.bak
+tmp/
+__pycache__/
+*.pyc
 
 # Local AI workflow config and generated assets
 .agents/config/right_code.env
