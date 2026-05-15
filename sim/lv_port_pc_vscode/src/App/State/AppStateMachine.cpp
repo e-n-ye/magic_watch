@@ -287,12 +287,12 @@ void AppStateMachine::handle_input(const InputCommand& command) {
       }
       return;
     case InputAction::CrownRotateCW:
-      if (power_state_ == PowerState::Running && is_current_home_surface()) {
+      if (power_state_ == PowerState::Running && is_current_home_surface() && !is_current_watchface_surface()) {
         navigate_home_surface(1);
       }
       return;
     case InputAction::CrownRotateCCW:
-      if (power_state_ == PowerState::Running && is_current_home_surface()) {
+      if (power_state_ == PowerState::Running && is_current_home_surface() && !is_current_watchface_surface()) {
         navigate_home_surface(-1);
       }
       return;
@@ -404,6 +404,12 @@ bool AppStateMachine::is_current_home_surface() const {
   const auto stack_top = page_manager_.stack_top_page_id();
   return !page_manager_.temporary_page_id() && page_manager_.stack_depth() == 1 && stack_top &&
          is_home_surface_page(*stack_top);
+}
+
+bool AppStateMachine::is_current_watchface_surface() const {
+  const auto stack_top = page_manager_.stack_top_page_id();
+  return !page_manager_.temporary_page_id() && page_manager_.stack_depth() == 1 && stack_top &&
+         *stack_top == PageId::Watchface;
 }
 
 void AppStateMachine::navigate_home_surface(int delta) {

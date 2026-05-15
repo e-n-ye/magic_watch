@@ -78,6 +78,7 @@ set(MAIN_SOURCES
     src/App/UI/PageBase.cpp
     src/App/UI/PageManager.cpp
     src/App/UI/Assets/MonicaAssets.cpp
+    src/App/UI/Watchface/WatchfaceStyle.cpp
     src/App/UI/UiStyles.cpp
     src/App/UI/Pages/CommonPages.cpp
     src/App/UI/Pages/ShellPages.cpp

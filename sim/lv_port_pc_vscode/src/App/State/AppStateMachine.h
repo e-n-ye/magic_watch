@@ -41,6 +41,7 @@ class AppStateMachine {
   void launch_app(PageId target);
   bool is_home_surface_page(PageId page_id) const;
   bool is_current_home_surface() const;
+  bool is_current_watchface_surface() const;
   void navigate_home_surface(int delta);
   void show_home_surface(std::size_t index, PageTransition transition);
   bool can_navigate_back() const;

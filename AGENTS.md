@@ -36,6 +36,7 @@ Remove-Item "C:\path\to\file.txt"
   - `docs/project_charter.md`: 项目定位、目标、边界、成功标准。
   - `docs/v0_scope.md`: 当前 v0 闭环范围和验收标准。
   - `docs/home_interaction_model.md`: 表盘中心交互模型。
+  - `docs/watchface_style_architecture.md`: 表盘宿主、风格接口和未来风格切换边界。
   - `docs/target_architecture.md`: v0 目标骨架。
   - `docs/workflow.md`: 每次会话如何推进。
   - `docs/learning_plan.md`: 学习路径。

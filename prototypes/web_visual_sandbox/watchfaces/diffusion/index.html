@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Magic Watch Diffusion Watchface Sandbox</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="workspace">
+    <section class="control-panel">
+      <div class="panel-block">
+        <p class="eyebrow">Magic Watch</p>
+        <h1>Diffusion Watchface</h1>
+        <p class="summary">
+          这份沙盘只服务于表盘风格本身。先把小时扩散层、电量、分钟和安全区压成比例合同，再回译到 LVGL。
+        </p>
+      </div>
+
+      <div class="panel-block">
+        <p class="label">Screen Preset</p>
+        <div class="button-row">
+          <button type="button" class="preset-button is-active" data-preset="xiaomi-197">Xiaomi 1.97</button>
+          <button type="button" class="preset-button" data-preset="taller-alt">Taller Alt</button>
+        </div>
+      </div>
+
+      <div class="panel-block">
+        <p class="label">Hour Digit</p>
+        <div id="digit-row" class="button-row digit-row"></div>
+      </div>
+
+      <div class="panel-block">
+        <p class="label">Spread Index</p>
+        <div class="slider-row">
+          <input id="spread-slider" type="range" min="0" max="8" step="1" value="4">
+          <span id="spread-value" class="slider-value">4</span>
+        </div>
+        <p class="helper-text">表冠顺时针扩散，逆时针收拢。LVGL 只近似这些偏移、透明度和轻微缩放。</p>
+      </div>
+
+      <div class="panel-block">
+        <p class="label">Minute / Battery</p>
+        <div class="field-grid">
+          <label>
+            <span>Minute</span>
+            <input id="minute-input" type="text" maxlength="2" value="58">
+          </label>
+          <label>
+            <span>Battery</span>
+            <input id="battery-input" type="number" min="0" max="100" value="86">
+          </label>
+        </div>
+      </div>
+
+      <div class="panel-block">
+        <p class="label">Export Spec</p>
+        <textarea id="spec-export" class="spec-export" readonly spellcheck="false"></textarea>
+      </div>
+    </section>
+
+    <section class="preview-panel">
+      <div class="watch-preview">
+        <div class="watch-shell">
+          <div id="watch-screen" class="watch-screen">
+            <div id="battery-chip" class="battery-chip">
+              <span id="battery-text">86%</span>
+            </div>
+
+            <div id="hour-stage" class="hour-stage">
+              <div id="hour-empty" class="hour-empty">--</div>
+
+              <div id="layer-left-outer" class="hour-slice slice-left">
+                <img class="digit-image digit-blur-outer" alt="left outer digit layer">
+              </div>
+              <div id="layer-left-inner" class="hour-slice slice-left">
+                <img class="digit-image digit-blur-inner" alt="left inner digit layer">
+              </div>
+              <div id="layer-core" class="hour-core">
+                <img class="digit-image digit-core-image" alt="core digit layer">
+              </div>
+              <div id="layer-right-inner" class="hour-slice slice-right">
+                <img class="digit-image digit-blur-inner" alt="right inner digit layer">
+              </div>
+              <div id="layer-right-outer" class="hour-slice slice-right">
+                <img class="digit-image digit-blur-outer" alt="right outer digit layer">
+              </div>
+            </div>
+
+            <div id="minute-label" class="minute-label">58</div>
+            <div class="status-pill">Watchface style seam reserved</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>

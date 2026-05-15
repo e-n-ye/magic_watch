@@ -1,6 +1,5 @@
 #include "App/UI/Pages/ShellPages.h"
 
-#include "App/UI/Assets/MonicaAssets.h"
 #include "App/UI/UiStyles.h"
 #include "lvgl/src/misc/lv_fs.h"
 
@@ -15,10 +14,6 @@
 namespace twsim::app {
 
 namespace {
-
-constexpr lv_coord_t kWatchfaceCanvasSize = 236;
-constexpr std::size_t kInitialWreathFrameIndex = 8;
-constexpr std::uint32_t kWreathFrameIntervalMs = 220;
 
 void style_root(lv_obj_t* root, std::uint32_t color) {
   lv_obj_remove_flag(root, LV_OBJ_FLAG_SCROLLABLE);
@@ -164,6 +159,11 @@ const char* payment_alipay_asset_path() {
 
 const char* payment_wechat_asset_path() {
   static const std::string path = resolve_lvgl_asset_path("assets/generated_icons/payment_wechat.png");
+  return path.empty() ? nullptr : path.c_str();
+}
+
+const char* payment_wechat_green_asset_path() {
+  static const std::string path = resolve_lvgl_asset_path("assets/generated_icons/payment_wechat_green.png");
   return path.empty() ? nullptr : path.c_str();
 }
 
@@ -388,15 +388,6 @@ const char* WatchfacePage::name() const {
 }
 
 void WatchfacePage::on_will_appear() {
-  if (wreath_timer_ != nullptr && monica_spring_wreath_available() && wreath_frames_remaining_ > 0) {
-    lv_timer_resume(wreath_timer_);
-  }
-  if (wreath_image_ != nullptr && monica_spring_wreath_available()) {
-    if (wreath_frames_remaining_ == 0) {
-      wreath_frame_index_ = kInitialWreathFrameIndex % monica_spring_wreath_frame_count();
-    }
-    lv_image_set_src(wreath_image_, monica_spring_wreath_frames()[wreath_frame_index_]);
-  }
   if (data_center_.time()) {
     apply_time(*data_center_.time());
   }
@@ -405,11 +396,7 @@ void WatchfacePage::on_will_appear() {
   }
 }
 
-void WatchfacePage::on_will_disappear() {
-  if (wreath_timer_ != nullptr) {
-    lv_timer_pause(wreath_timer_);
-  }
-}
+void WatchfacePage::on_will_disappear() {}
 
 lv_obj_t* WatchfacePage::build() {
   lv_obj_t* root = lv_obj_create(nullptr);
@@ -418,93 +405,67 @@ lv_obj_t* WatchfacePage::build() {
   }
   ui_prepare_box(root);
   ui_apply_surface(root, SurfaceStyle::Screen);
-  wreath_image_ = lv_image_create(root);
+
   lv_obj_t* overlay = lv_obj_create(root);
   lv_obj_t* battery_chip = lv_obj_create(overlay);
   battery_label_ = lv_label_create(battery_chip);
-  lv_obj_t* time_row = lv_obj_create(overlay);
-  hour_label_ = lv_label_create(time_row);
-  lv_obj_t* colon_label = lv_label_create(time_row);
-  minute_label_ = lv_label_create(time_row);
-  date_label_ = lv_label_create(overlay);
+  style_stage_ = lv_obj_create(overlay);
+  minute_label_ = lv_label_create(overlay);
   status_label_ = lv_label_create(overlay);
 
-  if (wreath_image_ == nullptr || overlay == nullptr || battery_chip == nullptr || battery_label_ == nullptr ||
-      time_row == nullptr || hour_label_ == nullptr || colon_label == nullptr || minute_label_ == nullptr ||
-      date_label_ == nullptr || status_label_ == nullptr) {
+  if (overlay == nullptr || battery_chip == nullptr || battery_label_ == nullptr || style_stage_ == nullptr ||
+      minute_label_ == nullptr || status_label_ == nullptr) {
     return nullptr;
-  }
-
-  if (monica_spring_wreath_available()) {
-    wreath_frame_index_ = kInitialWreathFrameIndex % monica_spring_wreath_frame_count();
-    lv_image_set_src(wreath_image_, monica_spring_wreath_frames()[wreath_frame_index_]);
-    const auto* first_frame = monica_spring_wreath_frames()[0];
-    if (first_frame != nullptr && first_frame->header.w > 0 && first_frame->header.h > 0) {
-      const auto scale_x =
-          static_cast<std::uint32_t>((kWatchfaceCanvasSize * LV_SCALE_NONE) / first_frame->header.w);
-      const auto scale_y =
-          static_cast<std::uint32_t>((kWatchfaceCanvasSize * LV_SCALE_NONE) / first_frame->header.h);
-      lv_image_set_scale(wreath_image_, std::min(scale_x, scale_y));
-    }
-  }
-  lv_obj_align(wreath_image_, LV_ALIGN_CENTER, 0, 0);
-  wreath_timer_ = lv_timer_create(&WatchfacePage::wreath_timer_cb, kWreathFrameIntervalMs, this);
-  if (wreath_timer_ != nullptr) {
-    lv_timer_set_repeat_count(wreath_timer_, -1);
-    lv_timer_set_user_data(wreath_timer_, this);
-    lv_timer_pause(wreath_timer_);
   }
 
   ui_prepare_box(overlay);
   lv_obj_set_size(overlay, LV_PCT(100), LV_PCT(100));
   lv_obj_center(overlay);
-  lv_obj_move_foreground(overlay);
 
-  style_overlay_card(battery_chip, lv_color_hex(0x0D100C), LV_OPA_50, 16);
-  lv_obj_set_style_pad_hor(battery_chip, 10, 0);
+  style_overlay_card(battery_chip, lv_color_hex(0x10192B), LV_OPA_50, 18);
+  lv_obj_set_style_pad_hor(battery_chip, 16, 0);
   lv_obj_set_style_pad_ver(battery_chip, 6, 0);
   lv_obj_set_size(battery_chip, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-  lv_obj_align(battery_chip, LV_ALIGN_TOP_RIGHT, -12, 12);
+  lv_obj_align(battery_chip, LV_ALIGN_TOP_MID, 0, 12);
   ui_prepare_label(battery_label_);
   ui_apply_text(battery_label_, TextStyle::Tiny);
-  lv_obj_set_style_text_color(battery_label_, lv_color_hex(0xF7E6A7), 0);
+  lv_obj_set_style_text_color(battery_label_, lv_color_hex(0xD9E4F5), 0);
+  lv_obj_set_style_text_align(battery_label_, LV_TEXT_ALIGN_CENTER, 0);
   lv_label_set_text(battery_label_, "--%");
 
-  ui_prepare_box(time_row);
-  ui_set_flex_row(time_row, 0, 2, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-  lv_obj_set_size(time_row, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-  lv_obj_align(time_row, LV_ALIGN_CENTER, 0, -34);
+  ui_prepare_box(style_stage_);
+  lv_obj_set_size(style_stage_, 220, 168);
+  lv_obj_align(style_stage_, LV_ALIGN_CENTER, 0, -2);
+  lv_obj_set_style_bg_opa(style_stage_, LV_OPA_TRANSP, 0);
+  lv_obj_set_style_border_width(style_stage_, 0, 0);
+  lv_obj_set_style_pad_all(style_stage_, 0, 0);
 
-  for (lv_obj_t* part : {hour_label_, colon_label, minute_label_}) {
-    ui_prepare_label(part);
-    ui_apply_text(part, TextStyle::Hero);
-    lv_obj_set_style_text_color(part, lv_color_hex(0xF8E8A9), 0);
-    lv_obj_set_style_text_font(part, &lv_font_montserrat_48, 0);
+  renderer_ = create_watchface_style_renderer(config_);
+  if (!renderer_ || renderer_->build(style_stage_) == nullptr) {
+    return nullptr;
   }
-  lv_label_set_text(hour_label_, "--");
-  lv_label_set_text(colon_label, ":");
-  lv_label_set_text(minute_label_, "--");
 
-  ui_prepare_label(date_label_);
-  ui_apply_text(date_label_, TextStyle::Title);
-  lv_obj_set_style_text_color(date_label_, lv_color_hex(0xFFF5CB), 0);
-  lv_obj_set_width(date_label_, 220);
-  lv_obj_set_style_text_align(date_label_, LV_TEXT_ALIGN_CENTER, 0);
-  lv_obj_align(date_label_, LV_ALIGN_CENTER, 0, 26);
-  lv_label_set_text(date_label_, "Waiting for RTC");
+  ui_prepare_label(minute_label_);
+  ui_apply_text(minute_label_, TextStyle::HeroSoft);
+  lv_obj_set_style_text_font(minute_label_, &lv_font_montserrat_32, 0);
+  lv_obj_set_style_text_color(minute_label_, lv_color_hex(0xD7E3F4), 0);
+  lv_obj_set_width(minute_label_, 180);
+  lv_obj_set_style_text_align(minute_label_, LV_TEXT_ALIGN_CENTER, 0);
+  lv_obj_align(minute_label_, LV_ALIGN_BOTTOM_MID, 0, -28);
+  lv_label_set_text(minute_label_, "--");
 
   ui_prepare_label(status_label_);
   ui_apply_text(status_label_, TextStyle::Tiny);
-  lv_obj_set_style_text_color(status_label_, lv_color_hex(0xCABC86), 0);
+  lv_obj_set_style_text_color(status_label_, lv_color_hex(0x7C8CA3), 0);
   lv_obj_set_width(status_label_, 220);
   lv_obj_set_style_text_align(status_label_, LV_TEXT_ALIGN_CENTER, 0);
   lv_obj_align(status_label_, LV_ALIGN_BOTTOM_MID, 0, -12);
-  lv_label_set_text(status_label_, monica_spring_wreath_available() ? "" : monica_spring_wreath_status());
+  lv_label_set_text(status_label_, "");
 
   track(data_center_.subscribe(EventId::TimeUpdated,
                                [this](const Event& event) {
                                  if (const auto* model = std::get_if<TimeModel>(&event.payload)) {
-                                    apply_time(*model);
+                                   apply_time(*model);
                                  }
                                }));
   track(data_center_.subscribe(EventId::BatteryChanged,
@@ -524,7 +485,21 @@ lv_obj_t* WatchfacePage::build() {
                                  }
                                  switch (command->action) {
                                    case InputAction::TouchActivity:
-                                     trigger_wreath_animation();
+                                     renderer_->apply(render_state_);
+                                     break;
+                                   case InputAction::CrownRotateCW:
+                                     if (renderer_ != nullptr &&
+                                         renderer_->on_crown_delta(std::max<std::int16_t>(1, command->value), config_)) {
+                                       render_state_.spread_index = config_.spread_index;
+                                       renderer_->apply(render_state_);
+                                     }
+                                     break;
+                                   case InputAction::CrownRotateCCW:
+                                     if (renderer_ != nullptr &&
+                                         renderer_->on_crown_delta(-std::max<std::int16_t>(1, command->value), config_)) {
+                                       render_state_.spread_index = config_.spread_index;
+                                       renderer_->apply(render_state_);
+                                     }
                                      break;
                                    default:
                                      break;
@@ -533,80 +508,43 @@ lv_obj_t* WatchfacePage::build() {
   return root;
 }
 
-void WatchfacePage::wreath_timer_cb(lv_timer_t* timer) {
-  auto* self = static_cast<WatchfacePage*>(timer != nullptr ? lv_timer_get_user_data(timer) : nullptr);
-  if (self == nullptr) {
-    return;
-  }
-  self->advance_wreath_frame();
-}
-
-void WatchfacePage::advance_wreath_frame() {
-  if (wreath_image_ == nullptr || !monica_spring_wreath_available()) {
-    return;
-  }
-
-  const auto frame_count = monica_spring_wreath_frame_count();
-  if (frame_count == 0) {
-    return;
-  }
-
-  wreath_frame_index_ = (wreath_frame_index_ + 1) % frame_count;
-  lv_image_set_src(wreath_image_, monica_spring_wreath_frames()[wreath_frame_index_]);
-  if (wreath_frames_remaining_ > 0) {
-    --wreath_frames_remaining_;
-    if (wreath_frames_remaining_ == 0 && wreath_timer_ != nullptr) {
-      lv_timer_pause(wreath_timer_);
-    }
-  }
-}
-
-void WatchfacePage::trigger_wreath_animation() {
-  const auto frame_count = monica_spring_wreath_frame_count();
-  if (wreath_timer_ == nullptr || frame_count == 0 || !monica_spring_wreath_available()) {
-    return;
-  }
-
-  wreath_frames_remaining_ = frame_count;
-  lv_timer_resume(wreath_timer_);
-}
-
 void WatchfacePage::apply_time(const TimeModel& model) {
-  if (hour_label_ == nullptr || minute_label_ == nullptr || date_label_ == nullptr) {
+  if (minute_label_ == nullptr || renderer_ == nullptr || status_label_ == nullptr) {
     return;
   }
 
   if (!model.valid) {
-    lv_label_set_text(hour_label_, "--");
     lv_label_set_text(minute_label_, "--");
-    lv_label_set_text(date_label_, "Waiting for RTC");
+    lv_label_set_text(status_label_, "Waiting for RTC");
+    render_state_.hour_digit = -1;
+    render_state_.minute_text = "--";
+    render_state_.spread_index = config_.spread_index;
+    renderer_->apply(render_state_);
     return;
   }
 
-  char hour_buffer[4] = {};
   char minute_buffer[4] = {};
-  char date_buffer[24] = {};
-  std::snprintf(hour_buffer, sizeof(hour_buffer), "%02u", static_cast<unsigned>(model.hour));
   std::snprintf(minute_buffer, sizeof(minute_buffer), "%02u", static_cast<unsigned>(model.minute));
-  std::snprintf(date_buffer,
-                sizeof(date_buffer),
-                "%02u/%02u/%04u",
-                static_cast<unsigned>(model.month),
-                static_cast<unsigned>(model.day),
-                static_cast<unsigned>(model.year));
-  lv_label_set_text(hour_label_, hour_buffer);
   lv_label_set_text(minute_label_, minute_buffer);
-  lv_label_set_text(date_label_, date_buffer);
+  lv_label_set_text(status_label_,
+                    config_.style_id == WatchfaceStyleId::Diffusion ? "" : "Reserved style placeholder");
+  render_state_.hour_digit = static_cast<int>(model.hour % 10);
+  render_state_.minute_text = minute_buffer;
+  render_state_.spread_index = config_.spread_index;
+  renderer_->apply(render_state_);
 }
 
 void WatchfacePage::apply_battery(const BatteryModel& model) {
-  if (battery_label_ == nullptr) {
+  if (battery_label_ == nullptr || renderer_ == nullptr) {
     return;
   }
 
   char buffer[32] = {};
   std::snprintf(buffer, sizeof(buffer), "%d%%%s", static_cast<int>(model.percent), model.charging ? " +" : "");
   lv_label_set_text(battery_label_, buffer);
+  render_state_.battery_percent = model.percent;
+  render_state_.spread_index = config_.spread_index;
+  renderer_->apply(render_state_);
 }
 
 LauncherPage::LauncherPage(DataCenter& data_center) : PageBase(data_center) {
@@ -1229,8 +1167,16 @@ lv_obj_t* PaymentsShortcutPage::build() {
   lv_obj_align(alipay_card, LV_ALIGN_TOP_LEFT, 0, top_y);
   lv_obj_align(wechat_card, LV_ALIGN_TOP_LEFT, small_w + card_gap, top_y);
 
-  auto build_payment_tile = [&](lv_obj_t* card, const char* icon_path, const char* label_text) -> bool {
-    lv_obj_t* icon = create_contain_image(card, icon_path, 44, 44, LV_ALIGN_TOP_LEFT, 12, 12);
+  auto build_payment_tile = [&](lv_obj_t* card,
+                                const char* icon_path,
+                                lv_coord_t icon_x,
+                                lv_coord_t icon_y,
+                                lv_coord_t icon_size,
+                                const char* label_text,
+                                lv_coord_t label_x,
+                                lv_coord_t label_y,
+                                lv_coord_t label_w) -> bool {
+    lv_obj_t* icon = create_contain_image(card, icon_path, icon_size, icon_size, LV_ALIGN_TOP_LEFT, icon_x, icon_y);
     lv_obj_t* label = lv_label_create(card);
     if (icon == nullptr || label == nullptr) {
       return false;
@@ -1239,15 +1185,20 @@ lv_obj_t* PaymentsShortcutPage::build() {
     ui_apply_text(label, TextStyle::Title);
     lv_obj_set_style_text_font(label, &lv_font_montserrat_14, 0);
     lv_obj_set_style_text_color(label, lv_color_hex(0xF8FAFC), 0);
-    lv_obj_set_width(label, 84);
+    lv_obj_set_width(label, label_w);
     lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP);
     lv_label_set_text(label, label_text);
-    lv_obj_align(label, LV_ALIGN_BOTTOM_LEFT, 12, -14);
+    lv_obj_align(label, LV_ALIGN_TOP_LEFT, label_x, label_y);
     return true;
   };
 
-  if (!build_payment_tile(alipay_card, payment_alipay_asset_path(), "Alipay") ||
-      !build_payment_tile(wechat_card, payment_wechat_asset_path(), "WeChat Pay")) {
+  const char* wechat_icon_path = payment_wechat_green_asset_path();
+  if (!file_exists(wechat_icon_path)) {
+    wechat_icon_path = payment_wechat_asset_path();
+  }
+
+  if (!build_payment_tile(alipay_card, payment_alipay_asset_path(), 2, 2, 49, "Alipay", 16, 72, 72) ||
+      !build_payment_tile(wechat_card, wechat_icon_path, 7, 5, 40, "WeChat\nPay", 16, 58, 74)) {
     return nullptr;
   }
 
@@ -1333,27 +1284,27 @@ lv_obj_t* NfcShortcutPage::build() {
 
   ui_prepare_label(title);
   ui_apply_text(title, TextStyle::HeroSoft);
-  lv_obj_set_style_text_font(title, &lv_font_montserrat_34, 0);
+  lv_obj_set_style_text_font(title, &lv_font_montserrat_22, 0);
   lv_obj_set_style_text_color(title, lv_color_hex(0xF8FAFC), 0);
-  lv_obj_set_width(title, 220);
+  lv_obj_set_width(title, 93);
   lv_obj_set_style_text_align(title, LV_TEXT_ALIGN_CENTER, 0);
   lv_label_set_text(title, "School");
-  lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 18);
+  lv_obj_align(title, LV_ALIGN_TOP_LEFT, 57, 18);
 
   ui_prepare_label(subtitle);
   ui_apply_text(subtitle, TextStyle::Title);
-  lv_obj_set_style_text_font(subtitle, &lv_font_montserrat_16, 0);
+  lv_obj_set_style_text_font(subtitle, &lv_font_montserrat_12, 0);
   lv_obj_set_style_text_color(subtitle, lv_color_hex(0x3B82F6), 0);
-  lv_obj_set_width(subtitle, 220);
+  lv_obj_set_width(subtitle, 151);
   lv_obj_set_style_text_align(subtitle, LV_TEXT_ALIGN_CENTER, 0);
   lv_label_set_text(subtitle, "Tap card reader");
-  lv_obj_align(subtitle, LV_ALIGN_TOP_MID, 0, 62);
+  lv_obj_align(subtitle, LV_ALIGN_TOP_LEFT, 30, 47);
 
   ui_prepare_box(card);
   ui_apply_surface(card, SurfaceStyle::PanelSubtle);
-  lv_obj_set_size(card, 188, 150);
-  lv_obj_align(card, LV_ALIGN_TOP_MID, 0, 96);
-  lv_obj_set_style_radius(card, 24, 0);
+  lv_obj_set_size(card, 208, 120);
+  lv_obj_align(card, LV_ALIGN_TOP_LEFT, 6, 75);
+  lv_obj_set_style_radius(card, 28, 0);
   lv_obj_set_style_pad_all(card, 0, 0);
   lv_obj_set_style_bg_color(card, card_bg, 0);
   lv_obj_set_style_border_width(card, 0, 0);
@@ -1364,7 +1315,7 @@ lv_obj_t* NfcShortcutPage::build() {
     nfc_asset_path = nfc_school_card_asset_path();
   }
 
-  if (create_cover_image(card, nfc_asset_path, 188, 150, LV_ALIGN_CENTER, 0, 0) == nullptr) {
+  if (create_cover_image(card, nfc_asset_path, 209, 124, LV_ALIGN_TOP_LEFT, -2, -4) == nullptr) {
     return nullptr;
   }
 
@@ -1403,13 +1354,16 @@ lv_obj_t* HealthShortcutPage::build() {
     const char* value;
     lv_color_t bg;
     bool emphasize;
+    lv_coord_t icon_x;
+    lv_coord_t icon_y;
+    lv_coord_t icon_size;
   };
 
   const std::array<HealthTile, 4> tiles {{
-      {health_heart_asset_path(), "--", lv_color_hex(0x0D1222), false},
-      {health_spo2_asset_path(), "--", lv_color_hex(0xFF4F72), false},
-      {health_breathe_asset_path(), "Breathe", lv_color_hex(0x4DBDFF), true},
-      {health_stress_asset_path(), "--", lv_color_hex(0x0D1222), false},
+      {health_heart_asset_path(), "--", lv_color_hex(0x0D1222), false, 18, 16, 36},
+      {health_spo2_asset_path(), "--", lv_color_hex(0xFF4F72), false, 18, 12, 40},
+      {health_breathe_asset_path(), "Breathe", lv_color_hex(0x4DBDFF), true, 14, 13, 39},
+      {health_stress_asset_path(), "--", lv_color_hex(0x0D1222), false, 18, 16, 44},
   }};
 
   const lv_coord_t tile_w = 106;
@@ -1434,8 +1388,8 @@ lv_obj_t* HealthShortcutPage::build() {
     lv_obj_set_style_bg_color(card, tile.bg, 0);
     lv_obj_set_style_border_width(card, 0, 0);
 
-    const lv_coord_t icon_size = tile.emphasize ? 54 : 44;
-    if (create_contain_image(card, tile.icon_path, icon_size, icon_size, LV_ALIGN_TOP_LEFT, 14, 12) == nullptr) {
+    if (create_contain_image(card, tile.icon_path, tile.icon_size, tile.icon_size, LV_ALIGN_TOP_LEFT, tile.icon_x, tile.icon_y) ==
+        nullptr) {
       return nullptr;
     }
 
@@ -1445,7 +1399,7 @@ lv_obj_t* HealthShortcutPage::build() {
     }
     ui_prepare_label(value);
     ui_apply_text(value, TextStyle::Title);
-    lv_obj_set_style_text_font(value, tile.emphasize ? &lv_font_montserrat_18 : &lv_font_montserrat_16, 0);
+    lv_obj_set_style_text_font(value, tile.emphasize ? &lv_font_montserrat_16 : &lv_font_montserrat_16, 0);
     lv_obj_set_style_text_color(value, tile.emphasize ? lv_color_hex(0xD7FBFF) : lv_color_hex(0xF8FAFC), 0);
     lv_obj_set_width(value, 78);
     lv_label_set_long_mode(value, LV_LABEL_LONG_DOT);

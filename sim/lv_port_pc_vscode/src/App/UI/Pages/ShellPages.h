@@ -2,9 +2,11 @@
 
 #include <array>
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 #include "App/UI/PageBase.h"
+#include "App/UI/Watchface/WatchfaceStyle.h"
 
 namespace twsim::app {
 
@@ -21,21 +23,15 @@ class WatchfacePage : public PageBase {
   lv_obj_t* build() override;
 
  private:
-  static void wreath_timer_cb(lv_timer_t* timer);
   void apply_time(const TimeModel& model);
   void apply_battery(const BatteryModel& model);
-  void advance_wreath_frame();
-  void trigger_wreath_animation();
-
-  lv_obj_t* wreath_image_ {nullptr};
-  lv_obj_t* hour_label_ {nullptr};
   lv_obj_t* minute_label_ {nullptr};
-  lv_obj_t* date_label_ {nullptr};
   lv_obj_t* battery_label_ {nullptr};
   lv_obj_t* status_label_ {nullptr};
-  lv_timer_t* wreath_timer_ {nullptr};
-  std::size_t wreath_frame_index_ {0};
-  std::size_t wreath_frames_remaining_ {0};
+  lv_obj_t* style_stage_ {nullptr};
+  WatchfaceConfig config_ {default_watchface_config()};
+  WatchfaceRenderState render_state_ {};
+  std::unique_ptr<IWatchfaceStyleRenderer> renderer_;
 };
 
 class LauncherPage : public PageBase {
