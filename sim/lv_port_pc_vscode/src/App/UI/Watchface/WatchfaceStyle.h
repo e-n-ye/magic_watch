@@ -18,7 +18,7 @@ struct WatchfaceConfig {
 };
 
 struct WatchfaceRenderState {
-  int hour_digit {-1};
+  std::string hour_text {"--"};
   std::string minute_text {"--"};
   int battery_percent {-1};
   int spread_index {4};

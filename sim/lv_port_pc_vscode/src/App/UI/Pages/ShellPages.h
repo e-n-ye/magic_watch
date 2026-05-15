@@ -25,9 +25,9 @@ class WatchfacePage : public PageBase {
  private:
   void apply_time(const TimeModel& model);
   void apply_battery(const BatteryModel& model);
+  lv_obj_t* battery_icon_label_ {nullptr};
   lv_obj_t* minute_label_ {nullptr};
   lv_obj_t* battery_label_ {nullptr};
-  lv_obj_t* status_label_ {nullptr};
   lv_obj_t* style_stage_ {nullptr};
   WatchfaceConfig config_ {default_watchface_config()};
   WatchfaceRenderState render_state_ {};

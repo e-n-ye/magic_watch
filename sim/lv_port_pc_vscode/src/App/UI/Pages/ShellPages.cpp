@@ -407,14 +407,14 @@ lv_obj_t* WatchfacePage::build() {
   ui_apply_surface(root, SurfaceStyle::Screen);
 
   lv_obj_t* overlay = lv_obj_create(root);
-  lv_obj_t* battery_chip = lv_obj_create(overlay);
-  battery_label_ = lv_label_create(battery_chip);
+  lv_obj_t* battery_row = lv_obj_create(overlay);
+  battery_icon_label_ = lv_label_create(battery_row);
+  battery_label_ = lv_label_create(battery_row);
   style_stage_ = lv_obj_create(overlay);
   minute_label_ = lv_label_create(overlay);
-  status_label_ = lv_label_create(overlay);
 
-  if (overlay == nullptr || battery_chip == nullptr || battery_label_ == nullptr || style_stage_ == nullptr ||
-      minute_label_ == nullptr || status_label_ == nullptr) {
+  if (overlay == nullptr || battery_row == nullptr || battery_icon_label_ == nullptr || battery_label_ == nullptr ||
+      style_stage_ == nullptr || minute_label_ == nullptr) {
     return nullptr;
   }
 
@@ -422,20 +422,28 @@ lv_obj_t* WatchfacePage::build() {
   lv_obj_set_size(overlay, LV_PCT(100), LV_PCT(100));
   lv_obj_center(overlay);
 
-  style_overlay_card(battery_chip, lv_color_hex(0x10192B), LV_OPA_50, 18);
-  lv_obj_set_style_pad_hor(battery_chip, 16, 0);
-  lv_obj_set_style_pad_ver(battery_chip, 6, 0);
-  lv_obj_set_size(battery_chip, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-  lv_obj_align(battery_chip, LV_ALIGN_TOP_MID, 0, 12);
+  ui_prepare_box(battery_row);
+  ui_set_flex_row(battery_row, 0, 2, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+  lv_obj_set_size(battery_row, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+  lv_obj_set_style_bg_opa(battery_row, LV_OPA_TRANSP, 0);
+  lv_obj_set_style_border_width(battery_row, 0, 0);
+  lv_obj_align(battery_row, LV_ALIGN_TOP_MID, 0, 10);
+
+  ui_prepare_label(battery_icon_label_);
+  ui_apply_text(battery_icon_label_, TextStyle::Tiny);
+  lv_obj_set_style_text_font(battery_icon_label_, &lv_font_montserrat_14, 0);
+  lv_obj_set_style_text_color(battery_icon_label_, lv_color_hex(0xF5F7FB), 0);
+  lv_label_set_text(battery_icon_label_, LV_SYMBOL_CHARGE);
+
   ui_prepare_label(battery_label_);
   ui_apply_text(battery_label_, TextStyle::Tiny);
-  lv_obj_set_style_text_color(battery_label_, lv_color_hex(0xD9E4F5), 0);
-  lv_obj_set_style_text_align(battery_label_, LV_TEXT_ALIGN_CENTER, 0);
+  lv_obj_set_style_text_font(battery_label_, &lv_font_montserrat_16, 0);
+  lv_obj_set_style_text_color(battery_label_, lv_color_hex(0xF5F7FB), 0);
   lv_label_set_text(battery_label_, "--%");
 
   ui_prepare_box(style_stage_);
-  lv_obj_set_size(style_stage_, 220, 168);
-  lv_obj_align(style_stage_, LV_ALIGN_CENTER, 0, -2);
+  lv_obj_set_size(style_stage_, 240, 296);
+  lv_obj_align(style_stage_, LV_ALIGN_TOP_LEFT, 0, 0);
   lv_obj_set_style_bg_opa(style_stage_, LV_OPA_TRANSP, 0);
   lv_obj_set_style_border_width(style_stage_, 0, 0);
   lv_obj_set_style_pad_all(style_stage_, 0, 0);
@@ -449,18 +457,10 @@ lv_obj_t* WatchfacePage::build() {
   ui_apply_text(minute_label_, TextStyle::HeroSoft);
   lv_obj_set_style_text_font(minute_label_, &lv_font_montserrat_32, 0);
   lv_obj_set_style_text_color(minute_label_, lv_color_hex(0xD7E3F4), 0);
-  lv_obj_set_width(minute_label_, 180);
+  lv_obj_set_width(minute_label_, 96);
   lv_obj_set_style_text_align(minute_label_, LV_TEXT_ALIGN_CENTER, 0);
-  lv_obj_align(minute_label_, LV_ALIGN_BOTTOM_MID, 0, -28);
+  lv_obj_set_pos(minute_label_, 76, 234);
   lv_label_set_text(minute_label_, "--");
-
-  ui_prepare_label(status_label_);
-  ui_apply_text(status_label_, TextStyle::Tiny);
-  lv_obj_set_style_text_color(status_label_, lv_color_hex(0x7C8CA3), 0);
-  lv_obj_set_width(status_label_, 220);
-  lv_obj_set_style_text_align(status_label_, LV_TEXT_ALIGN_CENTER, 0);
-  lv_obj_align(status_label_, LV_ALIGN_BOTTOM_MID, 0, -12);
-  lv_label_set_text(status_label_, "");
 
   track(data_center_.subscribe(EventId::TimeUpdated,
                                [this](const Event& event) {
@@ -509,26 +509,25 @@ lv_obj_t* WatchfacePage::build() {
 }
 
 void WatchfacePage::apply_time(const TimeModel& model) {
-  if (minute_label_ == nullptr || renderer_ == nullptr || status_label_ == nullptr) {
+  if (minute_label_ == nullptr || renderer_ == nullptr) {
     return;
   }
 
   if (!model.valid) {
     lv_label_set_text(minute_label_, "--");
-    lv_label_set_text(status_label_, "Waiting for RTC");
-    render_state_.hour_digit = -1;
+    render_state_.hour_text = "--";
     render_state_.minute_text = "--";
     render_state_.spread_index = config_.spread_index;
     renderer_->apply(render_state_);
     return;
   }
 
+  char hour_buffer[4] = {};
   char minute_buffer[4] = {};
+  std::snprintf(hour_buffer, sizeof(hour_buffer), "%02u", static_cast<unsigned>(model.hour));
   std::snprintf(minute_buffer, sizeof(minute_buffer), "%02u", static_cast<unsigned>(model.minute));
   lv_label_set_text(minute_label_, minute_buffer);
-  lv_label_set_text(status_label_,
-                    config_.style_id == WatchfaceStyleId::Diffusion ? "" : "Reserved style placeholder");
-  render_state_.hour_digit = static_cast<int>(model.hour % 10);
+  render_state_.hour_text = hour_buffer;
   render_state_.minute_text = minute_buffer;
   render_state_.spread_index = config_.spread_index;
   renderer_->apply(render_state_);

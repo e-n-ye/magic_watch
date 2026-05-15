@@ -23,9 +23,9 @@ body {
 
 .workspace {
   display: grid;
-  grid-template-columns: minmax(320px, 396px) minmax(420px, 1fr);
+  grid-template-columns: minmax(360px, 440px) minmax(420px, 1fr);
   gap: 28px;
-  max-width: 1440px;
+  max-width: 1500px;
   margin: 0 auto;
   padding: 32px;
 }
@@ -46,6 +46,13 @@ body {
 
 .panel-block {
   padding: 18px;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .eyebrow,
@@ -74,6 +81,14 @@ h1 {
   line-height: 1.5;
 }
 
+.status-pill {
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(26, 42, 61, 0.86);
+  color: #cbe2ff;
+  font-size: 12px;
+}
+
 .button-row {
   display: flex;
   flex-wrap: wrap;
@@ -81,9 +96,8 @@ h1 {
   margin-top: 10px;
 }
 
-.preset-button,
-.digit-button {
-  min-width: 52px;
+.preset-button {
+  min-width: 116px;
   padding: 10px 14px;
   border: 1px solid rgba(140, 169, 209, 0.18);
   border-radius: 999px;
@@ -92,14 +106,37 @@ h1 {
   cursor: pointer;
 }
 
-.preset-button.is-active,
-.digit-button.is-active {
+.preset-button.is-active {
   border-color: rgba(136, 204, 255, 0.4);
   background: #14314f;
 }
 
-.digit-row {
-  gap: 8px;
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.field-grid label,
+.range-grid label {
+  display: grid;
+  gap: 6px;
+  color: #d8e4f3;
+  font-size: 14px;
+}
+
+.field-grid input,
+.range-grid input {
+  width: 100%;
+}
+
+.field-grid input {
+  padding: 10px 12px;
+  border: 1px solid rgba(140, 169, 209, 0.18);
+  border-radius: 8px;
+  background: #08111d;
+  color: #d9e6f6;
 }
 
 .slider-row {
@@ -110,42 +147,27 @@ h1 {
   margin-top: 10px;
 }
 
-.slider-row input[type="range"] {
-  width: 100%;
-}
-
 .slider-value {
   min-width: 24px;
   text-align: center;
   color: #d9e6f6;
 }
 
-.field-grid {
+.range-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 14px 16px;
   margin-top: 10px;
 }
 
-.field-grid label {
-  display: grid;
-  gap: 6px;
-  color: #d8e4f3;
-  font-size: 14px;
-}
-
-.field-grid input {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid rgba(140, 169, 209, 0.18);
-  border-radius: 8px;
-  background: #08111d;
-  color: #d9e6f6;
+.range-grid output {
+  color: #8fb0d8;
+  font-size: 12px;
 }
 
 .spec-export {
   width: 100%;
-  min-height: 280px;
+  min-height: 320px;
   margin-top: 10px;
   padding: 12px;
   border: 1px solid rgba(140, 169, 209, 0.18);
@@ -160,7 +182,7 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 760px;
+  min-height: 780px;
   padding: 24px;
 }
 
@@ -183,88 +205,160 @@ h1 {
     calc(var(--safe-inset-bottom) * 1px);
   border-radius: 28px;
   background:
-    linear-gradient(180deg, rgba(24, 38, 70, 0.42), transparent 26%),
-    radial-gradient(circle at center, rgba(59, 130, 246, 0.1), transparent 54%),
+    linear-gradient(180deg, rgba(13, 24, 43, 0.42), transparent 26%),
+    radial-gradient(circle at center, rgba(59, 130, 246, 0.10), transparent 54%),
     #030711;
   overflow: hidden;
   transform: scale(var(--preview-scale));
   transform-origin: center;
 }
 
-.battery-chip,
+.editable-node {
+  position: absolute;
+  user-select: none;
+  touch-action: none;
+}
+
+.watch-screen.edit-mode .editable-node {
+  outline: 1px dashed rgba(108, 197, 255, 0.55);
+}
+
+.watch-screen.edit-mode .editable-node:hover {
+  outline-color: rgba(108, 197, 255, 0.9);
+}
+
+.editable-node.dragging,
+.editable-node.resizing {
+  outline: 2px solid rgba(122, 216, 255, 0.95);
+}
+
+.edit-handle {
+  display: none;
+}
+
+.watch-screen.edit-mode .edit-handle {
+  display: block;
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: #7ad8ff;
+  box-shadow: 0 0 0 2px rgba(3, 7, 17, 0.8);
+  z-index: 50;
+  cursor: nwse-resize;
+}
+
+.battery-row,
 .hour-stage,
-.minute-label,
-.status-pill,
-.hour-empty,
-.hour-slice,
-.hour-core {
+.minute-label {
   position: absolute;
 }
 
-.battery-chip {
+.battery-row {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 18px;
-  background: rgba(16, 25, 43, 0.52);
-  border: 1px solid rgba(175, 196, 228, 0.12);
-  color: #d9e4f5;
+  color: rgba(245, 247, 251, 0.96);
   white-space: nowrap;
 }
 
+.battery-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  color: rgba(245, 247, 251, 0.96);
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.10);
+}
+
+.battery-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .hour-stage {
-  inset: 0;
+  overflow: visible;
 }
 
 .hour-empty {
+  position: absolute;
+  inset: 0;
   display: none;
+  align-items: center;
+  justify-content: center;
   color: #64748b;
   font-size: 52px;
   line-height: 1;
-  text-align: center;
 }
 
-.hour-slice {
-  overflow: hidden;
+.digit-group {
+  position: absolute;
+  overflow: visible;
 }
 
 .hour-core,
 .hour-slice {
+  position: absolute;
+  top: 0;
+  height: 100%;
   pointer-events: none;
+}
+
+.hour-core {
+  left: 0;
+  width: 100%;
+  z-index: 1;
+}
+
+.hour-slice {
+  overflow: hidden;
+  z-index: 2;
+}
+
+.slice-left-inner,
+.slice-right-inner {
+  z-index: 3;
 }
 
 .digit-image {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: fill;
 }
 
 .digit-core-image {
-  filter: drop-shadow(0 0 18px rgba(184, 214, 255, 0.18));
+  filter:
+    brightness(1.02)
+    drop-shadow(0 0 22px rgba(176, 214, 255, 0.26));
 }
 
 .digit-blur-inner {
-  filter: blur(2px);
+  filter:
+    blur(1px)
+    brightness(0.90);
 }
 
 .digit-blur-outer {
-  filter: blur(6px);
+  filter:
+    blur(2px)
+    brightness(0.74);
 }
 
 .minute-label {
   color: #d7e3f4;
-  line-height: 0.96;
   text-align: center;
   white-space: nowrap;
 }
 
-.status-pill {
-  left: 50%;
-  bottom: 12px;
-  transform: translateX(-50%);
-  color: #8ea1b7;
-  font-size: 11px;
-  white-space: nowrap;
+.node-text {
+  display: inline-block;
+  width: 100%;
+  line-height: 1;
 }
