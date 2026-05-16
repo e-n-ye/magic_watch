@@ -14,6 +14,7 @@ enum class EventId {
   TimeUpdated,
   BatteryChanged,
   MotionUpdated,
+  DisplayPolicyChanged,
   NotificationsChanged,
   NotificationToastRequested,
   NotificationWakeRequested,
@@ -64,8 +65,17 @@ struct NotificationItem {
 
 struct NotificationCenterModel {
   std::vector<NotificationItem> items;
-  bool wake_on_notification {true};
   std::optional<std::string> active_toast_notification_id;
+};
+
+struct DisplayPolicyModel {
+  bool crown_press_wake_enabled {true};
+  bool notification_wake_enabled {true};
+  bool raise_to_wake_enabled {true};
+  bool tap_to_wake_enabled {false};
+  bool always_on_display_enabled {false};
+  bool auto_screen_off_enabled {true};
+  std::uint32_t screen_off_timeout_ms {5000};
 };
 
 struct ShellPreviewModel {
@@ -97,8 +107,8 @@ struct NavigationCommand {
 };
 
 enum class InputAction {
-  MainButtonShortPress,
-  MainButtonLongPress,
+  DebugToggleScreenOff,
+  DebugOpenPowerMenu,
   CrownPress,
   CrownRotateCW,
   CrownRotateCCW,
@@ -120,7 +130,7 @@ enum class InputAction {
 };
 
 struct InputCommand {
-  InputAction action {InputAction::MainButtonShortPress};
+  InputAction action {InputAction::DebugToggleScreenOff};
   std::int16_t value {0};
   std::int16_t x {0};
   std::int16_t y {0};
@@ -131,6 +141,7 @@ using EventPayload =
                  TimeModel,
                  BatteryModel,
                  MotionModel,
+                 DisplayPolicyModel,
                  NotificationItem,
                  NotificationCenterModel,
                  ShellPreviewModel,

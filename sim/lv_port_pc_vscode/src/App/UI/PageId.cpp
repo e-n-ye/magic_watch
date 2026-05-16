@@ -46,6 +46,8 @@ const char* page_name(PageId page_id) {
       return "SettingsHome";
     case PageId::SettingDisplay:
       return "SettingDisplay";
+    case PageId::SettingAppLayout:
+      return "SettingAppLayout";
     case PageId::SettingTimeDate:
       return "SettingTimeDate";
     case PageId::SettingSound:
@@ -60,6 +62,24 @@ const char* page_name(PageId page_id) {
       return "SettingDeveloper";
     case PageId::SettingVersion:
       return "SettingVersion";
+    case PageId::AppHeartRate:
+      return "AppHeartRate";
+    case PageId::AppBloodOxygen:
+      return "AppBloodOxygen";
+    case PageId::AppBreathing:
+      return "AppBreathing";
+    case PageId::AppStress:
+      return "AppStress";
+    case PageId::AppSleep:
+      return "AppSleep";
+    case PageId::AppWeather:
+      return "AppWeather";
+    case PageId::AppNfc:
+      return "AppNfc";
+    case PageId::AppAlipay:
+      return "AppAlipay";
+    case PageId::AppWeChatPay:
+      return "AppWeChatPay";
     case PageId::TimingToolsHome:
       return "TimingToolsHome";
     case PageId::Stopwatch:

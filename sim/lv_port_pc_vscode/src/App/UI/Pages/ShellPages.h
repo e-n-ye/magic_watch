@@ -41,6 +41,7 @@ class LauncherPage : public PageBase {
 
   PageId id() const override;
   const char* name() const override;
+  void on_will_appear() override;
 
  protected:
   lv_obj_t* build() override;
@@ -49,7 +50,10 @@ class LauncherPage : public PageBase {
   struct Item {
     const char* label;
     NavigationCommand command;
-    const char* detail;
+    const char* icon_text;
+    const char* icon_asset;
+    lv_color_t icon_bg;
+    lv_color_t icon_fg;
   };
 
   static void back_event_cb(lv_event_t* event);
@@ -254,7 +258,7 @@ class QuickSettingsPage : public PageBase {
   static void toggle_long_press_event_cb(lv_event_t* event);
 
   void bind_input();
-  void bind_notifications();
+  void bind_display_policy();
   void bind_backdrop();
   void refresh_backdrop();
   void apply_backdrop_time(const TimeModel& model);
@@ -289,7 +293,7 @@ class QuickSettingsPage : public PageBase {
       {"设置界面", LV_SYMBOL_SETTINGS, ToggleKind::OpenSettings, PageId::SettingsHome, 0, nullptr, nullptr},
       {"手电筒", LV_SYMBOL_CHARGE, ToggleKind::Flashlight, PageId::SettingDisplay, 0, nullptr, nullptr},
       {"寻找手机", LV_SYMBOL_CALL, ToggleKind::FindPhone, PageId::SettingBluetooth, 0, nullptr, nullptr},
-      {"自动排水", LV_SYMBOL_REFRESH, ToggleKind::Drain, PageId::SettingBattery, 0, nullptr, nullptr},
+      {"通知亮屏", LV_SYMBOL_REFRESH, ToggleKind::NotifyWake, PageId::SettingDisplay, 1, nullptr, nullptr},
       {"长续航模式", LV_SYMBOL_BATTERY_FULL, ToggleKind::LongBattery, PageId::SettingBattery, 0, nullptr, nullptr},
       {"持续亮屏5分钟", LV_SYMBOL_EYE_CLOSE, ToggleKind::AodFiveMinutes, PageId::SettingDisplay, 0, nullptr, nullptr},
   }};

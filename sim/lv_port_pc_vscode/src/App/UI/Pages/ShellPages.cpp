@@ -11,6 +11,8 @@
 #include <array>
 #include <filesystem>
 #include <string>
+#include <unordered_map>
+#include <utility>
 
 namespace twsim::app {
 
@@ -33,6 +35,92 @@ constexpr lv_coord_t kQuickSettingsOpenCommitThreshold = 148;
 constexpr lv_coord_t kQuickSettingsSheetY = 46;
 constexpr lv_coord_t kQuickSettingsSheetWidth = 228;
 constexpr lv_coord_t kQuickSettingsSheetHeight = 228;
+constexpr lv_coord_t kLauncherTileSize = 71;
+constexpr lv_coord_t kLauncherIconSize = 60;
+constexpr lv_coord_t kLauncherPadTop = 10;
+constexpr lv_coord_t kLauncherPadBottom = 10;
+constexpr lv_coord_t kLauncherRowGap = 4;
+constexpr lv_coord_t kLauncherColumnGap = 2;
+constexpr lv_coord_t kClickDragThreshold = 12;
+
+struct ClickGestureState {
+  lv_point_t press_point {0, 0};
+  bool moved {false};
+};
+
+std::unordered_map<lv_obj_t*, ClickGestureState>& click_gesture_states() {
+  static std::unordered_map<lv_obj_t*, ClickGestureState> states;
+  return states;
+}
+
+void click_guard_event_cb(lv_event_t* event) {
+  lv_obj_t* target = lv_event_get_current_target_obj(event);
+  if (target == nullptr) {
+    return;
+  }
+
+  auto& states = click_gesture_states();
+  switch (lv_event_get_code(event)) {
+    case LV_EVENT_PRESSED: {
+      lv_point_t point {0, 0};
+      if (lv_indev_t* indev = lv_event_get_indev(event)) {
+        lv_indev_get_point(indev, &point);
+      }
+      states[target] = {point, false};
+      break;
+    }
+    case LV_EVENT_PRESSING: {
+      auto it = states.find(target);
+      if (it == states.end()) {
+        break;
+      }
+      lv_point_t point {0, 0};
+      if (lv_indev_t* indev = lv_event_get_indev(event)) {
+        lv_indev_get_point(indev, &point);
+      }
+      const lv_coord_t dx = point.x - it->second.press_point.x;
+      const lv_coord_t dy = point.y - it->second.press_point.y;
+      if (LV_ABS(dx) >= kClickDragThreshold || LV_ABS(dy) >= kClickDragThreshold) {
+        it->second.moved = true;
+      }
+      break;
+    }
+    case LV_EVENT_PRESS_LOST: {
+      auto it = states.find(target);
+      if (it != states.end()) {
+        it->second.moved = true;
+      }
+      break;
+    }
+    default:
+      break;
+  }
+}
+
+void attach_click_guard(lv_obj_t* object) {
+  if (object == nullptr) {
+    return;
+  }
+  lv_obj_add_event_cb(object, click_guard_event_cb, LV_EVENT_PRESSED, nullptr);
+  lv_obj_add_event_cb(object, click_guard_event_cb, LV_EVENT_PRESSING, nullptr);
+  lv_obj_add_event_cb(object, click_guard_event_cb, LV_EVENT_PRESS_LOST, nullptr);
+}
+
+bool click_guard_allows(lv_obj_t* object) {
+  if (object == nullptr) {
+    return false;
+  }
+
+  auto& states = click_gesture_states();
+  const auto it = states.find(object);
+  if (it == states.end()) {
+    return true;
+  }
+
+  const bool allows = !it->second.moved;
+  states.erase(it);
+  return allows;
+}
 
 void style_root(lv_obj_t* root, std::uint32_t color) {
   lv_obj_remove_flag(root, LV_OBJ_FLAG_SCROLLABLE);
@@ -226,6 +314,10 @@ const char* payment_wechat_green_asset_path() {
   return path.empty() ? nullptr : path.c_str();
 }
 
+const char* preferred_wechat_icon_asset_path() {
+  return payment_wechat_green_asset_path() != nullptr ? payment_wechat_green_asset_path() : payment_wechat_asset_path();
+}
+
 const char* health_heart_asset_path() {
   static const std::string path = resolve_lvgl_asset_path("assets/generated_icons/health_heart.png");
   return path.empty() ? nullptr : path.c_str();
@@ -254,6 +346,34 @@ const char* nfc_school_card_asset_path() {
 const char* nfc_school_card_inner_asset_path() {
   static const std::string path = resolve_lvgl_asset_path("assets/generated_icons/nfc_school_card_inner.png");
   return path.empty() ? nullptr : path.c_str();
+}
+
+struct AppVisualSpec {
+  PageId target;
+  const char* label;
+  const char* icon_text;
+  const char* icon_asset_path;
+  std::uint32_t icon_bg;
+  std::uint32_t icon_fg;
+};
+
+const AppVisualSpec* find_app_visual_spec(PageId target) {
+  static const std::array<AppVisualSpec, 11> specs {{
+      {PageId::SettingsHome, "Settings", LV_SYMBOL_SETTINGS, nullptr, 0x201C22, 0xC7CED8},
+      {PageId::AppWeather, "Weather", nullptr, weather_icon_asset_path(), 0x1FA3E5, 0xF8FAFC},
+      {PageId::Pedometer, "Steps", nullptr, steps_icon_asset_path(), 0x2A5A2E, 0xF8FAFC},
+      {PageId::AppHeartRate, "Heart", nullptr, health_heart_asset_path(), 0xFAFAFA, 0x0F172A},
+      {PageId::AppBloodOxygen, "SpO2", nullptr, health_spo2_asset_path(), 0x26D9D6, 0xF8FAFC},
+      {PageId::AppSleep, "Sleep", nullptr, sleep_icon_asset_path(), 0x9162C0, 0xF8FAFC},
+      {PageId::AppStress, "Stress", nullptr, health_stress_asset_path(), 0x23433A, 0xF8FAFC},
+      {PageId::AppBreathing, "Breathe", nullptr, health_breathe_asset_path(), 0x8F8F8F, 0xF8FAFC},
+      {PageId::AppNfc, "NFC", "CARD", nullptr, 0x8E9B50, 0xF8FAFC},
+      {PageId::AppAlipay, "Alipay", nullptr, payment_alipay_asset_path(), 0x008CFF, 0xF8FAFC},
+      {PageId::AppWeChatPay, "WeChat", nullptr, preferred_wechat_icon_asset_path(), 0xEBEBEB, 0x0F172A},
+  }};
+
+  const auto it = std::find_if(specs.begin(), specs.end(), [target](const AppVisualSpec& spec) { return spec.target == target; });
+  return it != specs.end() ? &(*it) : nullptr;
 }
 
 bool file_exists(const char* path) {
@@ -434,6 +554,87 @@ lv_obj_t* create_cover_image(lv_obj_t* parent,
   return image;
 }
 
+lv_obj_t* create_app_round_icon(lv_obj_t* parent, const AppVisualSpec& spec, lv_coord_t size) {
+  lv_obj_t* icon_root = lv_obj_create(parent);
+  if (icon_root == nullptr) {
+    return nullptr;
+  }
+
+  ui_prepare_box(icon_root);
+  lv_obj_set_size(icon_root, size, size);
+  lv_obj_set_style_radius(icon_root, LV_RADIUS_CIRCLE, 0);
+  lv_obj_set_style_bg_color(icon_root, lv_color_hex(spec.icon_bg), 0);
+  lv_obj_set_style_bg_opa(icon_root, LV_OPA_COVER, 0);
+  lv_obj_set_style_border_width(icon_root, 0, 0);
+  lv_obj_remove_flag(icon_root, LV_OBJ_FLAG_SCROLLABLE);
+  lv_obj_remove_flag(icon_root, LV_OBJ_FLAG_CLICKABLE);
+
+  const char* asset_path = spec.icon_asset_path;
+  if (file_exists(asset_path)) {
+    lv_obj_t* image = lv_image_create(icon_root);
+    if (image == nullptr) {
+      return nullptr;
+    }
+    const lv_coord_t image_size = static_cast<lv_coord_t>(size - 12);
+    lv_obj_set_size(image, image_size, image_size);
+    lv_image_set_inner_align(image, LV_IMAGE_ALIGN_CONTAIN);
+    lv_image_set_src(image, asset_path);
+    lv_obj_remove_flag(image, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_center(image);
+    return icon_root;
+  }
+
+  if (spec.target == PageId::AppNfc) {
+    lv_obj_t* wallet_body = lv_obj_create(icon_root);
+    lv_obj_t* wallet_flap = lv_obj_create(icon_root);
+    lv_obj_t* wallet_slot = lv_obj_create(icon_root);
+    if (wallet_body == nullptr || wallet_flap == nullptr || wallet_slot == nullptr) {
+      return nullptr;
+    }
+
+    for (lv_obj_t* part : {wallet_body, wallet_flap, wallet_slot}) {
+      ui_prepare_box(part);
+      lv_obj_set_style_border_width(part, 0, 0);
+      lv_obj_remove_flag(part, LV_OBJ_FLAG_CLICKABLE);
+    }
+
+    lv_obj_set_size(wallet_body, 32, 22);
+    lv_obj_set_style_bg_color(wallet_body, lv_color_hex(0xF8FAFC), 0);
+    lv_obj_set_style_bg_opa(wallet_body, LV_OPA_COVER, 0);
+    lv_obj_set_style_radius(wallet_body, 6, 0);
+    lv_obj_align(wallet_body, LV_ALIGN_CENTER, 0, 4);
+
+    lv_obj_set_size(wallet_flap, 30, 8);
+    lv_obj_set_style_bg_color(wallet_flap, lv_color_hex(0xFDE68A), 0);
+    lv_obj_set_style_bg_opa(wallet_flap, LV_OPA_COVER, 0);
+    lv_obj_set_style_radius(wallet_flap, 4, 0);
+    lv_obj_align(wallet_flap, LV_ALIGN_CENTER, 0, -6);
+
+    lv_obj_set_size(wallet_slot, 8, 3);
+    lv_obj_set_style_bg_color(wallet_slot, lv_color_hex(0x93C5FD), 0);
+    lv_obj_set_style_bg_opa(wallet_slot, LV_OPA_COVER, 0);
+    lv_obj_set_style_radius(wallet_slot, 2, 0);
+    lv_obj_align(wallet_slot, LV_ALIGN_CENTER, 6, 4);
+    return icon_root;
+  }
+
+  lv_obj_t* label = lv_label_create(icon_root);
+  if (label == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_label(label);
+  ui_apply_text(label, TextStyle::Title);
+  lv_obj_set_style_text_font(label,
+                             std::strlen(spec.icon_text == nullptr ? "" : spec.icon_text) > 1 ? &lv_font_montserrat_14
+                                                                                               : &lv_font_montserrat_18,
+                             0);
+  lv_obj_set_style_text_color(label, lv_color_hex(spec.icon_fg), 0);
+  lv_label_set_text(label, spec.icon_text == nullptr ? "?" : spec.icon_text);
+  lv_obj_remove_flag(label, LV_OBJ_FLAG_CLICKABLE);
+  lv_obj_center(label);
+  return icon_root;
+}
+
 }  // namespace
 
 WatchfacePage::WatchfacePage(DataCenter& data_center) : PageBase(data_center) {}
@@ -610,16 +811,33 @@ void WatchfacePage::apply_battery(const BatteryModel& model) {
 }
 
 LauncherPage::LauncherPage(DataCenter& data_center) : PageBase(data_center) {
-  items_ = {
-      {"Settings", {NavigationAction::LaunchApp, PageId::SettingsHome}, "Scroll prototype and system settings"},
-      {"Display", {NavigationAction::LaunchApp, PageId::SettingDisplay}, "Brightness and wake policy shell"},
-      {"Sound", {NavigationAction::LaunchApp, PageId::SettingSound}, "Sound and vibration shell"},
-      {"Battery", {NavigationAction::LaunchApp, PageId::SettingBattery}, "Power and charging shell"},
-      {"Bluetooth", {NavigationAction::LaunchApp, PageId::SettingBluetooth}, "Nearby devices shell"},
-      {"Wi-Fi", {NavigationAction::LaunchApp, PageId::SettingWifi}, "Wireless connectivity shell"},
-      {"Version", {NavigationAction::LaunchApp, PageId::SettingVersion}, "Build information"},
-      {"Developer", {NavigationAction::LaunchApp, PageId::SettingDeveloper}, "Diagnostics and logs shell"},
-  };
+  const std::array<PageId, 11> launcher_targets {{
+      PageId::SettingsHome,
+      PageId::AppWeather,
+      PageId::Pedometer,
+      PageId::AppHeartRate,
+      PageId::AppBloodOxygen,
+      PageId::AppSleep,
+      PageId::AppStress,
+      PageId::AppBreathing,
+      PageId::AppNfc,
+      PageId::AppAlipay,
+      PageId::AppWeChatPay,
+  }};
+
+  items_.reserve(launcher_targets.size());
+  for (PageId target : launcher_targets) {
+    const AppVisualSpec* spec = find_app_visual_spec(target);
+    if (spec == nullptr) {
+      continue;
+    }
+    items_.push_back({spec->label,
+                      {NavigationAction::LaunchApp, target},
+                      spec->icon_text,
+                      spec->icon_asset_path,
+                      lv_color_hex(spec->icon_bg),
+                      lv_color_hex(spec->icon_fg)});
+  }
 }
 
 PageId LauncherPage::id() const {
@@ -630,76 +848,93 @@ const char* LauncherPage::name() const {
   return "Launcher";
 }
 
+void LauncherPage::on_will_appear() {
+  if (list_root_ != nullptr) {
+    lv_obj_update_layout(list_root_);
+    lv_obj_scroll_to_y(list_root_, 0, LV_ANIM_OFF);
+  }
+}
+
 lv_obj_t* LauncherPage::build() {
   lv_obj_t* root = lv_obj_create(nullptr);
   if (root == nullptr) {
     return nullptr;
   }
-  style_root(root, 0x041119);
+  style_root(root, 0x02070D);
 
-  lv_obj_t* title = lv_label_create(root);
+  const lv_coord_t screen_w = static_cast<lv_coord_t>(lv_display_get_horizontal_resolution(nullptr));
+  const lv_coord_t screen_h = static_cast<lv_coord_t>(lv_display_get_vertical_resolution(nullptr));
+
   list_root_ = lv_obj_create(root);
-  lv_obj_t* subtitle = lv_label_create(root);
-  lv_obj_t* close = create_close_chip(root, "Home", &LauncherPage::back_event_cb, this);
-  if (title == nullptr || subtitle == nullptr || list_root_ == nullptr || close == nullptr) {
+  if (list_root_ == nullptr) {
     return nullptr;
   }
 
-  lv_label_set_text(title, "Launcher");
-  lv_obj_set_style_text_font(title, &lv_font_montserrat_18, 0);
-  lv_obj_set_style_text_color(title, lv_color_hex(0xFFFFFF), 0);
-  lv_obj_align(title, LV_ALIGN_TOP_LEFT, 14, 16);
-
-  lv_obj_align(close, LV_ALIGN_TOP_LEFT, 10, 10);
-  lv_label_set_text(subtitle, "Flow list prototype, drag or rotate crown");
-  lv_obj_set_style_text_font(subtitle, &lv_font_montserrat_12, 0);
-  lv_obj_set_style_text_color(subtitle, lv_color_hex(0x94A3B8), 0);
-  lv_obj_align_to(subtitle, title, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 4);
-
-  lv_obj_set_size(list_root_, 220, 164);
-  lv_obj_align(list_root_, LV_ALIGN_BOTTOM_MID, 0, -8);
-  lv_obj_set_flex_flow(list_root_, LV_FLEX_FLOW_COLUMN);
+  lv_obj_set_size(list_root_, screen_w, screen_h);
+  lv_obj_align(list_root_, LV_ALIGN_TOP_MID, 0, 0);
+  lv_obj_set_flex_flow(list_root_, LV_FLEX_FLOW_ROW_WRAP);
   lv_obj_set_scroll_dir(list_root_, LV_DIR_VER);
   lv_obj_set_scrollbar_mode(list_root_, LV_SCROLLBAR_MODE_OFF);
   lv_obj_add_flag(list_root_, LV_OBJ_FLAG_SCROLL_ELASTIC);
   lv_obj_add_flag(list_root_, LV_OBJ_FLAG_SCROLL_MOMENTUM);
-  lv_obj_set_style_pad_all(list_root_, 8, 0);
-  lv_obj_set_style_pad_row(list_root_, 8, 0);
-  lv_obj_set_style_bg_color(list_root_, lv_color_hex(0x0F172A), 0);
-  lv_obj_set_style_bg_opa(list_root_, LV_OPA_COVER, 0);
-  lv_obj_set_style_border_width(list_root_, 1, 0);
-  lv_obj_set_style_border_color(list_root_, lv_color_hex(0x1E293B), 0);
-  lv_obj_set_style_radius(list_root_, 18, 0);
+  lv_obj_set_flex_align(list_root_, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
+  lv_obj_set_style_pad_top(list_root_, kLauncherPadTop, 0);
+  lv_obj_set_style_pad_bottom(list_root_, kLauncherPadBottom, 0);
+  lv_obj_set_style_pad_left(list_root_, 0, 0);
+  lv_obj_set_style_pad_right(list_root_, 0, 0);
+  lv_obj_set_style_pad_row(list_root_, kLauncherRowGap, 0);
+  lv_obj_set_style_pad_column(list_root_, kLauncherColumnGap, 0);
+  lv_obj_set_style_bg_opa(list_root_, LV_OPA_TRANSP, 0);
+  lv_obj_set_style_border_width(list_root_, 0, 0);
+  lv_obj_set_style_radius(list_root_, 0, 0);
 
   for (std::size_t index = 0; index < items_.size(); ++index) {
-    lv_obj_t* button = lv_button_create(list_root_);
-    if (button == nullptr) {
+    lv_obj_t* tile = lv_button_create(list_root_);
+    if (tile == nullptr) {
       return nullptr;
     }
-    lv_obj_set_width(button, LV_PCT(100));
-    lv_obj_set_height(button, 52);
-    lv_obj_set_style_bg_color(button, lv_color_hex(0x132033), 0);
-    lv_obj_set_style_bg_opa(button, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(button, 0, 0);
-    lv_obj_set_style_radius(button, 16, 0);
-    lv_obj_add_event_cb(button, &LauncherPage::item_event_cb, LV_EVENT_CLICKED, this);
-    lv_obj_set_user_data(button, reinterpret_cast<void*>(static_cast<std::uintptr_t>(index)));
+    ui_prepare_box(tile);
+    ui_set_touch_target(tile, 8);
+    lv_obj_set_size(tile, kLauncherTileSize, kLauncherTileSize);
+    lv_obj_set_style_bg_opa(tile, LV_OPA_TRANSP, 0);
+    lv_obj_set_style_border_width(tile, 0, 0);
+    lv_obj_set_style_shadow_width(tile, 0, 0);
+    lv_obj_set_style_pad_all(tile, 0, 0);
+    attach_click_guard(tile);
+    lv_obj_add_event_cb(tile, &LauncherPage::item_event_cb, LV_EVENT_CLICKED, this);
+    lv_obj_set_user_data(tile, reinterpret_cast<void*>(static_cast<std::uintptr_t>(index)));
 
-    lv_obj_t* label = lv_label_create(button);
-    lv_obj_t* detail = lv_label_create(button);
-    if (label == nullptr || detail == nullptr) {
+    const Item& item = items_[index];
+    const AppVisualSpec render_spec {
+        item.command.target,
+        item.label,
+        item.icon_text,
+        item.icon_asset,
+        lv_color_to_u32(item.icon_bg),
+        lv_color_to_u32(item.icon_fg),
+    };
+    lv_obj_t* icon = create_app_round_icon(tile, render_spec, kLauncherIconSize);
+    if (icon == nullptr) {
       return nullptr;
     }
+    lv_obj_align(icon, LV_ALIGN_CENTER, 0, 0);
+  }
 
-    lv_label_set_text(label, items_[index].label);
-    lv_obj_set_style_text_font(label, &lv_font_montserrat_14, 0);
-    lv_obj_set_style_text_color(label, lv_color_hex(0xFFFFFF), 0);
-    lv_obj_align(label, LV_ALIGN_LEFT_MID, 12, -8);
-
-    lv_label_set_text(detail, items_[index].detail);
-    lv_obj_set_style_text_font(detail, &lv_font_montserrat_12, 0);
-    lv_obj_set_style_text_color(detail, lv_color_hex(0x93C5FD), 0);
-    lv_obj_align(detail, LV_ALIGN_LEFT_MID, 12, 10);
+  const std::size_t remainder = items_.size() % 3U;
+  if (remainder != 0U) {
+    const std::size_t filler_count = 3U - remainder;
+    for (std::size_t filler_index = 0; filler_index < filler_count; ++filler_index) {
+      lv_obj_t* filler = lv_obj_create(list_root_);
+      if (filler == nullptr) {
+        return nullptr;
+      }
+      lv_obj_set_size(filler, kLauncherTileSize, kLauncherTileSize);
+      lv_obj_set_style_bg_opa(filler, LV_OPA_TRANSP, 0);
+      lv_obj_set_style_border_width(filler, 0, 0);
+      lv_obj_set_style_pad_all(filler, 0, 0);
+      lv_obj_remove_flag(filler, LV_OBJ_FLAG_CLICKABLE);
+      lv_obj_remove_flag(filler, LV_OBJ_FLAG_SCROLLABLE);
+    }
   }
 
   bind_input();
@@ -896,6 +1131,19 @@ const char* WeatherShortcutPage::name() const {
 }
 
 lv_obj_t* WeatherShortcutPage::build() {
+  const auto app_tile_event_cb = [](lv_event_t* event) {
+    auto* self = static_cast<WeatherShortcutPage*>(lv_event_get_user_data(event));
+    if (self == nullptr || self->should_ignore_click()) {
+      return;
+    }
+    lv_obj_t* target = lv_event_get_target_obj(event);
+    if (target == nullptr || !click_guard_allows(target)) {
+      return;
+    }
+    const auto raw = reinterpret_cast<std::uintptr_t>(lv_obj_get_user_data(target));
+    self->request_navigation({NavigationAction::Push, static_cast<PageId>(raw)});
+  };
+
   lv_obj_t* root = lv_obj_create(nullptr);
   if (root == nullptr) {
     return nullptr;
@@ -1006,6 +1254,13 @@ lv_obj_t* WeatherShortcutPage::build() {
   } else {
     lv_obj_add_flag(weather_icon_image, LV_OBJ_FLAG_HIDDEN);
   }
+
+  lv_obj_add_event_cb(hero_card,
+                      app_tile_event_cb,
+                      LV_EVENT_CLICKED,
+                      this);
+  attach_click_guard(hero_card);
+  lv_obj_set_user_data(hero_card, reinterpret_cast<void*>(static_cast<std::uintptr_t>(PageId::AppWeather)));
 
   ui_prepare_box(icon_sun);
   lv_obj_set_size(icon_sun, hero_icon_size, hero_icon_size);
@@ -1152,6 +1407,13 @@ lv_obj_t* WeatherShortcutPage::build() {
     return nullptr;
   }
 
+  for (auto [card, target] : {std::pair<lv_obj_t*, PageId> {sleep_card, PageId::AppSleep},
+                              std::pair<lv_obj_t*, PageId> {steps_card, PageId::Pedometer}}) {
+    attach_click_guard(card);
+    lv_obj_add_event_cb(card, app_tile_event_cb, LV_EVENT_CLICKED, this);
+    lv_obj_set_user_data(card, reinterpret_cast<void*>(static_cast<std::uintptr_t>(target)));
+  }
+
   ui_prepare_box(pager);
   ui_set_flex_row(pager, 0, 8, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
   lv_obj_set_size(pager, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
@@ -1183,6 +1445,19 @@ const char* PaymentsShortcutPage::name() const {
 }
 
 lv_obj_t* PaymentsShortcutPage::build() {
+  const auto app_tile_event_cb = [](lv_event_t* event) {
+    auto* self = static_cast<PaymentsShortcutPage*>(lv_event_get_user_data(event));
+    if (self == nullptr || self->should_ignore_click()) {
+      return;
+    }
+    lv_obj_t* target = lv_event_get_target_obj(event);
+    if (target == nullptr || !click_guard_allows(target)) {
+      return;
+    }
+    const auto raw = reinterpret_cast<std::uintptr_t>(lv_obj_get_user_data(target));
+    self->request_navigation({NavigationAction::Push, static_cast<PageId>(raw)});
+  };
+
   lv_obj_t* root = lv_obj_create(nullptr);
   if (root == nullptr) {
     return nullptr;
@@ -1264,6 +1539,13 @@ lv_obj_t* PaymentsShortcutPage::build() {
     return nullptr;
   }
 
+  for (auto [card, target] : {std::pair<lv_obj_t*, PageId> {alipay_card, PageId::AppAlipay},
+                              std::pair<lv_obj_t*, PageId> {wechat_card, PageId::AppWeChatPay}}) {
+    attach_click_guard(card);
+    lv_obj_add_event_cb(card, app_tile_event_cb, LV_EVENT_CLICKED, this);
+    lv_obj_set_user_data(card, reinterpret_cast<void*>(static_cast<std::uintptr_t>(target)));
+  }
+
   ui_prepare_box(music_card);
   ui_apply_surface(music_card, SurfaceStyle::Panel);
   lv_obj_set_size(music_card, 220, 106);
@@ -1319,6 +1601,18 @@ const char* NfcShortcutPage::name() const {
 }
 
 lv_obj_t* NfcShortcutPage::build() {
+  const auto app_card_event_cb = [](lv_event_t* event) {
+    auto* self = static_cast<NfcShortcutPage*>(lv_event_get_user_data(event));
+    if (self == nullptr || self->should_ignore_click()) {
+      return;
+    }
+    lv_obj_t* target = lv_event_get_target_obj(event);
+    if (target == nullptr || !click_guard_allows(target)) {
+      return;
+    }
+    self->request_navigation({NavigationAction::Push, PageId::AppNfc});
+  };
+
   lv_obj_t* root = lv_obj_create(nullptr);
   if (root == nullptr) {
     return nullptr;
@@ -1380,6 +1674,8 @@ lv_obj_t* NfcShortcutPage::build() {
   if (create_cover_image(card, nfc_asset_path, 209, 124, LV_ALIGN_TOP_LEFT, -2, -4) == nullptr) {
     return nullptr;
   }
+  attach_click_guard(card);
+  lv_obj_add_event_cb(card, app_card_event_cb, LV_EVENT_CLICKED, this);
 
   return root;
 }
@@ -1395,6 +1691,19 @@ const char* HealthShortcutPage::name() const {
 }
 
 lv_obj_t* HealthShortcutPage::build() {
+  const auto app_tile_event_cb = [](lv_event_t* event) {
+    auto* self = static_cast<HealthShortcutPage*>(lv_event_get_user_data(event));
+    if (self == nullptr || self->should_ignore_click()) {
+      return;
+    }
+    lv_obj_t* target = lv_event_get_target_obj(event);
+    if (target == nullptr || !click_guard_allows(target)) {
+      return;
+    }
+    const auto raw = reinterpret_cast<std::uintptr_t>(lv_obj_get_user_data(target));
+    self->request_navigation({NavigationAction::Push, static_cast<PageId>(raw)});
+  };
+
   lv_obj_t* root = lv_obj_create(nullptr);
   if (root == nullptr) {
     return nullptr;
@@ -1412,6 +1721,7 @@ lv_obj_t* HealthShortcutPage::build() {
   }
 
   struct HealthTile {
+    PageId target;
     const char* icon_path;
     const char* value;
     lv_color_t bg;
@@ -1422,10 +1732,10 @@ lv_obj_t* HealthShortcutPage::build() {
   };
 
   const std::array<HealthTile, 4> tiles {{
-      {health_heart_asset_path(), "--", lv_color_hex(0x0D1222), false, 18, 16, 36},
-      {health_spo2_asset_path(), "--", lv_color_hex(0xFF4F72), false, 18, 12, 40},
-      {health_breathe_asset_path(), "Breathe", lv_color_hex(0x4DBDFF), true, 14, 13, 39},
-      {health_stress_asset_path(), "--", lv_color_hex(0x0D1222), false, 18, 16, 44},
+      {PageId::AppHeartRate, health_heart_asset_path(), "--", lv_color_hex(0x0D1222), false, 18, 16, 36},
+      {PageId::AppBloodOxygen, health_spo2_asset_path(), "--", lv_color_hex(0xFF4F72), false, 18, 12, 40},
+      {PageId::AppBreathing, health_breathe_asset_path(), "Breathe", lv_color_hex(0x4DBDFF), true, 14, 13, 39},
+      {PageId::AppStress, health_stress_asset_path(), "--", lv_color_hex(0x0D1222), false, 18, 16, 44},
   }};
 
   const lv_coord_t tile_w = 106;
@@ -1449,6 +1759,9 @@ lv_obj_t* HealthShortcutPage::build() {
     lv_obj_set_style_pad_all(card, 0, 0);
     lv_obj_set_style_bg_color(card, tile.bg, 0);
     lv_obj_set_style_border_width(card, 0, 0);
+    attach_click_guard(card);
+    lv_obj_add_event_cb(card, app_tile_event_cb, LV_EVENT_CLICKED, this);
+    lv_obj_set_user_data(card, reinterpret_cast<void*>(static_cast<std::uintptr_t>(tile.target)));
 
     if (create_contain_image(card, tile.icon_path, tile.icon_size, tile.icon_size, LV_ALIGN_TOP_LEFT, tile.icon_x, tile.icon_y) ==
         nullptr) {
@@ -1483,12 +1796,12 @@ void LauncherPage::back_event_cb(lv_event_t* event) {
 
 void LauncherPage::item_event_cb(lv_event_t* event) {
   auto* self = static_cast<LauncherPage*>(lv_event_get_user_data(event));
-  if (self == nullptr) {
+  if (self == nullptr || self->should_ignore_click()) {
     return;
   }
 
-  lv_obj_t* target = lv_event_get_target_obj(event);
-  if (target == nullptr) {
+  lv_obj_t* target = lv_event_get_current_target_obj(event);
+  if (target == nullptr || !click_guard_allows(target)) {
     return;
   }
 
@@ -1514,10 +1827,10 @@ void LauncherPage::bind_input() {
 
                                  switch (command->action) {
                                    case InputAction::CrownRotateCW:
-                                     lv_obj_scroll_by(list_root_, 0, 44 * std::max<std::int16_t>(1, command->value), LV_ANIM_ON);
+                                     lv_obj_scroll_by(list_root_, 0, 82 * std::max<std::int16_t>(1, command->value), LV_ANIM_ON);
                                      break;
                                    case InputAction::CrownRotateCCW:
-                                     lv_obj_scroll_by(list_root_, 0, -44 * std::max<std::int16_t>(1, command->value), LV_ANIM_ON);
+                                     lv_obj_scroll_by(list_root_, 0, -82 * std::max<std::int16_t>(1, command->value), LV_ANIM_ON);
                                      break;
                                    default:
                                      break;
@@ -2520,7 +2833,7 @@ lv_obj_t* QuickSettingsPage::build() {
   lv_obj_move_foreground(drag_handle_);
 
   bind_input();
-  bind_notifications();
+  bind_display_policy();
   bind_backdrop();
   refresh_backdrop();
   set_open_preview_progress(0, false);
@@ -2555,10 +2868,20 @@ void QuickSettingsPage::toggle_event_cb(lv_event_t* event) {
     return;
   }
 
-  if (toggle.kind == ToggleKind::NotifyWake || toggle.kind == ToggleKind::RaiseToWake) {
-    const auto notifications = self->data_center_.notifications();
-    const bool current = !notifications || notifications->wake_on_notification;
+  if (toggle.kind == ToggleKind::NotifyWake) {
+    const auto policy = self->data_center_.display_policy();
+    const bool current = !policy || policy->notification_wake_enabled;
     self->data_center_.set_notification_wake_enabled(!current);
+    toggle.mode = current ? 0 : 1;
+  } else if (toggle.kind == ToggleKind::RaiseToWake) {
+    const auto policy = self->data_center_.display_policy();
+    const bool current = !policy || policy->raise_to_wake_enabled;
+    self->data_center_.set_raise_to_wake_enabled(!current);
+    toggle.mode = current ? 0 : 1;
+  } else if (toggle.kind == ToggleKind::AodFiveMinutes) {
+    const auto policy = self->data_center_.display_policy();
+    const bool current = policy && policy->always_on_display_enabled;
+    self->data_center_.set_always_on_display_enabled(!current);
     toggle.mode = current ? 0 : 1;
   } else {
     toggle.mode = toggle.mode == 0 ? 1 : 0;
@@ -2621,16 +2944,29 @@ void QuickSettingsPage::bind_input() {
                                }));
 }
 
-void QuickSettingsPage::bind_notifications() {
-  track(data_center_.subscribe(EventId::NotificationsChanged,
-                               [this](const Event&) {
+void QuickSettingsPage::bind_display_policy() {
+  track(data_center_.subscribe(EventId::DisplayPolicyChanged,
+                               [this](const Event& event) {
+                                 const auto* policy = std::get_if<DisplayPolicyModel>(&event.payload);
+                                 if (policy == nullptr) {
+                                   return;
+                                 }
                                  for (std::size_t index = 0; index < toggles_.size(); ++index) {
-                                   if (toggles_[index].kind == ToggleKind::NotifyWake ||
-                                       toggles_[index].kind == ToggleKind::RaiseToWake) {
-                                     const auto notifications = data_center_.notifications();
-                                     toggles_[index].mode =
-                                         (!notifications || notifications->wake_on_notification) ? 1 : 0;
-                                     apply_toggle_visual(index);
+                                   switch (toggles_[index].kind) {
+                                     case ToggleKind::NotifyWake:
+                                       toggles_[index].mode = policy->notification_wake_enabled ? 1 : 0;
+                                       apply_toggle_visual(index);
+                                       break;
+                                     case ToggleKind::RaiseToWake:
+                                       toggles_[index].mode = policy->raise_to_wake_enabled ? 1 : 0;
+                                       apply_toggle_visual(index);
+                                       break;
+                                     case ToggleKind::AodFiveMinutes:
+                                       toggles_[index].mode = policy->always_on_display_enabled ? 1 : 0;
+                                       apply_toggle_visual(index);
+                                       break;
+                                     default:
+                                       break;
                                    }
                                  }
                                }));
@@ -2747,9 +3083,17 @@ void QuickSettingsPage::apply_toggle_visual(std::size_t index) {
 
   auto& toggle = toggles_[index];
   bool active = toggle.mode != 0;
-  if (toggle.kind == ToggleKind::NotifyWake || toggle.kind == ToggleKind::RaiseToWake) {
-    const auto notifications = data_center_.notifications();
-    active = !notifications || notifications->wake_on_notification;
+  if (toggle.kind == ToggleKind::NotifyWake) {
+    const auto policy = data_center_.display_policy();
+    active = !policy || policy->notification_wake_enabled;
+  }
+  if (toggle.kind == ToggleKind::RaiseToWake) {
+    const auto policy = data_center_.display_policy();
+    active = !policy || policy->raise_to_wake_enabled;
+  }
+  if (toggle.kind == ToggleKind::AodFiveMinutes) {
+    const auto policy = data_center_.display_policy();
+    active = policy && policy->always_on_display_enabled;
   }
   if (toggle.kind == ToggleKind::OpenSettings) {
     active = false;
@@ -2998,6 +3342,18 @@ lv_obj_t* PassiveShellPage::build() {
     return nullptr;
   }
   style_root(root, 0x000000);
+
+  if (page_id_ == PageId::ScreenOff) {
+    lv_obj_t* debug_hint = lv_label_create(root);
+    if (debug_hint == nullptr) {
+      return root;
+    }
+    lv_label_set_text(debug_hint, "screen off");
+    lv_obj_set_style_text_font(debug_hint, &lv_font_montserrat_12, 0);
+    lv_obj_set_style_text_color(debug_hint, lv_color_hex(0x101010), 0);
+    lv_obj_align(debug_hint, LV_ALIGN_BOTTOM_MID, 0, -8);
+    return root;
+  }
 
   lv_obj_t* title = lv_label_create(root);
   lv_obj_t* detail = lv_label_create(root);

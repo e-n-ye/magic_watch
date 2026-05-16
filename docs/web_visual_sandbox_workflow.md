@@ -15,6 +15,7 @@
 当前第一块沙盘入口：
 
 - `prototypes/web_visual_sandbox/home_ring_weather/index.html`
+- `prototypes/web_visual_sandbox/launcher_grid/index.html`
 
 当前视觉基线：
 

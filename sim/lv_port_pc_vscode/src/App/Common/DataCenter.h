@@ -19,11 +19,14 @@ class DataCenter {
   void publish_input(const InputCommand& command);
   void publish_shell_preview(const ShellPreviewModel& model);
   void publish_notifications(const NotificationCenterModel& model);
+  void publish_display_policy(const DisplayPolicyModel& model);
 
   void push_notification(const NotificationItem& item);
   bool dismiss_notification(std::string_view id);
   void clear_notifications();
   void set_notification_wake_enabled(bool enabled);
+  void set_raise_to_wake_enabled(bool enabled);
+  void set_always_on_display_enabled(bool enabled);
   void show_toast_for(std::string_view id);
   void clear_toast();
 
@@ -31,6 +34,7 @@ class DataCenter {
   const std::optional<BatteryModel>& battery() const;
   const std::optional<MotionModel>& motion() const;
   const std::optional<NotificationCenterModel>& notifications() const;
+  const std::optional<DisplayPolicyModel>& display_policy() const;
   const NotificationItem* latest_notification() const;
   const NotificationItem* find_notification(std::string_view id) const;
 
@@ -42,6 +46,7 @@ class DataCenter {
   std::optional<BatteryModel> last_battery_;
   std::optional<MotionModel> last_motion_;
   std::optional<NotificationCenterModel> notification_center_ {NotificationCenterModel {}};
+  std::optional<DisplayPolicyModel> display_policy_ {DisplayPolicyModel {}};
 };
 
 }  // namespace twsim::app

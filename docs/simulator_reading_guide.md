@@ -165,8 +165,8 @@ Platform/HAL -> Application -> DataCenter/EventBus -> AppStateMachine -> PageMan
 
 它把 HAL 事件翻译成 `InputCommand`，例如：
 
-- `MainButtonShortPress`
-- `MainButtonLongPress`
+- `DebugToggleScreenOff`
+- `DebugOpenPowerMenu`
 - `CrownPress`
 - `CrownRotateCW`
 - `NavigateBack`
@@ -286,21 +286,23 @@ Platform/HAL -> Application -> DataCenter/EventBus -> AppStateMachine -> PageMan
 - 业务意图和显示实现分开
 - 以后更容易替换规则
 
-## 9. 一个完整例子：主按键短按是怎么走的
+## 9. 一个完整例子：模拟器调试熄屏键是怎么走的
 
-以键盘 `5` 模拟主按键为例，链路大致是：
+以键盘 `P` 模拟调试熄屏键为例，链路大致是：
 
 1. `SimulatorDevice::process_button()` 识别短按/长按
 2. 发出 `hal::EventKind::ButtonChanged`
 3. `Application::handle_hal_event()` 收到事件
-4. `InputIntentRouter` 翻译成 `InputAction::MainButtonShortPress`
+4. `InputIntentRouter` 翻译成 `InputAction::DebugToggleScreenOff`
 5. `DataCenter::publish_input()` 广播事件
 6. `AppStateMachine::handle_input()` 决定：
    - 如果在熄屏，就亮回主页
    - 如果在主页，就进入熄屏
    - 如果在其他页面，就先回主页
 
-这条链路就是“输入先语义化，再由系统态做决策”的典型例子。
+这条链路只是 PC 模拟器调试入口，不代表真实手表一定存在独立主按键。真实产品语义中，熄屏态亮屏应优先由表冠按下、翻腕亮屏等 `DisplayPolicyModel` 允许的唤醒来源触发。
+
+当前 `5` / 小键盘 `5` 仍保留为历史兼容别名，但后续阅读和手测应优先把 `P` 理解为模拟器调试键。
 
 ## 10. 一个完整例子：页面点击按钮是怎么跳转的
 
@@ -454,7 +456,8 @@ lv_obj_t* build() override;
 
 例如只追：
 
-- 主按键短按链路
+- 模拟器调试熄屏键链路
+- 表冠按下链路
 - 左边缘右滑链路
 - 点击 Launcher 某个 item 的链路
 

@@ -268,6 +268,7 @@ using MenuItem = MenuPage::Item;
 std::vector<MenuItem> settings_items() {
   return {
       {"Display", {NavigationAction::Push, PageId::SettingDisplay}, "Brightness and screen"},
+      {"App Layout", {NavigationAction::Push, PageId::SettingAppLayout}, "Launcher layout placeholder"},
       {"Time & Date", {NavigationAction::Push, PageId::SettingTimeDate}, "Clock and calendar"},
       {"Sound", {NavigationAction::Push, PageId::SettingSound}, "Sound and vibration"},
       {"Battery", {NavigationAction::Push, PageId::SettingBattery}, "Power and charging"},
@@ -324,6 +325,13 @@ void Application::tick(std::uint32_t elapsed_ms) {
 }
 
 void Application::register_pages() {
+  auto register_app_placeholder = [this](PageId page_id, const char* title, const char* detail) {
+    page_manager_.register_page(page_id,
+                                [this, page_id, title, detail]() {
+                                  return std::make_unique<PlaceholderPage>(data_center_, page_id, title, detail, false);
+                                });
+  };
+
   page_manager_.register_page(PageId::Watchface, [this]() { return std::make_unique<WatchfacePage>(data_center_); });
   page_manager_.register_page(
       PageId::HomeShortcutPayments,
@@ -357,13 +365,13 @@ void Application::register_pages() {
       PageId::ScreenOff,
       [this]() {
         return std::make_unique<PassiveShellPage>(
-            data_center_, PageId::ScreenOff, "Screen Off", "Press key 5 or Enter to wake\nLong press key 5 for power");
+            data_center_, PageId::ScreenOff, "Screen Off", "Press P / Enter to wake\nLong press P for power");
       });
   page_manager_.register_page(
       PageId::PoweredOff,
       [this]() {
         return std::make_unique<PassiveShellPage>(
-            data_center_, PageId::PoweredOff, "Powered Off", "Long press key 5 to boot");
+            data_center_, PageId::PoweredOff, "Powered Off", "Long press P to boot\nLegacy alias: key 5");
       });
 
   page_manager_.register_page(PageId::SettingsHome,
@@ -442,6 +450,12 @@ void Application::register_pages() {
             data_center_, PageId::SettingDisplay, "Display", "Brightness and screen behavior placeholder.");
       });
   page_manager_.register_page(
+      PageId::SettingAppLayout,
+      [this]() {
+        return std::make_unique<PlaceholderPage>(
+            data_center_, PageId::SettingAppLayout, "App Layout", "Multi-column launcher layout placeholder.");
+      });
+  page_manager_.register_page(
       PageId::SettingTimeDate,
       [this]() {
         return std::make_unique<PlaceholderPage>(
@@ -482,6 +496,15 @@ void Application::register_pages() {
                                 return std::make_unique<PlaceholderPage>(
                                     data_center_, PageId::SettingVersion, "Version", "Version information placeholder.");
                               });
+  register_app_placeholder(PageId::AppHeartRate, "Heart Rate", "Heart rate app placeholder page.");
+  register_app_placeholder(PageId::AppBloodOxygen, "Blood Oxygen", "SpO2 app placeholder page.");
+  register_app_placeholder(PageId::AppBreathing, "Breathing", "Breathing training placeholder page.");
+  register_app_placeholder(PageId::AppStress, "Stress", "Stress app placeholder page.");
+  register_app_placeholder(PageId::AppSleep, "Sleep", "Sleep app placeholder page.");
+  register_app_placeholder(PageId::AppWeather, "Weather", "Weather app placeholder page.");
+  register_app_placeholder(PageId::AppNfc, "NFC", "NFC wallet placeholder page.");
+  register_app_placeholder(PageId::AppAlipay, "Alipay", "Alipay app placeholder page.");
+  register_app_placeholder(PageId::AppWeChatPay, "WeChat Pay", "WeChat Pay app placeholder page.");
   page_manager_.register_page(
       PageId::Game2048,
       [this]() {

@@ -48,6 +48,10 @@ class AppStateMachine {
   void schedule_notification_screen_off();
   void cancel_notification_screen_off(bool clear_session);
   static void notification_screen_off_timer_cb(lv_timer_t* timer);
+  void schedule_auto_screen_off();
+  void cancel_auto_screen_off();
+  void reset_auto_screen_off_timer();
+  static void auto_screen_off_timer_cb(lv_timer_t* timer);
   bool is_home_surface_page(PageId page_id) const;
   bool is_current_home_surface() const;
   bool is_current_watchface_surface() const;
@@ -61,10 +65,12 @@ class AppStateMachine {
   EventBus::Subscription navigation_subscription_;
   EventBus::Subscription input_subscription_;
   EventBus::Subscription notification_wake_subscription_;
+  EventBus::Subscription display_policy_subscription_;
   PowerState power_state_ {PowerState::Booting};
   ShellSurface shell_surface_ {ShellSurface::None};
   bool notification_wake_session_active_ {false};
   lv_timer_t* notification_screen_off_timer_ {nullptr};
+  lv_timer_t* auto_screen_off_timer_ {nullptr};
   std::size_t home_surface_index_ {0};
   bool notifications_pull_preview_active_ {false};
   bool quick_settings_pull_preview_active_ {false};

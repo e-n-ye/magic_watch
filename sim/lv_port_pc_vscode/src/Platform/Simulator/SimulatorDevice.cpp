@@ -73,7 +73,6 @@ class SimulatorDevice final : public hal::Device {
 
     lv_indev_set_group(mouse, lv_group_get_default());
     lv_indev_set_group(wheel, lv_group_get_default());
-    lv_indev_set_group(keyboard, lv_group_get_default());
 
     lv_obj_t* cursor = lv_image_create(lv_screen_active());
     if (cursor != nullptr) {
@@ -193,10 +192,10 @@ class SimulatorDevice final : public hal::Device {
   }
 
   void process_button(std::uint32_t elapsed_ms) {
-    const Uint8* keyboard_state = SDL_GetKeyboardState(nullptr);
     const bool pressed =
-        keyboard_state != nullptr &&
-        (keyboard_state[SDL_SCANCODE_5] != 0 || keyboard_state[SDL_SCANCODE_KP_5] != 0);
+        key_pressed_fallback(SDL_SCANCODE_P, 'P') ||
+        key_pressed_fallback(SDL_SCANCODE_5, '5') ||
+        key_pressed_fallback(SDL_SCANCODE_KP_5, VK_NUMPAD5);
 
     if (pressed) {
       if (!button_pressed_) {

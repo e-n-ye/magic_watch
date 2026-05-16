@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <vector>
 
 #include "App/Common/DataCenter.h"
@@ -25,12 +26,14 @@ class PageBase {
   virtual lv_obj_t* build() = 0;
   void track(EventBus::Subscription subscription);
   void request_navigation(const NavigationCommand& command);
+  bool should_ignore_click() const;
 
   DataCenter& data_center_;
   lv_obj_t* root_ {nullptr};
 
  private:
   bool created_ {false};
+  std::chrono::steady_clock::time_point suppress_click_until_ {};
   std::vector<EventBus::Subscription> subscriptions_;
 };
 

@@ -25,8 +25,8 @@ bool is_watchface_page(PageId page_id) {
 
 std::optional<InputCommand> from_button(const hal::ButtonSample& sample) {
   return InputCommand {
-      sample.action == hal::ButtonSample::Action::LongPress ? InputAction::MainButtonLongPress
-                                                            : InputAction::MainButtonShortPress,
+      sample.action == hal::ButtonSample::Action::LongPress ? InputAction::DebugOpenPowerMenu
+                                                            : InputAction::DebugToggleScreenOff,
       0,
       0,
       0,

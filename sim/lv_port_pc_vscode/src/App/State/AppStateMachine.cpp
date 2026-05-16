@@ -127,6 +127,13 @@ AppStateMachine::AppStateMachine(DataCenter& data_center, PageManager& page_mana
   notification_wake_subscription_ =
       data_center_.subscribe(EventId::NotificationWakeRequested,
                              [this](const Event& event) { handle_event(event); });
+  display_policy_subscription_ =
+      data_center_.subscribe(EventId::DisplayPolicyChanged,
+                             [this](const Event&) {
+                               if (power_state_ == PowerState::Running) {
+                                 schedule_auto_screen_off();
+                               }
+                             });
 }
 
 bool AppStateMachine::start() {
@@ -137,6 +144,7 @@ bool AppStateMachine::start() {
   power_state_ = PowerState::Running;
   shell_surface_ = ShellSurface::None;
   home_surface_index_ = 0;
+  schedule_auto_screen_off();
   return true;
 }
 
@@ -233,9 +241,12 @@ void AppStateMachine::handle_input(const InputCommand& command) {
   if (power_state_ == PowerState::Running && notification_screen_off_timer_ != nullptr) {
     cancel_notification_screen_off(true);
   }
+  if (power_state_ == PowerState::Running) {
+    reset_auto_screen_off_timer();
+  }
 
   switch (command.action) {
-    case InputAction::MainButtonShortPress:
+    case InputAction::DebugToggleScreenOff:
       overlay.hide();
       if (power_state_ == PowerState::PoweredOff) {
         return;
@@ -246,7 +257,7 @@ void AppStateMachine::handle_input(const InputCommand& command) {
       }
       enter_screen_off();
       return;
-    case InputAction::MainButtonLongPress:
+    case InputAction::DebugOpenPowerMenu:
       overlay.hide();
       if (power_state_ == PowerState::PoweredOff) {
         boot_to_home();
@@ -339,16 +350,18 @@ void AppStateMachine::handle_input(const InputCommand& command) {
         return;
       }
       if (power_state_ == PowerState::ScreenOff) {
+        const auto policy = data_center_.display_policy();
+        if (policy && !policy->crown_press_wake_enabled) {
+          return;
+        }
         return_home();
         return;
       }
-      if (page_manager_.temporary_page_id() || page_manager_.stack_depth() > 1) {
-        return_home();
-        return;
-      }
-      if (is_current_home_surface()) {
+      if (is_current_watchface_surface()) {
         launch_app(PageId::Launcher);
+        return;
       }
+      return_home();
       return;
     case InputAction::HomeEdgeBackRight:
       if (power_state_ == PowerState::Running && is_current_home_surface()) {
@@ -383,6 +396,7 @@ void AppStateMachine::boot_to_home(PageTransition transition) {
     power_state_ = PowerState::Running;
     shell_surface_ = ShellSurface::None;
     home_surface_index_ = 0;
+    schedule_auto_screen_off();
   }
 }
 
@@ -392,6 +406,7 @@ void AppStateMachine::return_home(PageTransition transition) {
 
 void AppStateMachine::enter_screen_off() {
   cancel_notification_screen_off(true);
+  cancel_auto_screen_off();
   if (page_manager_.set_root(PageId::ScreenOff, PageTransition::Fade)) {
     power_state_ = PowerState::ScreenOff;
     shell_surface_ = ShellSurface::None;
@@ -400,6 +415,7 @@ void AppStateMachine::enter_screen_off() {
 
 void AppStateMachine::enter_powered_off() {
   cancel_notification_screen_off(true);
+  cancel_auto_screen_off();
   if (page_manager_.set_root(PageId::PoweredOff, PageTransition::Fade)) {
     power_state_ = PowerState::PoweredOff;
     shell_surface_ = ShellSurface::None;
@@ -533,6 +549,14 @@ void AppStateMachine::launch_app(PageId target) {
     return;
   }
 
+  if (!page_manager_.temporary_page_id()) {
+    const auto stack_top = page_manager_.stack_top_page_id();
+    if (target != PageId::Launcher && stack_top && *stack_top == PageId::Launcher) {
+      page_manager_.push(target, PageTransition::MoveLeft);
+      return;
+    }
+  }
+
   if (!page_manager_.set_root(PageId::Watchface, PageTransition::None)) {
     return;
   }
@@ -588,6 +612,7 @@ void AppStateMachine::show_home_surface(std::size_t index, PageTransition transi
     home_surface_index_ = index;
     shell_surface_ = ShellSurface::None;
     power_state_ = PowerState::Running;
+    schedule_auto_screen_off();
   }
 }
 
@@ -632,8 +657,8 @@ void AppStateMachine::handle_notification_wake_request(const NotificationItem& i
     return;
   }
 
-  const auto notifications = data_center_.notifications();
-  const bool wake_on_notification = !notifications || notifications->wake_on_notification;
+  const auto display_policy = data_center_.display_policy();
+  const bool wake_on_notification = !display_policy || display_policy->notification_wake_enabled;
 
   if (power_state_ == PowerState::ScreenOff) {
     if (!wake_on_notification) {
@@ -688,6 +713,51 @@ void AppStateMachine::notification_screen_off_timer_cb(lv_timer_t* timer) {
 
   self->notification_screen_off_timer_ = nullptr;
   self->enter_screen_off();
+}
+
+void AppStateMachine::schedule_auto_screen_off() {
+  cancel_auto_screen_off();
+  if (power_state_ != PowerState::Running) {
+    return;
+  }
+
+  const auto policy = data_center_.display_policy();
+  if (policy && (!policy->auto_screen_off_enabled || policy->always_on_display_enabled)) {
+    return;
+  }
+
+  const std::uint32_t timeout_ms = policy ? policy->screen_off_timeout_ms : 5000U;
+  if (timeout_ms == 0U) {
+    return;
+  }
+
+  auto_screen_off_timer_ = lv_timer_create(&AppStateMachine::auto_screen_off_timer_cb, timeout_ms, this);
+  if (auto_screen_off_timer_ != nullptr) {
+    lv_timer_set_repeat_count(auto_screen_off_timer_, 1);
+  }
+}
+
+void AppStateMachine::cancel_auto_screen_off() {
+  if (auto_screen_off_timer_ != nullptr) {
+    lv_timer_del(auto_screen_off_timer_);
+    auto_screen_off_timer_ = nullptr;
+  }
+}
+
+void AppStateMachine::reset_auto_screen_off_timer() {
+  schedule_auto_screen_off();
+}
+
+void AppStateMachine::auto_screen_off_timer_cb(lv_timer_t* timer) {
+  auto* self = static_cast<AppStateMachine*>(lv_timer_get_user_data(timer));
+  if (self == nullptr) {
+    return;
+  }
+
+  self->auto_screen_off_timer_ = nullptr;
+  if (self->power_state_ == PowerState::Running) {
+    self->enter_screen_off();
+  }
 }
 
 }  // namespace twsim::app

@@ -1,5 +1,26 @@
 # Prototype Progress
 
+## 2026-05-16: v0.1 Display Policy Model
+
+### What Changed
+
+- Added a lightweight `DisplayPolicyModel` in the shared app model layer.
+- Moved notification wake policy out of `NotificationCenterModel`.
+- Updated Quick Settings so display-related toggles write display policy state instead of notification state or page-local state.
+- Updated `AppStateMachine` so notification wake and crown wake decisions read the display policy model.
+- Added a visible simulator input contract: `P` is now a simulator-only debug key, while `5` remains a legacy alias.
+- Connected the default 5-second auto screen-off timeout to the state machine and made `ScreenOff` render as a near-black simulator state.
+- Re-aligned the product model around screen + pressable crown: crown press wakes from screen-off, opens Launcher on the watchface, and returns home from other pages.
+- Added the architecture re-entry note:
+  - `docs/v0_1_architecture_closure.md`
+
+### Current Boundary
+
+- This is a policy ownership cleanup, not real low-power hardware support.
+- Raise-to-wake, tap-to-wake, always-on display, and auto screen-off are still simulator-level policy placeholders.
+- Auto screen-off is only a simulator state transition, not real display power control.
+- Quick Settings still contains shell toggles that do not all map to real services yet.
+
 ## 2026-05-14: Web Visual Sandbox + Home Ring Cleanup
 
 ### What Changed

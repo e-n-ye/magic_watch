@@ -40,6 +40,11 @@ void DataCenter::publish_notifications(const NotificationCenterModel& model) {
   event_bus_.publish({EventId::NotificationsChanged, model});
 }
 
+void DataCenter::publish_display_policy(const DisplayPolicyModel& model) {
+  display_policy_ = model;
+  event_bus_.publish({EventId::DisplayPolicyChanged, model});
+}
+
 void DataCenter::push_notification(const NotificationItem& item) {
   if (!notification_center_) {
     notification_center_ = NotificationCenterModel {};
@@ -81,14 +86,36 @@ void DataCenter::clear_notifications() {
 }
 
 void DataCenter::set_notification_wake_enabled(bool enabled) {
-  if (!notification_center_) {
-    notification_center_ = NotificationCenterModel {};
+  if (!display_policy_) {
+    display_policy_ = DisplayPolicyModel {};
   }
-  if (notification_center_->wake_on_notification == enabled) {
+  if (display_policy_->notification_wake_enabled == enabled) {
     return;
   }
-  notification_center_->wake_on_notification = enabled;
-  notify_notifications_changed();
+  display_policy_->notification_wake_enabled = enabled;
+  event_bus_.publish({EventId::DisplayPolicyChanged, *display_policy_});
+}
+
+void DataCenter::set_raise_to_wake_enabled(bool enabled) {
+  if (!display_policy_) {
+    display_policy_ = DisplayPolicyModel {};
+  }
+  if (display_policy_->raise_to_wake_enabled == enabled) {
+    return;
+  }
+  display_policy_->raise_to_wake_enabled = enabled;
+  event_bus_.publish({EventId::DisplayPolicyChanged, *display_policy_});
+}
+
+void DataCenter::set_always_on_display_enabled(bool enabled) {
+  if (!display_policy_) {
+    display_policy_ = DisplayPolicyModel {};
+  }
+  if (display_policy_->always_on_display_enabled == enabled) {
+    return;
+  }
+  display_policy_->always_on_display_enabled = enabled;
+  event_bus_.publish({EventId::DisplayPolicyChanged, *display_policy_});
 }
 
 void DataCenter::show_toast_for(std::string_view id) {
@@ -126,6 +153,10 @@ const std::optional<MotionModel>& DataCenter::motion() const {
 
 const std::optional<NotificationCenterModel>& DataCenter::notifications() const {
   return notification_center_;
+}
+
+const std::optional<DisplayPolicyModel>& DataCenter::display_policy() const {
+  return display_policy_;
 }
 
 const NotificationItem* DataCenter::latest_notification() const {

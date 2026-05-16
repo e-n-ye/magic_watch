@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Magic Watch Launcher Sandbox</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="workspace">
+    <section class="control-panel">
+      <div class="panel-block">
+        <p class="eyebrow">Magic Watch</p>
+        <h1>Launcher Sandbox</h1>
+        <p class="summary">
+          先在浏览器里调整多列应用网格的锚点、色板和图标对比，再把结果回写到 LVGL。
+        </p>
+      </div>
+
+      <div class="panel-block">
+        <p class="label">Layout</p>
+        <div class="control-grid">
+          <label>Top Inset <input id="topInset" type="range" min="0" max="24" step="1"></label>
+          <label>Bottom Inset <input id="bottomInset" type="range" min="0" max="24" step="1"></label>
+          <label>Tile Size <input id="tileSize" type="range" min="64" max="84" step="1"></label>
+          <label>Icon Size <input id="iconSize" type="range" min="48" max="66" step="1"></label>
+          <label>Row Gap <input id="rowGap" type="range" min="4" max="18" step="1"></label>
+          <label>Col Gap <input id="colGap" type="range" min="0" max="12" step="1"></label>
+        </div>
+      </div>
+
+      <div class="panel-block">
+        <p class="label">Palette</p>
+        <div id="paletteList" class="palette-list"></div>
+      </div>
+
+      <div class="panel-block">
+        <p class="label">Export</p>
+        <textarea id="exportBox" class="layout-export" readonly spellcheck="false"></textarea>
+      </div>
+    </section>
+
+    <section class="preview-panel">
+      <div class="watch-preview">
+        <div class="watch-shell">
+          <div class="watch-screen">
+            <div id="launcherViewport" class="launcher-viewport">
+              <div id="launcherGrid" class="launcher-grid"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>
