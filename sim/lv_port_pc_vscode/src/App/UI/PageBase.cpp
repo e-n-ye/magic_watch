@@ -2,6 +2,15 @@
 
 namespace twsim::app {
 
+namespace {
+
+std::chrono::steady_clock::time_point& global_suppress_click_until() {
+  static std::chrono::steady_clock::time_point value {};
+  return value;
+}
+
+}  // namespace
+
 PageBase::PageBase(DataCenter& data_center) : data_center_(data_center) {
   track(data_center_.subscribe(EventId::InputRequested,
                                [this](const Event& event) {
@@ -18,6 +27,8 @@ PageBase::PageBase(DataCenter& data_center) : data_center_(data_center) {
                                    case InputAction::EdgeBackProgress:
                                    case InputAction::EdgeBackCancel:
                                    case InputAction::NavigateBack:
+                                   case InputAction::HomeSwipeProgress:
+                                   case InputAction::HomeSwipeCancel:
                                    case InputAction::HomeEdgeBackRight:
                                    case InputAction::HomeSwipeLeft:
                                      suppress_click_until_ = std::chrono::steady_clock::now() + std::chrono::milliseconds(220);
@@ -55,7 +66,16 @@ void PageBase::request_navigation(const NavigationCommand& command) {
 }
 
 bool PageBase::should_ignore_click() const {
-  return std::chrono::steady_clock::now() < suppress_click_until_;
+  const auto now = std::chrono::steady_clock::now();
+  return now < suppress_click_until_ || now < global_suppress_click_until();
+}
+
+void PageBase::suppress_click_for(std::chrono::milliseconds duration) {
+  suppress_click_until_ = std::chrono::steady_clock::now() + duration;
+}
+
+void PageBase::suppress_global_clicks_for(std::chrono::milliseconds duration) {
+  global_suppress_click_until() = std::chrono::steady_clock::now() + duration;
 }
 
 }  // namespace twsim::app

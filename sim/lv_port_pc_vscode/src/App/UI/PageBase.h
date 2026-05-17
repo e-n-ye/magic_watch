@@ -27,6 +27,8 @@ class PageBase {
   void track(EventBus::Subscription subscription);
   void request_navigation(const NavigationCommand& command);
   bool should_ignore_click() const;
+  void suppress_click_for(std::chrono::milliseconds duration);
+  static void suppress_global_clicks_for(std::chrono::milliseconds duration);
 
   DataCenter& data_center_;
   lv_obj_t* root_ {nullptr};

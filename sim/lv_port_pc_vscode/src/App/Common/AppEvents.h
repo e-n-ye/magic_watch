@@ -19,6 +19,7 @@ enum class EventId {
   NotificationToastRequested,
   NotificationWakeRequested,
   ShellPreviewRequested,
+  HomeRingPreviewChanged,
   NavigationRequested,
   InputRequested,
 };
@@ -68,18 +69,48 @@ struct NotificationCenterModel {
   std::optional<std::string> active_toast_notification_id;
 };
 
+enum class BrightnessMode {
+  Auto,
+  Manual,
+};
+
+enum class RaiseToWakeMode {
+  Off,
+  AllDay,
+  Scheduled,
+};
+
+struct DailyTimeWindow {
+  std::uint8_t start_hour {8};
+  std::uint8_t start_minute {0};
+  std::uint8_t end_hour {22};
+  std::uint8_t end_minute {0};
+};
+
 struct DisplayPolicyModel {
   bool crown_press_wake_enabled {true};
   bool notification_wake_enabled {true};
-  bool raise_to_wake_enabled {true};
+  RaiseToWakeMode raise_to_wake_mode {RaiseToWakeMode::AllDay};
+  DailyTimeWindow raise_to_wake_window {};
   bool tap_to_wake_enabled {false};
   bool always_on_display_enabled {false};
   bool auto_screen_off_enabled {true};
   std::uint32_t screen_off_timeout_ms {5000};
+  std::uint32_t keep_screen_on_duration_ms {0};
+  BrightnessMode brightness_mode {BrightnessMode::Auto};
+  std::uint8_t manual_brightness_level {60};
 };
 
 struct ShellPreviewModel {
   PageId page_id {PageId::Watchface};
+  std::int16_t progress {0};
+  bool active {false};
+  bool commit {false};
+};
+
+struct HomeRingPreviewModel {
+  std::uint8_t base_index {0};
+  std::int8_t direction {0};
   std::int16_t progress {0};
   bool active {false};
   bool commit {false};
@@ -109,6 +140,8 @@ struct NavigationCommand {
 enum class InputAction {
   DebugToggleScreenOff,
   DebugOpenPowerMenu,
+  SimRaiseToWake,
+  SimRaiseDismiss,
   CrownPress,
   CrownRotateCW,
   CrownRotateCCW,
@@ -122,6 +155,8 @@ enum class InputAction {
   BottomEdgeCancel,
   EdgeBackProgress,
   EdgeBackCancel,
+  HomeSwipeProgress,
+  HomeSwipeCancel,
   NavigateBack,
   HomeEdgeBackRight,
   HomeSwipeLeft,
@@ -145,6 +180,7 @@ using EventPayload =
                  NotificationItem,
                  NotificationCenterModel,
                  ShellPreviewModel,
+                 HomeRingPreviewModel,
                  NavigationCommand,
                  InputCommand>;
 

@@ -4,13 +4,16 @@
 #include "lvgl/src/libs/tiny_ttf/lv_tiny_ttf.h"
 #include "lvgl/src/misc/lv_fs.h"
 
+#include <chrono>
 #include <cstdio>
 #include <cstdint>
 #include <cstring>
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <filesystem>
 #include <string>
+#include <tuple>
 #include <unordered_map>
 #include <utility>
 
@@ -42,6 +45,55 @@ constexpr lv_coord_t kLauncherPadBottom = 10;
 constexpr lv_coord_t kLauncherRowGap = 4;
 constexpr lv_coord_t kLauncherColumnGap = 2;
 constexpr lv_coord_t kClickDragThreshold = 12;
+constexpr lv_coord_t kHomePagerStep = 15;
+
+const char* quick_settings_log_path() {
+  static const std::string path = (std::filesystem::current_path() / "quicksettings_debug.log").string();
+  return path.c_str();
+}
+
+void append_quick_settings_log(const char* phase,
+                               std::size_t index,
+                               const char* kind,
+                               bool suppress_next_click,
+                               bool guard_allows,
+                               lv_obj_t* target,
+                               lv_event_t* event) {
+  std::FILE* file = std::fopen(quick_settings_log_path(), "a");
+  if (file == nullptr) {
+    return;
+  }
+
+  lv_point_t point {0, 0};
+  if (event != nullptr) {
+    if (lv_indev_t* indev = lv_event_get_indev(event)) {
+      lv_indev_get_point(indev, &point);
+    }
+  }
+
+  const auto now = std::chrono::steady_clock::now().time_since_epoch();
+  const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now).count();
+  std::fprintf(file,
+               "[%lld] %s idx=%zu kind=%s suppress=%d guard=%d target=%p x=%d y=%d\n",
+               static_cast<long long>(ms),
+               phase != nullptr ? phase : "Unknown",
+               index,
+               kind != nullptr ? kind : "Unknown",
+               suppress_next_click ? 1 : 0,
+               guard_allows ? 1 : 0,
+               static_cast<void*>(target),
+               static_cast<int>(point.x),
+               static_cast<int>(point.y));
+  std::fclose(file);
+}
+
+void reset_quick_settings_log() {
+  std::FILE* file = std::fopen(quick_settings_log_path(), "w");
+  if (file == nullptr) {
+    return;
+  }
+  std::fclose(file);
+}
 
 struct ClickGestureState {
   lv_point_t press_point {0, 0};
@@ -808,6 +860,758 @@ void WatchfacePage::apply_battery(const BatteryModel& model) {
   render_state_.battery_percent = model.percent;
   render_state_.spread_index = config_.spread_index;
   renderer_->apply(render_state_);
+}
+
+HomeRingHostPage::HomeRingHostPage(DataCenter& data_center) : PageBase(data_center) {}
+
+PageId HomeRingHostPage::id() const {
+  return PageId::HomeRingHost;
+}
+
+const char* HomeRingHostPage::name() const {
+  return "HomeRingHost";
+}
+
+void HomeRingHostPage::on_will_appear() {
+  if (data_center_.time()) {
+    apply_time(*data_center_.time());
+  }
+  if (data_center_.battery()) {
+    apply_battery(*data_center_.battery());
+  }
+  if (data_center_.home_ring_preview()) {
+    apply_home_ring_preview(*data_center_.home_ring_preview());
+  } else {
+    layout_surfaces_for_preview(static_cast<std::uint8_t>(settled_surface_index_), 0);
+    set_track_x(static_cast<lv_coord_t>(-240 * static_cast<int>(settled_surface_index_)));
+  }
+}
+
+void HomeRingHostPage::apply_time(const TimeModel& model) {
+  if (minute_label_ == nullptr || renderer_ == nullptr) {
+    return;
+  }
+
+  if (!model.valid) {
+    lv_label_set_text(minute_label_, "--");
+    render_state_.hour_text = "--";
+    render_state_.minute_text = "--";
+    render_state_.spread_index = config_.spread_index;
+    renderer_->apply(render_state_);
+    return;
+  }
+
+  char hour_buffer[4] = {};
+  char minute_buffer[4] = {};
+  unsigned display_hour = static_cast<unsigned>(model.hour % 12);
+  if (display_hour == 0U) {
+    display_hour = 12U;
+  }
+  std::snprintf(hour_buffer, sizeof(hour_buffer), "%u", display_hour);
+  std::snprintf(minute_buffer, sizeof(minute_buffer), "%02u", static_cast<unsigned>(model.minute));
+  lv_label_set_text(minute_label_, minute_buffer);
+  render_state_.hour_text = hour_buffer;
+  render_state_.minute_text = minute_buffer;
+  render_state_.spread_index = config_.spread_index;
+  renderer_->apply(render_state_);
+}
+
+void HomeRingHostPage::apply_battery(const BatteryModel& model) {
+  if (battery_label_ == nullptr || renderer_ == nullptr) {
+    return;
+  }
+
+  char buffer[32] = {};
+  std::snprintf(buffer, sizeof(buffer), "%d%%%s", static_cast<int>(model.percent), model.charging ? " +" : "");
+  lv_label_set_text(battery_label_, buffer);
+  render_state_.battery_percent = model.percent;
+  render_state_.spread_index = config_.spread_index;
+  renderer_->apply(render_state_);
+}
+
+std::size_t HomeRingHostPage::wrap_surface_index(int index) const {
+  const int size = static_cast<int>(surfaces_.size());
+  int wrapped = index % size;
+  if (wrapped < 0) {
+    wrapped += size;
+  }
+  return static_cast<std::size_t>(wrapped);
+}
+
+void HomeRingHostPage::set_track_x(lv_coord_t x) {
+  if (track_ == nullptr) {
+    return;
+  }
+  lv_obj_set_x(track_, x);
+}
+
+void HomeRingHostPage::layout_surfaces_for_preview(std::uint8_t base_index, std::int8_t direction) {
+  const lv_coord_t screen_w = static_cast<lv_coord_t>(lv_display_get_horizontal_resolution(nullptr));
+  const bool wrap_to_weather = base_index == 0 && direction < 0;
+  const bool wrap_to_watchface = base_index == surfaces_.size() - 1 && direction > 0;
+
+  if (wrap_to_weather || wrap_to_watchface) {
+    for (std::size_t index = 0; index < surfaces_.size(); ++index) {
+      if (surfaces_[index] == nullptr) {
+        continue;
+      }
+      lv_obj_set_pos(surfaces_[index], static_cast<lv_coord_t>((index + 2) * screen_w), 0);
+    }
+
+    if (surfaces_[0] != nullptr) {
+      lv_obj_set_pos(surfaces_[0], screen_w, 0);
+    }
+    if (surfaces_.back() != nullptr) {
+      lv_obj_set_pos(surfaces_.back(), 0, 0);
+    }
+    return;
+  }
+
+  for (std::size_t index = 0; index < surfaces_.size(); ++index) {
+    if (surfaces_[index] == nullptr) {
+      continue;
+    }
+    lv_obj_set_pos(surfaces_[index], static_cast<lv_coord_t>(index * screen_w), 0);
+  }
+}
+
+void HomeRingHostPage::apply_home_ring_preview(const HomeRingPreviewModel& model) {
+  const lv_coord_t screen_w = static_cast<lv_coord_t>(lv_display_get_horizontal_resolution(nullptr));
+  const lv_coord_t base_x = static_cast<lv_coord_t>(-screen_w * static_cast<int>(model.base_index));
+  const lv_coord_t clamped_progress = clamp_coord(model.progress, 0, screen_w);
+  auto update_pager = [&](float shortcut_position, bool visible) {
+    if (pager_root_ == nullptr || pager_active_dot_ == nullptr) {
+      return;
+    }
+    if (!visible) {
+      lv_obj_add_flag(pager_root_, LV_OBJ_FLAG_HIDDEN);
+      return;
+    }
+
+    lv_obj_clear_flag(pager_root_, LV_OBJ_FLAG_HIDDEN);
+    const float clamped = std::clamp(shortcut_position, 0.0f, 3.0f);
+    const lv_coord_t offset = static_cast<lv_coord_t>(std::lround(clamped * static_cast<float>(kHomePagerStep)));
+    lv_obj_set_x(pager_active_dot_, offset);
+  };
+
+  if (model.active && model.direction != 0) {
+    layout_surfaces_for_preview(model.base_index, model.direction);
+    const bool touches_watchface = (model.base_index == 0 && model.direction < 0) ||
+                                   (model.base_index == static_cast<std::uint8_t>(surfaces_.size() - 1) &&
+                                    model.direction > 0);
+    if (touches_watchface) {
+      const lv_coord_t offset = model.base_index == 0
+                                    ? static_cast<lv_coord_t>(clamped_progress - screen_w)
+                                    : static_cast<lv_coord_t>(-clamped_progress);
+      set_track_x(offset);
+    } else {
+      const lv_coord_t offset = model.direction > 0 ? static_cast<lv_coord_t>(-clamped_progress)
+                                                    : static_cast<lv_coord_t>(clamped_progress);
+      set_track_x(static_cast<lv_coord_t>(base_x + offset));
+    }
+
+    if (touches_watchface) {
+      update_pager(0.0f, false);
+    } else if (model.base_index > 0) {
+      const float ratio = static_cast<float>(clamped_progress) / static_cast<float>(screen_w);
+      const float base_shortcut = static_cast<float>(model.base_index - 1);
+      const float delta = model.direction > 0 ? ratio : -ratio;
+      update_pager(base_shortcut + delta, true);
+    } else {
+      update_pager(0.0f, false);
+    }
+    return;
+  }
+
+  if (model.commit && model.direction != 0) {
+    settled_surface_index_ = wrap_surface_index(static_cast<int>(model.base_index) + model.direction);
+  } else {
+    settled_surface_index_ = wrap_surface_index(model.base_index);
+  }
+
+  layout_surfaces_for_preview(static_cast<std::uint8_t>(settled_surface_index_), 0);
+  set_track_x(static_cast<lv_coord_t>(-screen_w * static_cast<int>(settled_surface_index_)));
+  if (settled_surface_index_ == 0) {
+    update_pager(0.0f, false);
+  } else {
+    update_pager(static_cast<float>(settled_surface_index_ - 1), true);
+  }
+}
+
+lv_obj_t* HomeRingHostPage::build() {
+  const auto app_tile_event_cb = [](lv_event_t* event) {
+    auto* self = static_cast<HomeRingHostPage*>(lv_event_get_user_data(event));
+    if (self == nullptr || self->should_ignore_click()) {
+      return;
+    }
+    lv_obj_t* target = lv_event_get_current_target_obj(event);
+    if (target == nullptr || !click_guard_allows(target)) {
+      return;
+    }
+    const auto raw = reinterpret_cast<std::uintptr_t>(lv_obj_get_user_data(target));
+    self->request_navigation({NavigationAction::Push, static_cast<PageId>(raw)});
+  };
+
+  lv_obj_t* root = lv_obj_create(nullptr);
+  if (root == nullptr) {
+    return nullptr;
+  }
+  style_root(root, 0x02070D);
+
+  const lv_coord_t screen_w = static_cast<lv_coord_t>(lv_display_get_horizontal_resolution(nullptr));
+  const lv_coord_t screen_h = static_cast<lv_coord_t>(lv_display_get_vertical_resolution(nullptr));
+  const auto layout = make_home_surface_layout();
+
+  track_ = lv_obj_create(root);
+  if (track_ == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_box(track_);
+  lv_obj_set_size(track_, static_cast<lv_coord_t>(screen_w * static_cast<int>(surfaces_.size())), screen_h);
+  lv_obj_align(track_, LV_ALIGN_TOP_LEFT, 0, 0);
+  lv_obj_set_style_bg_opa(track_, LV_OPA_TRANSP, 0);
+  lv_obj_set_style_border_width(track_, 0, 0);
+  lv_obj_set_style_pad_all(track_, 0, 0);
+  lv_obj_remove_flag(track_, LV_OBJ_FLAG_SCROLLABLE);
+  lv_obj_add_flag(track_, LV_OBJ_FLAG_OVERFLOW_VISIBLE);
+
+  for (std::size_t index = 0; index < surfaces_.size(); ++index) {
+    surfaces_[index] = lv_obj_create(track_);
+    if (surfaces_[index] == nullptr) {
+      return nullptr;
+    }
+    ui_prepare_box(surfaces_[index]);
+    ui_apply_surface(surfaces_[index], SurfaceStyle::Screen);
+    lv_obj_set_size(surfaces_[index], screen_w, screen_h);
+    lv_obj_set_pos(surfaces_[index], static_cast<lv_coord_t>(index * screen_w), 0);
+    lv_obj_remove_flag(surfaces_[index], LV_OBJ_FLAG_SCROLLABLE);
+  }
+
+  pager_root_ = lv_obj_create(root);
+  if (pager_root_ == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_box(pager_root_);
+  lv_obj_set_size(pager_root_, 54, 14);
+  lv_obj_set_style_bg_opa(pager_root_, LV_OPA_TRANSP, 0);
+  lv_obj_set_style_border_width(pager_root_, 0, 0);
+  lv_obj_set_style_pad_all(pager_root_, 0, 0);
+  lv_obj_align(pager_root_, LV_ALIGN_BOTTOM_MID, 0, -layout.pager_bottom);
+  lv_obj_add_flag(pager_root_, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_remove_flag(pager_root_, LV_OBJ_FLAG_SCROLLABLE);
+  lv_obj_remove_flag(pager_root_, LV_OBJ_FLAG_CLICKABLE);
+
+  for (std::size_t index = 0; index < pager_dots_.size(); ++index) {
+    pager_dots_[index] = create_pager_dot(pager_root_, lv_color_hex(0xB9C5D5), LV_OPA_10, false);
+    if (pager_dots_[index] == nullptr) {
+      return nullptr;
+    }
+    lv_obj_add_flag(pager_dots_[index], LV_OBJ_FLAG_IGNORE_LAYOUT);
+    lv_obj_remove_flag(pager_dots_[index], LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_remove_flag(pager_dots_[index], LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_set_pos(pager_dots_[index], static_cast<lv_coord_t>(index * kHomePagerStep + 1), 3);
+  }
+
+  pager_active_dot_ = lv_obj_create(pager_root_);
+  if (pager_active_dot_ == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_box(pager_active_dot_);
+  lv_obj_set_size(pager_active_dot_, 9, 9);
+  lv_obj_add_flag(pager_active_dot_, LV_OBJ_FLAG_IGNORE_LAYOUT);
+  lv_obj_remove_flag(pager_active_dot_, LV_OBJ_FLAG_SCROLLABLE);
+  lv_obj_remove_flag(pager_active_dot_, LV_OBJ_FLAG_CLICKABLE);
+  lv_obj_set_style_radius(pager_active_dot_, LV_RADIUS_CIRCLE, 0);
+  lv_obj_set_style_bg_color(pager_active_dot_, lv_color_hex(0xFFFFFF), 0);
+  lv_obj_set_style_bg_opa(pager_active_dot_, LV_OPA_70, 0);
+  lv_obj_set_style_border_width(pager_active_dot_, 0, 0);
+  lv_obj_set_style_pad_all(pager_active_dot_, 0, 0);
+  lv_obj_set_pos(pager_active_dot_, 0, 2);
+
+  {
+    lv_obj_t* surface = surfaces_[0];
+    lv_obj_t* overlay = lv_obj_create(surface);
+    lv_obj_t* battery_row = lv_obj_create(overlay);
+    battery_icon_label_ = lv_label_create(battery_row);
+    battery_label_ = lv_label_create(battery_row);
+    style_stage_ = lv_obj_create(overlay);
+    minute_label_ = lv_label_create(overlay);
+
+    if (overlay == nullptr || battery_row == nullptr || battery_icon_label_ == nullptr || battery_label_ == nullptr ||
+        style_stage_ == nullptr || minute_label_ == nullptr) {
+      return nullptr;
+    }
+
+    ui_prepare_box(overlay);
+    lv_obj_set_size(overlay, LV_PCT(100), LV_PCT(100));
+    lv_obj_center(overlay);
+
+    ui_prepare_box(battery_row);
+    ui_set_flex_row(battery_row, 0, 4, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_size(battery_row, 53, 18);
+    lv_obj_set_style_bg_opa(battery_row, LV_OPA_TRANSP, 0);
+    lv_obj_set_style_border_width(battery_row, 0, 0);
+    lv_obj_align(battery_row, LV_ALIGN_TOP_MID, 0, 10);
+
+    ui_prepare_label(battery_icon_label_);
+    ui_apply_text(battery_icon_label_, TextStyle::Tiny);
+    lv_obj_set_style_text_font(battery_icon_label_, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_color(battery_icon_label_, lv_color_hex(0xF5F7FB), 0);
+    lv_label_set_text(battery_icon_label_, LV_SYMBOL_CHARGE);
+
+    ui_prepare_label(battery_label_);
+    ui_apply_text(battery_label_, TextStyle::Tiny);
+    lv_obj_set_style_text_font(battery_label_, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_color(battery_label_, lv_color_hex(0xF5F7FB), 0);
+    lv_label_set_text(battery_label_, "--%");
+
+    ui_prepare_box(style_stage_);
+    lv_obj_set_size(style_stage_, 240, 296);
+    lv_obj_align(style_stage_, LV_ALIGN_TOP_LEFT, 0, 0);
+    lv_obj_set_style_bg_opa(style_stage_, LV_OPA_TRANSP, 0);
+    lv_obj_set_style_border_width(style_stage_, 0, 0);
+    lv_obj_set_style_pad_all(style_stage_, 0, 0);
+
+    renderer_ = create_watchface_style_renderer(config_);
+    if (!renderer_ || renderer_->build(style_stage_) == nullptr) {
+      return nullptr;
+    }
+
+    ui_prepare_label(minute_label_);
+    ui_apply_text(minute_label_, TextStyle::HeroSoft);
+    lv_obj_set_style_text_font(minute_label_, &lv_font_montserrat_42, 0);
+    lv_obj_set_style_text_color(minute_label_, lv_color_hex(0xD7E3F4), 0);
+    lv_obj_set_width(minute_label_, 96);
+    lv_obj_set_style_text_align(minute_label_, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_pos(minute_label_, 76, 234);
+    lv_label_set_text(minute_label_, "--");
+  }
+
+  {
+    lv_obj_t* surface = surfaces_[1];
+    const lv_color_t stage_bg = lv_color_hex(0x040812);
+    const lv_color_t tile_bg = lv_color_hex(0x0C1424);
+    const lv_color_t tile_border = lv_color_hex(0x1E375A);
+    const lv_color_t music_bg = lv_color_hex(0x4BE7E8);
+    const lv_color_t music_fg = lv_color_hex(0xF7FFFE);
+    lv_obj_t* stage = create_home_stage_root(surface, layout, stage_bg);
+    if (stage == nullptr) {
+      return nullptr;
+    }
+
+    const lv_coord_t small_w = 106;
+    const lv_coord_t small_h = 106;
+    const lv_coord_t top_y = 15;
+    const lv_coord_t music_y = 136;
+    const lv_coord_t card_gap = 8;
+    lv_obj_t* alipay_card = lv_obj_create(stage);
+    lv_obj_t* wechat_card = lv_obj_create(stage);
+    lv_obj_t* music_card = lv_obj_create(stage);
+    if (alipay_card == nullptr || wechat_card == nullptr || music_card == nullptr) {
+      return nullptr;
+    }
+
+    for (lv_obj_t* card : {alipay_card, wechat_card}) {
+      ui_prepare_box(card);
+      ui_apply_surface(card, SurfaceStyle::PanelSubtle);
+      lv_obj_set_size(card, small_w, small_h);
+      lv_obj_set_style_radius(card, 24, 0);
+      lv_obj_set_style_pad_all(card, 0, 0);
+      lv_obj_set_style_bg_color(card, tile_bg, 0);
+      lv_obj_set_style_border_color(card, tile_border, 0);
+    }
+    lv_obj_align(alipay_card, LV_ALIGN_TOP_LEFT, 0, top_y);
+    lv_obj_align(wechat_card, LV_ALIGN_TOP_LEFT, small_w + card_gap, top_y);
+
+    auto build_payment_tile = [&](lv_obj_t* card,
+                                  const char* icon_path,
+                                  lv_coord_t icon_x,
+                                  lv_coord_t icon_y,
+                                  lv_coord_t icon_size,
+                                  const char* label_text,
+                                  lv_coord_t label_x,
+                                  lv_coord_t label_y,
+                                  lv_coord_t label_w) -> bool {
+      lv_obj_t* icon = create_contain_image(card, icon_path, icon_size, icon_size, LV_ALIGN_TOP_LEFT, icon_x, icon_y);
+      lv_obj_t* label = lv_label_create(card);
+      if (icon == nullptr || label == nullptr) {
+        return false;
+      }
+      ui_prepare_label(label);
+      ui_apply_text(label, TextStyle::Title);
+      lv_obj_set_style_text_font(label, &lv_font_montserrat_14, 0);
+      lv_obj_set_style_text_color(label, lv_color_hex(0xF8FAFC), 0);
+      lv_obj_set_width(label, label_w);
+      lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP);
+      lv_label_set_text(label, label_text);
+      lv_obj_align(label, LV_ALIGN_TOP_LEFT, label_x, label_y);
+      return true;
+    };
+
+    const char* wechat_icon_path = payment_wechat_green_asset_path();
+    if (!file_exists(wechat_icon_path)) {
+      wechat_icon_path = payment_wechat_asset_path();
+    }
+    if (!build_payment_tile(alipay_card, payment_alipay_asset_path(), 2, 2, 49, "Alipay", 16, 72, 72) ||
+        !build_payment_tile(wechat_card, wechat_icon_path, 7, 5, 40, "WeChat\nPay", 16, 58, 74)) {
+      return nullptr;
+    }
+
+    for (auto [card, target] : {std::pair<lv_obj_t*, PageId> {alipay_card, PageId::AppAlipay},
+                                std::pair<lv_obj_t*, PageId> {wechat_card, PageId::AppWeChatPay}}) {
+      attach_click_guard(card);
+      lv_obj_add_event_cb(card, app_tile_event_cb, LV_EVENT_CLICKED, this);
+      lv_obj_set_user_data(card, reinterpret_cast<void*>(static_cast<std::uintptr_t>(target)));
+    }
+
+    ui_prepare_box(music_card);
+    ui_apply_surface(music_card, SurfaceStyle::Panel);
+    lv_obj_set_size(music_card, 220, 106);
+    lv_obj_align(music_card, LV_ALIGN_TOP_LEFT, 0, music_y);
+    lv_obj_set_style_radius(music_card, 24, 0);
+    lv_obj_set_style_pad_all(music_card, 0, 0);
+    lv_obj_set_style_bg_color(music_card, music_bg, 0);
+    lv_obj_set_style_border_width(music_card, 0, 0);
+
+    lv_obj_t* music_status = lv_label_create(music_card);
+    lv_obj_t* music_prev = lv_label_create(music_card);
+    lv_obj_t* music_play = lv_label_create(music_card);
+    lv_obj_t* music_next = lv_label_create(music_card);
+    if (music_status == nullptr || music_prev == nullptr || music_play == nullptr || music_next == nullptr) {
+      return nullptr;
+    }
+
+    ui_prepare_label(music_status);
+    ui_apply_text(music_status, TextStyle::Title);
+    lv_obj_set_style_text_font(music_status, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_color(music_status, music_fg, 0);
+    lv_obj_set_width(music_status, 180);
+    lv_label_set_long_mode(music_status, LV_LABEL_LONG_DOT);
+    lv_label_set_text(music_status, "Phone not playing");
+    lv_obj_align(music_status, LV_ALIGN_TOP_LEFT, 16, 16);
+
+    for (lv_obj_t* control : {music_prev, music_play, music_next}) {
+      ui_prepare_label(control);
+      ui_apply_text(control, TextStyle::Hero);
+      lv_obj_set_style_text_color(control, music_fg, 0);
+    }
+    lv_obj_set_style_text_font(music_prev, &lv_font_montserrat_18, 0);
+    lv_obj_set_style_text_font(music_play, &lv_font_montserrat_22, 0);
+    lv_obj_set_style_text_font(music_next, &lv_font_montserrat_18, 0);
+    lv_label_set_text(music_prev, LV_SYMBOL_PREV);
+    lv_label_set_text(music_play, LV_SYMBOL_PLAY);
+    lv_label_set_text(music_next, LV_SYMBOL_NEXT);
+    lv_obj_align(music_prev, LV_ALIGN_BOTTOM_LEFT, 24, -16);
+    lv_obj_align(music_play, LV_ALIGN_BOTTOM_MID, 0, -12);
+    lv_obj_align(music_next, LV_ALIGN_BOTTOM_RIGHT, -24, -16);
+  }
+
+  {
+    lv_obj_t* surface = surfaces_[3];
+    const lv_color_t stage_bg = lv_color_hex(0x040812);
+    lv_obj_t* stage = create_home_stage_root(surface, layout, stage_bg);
+    if (stage == nullptr) {
+      return nullptr;
+    }
+
+    struct HealthTile {
+      PageId target;
+      const char* icon_path;
+      const char* value;
+      lv_color_t bg;
+      bool emphasize;
+      lv_coord_t icon_x;
+      lv_coord_t icon_y;
+      lv_coord_t icon_size;
+    };
+
+    const std::array<HealthTile, 4> tiles {{
+        {PageId::AppHeartRate, health_heart_asset_path(), "--", lv_color_hex(0x0D1222), false, 18, 16, 36},
+        {PageId::AppBloodOxygen, health_spo2_asset_path(), "--", lv_color_hex(0xFF4F72), false, 18, 12, 40},
+        {PageId::AppBreathing, health_breathe_asset_path(), "Breathe", lv_color_hex(0x4DBDFF), true, 14, 13, 39},
+        {PageId::AppStress, health_stress_asset_path(), "--", lv_color_hex(0x0D1222), false, 18, 16, 44},
+    }};
+
+    const lv_coord_t tile_w = 106;
+    const lv_coord_t tile_h = 106;
+    const lv_coord_t tile_gap = 8;
+    const lv_coord_t start_y = 15;
+
+    for (std::size_t index = 0; index < tiles.size(); ++index) {
+      const auto& tile = tiles[index];
+      const lv_coord_t x = static_cast<lv_coord_t>((index % 2) * (tile_w + tile_gap));
+      const lv_coord_t y = static_cast<lv_coord_t>(start_y + (index / 2) * (tile_h + tile_gap));
+      lv_obj_t* card = lv_obj_create(stage);
+      if (card == nullptr) {
+        return nullptr;
+      }
+      ui_prepare_box(card);
+      ui_apply_surface(card, SurfaceStyle::PanelSubtle);
+      lv_obj_set_size(card, tile_w, tile_h);
+      lv_obj_align(card, LV_ALIGN_TOP_LEFT, x, y);
+      lv_obj_set_style_radius(card, 24, 0);
+      lv_obj_set_style_pad_all(card, 0, 0);
+      lv_obj_set_style_bg_color(card, tile.bg, 0);
+      lv_obj_set_style_border_width(card, 0, 0);
+      attach_click_guard(card);
+      lv_obj_add_event_cb(card, app_tile_event_cb, LV_EVENT_CLICKED, this);
+      lv_obj_set_user_data(card, reinterpret_cast<void*>(static_cast<std::uintptr_t>(tile.target)));
+
+      if (create_contain_image(card, tile.icon_path, tile.icon_size, tile.icon_size, LV_ALIGN_TOP_LEFT, tile.icon_x, tile.icon_y) ==
+          nullptr) {
+        return nullptr;
+      }
+
+      lv_obj_t* value = lv_label_create(card);
+      if (value == nullptr) {
+        return nullptr;
+      }
+      ui_prepare_label(value);
+      ui_apply_text(value, TextStyle::Title);
+      lv_obj_set_style_text_font(value, &lv_font_montserrat_16, 0);
+      lv_obj_set_style_text_color(value, tile.emphasize ? lv_color_hex(0xD7FBFF) : lv_color_hex(0xF8FAFC), 0);
+      lv_obj_set_width(value, 78);
+      lv_label_set_long_mode(value, LV_LABEL_LONG_DOT);
+      lv_label_set_text(value, tile.value);
+      lv_obj_align(value, LV_ALIGN_BOTTOM_LEFT, 12, -14);
+    }
+  }
+
+  {
+    lv_obj_t* surface = surfaces_[2];
+    const lv_color_t stage_bg = lv_color_hex(0x040812);
+    const lv_color_t card_bg = lv_color_hex(0x0A101A);
+    lv_obj_t* stage = create_home_stage_root(surface, layout, stage_bg);
+    if (stage == nullptr) {
+      return nullptr;
+    }
+
+    lv_obj_t* title = lv_label_create(stage);
+    lv_obj_t* subtitle = lv_label_create(stage);
+    lv_obj_t* card = lv_obj_create(stage);
+    if (title == nullptr || subtitle == nullptr || card == nullptr) {
+      return nullptr;
+    }
+
+    ui_prepare_label(title);
+    ui_apply_text(title, TextStyle::HeroSoft);
+    lv_obj_set_style_text_font(title, &lv_font_montserrat_22, 0);
+    lv_obj_set_style_text_color(title, lv_color_hex(0xF8FAFC), 0);
+    lv_obj_set_width(title, 93);
+    lv_obj_set_style_text_align(title, LV_TEXT_ALIGN_CENTER, 0);
+    lv_label_set_text(title, "School");
+    lv_obj_align(title, LV_ALIGN_TOP_LEFT, 57, 18);
+
+    ui_prepare_label(subtitle);
+    ui_apply_text(subtitle, TextStyle::Title);
+    lv_obj_set_style_text_font(subtitle, &lv_font_montserrat_12, 0);
+    lv_obj_set_style_text_color(subtitle, lv_color_hex(0x3B82F6), 0);
+    lv_obj_set_width(subtitle, 151);
+    lv_obj_set_style_text_align(subtitle, LV_TEXT_ALIGN_CENTER, 0);
+    lv_label_set_text(subtitle, "Tap card reader");
+    lv_obj_align(subtitle, LV_ALIGN_TOP_LEFT, 30, 47);
+
+    ui_prepare_box(card);
+    ui_apply_surface(card, SurfaceStyle::PanelSubtle);
+    lv_obj_set_size(card, 208, 120);
+    lv_obj_align(card, LV_ALIGN_TOP_LEFT, 6, 75);
+    lv_obj_set_style_radius(card, 28, 0);
+    lv_obj_set_style_pad_all(card, 0, 0);
+    lv_obj_set_style_bg_color(card, card_bg, 0);
+    lv_obj_set_style_border_width(card, 0, 0);
+    lv_obj_set_style_clip_corner(card, true, 0);
+
+    const char* nfc_asset_path = nfc_school_card_inner_asset_path();
+    if (!file_exists(nfc_asset_path)) {
+      nfc_asset_path = nfc_school_card_asset_path();
+    }
+    if (create_cover_image(card, nfc_asset_path, 209, 124, LV_ALIGN_TOP_LEFT, -2, -4) == nullptr) {
+      return nullptr;
+    }
+    attach_click_guard(card);
+    lv_obj_add_event_cb(card, app_tile_event_cb, LV_EVENT_CLICKED, this);
+    lv_obj_set_user_data(card, reinterpret_cast<void*>(static_cast<std::uintptr_t>(PageId::AppNfc)));
+  }
+
+  {
+    lv_obj_t* surface = surfaces_[4];
+    const lv_color_t stage_bg = lv_color_hex(0x040812);
+    const lv_color_t weather_bg = lv_color_hex(0x0E2B56);
+    const lv_color_t weather_accent = lv_color_hex(0x7EC8FF);
+    const lv_color_t sleep_bg = lv_color_hex(0x3A1B69);
+    const lv_color_t sleep_accent = lv_color_hex(0xC06CFF);
+    const lv_color_t steps_bg = lv_color_hex(0x054A42);
+    const lv_color_t steps_accent = lv_color_hex(0x19F57A);
+
+    lv_obj_t* stage = lv_obj_create(surface);
+    lv_obj_t* hero_card = lv_obj_create(stage);
+    lv_obj_t* sleep_card = lv_obj_create(stage);
+    lv_obj_t* steps_card = lv_obj_create(stage);
+    if (stage == nullptr || hero_card == nullptr || sleep_card == nullptr || steps_card == nullptr) {
+      return nullptr;
+    }
+
+    style_home_surface_stage(stage, layout.stage_w, layout.stage_h, layout.stage_radius, stage_bg);
+    lv_obj_align(stage, LV_ALIGN_TOP_MID, 0, layout.stage_top);
+
+    ui_prepare_box(hero_card);
+    ui_apply_surface(hero_card, SurfaceStyle::Panel);
+    lv_obj_set_size(hero_card, layout.stage_w, 110);
+    lv_obj_align(hero_card, LV_ALIGN_TOP_LEFT, 0, 15);
+    lv_obj_set_style_bg_color(hero_card, weather_bg, 0);
+    lv_obj_set_style_border_color(hero_card, lv_color_mix(weather_accent, lv_color_hex(0xFFFFFF), LV_OPA_20), 0);
+    lv_obj_set_style_radius(hero_card, 28, 0);
+    lv_obj_set_style_pad_all(hero_card, 0, 0);
+
+    lv_obj_t* temp_label = lv_label_create(hero_card);
+    lv_obj_t* range_label = lv_label_create(hero_card);
+    lv_obj_t* weather_icon_image = lv_image_create(hero_card);
+    if (temp_label == nullptr || range_label == nullptr || weather_icon_image == nullptr) {
+      return nullptr;
+    }
+    ui_prepare_label(temp_label);
+    ui_apply_text(temp_label, TextStyle::Hero);
+    lv_obj_set_style_text_font(temp_label, &lv_font_montserrat_34, 0);
+    lv_obj_set_style_text_color(temp_label, lv_color_hex(0xFFFFFF), 0);
+    set_single_line_label(temp_label, 90);
+    lv_label_set_text(temp_label, "23C");
+    lv_obj_align(temp_label, LV_ALIGN_TOP_LEFT, 15, 23);
+
+    ui_prepare_label(range_label);
+    ui_apply_text(range_label, TextStyle::Title);
+    lv_obj_set_style_text_font(range_label, &lv_font_montserrat_12, 0);
+    lv_obj_set_style_text_color(range_label, lv_color_hex(0xC8D7EE), 0);
+    set_single_line_label(range_label, 76);
+    lv_label_set_text(range_label, "30C / 18C");
+    lv_obj_align(range_label, LV_ALIGN_TOP_LEFT, 28, 68);
+
+    const char* weather_icon_path = weather_icon_asset_path();
+    if (file_exists(weather_icon_path)) {
+      lv_image_set_src(weather_icon_image, weather_icon_path);
+      lv_obj_set_size(weather_icon_image, 73, 73);
+      lv_image_set_inner_align(weather_icon_image, LV_IMAGE_ALIGN_CONTAIN);
+      lv_obj_align(weather_icon_image, LV_ALIGN_TOP_LEFT, 140, 18);
+    } else {
+      lv_obj_add_flag(weather_icon_image, LV_OBJ_FLAG_HIDDEN);
+    }
+    attach_click_guard(hero_card);
+    lv_obj_add_event_cb(hero_card, app_tile_event_cb, LV_EVENT_CLICKED, this);
+    lv_obj_set_user_data(hero_card, reinterpret_cast<void*>(static_cast<std::uintptr_t>(PageId::AppWeather)));
+
+    for (auto [card, bg, border, x, target] :
+         {std::tuple<lv_obj_t*, lv_color_t, lv_color_t, lv_coord_t, PageId> {sleep_card,
+                                                                              sleep_bg,
+                                                                              lv_color_mix(sleep_accent, lv_color_hex(0xFFFFFF), LV_OPA_20),
+                                                                              1,
+                                                                              PageId::AppSleep},
+          std::tuple<lv_obj_t*, lv_color_t, lv_color_t, lv_coord_t, PageId> {steps_card,
+                                                                              steps_bg,
+                                                                              lv_color_mix(steps_accent, lv_color_hex(0xFFFFFF), LV_OPA_20),
+                                                                              114,
+                                                                              PageId::Pedometer}}) {
+      ui_prepare_box(card);
+      ui_apply_surface(card, SurfaceStyle::PanelSubtle);
+      lv_obj_set_size(card, 106, 106);
+      lv_obj_align(card, LV_ALIGN_TOP_LEFT, x, 136);
+      lv_obj_set_style_radius(card, 24, 0);
+      lv_obj_set_style_pad_all(card, 0, 0);
+      lv_obj_set_style_bg_color(card, bg, 0);
+      lv_obj_set_style_border_color(card, border, 0);
+      attach_click_guard(card);
+      lv_obj_add_event_cb(card, app_tile_event_cb, LV_EVENT_CLICKED, this);
+      lv_obj_set_user_data(card, reinterpret_cast<void*>(static_cast<std::uintptr_t>(target)));
+    }
+
+    auto build_metric_card = [&](lv_obj_t* card, const char* value, bool sleep_icon, bool emphasize) -> bool {
+      lv_obj_t* icon_root = lv_obj_create(card);
+      lv_obj_t* icon_image = lv_image_create(icon_root);
+      lv_obj_t* value_label = lv_label_create(card);
+      if (icon_root == nullptr || icon_image == nullptr || value_label == nullptr) {
+        return false;
+      }
+      ui_prepare_box(icon_root);
+      lv_obj_set_size(icon_root, 58, 58);
+      lv_obj_set_style_bg_opa(icon_root, LV_OPA_TRANSP, 0);
+      lv_obj_set_style_border_width(icon_root, 0, 0);
+      lv_obj_align(icon_root, LV_ALIGN_TOP_LEFT, 0, 2);
+
+      const char* icon_path = sleep_icon ? sleep_icon_asset_path() : steps_icon_asset_path();
+      lv_obj_set_size(icon_image, 58, 58);
+      lv_image_set_inner_align(icon_image, LV_IMAGE_ALIGN_CONTAIN);
+      lv_image_set_src(icon_image, icon_path);
+      lv_obj_center(icon_image);
+
+      ui_prepare_label(value_label);
+      ui_apply_text(value_label, TextStyle::HeroSoft);
+      lv_obj_set_style_text_font(value_label, emphasize ? &lv_font_montserrat_16 : &lv_font_montserrat_14, 0);
+      lv_obj_set_style_text_color(value_label, lv_color_hex(0xFFFFFF), 0);
+      set_single_line_label(value_label, 72);
+      lv_label_set_text(value_label, value);
+      lv_obj_align(value_label, LV_ALIGN_TOP_LEFT, sleep_icon ? 6 : 2, 70);
+      return true;
+    };
+
+    if (!build_metric_card(sleep_card, "7h 36m", true, false) ||
+        !build_metric_card(steps_card, "7645", false, true)) {
+      return nullptr;
+    }
+
+  }
+
+  track(data_center_.subscribe(EventId::TimeUpdated,
+                               [this](const Event& event) {
+                                 if (const auto* model = std::get_if<TimeModel>(&event.payload)) {
+                                   apply_time(*model);
+                                 }
+                               }));
+  track(data_center_.subscribe(EventId::BatteryChanged,
+                               [this](const Event& event) {
+                                 if (const auto* model = std::get_if<BatteryModel>(&event.payload)) {
+                                   apply_battery(*model);
+                                 }
+                               }));
+  track(data_center_.subscribe(EventId::HomeRingPreviewChanged,
+                               [this](const Event& event) {
+                                 if (root_ == nullptr || lv_screen_active() != root_) {
+                                   return;
+                                 }
+                                 if (const auto* model = std::get_if<HomeRingPreviewModel>(&event.payload)) {
+                                   apply_home_ring_preview(*model);
+                                 }
+                               }));
+  track(data_center_.subscribe(EventId::InputRequested,
+                               [this](const Event& event) {
+                                 if (root_ == nullptr || lv_screen_active() != root_ || renderer_ == nullptr) {
+                                   return;
+                                 }
+                                 const auto* command = std::get_if<InputCommand>(&event.payload);
+                                 if (command == nullptr || settled_surface_index_ != 0) {
+                                   return;
+                                 }
+                                 switch (command->action) {
+                                   case InputAction::TouchActivity:
+                                     renderer_->apply(render_state_);
+                                     break;
+                                   case InputAction::CrownRotateCW:
+                                     if (renderer_->on_crown_delta(std::max<std::int16_t>(1, command->value), config_)) {
+                                       render_state_.spread_index = config_.spread_index;
+                                       renderer_->apply(render_state_);
+                                     }
+                                     break;
+                                   case InputAction::CrownRotateCCW:
+                                     if (renderer_->on_crown_delta(-std::max<std::int16_t>(1, command->value), config_)) {
+                                       render_state_.spread_index = config_.spread_index;
+                                       renderer_->apply(render_state_);
+                                     }
+                                     break;
+                                   default:
+                                     break;
+                                 }
+                               }));
+
+  layout_surfaces_for_preview(0, 0);
+  set_track_x(0);
+  return root;
 }
 
 LauncherPage::LauncherPage(DataCenter& data_center) : PageBase(data_center) {
@@ -2669,6 +3473,30 @@ const char* QuickSettingsPage::name() const {
   return "QuickSettings";
 }
 
+void QuickSettingsPage::on_will_appear() {
+  PageBase::on_will_appear();
+  reset_quick_settings_log();
+  hide_toggle_toast();
+  if (suppress_click_deadline_ != std::chrono::steady_clock::time_point {} &&
+      std::chrono::steady_clock::now() >= suppress_click_deadline_) {
+    suppress_next_click_ = false;
+    suppress_click_deadline_ = std::chrono::steady_clock::time_point {};
+  }
+  if (!suppress_next_click_) {
+    long_press_source_button_ = nullptr;
+  }
+}
+
+void QuickSettingsPage::on_will_disappear() {
+  stop_toast_timer();
+  stop_preview_close_timer();
+  hide_toggle_toast();
+  if (!suppress_next_click_) {
+    long_press_source_button_ = nullptr;
+  }
+  PageBase::on_will_disappear();
+}
+
 lv_obj_t* QuickSettingsPage::build() {
   lv_obj_t* root = lv_obj_create(nullptr);
   if (root == nullptr) {
@@ -2679,7 +3507,8 @@ lv_obj_t* QuickSettingsPage::build() {
 
   backdrop_root_ = lv_obj_create(root);
   sheet_container_ = lv_obj_create(root);
-  if (backdrop_root_ == nullptr || sheet_container_ == nullptr) {
+  toast_container_ = lv_obj_create(root);
+  if (backdrop_root_ == nullptr || sheet_container_ == nullptr || toast_container_ == nullptr) {
     return nullptr;
   }
 
@@ -2769,6 +3598,36 @@ lv_obj_t* QuickSettingsPage::build() {
   lv_obj_remove_flag(sheet_container_, LV_OBJ_FLAG_SCROLLABLE);
   lv_obj_align(sheet_container_, LV_ALIGN_TOP_MID, 0, 0);
 
+  toast_label_ = lv_label_create(toast_container_);
+  if (toast_label_ == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_box(toast_container_);
+  lv_obj_set_style_bg_color(toast_container_, lv_color_hex(0x6A7D97), 0);
+  lv_obj_set_style_bg_opa(toast_container_, LV_OPA_80, 0);
+  lv_obj_set_style_border_width(toast_container_, 0, 0);
+  lv_obj_set_style_radius(toast_container_, 22, 0);
+  lv_obj_set_style_pad_left(toast_container_, 18, 0);
+  lv_obj_set_style_pad_right(toast_container_, 18, 0);
+  lv_obj_set_style_pad_top(toast_container_, 8, 0);
+  lv_obj_set_style_pad_bottom(toast_container_, 8, 0);
+  lv_obj_remove_flag(toast_container_, LV_OBJ_FLAG_SCROLLABLE);
+  lv_obj_remove_flag(toast_container_, LV_OBJ_FLAG_CLICKABLE);
+  lv_obj_add_flag(toast_container_, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_align(toast_container_, LV_ALIGN_TOP_MID, 0, 28);
+  lv_obj_set_size(toast_container_, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+  lv_obj_move_foreground(toast_container_);
+
+  ui_prepare_label(toast_label_);
+  ui_apply_text(toast_label_, TextStyle::Body);
+  lv_obj_set_style_text_font(toast_label_, cjk_font_16(), 0);
+  lv_obj_set_style_text_color(toast_label_, lv_color_hex(0xF8FBFF), 0);
+  lv_label_set_long_mode(toast_label_, LV_LABEL_LONG_MODE_CLIP);
+  lv_obj_set_size(toast_label_, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
+  lv_obj_set_style_text_align(toast_label_, LV_TEXT_ALIGN_CENTER, 0);
+  lv_label_set_text(toast_label_, "");
+  lv_obj_center(toast_label_);
+
   drag_handle_ = lv_obj_create(sheet_container_);
   if (drag_handle_ == nullptr) {
     return nullptr;
@@ -2807,8 +3666,11 @@ lv_obj_t* QuickSettingsPage::build() {
     lv_obj_set_style_bg_opa(button, LV_OPA_COVER, 0);
     lv_obj_set_style_border_width(button, 0, 0);
     lv_obj_set_style_shadow_width(button, 0, 0);
+    attach_click_guard(button);
     lv_obj_add_event_cb(button, &QuickSettingsPage::toggle_event_cb, LV_EVENT_CLICKED, this);
     lv_obj_add_event_cb(button, &QuickSettingsPage::toggle_long_press_event_cb, LV_EVENT_LONG_PRESSED, this);
+    lv_obj_add_event_cb(button, &QuickSettingsPage::toggle_release_event_cb, LV_EVENT_RELEASED, this);
+    lv_obj_add_event_cb(button, &QuickSettingsPage::toggle_press_lost_event_cb, LV_EVENT_PRESS_LOST, this);
     lv_obj_set_user_data(button, reinterpret_cast<void*>(static_cast<std::uintptr_t>(index)));
 
     lv_obj_t* icon = lv_label_create(button);
@@ -2853,17 +3715,46 @@ void QuickSettingsPage::toggle_event_cb(lv_event_t* event) {
   if (self == nullptr) {
     return;
   }
-  lv_obj_t* target = lv_event_get_target_obj(event);
-  if (target == nullptr) {
+  lv_obj_t* target = lv_event_get_current_target_obj(event);
+  std::size_t index = static_cast<std::size_t>(-1);
+  const char* label = "null";
+  if (target != nullptr) {
+    index = static_cast<std::size_t>(reinterpret_cast<std::uintptr_t>(lv_obj_get_user_data(target)));
+    if (index < self->toggles_.size()) {
+      label = self->toggles_[index].label;
+    }
+  }
+  append_quick_settings_log("CLICK_ENTER", index, label, self->suppress_next_click_, true, target, event);
+  const bool guard_allows = target != nullptr && click_guard_allows(target);
+  append_quick_settings_log("CLICK_GUARD", index, label, self->suppress_next_click_, guard_allows, target, event);
+  if (target == nullptr || !guard_allows) {
     return;
   }
-  const auto index = static_cast<std::size_t>(reinterpret_cast<std::uintptr_t>(lv_obj_get_user_data(target)));
+  if (self->suppress_next_click_ &&
+      self->suppress_click_deadline_ != std::chrono::steady_clock::time_point {} &&
+      std::chrono::steady_clock::now() >= self->suppress_click_deadline_) {
+    append_quick_settings_log("CLICK_SUPPRESS_EXPIRED", index, label, self->suppress_next_click_, true, target, event);
+    self->suppress_next_click_ = false;
+    self->suppress_click_deadline_ = std::chrono::steady_clock::time_point {};
+    self->long_press_source_button_ = nullptr;
+  }
+  if (self->suppress_next_click_) {
+    append_quick_settings_log("CLICK_SWALLOWED", index, label, self->suppress_next_click_, true, target, event);
+    self->suppress_next_click_ = false;
+    self->suppress_click_deadline_ = std::chrono::steady_clock::time_point {};
+    self->long_press_source_button_ = nullptr;
+    return;
+  }
+
   if (index >= self->toggles_.size()) {
+    append_quick_settings_log("CLICK_INDEX_OOB", index, label, self->suppress_next_click_, true, target, event);
     return;
   }
 
   auto& toggle = self->toggles_[index];
+  append_quick_settings_log("CLICK_HANDLE", index, toggle.label, self->suppress_next_click_, true, target, event);
   if (toggle.kind == ToggleKind::OpenSettings) {
+    append_quick_settings_log("CLICK_NAV_SETTINGS", index, toggle.label, self->suppress_next_click_, true, target, event);
     self->request_navigation({NavigationAction::LaunchApp, PageId::SettingsHome});
     return;
   }
@@ -2875,18 +3766,21 @@ void QuickSettingsPage::toggle_event_cb(lv_event_t* event) {
     toggle.mode = current ? 0 : 1;
   } else if (toggle.kind == ToggleKind::RaiseToWake) {
     const auto policy = self->data_center_.display_policy();
-    const bool current = !policy || policy->raise_to_wake_enabled;
+    const bool current = !policy || policy->raise_to_wake_mode != RaiseToWakeMode::Off;
     self->data_center_.set_raise_to_wake_enabled(!current);
     toggle.mode = current ? 0 : 1;
+    self->show_toggle_toast(!current ? "抬腕亮屏已开启" : "抬腕亮屏已关闭");
   } else if (toggle.kind == ToggleKind::AodFiveMinutes) {
     const auto policy = self->data_center_.display_policy();
-    const bool current = policy && policy->always_on_display_enabled;
-    self->data_center_.set_always_on_display_enabled(!current);
+    const bool current = policy && policy->keep_screen_on_duration_ms > 0U;
+    self->data_center_.set_keep_screen_on_duration_ms(current ? 0U : 300000U);
     toggle.mode = current ? 0 : 1;
+    self->show_toggle_toast(current ? "持续亮屏已关闭" : "持续亮屏5分钟");
   } else {
     toggle.mode = toggle.mode == 0 ? 1 : 0;
   }
   self->apply_toggle_visual(index);
+  append_quick_settings_log("CLICK_DONE", index, toggle.label, self->suppress_next_click_, true, target, event);
 }
 
 void QuickSettingsPage::toggle_long_press_event_cb(lv_event_t* event) {
@@ -2894,16 +3788,77 @@ void QuickSettingsPage::toggle_long_press_event_cb(lv_event_t* event) {
   if (self == nullptr) {
     return;
   }
-  lv_obj_t* target = lv_event_get_target_obj(event);
+  lv_obj_t* target = lv_event_get_current_target_obj(event);
   if (target == nullptr) {
     return;
   }
   const auto index = static_cast<std::size_t>(reinterpret_cast<std::uintptr_t>(lv_obj_get_user_data(target)));
+  const char* label = index < self->toggles_.size() ? self->toggles_[index].label : "oob";
+  append_quick_settings_log("LONG_PRESS_ENTER", index, label, self->suppress_next_click_, true, target, event);
   if (index >= self->toggles_.size()) {
     return;
   }
 
+  self->stop_toast_timer();
+  self->hide_toggle_toast();
+  self->suppress_next_click_ = true;
+  self->suppress_click_deadline_ = std::chrono::steady_clock::now() + std::chrono::milliseconds(1200);
+  self->long_press_source_button_ = target;
+  self->suppress_global_clicks_for(std::chrono::milliseconds(520));
+  append_quick_settings_log(
+      "LONG_PRESS_NAV", index, self->toggles_[index].label, self->suppress_next_click_, true, target, event);
   self->request_navigation({NavigationAction::LaunchApp, self->toggles_[index].detail_page});
+}
+
+void QuickSettingsPage::toggle_release_event_cb(lv_event_t* event) {
+  auto* self = static_cast<QuickSettingsPage*>(lv_event_get_user_data(event));
+  if (self == nullptr) {
+    return;
+  }
+  lv_obj_t* target = lv_event_get_current_target_obj(event);
+  std::size_t index = static_cast<std::size_t>(-1);
+  const char* label = "null";
+  if (target != nullptr) {
+    index = static_cast<std::size_t>(reinterpret_cast<std::uintptr_t>(lv_obj_get_user_data(target)));
+    if (index < self->toggles_.size()) {
+      label = self->toggles_[index].label;
+    }
+  }
+  append_quick_settings_log("RELEASE", index, label, self->suppress_next_click_, true, target, event);
+  if (target == nullptr || target != self->long_press_source_button_) {
+    return;
+  }
+}
+
+void QuickSettingsPage::toggle_press_lost_event_cb(lv_event_t* event) {
+  auto* self = static_cast<QuickSettingsPage*>(lv_event_get_user_data(event));
+  if (self == nullptr) {
+    return;
+  }
+  lv_obj_t* target = lv_event_get_current_target_obj(event);
+  std::size_t index = static_cast<std::size_t>(-1);
+  const char* label = "null";
+  if (target != nullptr) {
+    index = static_cast<std::size_t>(reinterpret_cast<std::uintptr_t>(lv_obj_get_user_data(target)));
+    if (index < self->toggles_.size()) {
+      label = self->toggles_[index].label;
+    }
+  }
+  append_quick_settings_log("PRESS_LOST", index, label, self->suppress_next_click_, true, target, event);
+  if (target == nullptr || target != self->long_press_source_button_) {
+    return;
+  }
+  self->long_press_source_button_ = nullptr;
+  append_quick_settings_log("PRESS_LOST_SOURCE_CLEARED", index, label, self->suppress_next_click_, true, target, event);
+}
+
+void QuickSettingsPage::toast_timeout_cb(lv_timer_t* timer) {
+  auto* self = static_cast<QuickSettingsPage*>(lv_timer_get_user_data(timer));
+  if (self == nullptr) {
+    return;
+  }
+  self->toast_timer_ = nullptr;
+  self->hide_toggle_toast();
 }
 
 void QuickSettingsPage::bind_input() {
@@ -2958,11 +3913,11 @@ void QuickSettingsPage::bind_display_policy() {
                                        apply_toggle_visual(index);
                                        break;
                                      case ToggleKind::RaiseToWake:
-                                       toggles_[index].mode = policy->raise_to_wake_enabled ? 1 : 0;
+                                       toggles_[index].mode = policy->raise_to_wake_mode != RaiseToWakeMode::Off ? 1 : 0;
                                        apply_toggle_visual(index);
                                        break;
                                      case ToggleKind::AodFiveMinutes:
-                                       toggles_[index].mode = policy->always_on_display_enabled ? 1 : 0;
+                                       toggles_[index].mode = policy->keep_screen_on_duration_ms > 0U ? 1 : 0;
                                        apply_toggle_visual(index);
                                        break;
                                      default:
@@ -3089,11 +4044,11 @@ void QuickSettingsPage::apply_toggle_visual(std::size_t index) {
   }
   if (toggle.kind == ToggleKind::RaiseToWake) {
     const auto policy = data_center_.display_policy();
-    active = !policy || policy->raise_to_wake_enabled;
+    active = !policy || policy->raise_to_wake_mode != RaiseToWakeMode::Off;
   }
   if (toggle.kind == ToggleKind::AodFiveMinutes) {
     const auto policy = data_center_.display_policy();
-    active = policy && policy->always_on_display_enabled;
+    active = policy && policy->keep_screen_on_duration_ms > 0U;
   }
   if (toggle.kind == ToggleKind::OpenSettings) {
     active = false;
@@ -3102,6 +4057,41 @@ void QuickSettingsPage::apply_toggle_visual(std::size_t index) {
   lv_obj_set_style_bg_color(toggle.button, active ? lv_color_hex(0x1493FF) : lv_color_hex(0x15294A), 0);
   lv_obj_set_style_bg_opa(toggle.button, LV_OPA_COVER, 0);
   lv_obj_set_style_text_color(toggle.icon_label, lv_color_hex(0xF5FAFF), 0);
+}
+
+void QuickSettingsPage::show_toggle_toast(const char* text) {
+  if (toast_container_ == nullptr || toast_label_ == nullptr || text == nullptr) {
+    return;
+  }
+  lv_label_set_text(toast_label_, text);
+  lv_obj_update_layout(toast_label_);
+  const lv_coord_t label_width = static_cast<lv_coord_t>(lv_obj_get_width(toast_label_) + 1);
+  const lv_coord_t label_height = static_cast<lv_coord_t>(lv_obj_get_height(toast_label_) + 1);
+  lv_obj_set_size(toast_container_,
+                  static_cast<lv_coord_t>(label_width + 32),
+                  static_cast<lv_coord_t>(label_height + 16));
+  lv_obj_update_layout(toast_container_);
+  lv_obj_clear_flag(toast_container_, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_move_foreground(toast_container_);
+  stop_toast_timer();
+  toast_timer_ = lv_timer_create(&QuickSettingsPage::toast_timeout_cb, 3000U, this);
+  if (toast_timer_ != nullptr) {
+    lv_timer_set_repeat_count(toast_timer_, 1);
+  }
+}
+
+void QuickSettingsPage::hide_toggle_toast() {
+  if (toast_container_ == nullptr) {
+    return;
+  }
+  lv_obj_add_flag(toast_container_, LV_OBJ_FLAG_HIDDEN);
+}
+
+void QuickSettingsPage::stop_toast_timer() {
+  if (toast_timer_ != nullptr) {
+    lv_timer_del(toast_timer_);
+    toast_timer_ = nullptr;
+  }
 }
 
 void QuickSettingsPage::set_open_preview_progress(lv_coord_t progress, bool animated) {

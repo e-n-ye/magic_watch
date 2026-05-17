@@ -1,6 +1,8 @@
 #include "App/State/AppStateMachine.h"
 
 #include <algorithm>
+#include <cmath>
+#include <cstdlib>
 #include <cstdint>
 
 #include "lvgl/lvgl.h"
@@ -114,6 +116,47 @@ PageTransition close_transition_for(PageId page_id) {
   }
 }
 
+bool is_time_in_window(const TimeModel& time, const DailyTimeWindow& window) {
+  if (!time.valid) {
+    return false;
+  }
+
+  const int current_minutes = static_cast<int>(time.hour) * 60 + static_cast<int>(time.minute);
+  const int start_minutes = static_cast<int>(window.start_hour) * 60 + static_cast<int>(window.start_minute);
+  const int end_minutes = static_cast<int>(window.end_hour) * 60 + static_cast<int>(window.end_minute);
+
+  if (start_minutes == end_minutes) {
+    return true;
+  }
+  if (start_minutes < end_minutes) {
+    return current_minutes >= start_minutes && current_minutes < end_minutes;
+  }
+  return current_minutes >= start_minutes || current_minutes < end_minutes;
+}
+
+bool raise_to_wake_allowed(DataCenter& data_center) {
+  const auto policy = data_center.display_policy();
+  if (!policy) {
+    return true;
+  }
+
+  switch (policy->raise_to_wake_mode) {
+    case RaiseToWakeMode::Off:
+      return false;
+    case RaiseToWakeMode::Scheduled: {
+      const auto& time = data_center.time();
+      return time && is_time_in_window(*time, policy->raise_to_wake_window);
+    }
+    case RaiseToWakeMode::AllDay:
+    default:
+      return true;
+  }
+}
+
+void clear_raise_session(bool& session_flag) {
+  session_flag = false;
+}
+
 }  // namespace
 
 AppStateMachine::AppStateMachine(DataCenter& data_center, PageManager& page_manager)
@@ -130,20 +173,26 @@ AppStateMachine::AppStateMachine(DataCenter& data_center, PageManager& page_mana
   display_policy_subscription_ =
       data_center_.subscribe(EventId::DisplayPolicyChanged,
                              [this](const Event&) {
+                               if (suppress_display_policy_sync_) {
+                                 return;
+                               }
                                if (power_state_ == PowerState::Running) {
+                                 sync_keep_screen_on_policy();
                                  schedule_auto_screen_off();
                                }
                              });
 }
 
 bool AppStateMachine::start() {
-  if (!page_manager_.set_root(PageId::Watchface, PageTransition::None)) {
+  if (!page_manager_.set_root(PageId::HomeRingHost, PageTransition::None)) {
     return false;
   }
 
   power_state_ = PowerState::Running;
   shell_surface_ = ShellSurface::None;
   home_surface_index_ = 0;
+  publish_home_ring_preview(0, 0, 0, false, false);
+  sync_keep_screen_on_policy();
   schedule_auto_screen_off();
   return true;
 }
@@ -171,6 +220,12 @@ void AppStateMachine::handle_navigation(const NavigationCommand& command) {
 
   switch (command.action) {
     case NavigationAction::SetRoot:
+      if (command.target == PageId::Watchface || command.target == PageId::HomeRingHost) {
+        if (power_state_ != PowerState::PoweredOff) {
+          boot_to_home(PageTransition::Fade);
+        }
+        return;
+      }
       if (command.target == PageId::ScreenOff) {
         enter_screen_off();
         return;
@@ -265,13 +320,56 @@ void AppStateMachine::handle_input(const InputCommand& command) {
       }
       open_shell_surface(ShellSurface::PowerMenu);
       return;
+    case InputAction::SimRaiseToWake:
+      overlay.hide();
+      if (power_state_ != PowerState::ScreenOff) {
+        return;
+      }
+      if (!raise_to_wake_allowed(data_center_)) {
+        return;
+      }
+      return_home();
+      raise_to_wake_session_active_ = true;
+      return;
+    case InputAction::SimRaiseDismiss:
+      overlay.hide();
+      if (power_state_ != PowerState::Running || !raise_to_wake_session_active_) {
+        return;
+      }
+      if (keep_screen_on_active()) {
+        clear_raise_session(raise_to_wake_session_active_);
+        return;
+      }
+      enter_screen_off();
+      return;
     case InputAction::EdgeBackProgress:
-      if (can_navigate_back()) {
+      if (power_state_ == PowerState::Running && is_current_home_surface()) {
+        publish_home_ring_preview(static_cast<std::uint8_t>(home_surface_index_), -1, command.value, true, false);
+      } else if (can_navigate_back()) {
         overlay.show_progress(command.value);
       }
       return;
     case InputAction::EdgeBackCancel:
-      overlay.hide();
+      if (power_state_ == PowerState::Running && is_current_home_surface()) {
+        publish_home_ring_preview(static_cast<std::uint8_t>(home_surface_index_), 0, 0, false, false);
+      } else {
+        overlay.hide();
+      }
+      return;
+    case InputAction::HomeSwipeProgress:
+      if (power_state_ == PowerState::Running && is_current_home_surface() && command.value != 0) {
+        const std::int8_t direction = command.value < 0 ? 1 : -1;
+        publish_home_ring_preview(static_cast<std::uint8_t>(home_surface_index_),
+                                  direction,
+                                  static_cast<std::int16_t>(std::abs(command.value)),
+                                  true,
+                                  false);
+      }
+      return;
+    case InputAction::HomeSwipeCancel:
+      if (power_state_ == PowerState::Running && is_current_home_surface()) {
+        publish_home_ring_preview(static_cast<std::uint8_t>(home_surface_index_), 0, 0, false, false);
+      }
       return;
     case InputAction::NavigateBack:
       overlay.hide();
@@ -283,6 +381,9 @@ void AppStateMachine::handle_input(const InputCommand& command) {
       return;
     case InputAction::OpenNotifications:
       if (power_state_ == PowerState::Running) {
+        if (!notifications_pull_preview_active_ && !is_watchface_shell_preview_context()) {
+          return;
+        }
         if (page_manager_.temporary_page_id() && *page_manager_.temporary_page_id() == PageId::Notifications &&
             !notifications_pull_preview_active_) {
           return;
@@ -331,6 +432,9 @@ void AppStateMachine::handle_input(const InputCommand& command) {
       return;
     case InputAction::OpenQuickSettings:
       if (power_state_ == PowerState::Running) {
+        if (!quick_settings_pull_preview_active_ && !is_watchface_shell_preview_context()) {
+          return;
+        }
         if (page_manager_.temporary_page_id() && *page_manager_.temporary_page_id() == PageId::QuickSettings &&
             !quick_settings_pull_preview_active_) {
           return;
@@ -383,6 +487,15 @@ void AppStateMachine::handle_input(const InputCommand& command) {
         navigate_home_surface(-1);
       }
       return;
+    case InputAction::TouchActivity:
+      if (power_state_ != PowerState::ScreenOff) {
+        return;
+      }
+      if (const auto policy = data_center_.display_policy(); policy && !policy->tap_to_wake_enabled) {
+        return;
+      }
+      return_home();
+      return;
     case InputAction::ScrollDrag:
     case InputAction::ScrollFlick:
     default:
@@ -392,10 +505,13 @@ void AppStateMachine::handle_input(const InputCommand& command) {
 
 void AppStateMachine::boot_to_home(PageTransition transition) {
   cancel_notification_screen_off(true);
-  if (page_manager_.set_root(PageId::Watchface, transition)) {
+  clear_raise_session(raise_to_wake_session_active_);
+  if (page_manager_.set_root(PageId::HomeRingHost, transition)) {
     power_state_ = PowerState::Running;
     shell_surface_ = ShellSurface::None;
     home_surface_index_ = 0;
+    publish_home_ring_preview(0, 0, 0, false, false);
+    sync_keep_screen_on_policy();
     schedule_auto_screen_off();
   }
 }
@@ -407,6 +523,10 @@ void AppStateMachine::return_home(PageTransition transition) {
 void AppStateMachine::enter_screen_off() {
   cancel_notification_screen_off(true);
   cancel_auto_screen_off();
+  suppress_display_policy_sync_ = true;
+  cancel_keep_screen_on_timer(true);
+  suppress_display_policy_sync_ = false;
+  clear_raise_session(raise_to_wake_session_active_);
   if (page_manager_.set_root(PageId::ScreenOff, PageTransition::Fade)) {
     power_state_ = PowerState::ScreenOff;
     shell_surface_ = ShellSurface::None;
@@ -416,6 +536,10 @@ void AppStateMachine::enter_screen_off() {
 void AppStateMachine::enter_powered_off() {
   cancel_notification_screen_off(true);
   cancel_auto_screen_off();
+  suppress_display_policy_sync_ = true;
+  cancel_keep_screen_on_timer(true);
+  suppress_display_policy_sync_ = false;
+  clear_raise_session(raise_to_wake_session_active_);
   if (page_manager_.set_root(PageId::PoweredOff, PageTransition::Fade)) {
     power_state_ = PowerState::PoweredOff;
     shell_surface_ = ShellSurface::None;
@@ -482,7 +606,8 @@ void AppStateMachine::close_shell_surface() {
 
 void AppStateMachine::preview_notifications_pull(std::int16_t progress) {
   const auto stack_top = page_manager_.stack_top_page_id();
-  if (power_state_ != PowerState::Running || !stack_top || *stack_top != PageId::Watchface) {
+  if (power_state_ != PowerState::Running || !stack_top || *stack_top != PageId::HomeRingHost ||
+      !is_watchface_shell_preview_context()) {
     return;
   }
 
@@ -514,7 +639,8 @@ void AppStateMachine::cancel_notifications_pull_preview() {
 
 void AppStateMachine::preview_quick_settings_pull(std::int16_t progress) {
   const auto stack_top = page_manager_.stack_top_page_id();
-  if (power_state_ != PowerState::Running || !stack_top || *stack_top != PageId::Watchface) {
+  if (power_state_ != PowerState::Running || !stack_top || *stack_top != PageId::HomeRingHost ||
+      !is_watchface_shell_preview_context()) {
     return;
   }
 
@@ -557,15 +683,16 @@ void AppStateMachine::launch_app(PageId target) {
     }
   }
 
-  if (!page_manager_.set_root(PageId::Watchface, PageTransition::None)) {
+  if (!page_manager_.set_root(PageId::HomeRingHost, PageTransition::None)) {
     return;
   }
 
   shell_surface_ = ShellSurface::None;
   power_state_ = PowerState::Running;
   home_surface_index_ = 0;
+  publish_home_ring_preview(0, 0, 0, false, false);
 
-  if (target == PageId::Watchface) {
+  if (target == PageId::Watchface || target == PageId::HomeRingHost) {
     return;
   }
 
@@ -573,7 +700,7 @@ void AppStateMachine::launch_app(PageId target) {
 }
 
 bool AppStateMachine::is_home_surface_page(PageId page_id) const {
-  return std::find(home_surfaces_.begin(), home_surfaces_.end(), page_id) != home_surfaces_.end();
+  return page_id == PageId::HomeRingHost;
 }
 
 bool AppStateMachine::is_current_home_surface() const {
@@ -583,37 +710,42 @@ bool AppStateMachine::is_current_home_surface() const {
 }
 
 bool AppStateMachine::is_current_watchface_surface() const {
+  return is_current_home_surface() && home_surface_index_ == 0;
+}
+
+bool AppStateMachine::is_watchface_shell_preview_context() const {
   const auto stack_top = page_manager_.stack_top_page_id();
-  return !page_manager_.temporary_page_id() && page_manager_.stack_depth() == 1 && stack_top &&
-         *stack_top == PageId::Watchface;
+  return power_state_ == PowerState::Running && stack_top && *stack_top == PageId::HomeRingHost &&
+         page_manager_.stack_depth() == 1 && home_surface_index_ == 0;
 }
 
 void AppStateMachine::navigate_home_surface(int delta) {
-  if (home_surfaces_.empty()) {
-    return;
-  }
-
-  const auto size = static_cast<int>(home_surfaces_.size());
+  const auto size = static_cast<int>(kHomeSurfaceCount);
   const auto current = static_cast<int>(home_surface_index_);
   int next = (current + delta) % size;
   if (next < 0) {
     next += size;
   }
 
-  show_home_surface(static_cast<std::size_t>(next), delta >= 0 ? PageTransition::MoveLeft : PageTransition::MoveRight);
+  publish_home_ring_preview(static_cast<std::uint8_t>(home_surface_index_),
+                            delta >= 0 ? 1 : -1,
+                            240,
+                            false,
+                            true);
+  show_home_surface(static_cast<std::size_t>(next));
 }
 
-void AppStateMachine::show_home_surface(std::size_t index, PageTransition transition) {
-  if (index >= home_surfaces_.size()) {
+void AppStateMachine::show_home_surface(std::size_t index) {
+  if (index >= kHomeSurfaceCount) {
     return;
   }
 
-  if (page_manager_.set_root(home_surfaces_[index], transition)) {
-    home_surface_index_ = index;
-    shell_surface_ = ShellSurface::None;
-    power_state_ = PowerState::Running;
-    schedule_auto_screen_off();
-  }
+  home_surface_index_ = index;
+  shell_surface_ = ShellSurface::None;
+  power_state_ = PowerState::Running;
+  publish_home_ring_preview(static_cast<std::uint8_t>(home_surface_index_), 0, 0, false, false);
+  sync_keep_screen_on_policy();
+  schedule_auto_screen_off();
 }
 
 bool AppStateMachine::can_navigate_back() const {
@@ -666,13 +798,14 @@ void AppStateMachine::handle_notification_wake_request(const NotificationItem& i
     }
 
     cancel_notification_screen_off(false);
-    if (!page_manager_.set_root(PageId::Watchface, PageTransition::None)) {
+    if (!page_manager_.set_root(PageId::HomeRingHost, PageTransition::None)) {
       return;
     }
 
     power_state_ = PowerState::Running;
     shell_surface_ = ShellSurface::None;
     home_surface_index_ = 0;
+    publish_home_ring_preview(0, 0, 0, false, false);
     notification_wake_session_active_ = true;
     open_shell_surface(ShellSurface::NotificationWakePreview);
     return;
@@ -685,6 +818,15 @@ void AppStateMachine::handle_notification_wake_request(const NotificationItem& i
   if (power_state_ == PowerState::Running) {
     data_center_.show_toast_for(item.id);
   }
+}
+
+void AppStateMachine::publish_home_ring_preview(std::uint8_t base_index,
+                                                std::int8_t direction,
+                                                std::int16_t progress,
+                                                bool active,
+                                                bool commit) {
+  data_center_.publish_home_ring_preview(
+      {base_index, direction, static_cast<std::int16_t>(std::clamp<std::int16_t>(progress, 0, 240)), active, commit});
 }
 
 void AppStateMachine::schedule_notification_screen_off() {
@@ -722,7 +864,8 @@ void AppStateMachine::schedule_auto_screen_off() {
   }
 
   const auto policy = data_center_.display_policy();
-  if (policy && (!policy->auto_screen_off_enabled || policy->always_on_display_enabled)) {
+  if (policy &&
+      (!policy->auto_screen_off_enabled || policy->always_on_display_enabled || policy->keep_screen_on_duration_ms > 0U)) {
     return;
   }
 
@@ -742,6 +885,61 @@ void AppStateMachine::cancel_auto_screen_off() {
     lv_timer_del(auto_screen_off_timer_);
     auto_screen_off_timer_ = nullptr;
   }
+}
+
+void AppStateMachine::sync_keep_screen_on_policy() {
+  if (power_state_ != PowerState::Running) {
+    cancel_keep_screen_on_timer(false);
+    return;
+  }
+
+  const auto policy = data_center_.display_policy();
+  const std::uint32_t duration_ms = policy ? policy->keep_screen_on_duration_ms : 0U;
+  if (duration_ms == 0U) {
+    cancel_keep_screen_on_timer(false);
+    return;
+  }
+  if (keep_screen_on_timer_ != nullptr && keep_screen_on_timer_duration_ms_ == duration_ms) {
+    return;
+  }
+
+  cancel_keep_screen_on_timer(false);
+  keep_screen_on_timer_ = lv_timer_create(&AppStateMachine::keep_screen_on_timer_cb, duration_ms, this);
+  if (keep_screen_on_timer_ != nullptr) {
+    lv_timer_set_repeat_count(keep_screen_on_timer_, 1);
+    keep_screen_on_timer_duration_ms_ = duration_ms;
+  }
+}
+
+void AppStateMachine::cancel_keep_screen_on_timer(bool clear_policy) {
+  if (keep_screen_on_timer_ != nullptr) {
+    lv_timer_del(keep_screen_on_timer_);
+    keep_screen_on_timer_ = nullptr;
+  }
+  keep_screen_on_timer_duration_ms_ = 0U;
+  if (clear_policy) {
+    const auto policy = data_center_.display_policy();
+    if (policy && policy->keep_screen_on_duration_ms != 0U) {
+      data_center_.set_keep_screen_on_duration_ms(0U);
+    }
+  }
+}
+
+void AppStateMachine::keep_screen_on_timer_cb(lv_timer_t* timer) {
+  auto* self = static_cast<AppStateMachine*>(lv_timer_get_user_data(timer));
+  if (self == nullptr) {
+    return;
+  }
+
+  self->keep_screen_on_timer_ = nullptr;
+  self->keep_screen_on_timer_duration_ms_ = 0U;
+  self->data_center_.set_keep_screen_on_duration_ms(0U);
+  self->enter_screen_off();
+}
+
+bool AppStateMachine::keep_screen_on_active() const {
+  const auto policy = data_center_.display_policy();
+  return power_state_ == PowerState::Running && policy && policy->keep_screen_on_duration_ms != 0U;
 }
 
 void AppStateMachine::reset_auto_screen_off_timer() {

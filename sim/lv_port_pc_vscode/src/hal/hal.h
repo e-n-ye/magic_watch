@@ -69,6 +69,8 @@ struct TouchSample {
     BottomEdgeCancel,
     EdgeBackProgress,
     EdgeBackCancel,
+    HorizontalSwipeProgress,
+    HorizontalSwipeCancel,
     EdgeBackCommit,
     HorizontalSwipeRightCommit,
     HorizontalSwipeLeftCommit,
@@ -94,6 +96,8 @@ struct DebugSample {
   enum class Action {
     InjectMessageNotification,
     InjectBatteryLowNotification,
+    SimRaiseToWake,
+    SimRaiseDismiss,
   };
 
   Action action {Action::InjectMessageNotification};

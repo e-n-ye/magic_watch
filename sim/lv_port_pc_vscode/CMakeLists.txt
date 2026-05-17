@@ -81,6 +81,7 @@ set(MAIN_SOURCES
     src/App/UI/Watchface/WatchfaceStyle.cpp
     src/App/UI/UiStyles.cpp
     src/App/UI/Pages/CommonPages.cpp
+    src/App/UI/Pages/SettingsPages.cpp
     src/App/UI/Pages/ShellPages.cpp
     src/App/UI/Pages/ToolPages.cpp
     src/App/State/AppStateMachine.cpp

@@ -8,11 +8,7 @@ namespace {
 
 bool is_home_surface_page(PageId page_id) {
   switch (page_id) {
-    case PageId::Watchface:
-    case PageId::HomeShortcutPayments:
-    case PageId::HomeShortcutNfc:
-    case PageId::HomeShortcutHealth:
-    case PageId::HomeShortcutWeather:
+    case PageId::HomeRingHost:
       return true;
     default:
       return false;
@@ -20,7 +16,7 @@ bool is_home_surface_page(PageId page_id) {
 }
 
 bool is_watchface_page(PageId page_id) {
-  return page_id == PageId::Watchface;
+  return page_id == PageId::HomeRingHost || page_id == PageId::Watchface;
 }
 
 std::optional<InputCommand> from_button(const hal::ButtonSample& sample) {
@@ -41,6 +37,17 @@ std::optional<InputCommand> from_crown(const hal::CrownSample& sample) {
       return InputCommand {InputAction::CrownRotateCW, sample.detents, 0, 0};
     case hal::CrownSample::Action::RotateCCW:
       return InputCommand {InputAction::CrownRotateCCW, sample.detents, 0, 0};
+    default:
+      return std::nullopt;
+  }
+}
+
+std::optional<InputCommand> from_debug(const hal::DebugSample& sample) {
+  switch (sample.action) {
+    case hal::DebugSample::Action::SimRaiseToWake:
+      return InputCommand {InputAction::SimRaiseToWake, 0, 0, 0};
+    case hal::DebugSample::Action::SimRaiseDismiss:
+      return InputCommand {InputAction::SimRaiseDismiss, 0, 0, 0};
     default:
       return std::nullopt;
   }
@@ -97,6 +104,16 @@ std::optional<InputCommand> InputIntentRouter::translate(const hal::Event& event
             return InputCommand {InputAction::EdgeBackProgress, sample->value, sample->x, sample->y};
           case hal::TouchSample::Action::EdgeBackCancel:
             return InputCommand {InputAction::EdgeBackCancel, sample->value, sample->x, sample->y};
+          case hal::TouchSample::Action::HorizontalSwipeProgress:
+            if (is_home_surface_context()) {
+              return InputCommand {InputAction::HomeSwipeProgress, sample->value, sample->x, sample->y};
+            }
+            return std::nullopt;
+          case hal::TouchSample::Action::HorizontalSwipeCancel:
+            if (is_home_surface_context()) {
+              return InputCommand {InputAction::HomeSwipeCancel, sample->value, sample->x, sample->y};
+            }
+            return std::nullopt;
           case hal::TouchSample::Action::EdgeBackCommit:
             return InputCommand {is_home_surface_context() ? InputAction::HomeEdgeBackRight
                                                            : InputAction::NavigateBack,
@@ -133,6 +150,11 @@ std::optional<InputCommand> InputIntentRouter::translate(const hal::Event& event
         }
       }
       return std::nullopt;
+    case hal::EventKind::DebugAction:
+      if (const auto* sample = std::get_if<hal::DebugSample>(&event.payload)) {
+        return from_debug(*sample);
+      }
+      return std::nullopt;
     default:
       return std::nullopt;
   }
@@ -148,14 +170,9 @@ bool InputIntentRouter::is_watchface_context() const {
   return !page_manager_.temporary_page_id() && current_page && is_watchface_page(*current_page);
 }
 
-bool InputIntentRouter::is_watchface_host_context() const {
-  const auto stack_top = page_manager_.stack_top_page_id();
-  return stack_top && is_watchface_page(*stack_top);
-}
-
 bool InputIntentRouter::is_notifications_preview_context() const {
   const auto stack_top = page_manager_.stack_top_page_id();
-  if (!stack_top || !is_watchface_page(*stack_top)) {
+  if (!stack_top || *stack_top != PageId::HomeRingHost) {
     return false;
   }
 
@@ -165,7 +182,7 @@ bool InputIntentRouter::is_notifications_preview_context() const {
 
 bool InputIntentRouter::is_quick_settings_preview_context() const {
   const auto stack_top = page_manager_.stack_top_page_id();
-  if (!stack_top || !is_watchface_page(*stack_top)) {
+  if (!stack_top || *stack_top != PageId::HomeRingHost) {
     return false;
   }
 

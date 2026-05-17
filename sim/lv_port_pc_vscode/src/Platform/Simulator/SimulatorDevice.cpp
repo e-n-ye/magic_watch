@@ -24,6 +24,8 @@ namespace {
 constexpr std::uint32_t kMainButtonLongPressMs = 900U;
 constexpr std::uint32_t kCrownRepeatMs = 120U;
 constexpr std::int16_t kEdgeActivationPx = 28;
+constexpr std::int16_t kHeaderTapExclusionWidth = 64;
+constexpr std::int16_t kHeaderTapExclusionHeight = 52;
 constexpr std::int16_t kBackCommitDx = 42;
 constexpr std::int16_t kBackCancelDx = -18;
 constexpr std::int16_t kBackMaxDy = 120;
@@ -283,6 +285,18 @@ class SimulatorDevice final : public hal::Device {
       emit_debug(hal::DebugSample::Action::InjectBatteryLowNotification);
     }
     battery_notification_latched_ = battery_pressed;
+
+    const bool raise_pressed = key_pressed_fallback(SDL_SCANCODE_R, 'R');
+    if (raise_pressed && !raise_to_wake_latched_) {
+      emit_debug(hal::DebugSample::Action::SimRaiseToWake);
+    }
+    raise_to_wake_latched_ = raise_pressed;
+
+    const bool dismiss_pressed = key_pressed_fallback(SDL_SCANCODE_F, 'F');
+    if (dismiss_pressed && !raise_dismiss_latched_) {
+      emit_debug(hal::DebugSample::Action::SimRaiseDismiss);
+    }
+    raise_dismiss_latched_ = dismiss_pressed;
   }
 
   void process_pointer() {
@@ -293,6 +307,7 @@ class SimulatorDevice final : public hal::Device {
 
     if (pressed && !pointer_pressed_) {
       pointer_pressed_ = true;
+      horizontal_swipe_progress_active_ = false;
       pointer_start_x_ = static_cast<std::int16_t>(mouse_x);
       pointer_start_y_ = static_cast<std::int16_t>(mouse_y);
       pointer_last_x_ = pointer_start_x_;
@@ -323,6 +338,19 @@ class SimulatorDevice final : public hal::Device {
         const auto dy = static_cast<std::int16_t>(mouse_y - pointer_start_y_);
         const auto abs_dx = static_cast<std::int16_t>(dx >= 0 ? dx : -dx);
         const auto abs_dy = static_cast<std::int16_t>(dy >= 0 ? dy : -dy);
+        if (abs_dx >= kScrollDragThresholdDy && abs_dx > abs_dy) {
+          horizontal_swipe_progress_active_ = true;
+          emit_touch(hal::TouchSample::Action::HorizontalSwipeProgress,
+                     dx,
+                     static_cast<std::int16_t>(mouse_x),
+                     static_cast<std::int16_t>(mouse_y));
+        } else if (horizontal_swipe_progress_active_ && abs_dy > abs_dx) {
+          horizontal_swipe_progress_active_ = false;
+          emit_touch(hal::TouchSample::Action::HorizontalSwipeCancel,
+                     0,
+                     static_cast<std::int16_t>(mouse_x),
+                     static_cast<std::int16_t>(mouse_y));
+        }
         if (abs_dy >= kScrollDragThresholdDy && abs_dy >= abs_dx) {
           emit_touch(hal::TouchSample::Action::ScrollDrag,
                      dy,
@@ -359,6 +387,25 @@ class SimulatorDevice final : public hal::Device {
                      static_cast<std::int16_t>(mouse_x),
                      static_cast<std::int16_t>(mouse_y));
         }
+      } else if (pointer_gesture_ == PointerGesture::RightReserved) {
+        const auto dx = static_cast<std::int16_t>(mouse_x - pointer_start_x_);
+        const auto dy = static_cast<std::int16_t>(mouse_y - pointer_start_y_);
+        const auto abs_dx = static_cast<std::int16_t>(dx >= 0 ? dx : -dx);
+        const auto abs_dy = static_cast<std::int16_t>(dy >= 0 ? dy : -dy);
+        if (dx < 0 && (-dx) >= kScrollDragThresholdDy && (-dx) >= abs_dy) {
+          horizontal_swipe_progress_active_ = true;
+          emit_touch(hal::TouchSample::Action::HorizontalSwipeProgress,
+                     dx,
+                     static_cast<std::int16_t>(mouse_x),
+                     static_cast<std::int16_t>(mouse_y));
+        } else if (horizontal_swipe_progress_active_ &&
+                   (dx > kScrollDragThresholdDy || abs_dy > abs_dx)) {
+          horizontal_swipe_progress_active_ = false;
+          emit_touch(hal::TouchSample::Action::HorizontalSwipeCancel,
+                     0,
+                     static_cast<std::int16_t>(mouse_x),
+                     static_cast<std::int16_t>(mouse_y));
+        }
       }
       pointer_last_x_ = static_cast<std::int16_t>(mouse_x);
       pointer_last_y_ = static_cast<std::int16_t>(mouse_y);
@@ -369,10 +416,14 @@ class SimulatorDevice final : public hal::Device {
       finish_pointer_gesture(static_cast<std::int16_t>(mouse_x), static_cast<std::int16_t>(mouse_y));
       pointer_pressed_ = false;
       pointer_gesture_ = PointerGesture::None;
+      horizontal_swipe_progress_active_ = false;
     }
   }
 
   PointerGesture classify_pointer_gesture(std::int16_t x, std::int16_t y) const {
+    if (x <= kHeaderTapExclusionWidth && y <= kHeaderTapExclusionHeight) {
+      return PointerGesture::Scroll;
+    }
     if (x <= kEdgeActivationPx) {
       return PointerGesture::EdgeBack;
     }
@@ -418,14 +469,23 @@ class SimulatorDevice final : public hal::Device {
         break;
       case PointerGesture::RightReserved:
         if (-dx >= kHorizontalCommitDx && (-dx * 2) >= abs_dy) {
+          horizontal_swipe_progress_active_ = false;
           emit_touch(hal::TouchSample::Action::RightEdgeCommit, -dx, x, y);
+        } else if (horizontal_swipe_progress_active_) {
+          horizontal_swipe_progress_active_ = false;
+          emit_touch(hal::TouchSample::Action::HorizontalSwipeCancel, 0, x, y);
         }
         break;
       case PointerGesture::Scroll:
         if (dx >= kHorizontalCommitDx && dx > abs_dy) {
+          horizontal_swipe_progress_active_ = false;
           emit_touch(hal::TouchSample::Action::HorizontalSwipeRightCommit, dx, x, y);
         } else if (-dx >= kHorizontalCommitDx && (-dx) > abs_dy) {
+          horizontal_swipe_progress_active_ = false;
           emit_touch(hal::TouchSample::Action::HorizontalSwipeLeftCommit, -dx, x, y);
+        } else if (horizontal_swipe_progress_active_) {
+          horizontal_swipe_progress_active_ = false;
+          emit_touch(hal::TouchSample::Action::HorizontalSwipeCancel, 0, x, y);
         } else if (abs_dy >= kScrollFlickThresholdDy && abs_dy > abs_dx) {
           emit_touch(hal::TouchSample::Action::ScrollFlick, dy, x, y);
         } else if (abs_dy >= kScrollDragThresholdDy) {
@@ -476,8 +536,11 @@ class SimulatorDevice final : public hal::Device {
   bool crown_ccw_latched_ {false};
   bool message_notification_latched_ {false};
   bool battery_notification_latched_ {false};
+  bool raise_to_wake_latched_ {false};
+  bool raise_dismiss_latched_ {false};
   bool pointer_pressed_ {false};
   PointerGesture pointer_gesture_ {PointerGesture::None};
+  bool horizontal_swipe_progress_active_ {false};
   std::uint32_t crown_cw_repeat_ms_ {0};
   std::uint32_t crown_ccw_repeat_ms_ {0};
   std::int16_t pointer_start_x_ {0};

@@ -35,6 +35,11 @@ void DataCenter::publish_shell_preview(const ShellPreviewModel& model) {
   event_bus_.publish({EventId::ShellPreviewRequested, model});
 }
 
+void DataCenter::publish_home_ring_preview(const HomeRingPreviewModel& model) {
+  home_ring_preview_ = model;
+  event_bus_.publish({EventId::HomeRingPreviewChanged, model});
+}
+
 void DataCenter::publish_notifications(const NotificationCenterModel& model) {
   notification_center_ = model;
   event_bus_.publish({EventId::NotificationsChanged, model});
@@ -97,13 +102,42 @@ void DataCenter::set_notification_wake_enabled(bool enabled) {
 }
 
 void DataCenter::set_raise_to_wake_enabled(bool enabled) {
+  set_raise_to_wake_mode(enabled ? RaiseToWakeMode::AllDay : RaiseToWakeMode::Off);
+}
+
+void DataCenter::set_raise_to_wake_mode(RaiseToWakeMode mode) {
   if (!display_policy_) {
     display_policy_ = DisplayPolicyModel {};
   }
-  if (display_policy_->raise_to_wake_enabled == enabled) {
+  if (display_policy_->raise_to_wake_mode == mode) {
     return;
   }
-  display_policy_->raise_to_wake_enabled = enabled;
+  display_policy_->raise_to_wake_mode = mode;
+  event_bus_.publish({EventId::DisplayPolicyChanged, *display_policy_});
+}
+
+void DataCenter::set_raise_to_wake_window(const DailyTimeWindow& window) {
+  if (!display_policy_) {
+    display_policy_ = DisplayPolicyModel {};
+  }
+  if (display_policy_->raise_to_wake_window.start_hour == window.start_hour &&
+      display_policy_->raise_to_wake_window.start_minute == window.start_minute &&
+      display_policy_->raise_to_wake_window.end_hour == window.end_hour &&
+      display_policy_->raise_to_wake_window.end_minute == window.end_minute) {
+    return;
+  }
+  display_policy_->raise_to_wake_window = window;
+  event_bus_.publish({EventId::DisplayPolicyChanged, *display_policy_});
+}
+
+void DataCenter::set_tap_to_wake_enabled(bool enabled) {
+  if (!display_policy_) {
+    display_policy_ = DisplayPolicyModel {};
+  }
+  if (display_policy_->tap_to_wake_enabled == enabled) {
+    return;
+  }
+  display_policy_->tap_to_wake_enabled = enabled;
   event_bus_.publish({EventId::DisplayPolicyChanged, *display_policy_});
 }
 
@@ -115,6 +149,51 @@ void DataCenter::set_always_on_display_enabled(bool enabled) {
     return;
   }
   display_policy_->always_on_display_enabled = enabled;
+  event_bus_.publish({EventId::DisplayPolicyChanged, *display_policy_});
+}
+
+void DataCenter::set_screen_off_timeout_ms(std::uint32_t timeout_ms) {
+  if (!display_policy_) {
+    display_policy_ = DisplayPolicyModel {};
+  }
+  if (display_policy_->screen_off_timeout_ms == timeout_ms) {
+    return;
+  }
+  display_policy_->screen_off_timeout_ms = timeout_ms;
+  event_bus_.publish({EventId::DisplayPolicyChanged, *display_policy_});
+}
+
+void DataCenter::set_keep_screen_on_duration_ms(std::uint32_t duration_ms) {
+  if (!display_policy_) {
+    display_policy_ = DisplayPolicyModel {};
+  }
+  if (display_policy_->keep_screen_on_duration_ms == duration_ms) {
+    return;
+  }
+  display_policy_->keep_screen_on_duration_ms = duration_ms;
+  event_bus_.publish({EventId::DisplayPolicyChanged, *display_policy_});
+}
+
+void DataCenter::set_brightness_mode(BrightnessMode mode) {
+  if (!display_policy_) {
+    display_policy_ = DisplayPolicyModel {};
+  }
+  if (display_policy_->brightness_mode == mode) {
+    return;
+  }
+  display_policy_->brightness_mode = mode;
+  event_bus_.publish({EventId::DisplayPolicyChanged, *display_policy_});
+}
+
+void DataCenter::set_manual_brightness_level(std::uint8_t level) {
+  if (!display_policy_) {
+    display_policy_ = DisplayPolicyModel {};
+  }
+  const auto clamped = static_cast<std::uint8_t>(std::clamp<int>(level, 0, 100));
+  if (display_policy_->manual_brightness_level == clamped) {
+    return;
+  }
+  display_policy_->manual_brightness_level = clamped;
   event_bus_.publish({EventId::DisplayPolicyChanged, *display_policy_});
 }
 
@@ -157,6 +236,10 @@ const std::optional<NotificationCenterModel>& DataCenter::notifications() const 
 
 const std::optional<DisplayPolicyModel>& DataCenter::display_policy() const {
   return display_policy_;
+}
+
+const std::optional<HomeRingPreviewModel>& DataCenter::home_ring_preview() const {
+  return home_ring_preview_;
 }
 
 const NotificationItem* DataCenter::latest_notification() const {

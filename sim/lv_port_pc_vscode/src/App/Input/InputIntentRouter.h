@@ -17,7 +17,6 @@ class InputIntentRouter {
  private:
   bool is_home_surface_context() const;
   bool is_watchface_context() const;
-  bool is_watchface_host_context() const;
   bool is_notifications_preview_context() const;
   bool is_quick_settings_preview_context() const;
 

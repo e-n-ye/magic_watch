@@ -6,6 +6,7 @@
 #include <string>
 
 #include "App/UI/Pages/CommonPages.h"
+#include "App/UI/Pages/SettingsPages.h"
 #include "App/UI/Pages/ShellPages.h"
 #include "App/UI/Pages/ToolPages.h"
 #include "lvgl/lvgl.h"
@@ -265,19 +266,6 @@ class NotificationToastOverlay {
 NotificationToastOverlay g_notification_toast_overlay;
 
 using MenuItem = MenuPage::Item;
-std::vector<MenuItem> settings_items() {
-  return {
-      {"Display", {NavigationAction::Push, PageId::SettingDisplay}, "Brightness and screen"},
-      {"App Layout", {NavigationAction::Push, PageId::SettingAppLayout}, "Launcher layout placeholder"},
-      {"Time & Date", {NavigationAction::Push, PageId::SettingTimeDate}, "Clock and calendar"},
-      {"Sound", {NavigationAction::Push, PageId::SettingSound}, "Sound and vibration"},
-      {"Battery", {NavigationAction::Push, PageId::SettingBattery}, "Power and charging"},
-      {"Bluetooth", {NavigationAction::Push, PageId::SettingBluetooth}, "Nearby devices"},
-      {"Wi-Fi", {NavigationAction::Push, PageId::SettingWifi}, "Connections"},
-      {"Developer", {NavigationAction::Push, PageId::SettingDeveloper}, "Diagnostics and logs"},
-      {"Version", {NavigationAction::Push, PageId::SettingVersion}, "Build information"},
-  };
-}
 
 std::vector<MenuItem> timing_items() {
   return {
@@ -332,6 +320,7 @@ void Application::register_pages() {
                                 });
   };
 
+  page_manager_.register_page(PageId::HomeRingHost, [this]() { return std::make_unique<HomeRingHostPage>(data_center_); });
   page_manager_.register_page(PageId::Watchface, [this]() { return std::make_unique<WatchfacePage>(data_center_); });
   page_manager_.register_page(
       PageId::HomeShortcutPayments,
@@ -376,14 +365,7 @@ void Application::register_pages() {
 
   page_manager_.register_page(PageId::SettingsHome,
                               [this]() {
-                                return std::make_unique<MenuPage>(
-                                    data_center_,
-                                    PageId::SettingsHome,
-                                    "Settings",
-                                    "Scroll prototype / system configuration",
-                                    settings_items(),
-                                    true,
-                                    true);
+                                return std::make_unique<SettingsHomePage>(data_center_);
                               });
   page_manager_.register_page(PageId::TimingToolsHome,
                               [this]() {
@@ -446,26 +428,117 @@ void Application::register_pages() {
   page_manager_.register_page(
       PageId::SettingDisplay,
       [this]() {
-        return std::make_unique<PlaceholderPage>(
-            data_center_, PageId::SettingDisplay, "Display", "Brightness and screen behavior placeholder.");
+        return std::make_unique<DisplaySettingsPage>(data_center_);
+      });
+  page_manager_.register_page(
+      PageId::SettingDisplayBrightness,
+      [this]() {
+        return std::make_unique<DisplayBrightnessPage>(data_center_);
+      });
+  page_manager_.register_page(
+      PageId::SettingDisplayManualBrightness,
+      [this]() {
+        return std::make_unique<DisplayManualBrightnessPage>(data_center_);
+      });
+  page_manager_.register_page(
+      PageId::SettingDisplayTimeout,
+      [this]() {
+        return std::make_unique<DisplayTimeoutPage>(data_center_);
+      });
+  page_manager_.register_page(
+      PageId::SettingDisplayRaiseToWake,
+      [this]() {
+        return std::make_unique<DisplayRaiseToWakePage>(data_center_);
+      });
+  page_manager_.register_page(
+      PageId::SettingDisplayRaiseToWakeStartTime,
+      [this]() {
+        return std::make_unique<DisplayRaiseToWakeTimePage>(
+            data_center_,
+            PageId::SettingDisplayRaiseToWakeStartTime,
+            "\xE5\xBC\x80\xE5\xA7\x8B\xE6\x97\xB6\xE9\x97\xB4",
+            true);
+      });
+  page_manager_.register_page(
+      PageId::SettingDisplayRaiseToWakeEndTime,
+      [this]() {
+        return std::make_unique<DisplayRaiseToWakeTimePage>(
+            data_center_,
+            PageId::SettingDisplayRaiseToWakeEndTime,
+            "\xE7\xBB\x93\xE6\x9D\x9F\xE6\x97\xB6\xE9\x97\xB4",
+            false);
+      });
+  page_manager_.register_page(
+      PageId::SettingDisplayKeepScreenOn,
+      [this]() {
+        return std::make_unique<DisplayKeepScreenOnPage>(data_center_);
+      });
+  page_manager_.register_page(
+      PageId::SettingSound,
+      [this]() {
+        return std::make_unique<SettingsPlaceholderPage>(
+            data_center_,
+            PageId::SettingSound,
+            "\xE5\xA3\xB0\xE9\x9F\xB3\xE4\xB8\x8E\xE6\x8C\xAF\xE5\x8A\xA8",
+            "\xE6\x9C\xAC\xE8\xBD\xAE\xE5\x85\x88\xE6\x94\xBE\xE7\xBB\x9F\xE4\xB8\x80\xE5\x8D\xA0\xE4\xBD\x8D\xE9\xA1\xB5\xEF\xBC\x8C"
+            "\xE5\x90\x8E\xE7\xBB\xAD\xE5\x86\x8D\xE6\x8B\x86\xE5\x88\x86\xE9\x93\x83\xE5\xA3\xB0\xE3\x80\x81\xE6\x8C\xAF\xE5\x8A\xA8"
+            "\xE4\xB8\x8E\xE9\x9D\x99\xE9\x9F\xB3\xE7\xBB\x86\xE8\x8A\x82\xE3\x80\x82");
+      });
+  page_manager_.register_page(
+      PageId::SettingDoNotDisturb,
+      [this]() {
+        return std::make_unique<SettingsPlaceholderPage>(
+            data_center_,
+            PageId::SettingDoNotDisturb,
+            "\xE5\x8B\xBF\xE6\x89\xB0\xE6\xA8\xA1\xE5\xBC\x8F",
+            "\xE5\x8B\xBF\xE6\x89\xB0\xE7\x9A\x84\xE5\xBC\x80\xE5\x85\xB3\xE3\x80\x81\xE5\xAE\x9A\xE6\x97\xB6\xE8\xA7\x84\xE5\x88\x99"
+            "\xE4\xB8\x8E\xE5\x8F\xAF\xE6\x89\x93\xE6\x89\xB0\xE4\xBE\x8B\xE5\xA4\x96\xE5\x90\x8E\xE7\xBB\xAD\xE5\x86\x8D\xE8\xA1\xA5\xE3\x80\x82");
+      });
+  page_manager_.register_page(
+      PageId::SettingNotifications,
+      [this]() {
+        return std::make_unique<SettingsPlaceholderPage>(
+            data_center_,
+            PageId::SettingNotifications,
+            "\xE6\xB6\x88\xE6\x81\xAF\xE9\x80\x9A\xE7\x9F\xA5",
+            "\xE6\xB6\x88\xE6\x81\xAF\xE9\x80\x9A\xE7\x9F\xA5\xE7\x9A\x84\xE5\x88\x86\xE7\xBB\x84\xE3\x80\x81\xE4\xBA\xAE\xE5\xB1\x8F"
+            "\xE4\xB8\x8E\xE6\x8F\x90\xE7\xA4\xBA\xE7\xAD\x96\xE7\x95\xA5\xE7\x95\x99\xE5\x88\xB0\xE5\x90\x8E\xE7\xBB\xAD\xE5\xB0\x8F\xE8\xBD\xAE\xE3\x80\x82");
       });
   page_manager_.register_page(
       PageId::SettingAppLayout,
       [this]() {
-        return std::make_unique<PlaceholderPage>(
-            data_center_, PageId::SettingAppLayout, "App Layout", "Multi-column launcher layout placeholder.");
+        return std::make_unique<SettingsPlaceholderPage>(
+            data_center_,
+            PageId::SettingAppLayout,
+            "\xE5\xBA\x94\xE7\x94\xA8\xE5\xB8\x83\xE5\xB1\x80",
+            "\xE5\xBA\x94\xE7\x94\xA8\xE5\x88\x97\xE8\xA1\xA8\xE3\x80\x81\xE5\x88\x86\xE7\xBB\x84\xE4\xB8\x8E\xE5\xB8\x83\xE5\xB1\x80"
+            "\xE5\x88\x87\xE6\x8D\xA2\xE6\x9A\x82\xE4\xB8\x8D\xE5\xB1\x95\xE5\xBC\x80\xEF\xBC\x8C\xE5\x85\x88\xE4\xBF\x9D\xE7\x95\x99\xE5\x85\xA5\xE5\x8F\xA3\xE3\x80\x82");
+      });
+  page_manager_.register_page(
+      PageId::SettingSystemActions,
+      [this]() {
+        return std::make_unique<SettingsPlaceholderPage>(
+            data_center_,
+            PageId::SettingSystemActions,
+            "\xE7\xB3\xBB\xE7\xBB\x9F\xE6\x93\x8D\xE4\xBD\x9C",
+            "\xE9\x87\x8D\xE5\x90\xAF\xE3\x80\x81\xE5\x85\xB3\xE6\x9C\xBA\xE3\x80\x81\xE6\x81\xA2\xE5\xA4\x8D\xE4\xB8\x8E\xE7\xA1\xAE"
+            "\xE8\xAE\xA4\xE6\xB5\x81\xE7\xA8\x8B\xE5\x90\x8E\xE7\xBB\xAD\xE5\x86\x8D\xE5\xBB\xBA\xE9\x97\xAD\xE7\x8E\xAF\xE3\x80\x82");
+      });
+  page_manager_.register_page(
+      PageId::SettingAbout,
+      [this]() {
+        return std::make_unique<SettingsPlaceholderPage>(
+            data_center_,
+            PageId::SettingAbout,
+            "\xE5\x85\xB3\xE4\xBA\x8E",
+            "\xE7\x89\x88\xE6\x9C\xAC\xE4\xBF\xA1\xE6\x81\xAF\xE3\x80\x81\xE8\xAE\xBE\xE5\xA4\x87\xE8\xAF\x86\xE5\x88\xAB\xE4\xB8\x8E"
+            "\xE7\x89\x88\xE6\x9C\xAC\xE5\x8F\xB7\xE5\xB1\x95\xE7\xA4\xBA\xE5\x90\x8E\xE7\xBB\xAD\xE5\x86\x8D\xE8\xBF\x81\xE7\xA7\xBB\xE8\xBF\x9B\xE6\x9D\xA5\xE3\x80\x82");
       });
   page_manager_.register_page(
       PageId::SettingTimeDate,
       [this]() {
         return std::make_unique<PlaceholderPage>(
             data_center_, PageId::SettingTimeDate, "Time & Date", "Clock, date, and timezone placeholder.");
-      });
-  page_manager_.register_page(
-      PageId::SettingSound,
-      [this]() {
-        return std::make_unique<PlaceholderPage>(
-            data_center_, PageId::SettingSound, "Sound", "Sound and vibration placeholder.");
       });
   page_manager_.register_page(
       PageId::SettingBattery,
@@ -562,6 +635,12 @@ void Application::handle_hal_event(const hal::Event& event) {
             data_center_.push_notification(make_mock_battery_low_notification(battery ? battery->percent : 20));
             break;
           }
+          case hal::DebugSample::Action::SimRaiseToWake:
+          case hal::DebugSample::Action::SimRaiseDismiss:
+            if (const auto input = input_router_.translate(event)) {
+              data_center_.publish_input(*input);
+            }
+            break;
           default:
             break;
         }

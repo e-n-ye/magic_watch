@@ -4,6 +4,8 @@ namespace twsim::app {
 
 const char* page_name(PageId page_id) {
   switch (page_id) {
+    case PageId::HomeRingHost:
+      return "HomeRingHost";
     case PageId::Watchface:
       return "Watchface";
     case PageId::Launcher:
@@ -46,12 +48,34 @@ const char* page_name(PageId page_id) {
       return "SettingsHome";
     case PageId::SettingDisplay:
       return "SettingDisplay";
-    case PageId::SettingAppLayout:
-      return "SettingAppLayout";
-    case PageId::SettingTimeDate:
-      return "SettingTimeDate";
+    case PageId::SettingDisplayBrightness:
+      return "SettingDisplayBrightness";
+    case PageId::SettingDisplayManualBrightness:
+      return "SettingDisplayManualBrightness";
+    case PageId::SettingDisplayTimeout:
+      return "SettingDisplayTimeout";
+    case PageId::SettingDisplayRaiseToWake:
+      return "SettingDisplayRaiseToWake";
+    case PageId::SettingDisplayRaiseToWakeStartTime:
+      return "SettingDisplayRaiseToWakeStartTime";
+    case PageId::SettingDisplayRaiseToWakeEndTime:
+      return "SettingDisplayRaiseToWakeEndTime";
+    case PageId::SettingDisplayKeepScreenOn:
+      return "SettingDisplayKeepScreenOn";
     case PageId::SettingSound:
       return "SettingSound";
+    case PageId::SettingDoNotDisturb:
+      return "SettingDoNotDisturb";
+    case PageId::SettingNotifications:
+      return "SettingNotifications";
+    case PageId::SettingAppLayout:
+      return "SettingAppLayout";
+    case PageId::SettingSystemActions:
+      return "SettingSystemActions";
+    case PageId::SettingAbout:
+      return "SettingAbout";
+    case PageId::SettingTimeDate:
+      return "SettingTimeDate";
     case PageId::SettingBattery:
       return "SettingBattery";
     case PageId::SettingBluetooth:

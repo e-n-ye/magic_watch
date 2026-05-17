@@ -45,6 +45,11 @@ class AppStateMachine {
   void preview_quick_settings_pull(std::int16_t progress);
   void cancel_quick_settings_pull_preview();
   void launch_app(PageId target);
+  void publish_home_ring_preview(std::uint8_t base_index,
+                                 std::int8_t direction,
+                                 std::int16_t progress,
+                                 bool active,
+                                 bool commit);
   void schedule_notification_screen_off();
   void cancel_notification_screen_off(bool clear_session);
   static void notification_screen_off_timer_cb(lv_timer_t* timer);
@@ -52,11 +57,16 @@ class AppStateMachine {
   void cancel_auto_screen_off();
   void reset_auto_screen_off_timer();
   static void auto_screen_off_timer_cb(lv_timer_t* timer);
+  void sync_keep_screen_on_policy();
+  void cancel_keep_screen_on_timer(bool clear_policy);
+  static void keep_screen_on_timer_cb(lv_timer_t* timer);
+  bool keep_screen_on_active() const;
   bool is_home_surface_page(PageId page_id) const;
   bool is_current_home_surface() const;
   bool is_current_watchface_surface() const;
+  bool is_watchface_shell_preview_context() const;
   void navigate_home_surface(int delta);
-  void show_home_surface(std::size_t index, PageTransition transition);
+  void show_home_surface(std::size_t index);
   bool can_navigate_back() const;
   void sync_shell_surface();
 
@@ -69,18 +79,16 @@ class AppStateMachine {
   PowerState power_state_ {PowerState::Booting};
   ShellSurface shell_surface_ {ShellSurface::None};
   bool notification_wake_session_active_ {false};
+  bool raise_to_wake_session_active_ {false};
+  bool suppress_display_policy_sync_ {false};
   lv_timer_t* notification_screen_off_timer_ {nullptr};
   lv_timer_t* auto_screen_off_timer_ {nullptr};
+  lv_timer_t* keep_screen_on_timer_ {nullptr};
+  std::uint32_t keep_screen_on_timer_duration_ms_ {0};
   std::size_t home_surface_index_ {0};
   bool notifications_pull_preview_active_ {false};
   bool quick_settings_pull_preview_active_ {false};
-  const std::array<PageId, 5> home_surfaces_ {{
-      PageId::Watchface,
-      PageId::HomeShortcutPayments,
-      PageId::HomeShortcutNfc,
-      PageId::HomeShortcutHealth,
-      PageId::HomeShortcutWeather,
-  }};
+  static constexpr std::size_t kHomeSurfaceCount = 5;
 };
 
 }  // namespace twsim::app
