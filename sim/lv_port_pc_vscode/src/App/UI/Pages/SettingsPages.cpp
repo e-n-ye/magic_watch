@@ -1175,6 +1175,18 @@ void DisplayManualBrightnessPage::slider_event_cb(lv_event_t* event) {
     return;
   }
 
+  if (self->suppress_slider_event_) {
+    return;
+  }
+
+  if (self->should_ignore_click()) {
+    self->suppress_slider_event_ = true;
+    lv_slider_set_value(self->slider_, self->pending_level_, LV_ANIM_OFF);
+    self->suppress_slider_event_ = false;
+    self->apply_preview_value(self->pending_level_);
+    return;
+  }
+
   self->pending_level_ = static_cast<std::uint8_t>(lv_slider_get_value(self->slider_));
   self->dirty_ = true;
   self->apply_preview_value(self->pending_level_);
@@ -1521,6 +1533,7 @@ void DisplayRaiseToWakePage::refresh_selection() {
     lv_obj_set_height(option.button, expanded ? 182 : kTileHeight);
     if (expanded) {
       lv_obj_align(option.title_label, LV_ALIGN_TOP_LEFT, kTileHorizontalPadding, 12);
+      lv_obj_align(option.check_label, LV_ALIGN_TOP_RIGHT, -16, 16);
       lv_obj_clear_flag(option.start_row, LV_OBJ_FLAG_HIDDEN);
       lv_obj_clear_flag(option.start_title_label, LV_OBJ_FLAG_HIDDEN);
       lv_obj_clear_flag(option.start_value_label, LV_OBJ_FLAG_HIDDEN);
@@ -1531,6 +1544,7 @@ void DisplayRaiseToWakePage::refresh_selection() {
       lv_label_set_text(option.end_value_label, end_text.c_str());
     } else {
       lv_obj_align(option.title_label, LV_ALIGN_LEFT_MID, kTileHorizontalPadding, 0);
+      lv_obj_align(option.check_label, LV_ALIGN_RIGHT_MID, -16, 0);
       lv_obj_add_flag(option.start_row, LV_OBJ_FLAG_HIDDEN);
       lv_obj_add_flag(option.start_title_label, LV_OBJ_FLAG_HIDDEN);
       lv_obj_add_flag(option.start_value_label, LV_OBJ_FLAG_HIDDEN);

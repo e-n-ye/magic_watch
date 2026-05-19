@@ -1,5 +1,44 @@
 # Prototype Progress
 
+## 2026-05-19: v0.2 Shell Closure Baseline
+
+### What Changed
+
+- Declared the project stage as "late v0 shell prototype" rather than "startup only".
+- Froze the current display-policy-oriented shell into a documented v0.2 closure.
+- Recorded the currently landed display and screen-off loops:
+  - `遮盖息屏`
+  - `息屏显示`
+  - `默认息屏样式`
+  - `持续亮屏`
+  - `抬腕亮屏 / 息屏显示` 冲突提示
+  - real screen-off rendering
+  - restore pre-screen-off page after wake
+- Added a dedicated simulator manual regression matrix for the current shell.
+- Completed one paired manual regression run against the v0.2 shell baseline.
+- Closed the regression issues found in that run:
+  - home-ring `Q / E` overshoot on shortcut surfaces
+  - `Messages -> return -> Quick Settings` backdrop offset residue
+  - manual brightness slider accidental value changes during edge-back
+  - raise-to-wake scheduled-card selection-dot layout inconsistency
+- Added:
+  - `docs/v0_2_shell_closure.md`
+  - `docs/simulator_manual_regression_matrix.md`
+  - `docs/simulator_manual_regression_run_2026_05_19.md`
+
+### Why This Step Matters
+
+- The shell is now rich enough that undocumented behavior has become a real source of regressions.
+- The highest-value work is no longer "add another page", but "make the current shell explainable and testable".
+- This creates a stable comparison point before later architecture cleanup or hardware migration.
+
+### Current Boundary
+
+- This is a documentation and regression-baseline closure, not a new feature round.
+- It does not introduce watchface-specific paired screen-off styles yet.
+- It does not move the project onto real hardware.
+- The simulator crown model is still a useful approximation, not a true rotary-encoder simulation.
+
 ## 2026-05-16: v0.1 Display Policy Model
 
 ### What Changed

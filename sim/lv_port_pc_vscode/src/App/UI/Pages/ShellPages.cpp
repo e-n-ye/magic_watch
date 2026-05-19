@@ -3484,6 +3484,14 @@ void QuickSettingsPage::on_will_appear() {
   PageBase::on_will_appear();
   reset_quick_settings_log();
   hide_toggle_toast();
+  stop_preview_close_timer();
+  shell_drag_offset_ = 0;
+  open_preview_progress_ = 0;
+  shell_drag_active_ = false;
+  if (sheet_container_ != nullptr) {
+    lv_obj_set_y(sheet_container_, kQuickSettingsSheetY);
+  }
+  refresh_backdrop();
   if (suppress_click_deadline_ != std::chrono::steady_clock::time_point {} &&
       std::chrono::steady_clock::now() >= suppress_click_deadline_) {
     suppress_next_click_ = false;

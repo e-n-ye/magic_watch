@@ -489,12 +489,12 @@ void AppStateMachine::handle_input(const InputCommand& command) {
       return;
     case InputAction::CrownRotateCW:
       if (power_state_ == PowerState::Running && is_current_home_surface() && !is_current_watchface_surface()) {
-        navigate_home_surface(1);
+        preview_home_surface_crown_rotate(1);
       }
       return;
     case InputAction::CrownRotateCCW:
       if (power_state_ == PowerState::Running && is_current_home_surface() && !is_current_watchface_surface()) {
-        navigate_home_surface(-1);
+        preview_home_surface_crown_rotate(-1);
       }
       return;
     case InputAction::TouchActivity:
@@ -751,6 +751,7 @@ bool AppStateMachine::is_watchface_shell_preview_context() const {
 }
 
 void AppStateMachine::navigate_home_surface(int delta) {
+  clear_home_surface_crown_preview();
   const auto size = static_cast<int>(kHomeSurfaceCount);
   const auto current = static_cast<int>(home_surface_index_);
   int next = (current + delta) % size;
@@ -766,7 +767,94 @@ void AppStateMachine::navigate_home_surface(int delta) {
   show_home_surface(static_cast<std::size_t>(next));
 }
 
+void AppStateMachine::preview_home_surface_crown_rotate(std::int8_t direction) {
+  if (direction == 0) {
+    return;
+  }
+
+  if (home_surface_crown_preview_direction_ != 0 && home_surface_crown_preview_direction_ != direction) {
+    clear_home_surface_crown_preview();
+  }
+
+  home_surface_crown_preview_active_ = true;
+  home_surface_crown_preview_direction_ = direction;
+  home_surface_crown_preview_progress_ =
+      std::clamp<std::int16_t>(static_cast<std::int16_t>(home_surface_crown_preview_progress_ + kHomeSurfacePreviewStepPx),
+                               0,
+                               240);
+  publish_home_ring_preview(static_cast<std::uint8_t>(home_surface_index_),
+                            direction,
+                            home_surface_crown_preview_progress_,
+                            true,
+                            false);
+
+  if (home_surface_crown_preview_progress_ >= kHomeSurfacePreviewCommitPx) {
+    finalize_home_surface_crown_preview();
+    return;
+  }
+
+  if (home_surface_crown_preview_timer_ == nullptr) {
+    home_surface_crown_preview_timer_ =
+        lv_timer_create(&AppStateMachine::home_surface_crown_preview_timer_cb, kHomeSurfacePreviewSettleMs, this);
+    if (home_surface_crown_preview_timer_ != nullptr) {
+      lv_timer_set_repeat_count(home_surface_crown_preview_timer_, 1);
+    }
+    return;
+  }
+
+  lv_timer_set_period(home_surface_crown_preview_timer_, kHomeSurfacePreviewSettleMs);
+  lv_timer_reset(home_surface_crown_preview_timer_);
+}
+
+void AppStateMachine::finalize_home_surface_crown_preview() {
+  if (!home_surface_crown_preview_active_ || home_surface_crown_preview_direction_ == 0) {
+    clear_home_surface_crown_preview();
+    return;
+  }
+
+  const auto direction = home_surface_crown_preview_direction_;
+  const auto progress = home_surface_crown_preview_progress_;
+  clear_home_surface_crown_preview();
+
+  if (progress < kHomeSurfacePreviewCommitPx) {
+    publish_home_ring_preview(static_cast<std::uint8_t>(home_surface_index_), 0, 0, false, false);
+    return;
+  }
+
+  const auto size = static_cast<int>(kHomeSurfaceCount);
+  const auto current = static_cast<int>(home_surface_index_);
+  int next = (current + direction) % size;
+  if (next < 0) {
+    next += size;
+  }
+
+  publish_home_ring_preview(static_cast<std::uint8_t>(home_surface_index_), direction, progress, false, true);
+  show_home_surface(static_cast<std::size_t>(next));
+}
+
+void AppStateMachine::clear_home_surface_crown_preview() {
+  home_surface_crown_preview_active_ = false;
+  home_surface_crown_preview_direction_ = 0;
+  home_surface_crown_preview_progress_ = 0;
+  if (home_surface_crown_preview_timer_ != nullptr) {
+    lv_timer_del(home_surface_crown_preview_timer_);
+    home_surface_crown_preview_timer_ = nullptr;
+  }
+}
+
+void AppStateMachine::home_surface_crown_preview_timer_cb(lv_timer_t* timer) {
+  if (timer == nullptr) {
+    return;
+  }
+  auto* self = static_cast<AppStateMachine*>(lv_timer_get_user_data(timer));
+  if (self == nullptr) {
+    return;
+  }
+  self->finalize_home_surface_crown_preview();
+}
+
 void AppStateMachine::show_home_surface(std::size_t index) {
+  clear_home_surface_crown_preview();
   if (index >= kHomeSurfaceCount) {
     return;
   }

@@ -51,6 +51,10 @@ class AppStateMachine {
                                  std::int16_t progress,
                                  bool active,
                                  bool commit);
+  void preview_home_surface_crown_rotate(std::int8_t direction);
+  void finalize_home_surface_crown_preview();
+  void clear_home_surface_crown_preview();
+  static void home_surface_crown_preview_timer_cb(lv_timer_t* timer);
   void schedule_notification_screen_off();
   void cancel_notification_screen_off(bool clear_session);
   static void notification_screen_off_timer_cb(lv_timer_t* timer);
@@ -91,7 +95,14 @@ class AppStateMachine {
   std::size_t screen_off_home_surface_index_ {0};
   bool notifications_pull_preview_active_ {false};
   bool quick_settings_pull_preview_active_ {false};
+  lv_timer_t* home_surface_crown_preview_timer_ {nullptr};
+  bool home_surface_crown_preview_active_ {false};
+  std::int8_t home_surface_crown_preview_direction_ {0};
+  std::int16_t home_surface_crown_preview_progress_ {0};
   static constexpr std::size_t kHomeSurfaceCount = 5;
+  static constexpr std::int16_t kHomeSurfacePreviewStepPx = 18;
+  static constexpr std::int16_t kHomeSurfacePreviewCommitPx = 60;
+  static constexpr std::uint32_t kHomeSurfacePreviewSettleMs = 180U;
 };
 
 }  // namespace twsim::app

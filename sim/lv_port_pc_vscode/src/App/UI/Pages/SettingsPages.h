@@ -133,6 +133,7 @@ class DisplayManualBrightnessPage : public SettingsPageBase {
   lv_obj_t* value_label_ {nullptr};
   std::uint8_t pending_level_ {60};
   bool dirty_ {false};
+  bool suppress_slider_event_ {false};
 };
 
 class DisplayTimeoutPage : public SettingsPageBase {
