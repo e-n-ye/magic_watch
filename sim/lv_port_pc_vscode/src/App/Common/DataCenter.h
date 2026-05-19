@@ -39,6 +39,7 @@ class DataCenter {
   void set_keep_screen_on_duration_ms(std::uint32_t duration_ms);
   void set_brightness_mode(BrightnessMode mode);
   void set_manual_brightness_level(std::uint8_t level);
+  void set_launcher_layout_mode(LauncherLayoutMode mode);
   void show_toast_for(std::string_view id);
   void clear_toast();
 

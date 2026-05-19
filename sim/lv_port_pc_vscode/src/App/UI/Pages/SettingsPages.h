@@ -60,6 +60,28 @@ class SettingsPlaceholderPage : public SettingsPageBase {
   const char* detail_;
 };
 
+class AppLayoutSettingsPage : public SettingsPageBase {
+ public:
+  explicit AppLayoutSettingsPage(DataCenter& data_center);
+  void on_will_appear() override;
+
+ protected:
+  lv_obj_t* build() override;
+
+ private:
+  struct LayoutOptionState {
+    LauncherLayoutMode mode {LauncherLayoutMode::Categorized};
+    const char* label {nullptr};
+    lv_obj_t* button {nullptr};
+    lv_obj_t* check_label {nullptr};
+  };
+
+  static void option_event_cb(lv_event_t* event);
+  void refresh_selection();
+
+  std::array<LayoutOptionState, 3> options_;
+};
+
 class DisplaySettingsPage : public SettingsPageBase {
  public:
   explicit DisplaySettingsPage(DataCenter& data_center);

@@ -1,5 +1,74 @@
 # Prototype Progress
 
+## 2026-05-19: Launcher Layout Modes v0.3-B1 / v0.3-B2
+
+### What Changed
+
+- Turned `设置 -> 应用布局` from a placeholder into a real saved setting.
+- Added a launcher layout mode field into the shared display / shell policy model.
+- Landed three launcher shell modes:
+  - `多列布局`
+  - `列表布局`
+  - `分类布局`
+- Wired launcher rendering so it rebuilds from the saved mode instead of staying on one hard-coded structure.
+- Removed the temporary launcher header and back-button shell that proved visually unnecessary during review.
+- Hid app-name text in the multi-column launcher variant to keep it aligned with the Xiaomi-style icon-wall direction.
+- Tightened vertical spacing in multi-column mode and restored edge elastic feel when the content is short.
+
+### Why This Step Matters
+
+- Launcher is no longer a one-off shell experiment; it now has an explicit layout-mode concept with saved state.
+- This creates a cleaner product seam between "entry-shell structure" and later "launcher interaction polish".
+- It also avoids forcing one launcher shape too early, which would make later product comparison harder.
+
+### Current Boundary
+
+- The three layout modes now exist and can be switched, but their detailed interaction polish is not finished yet.
+- This round did not yet fully close:
+  - categorized-layout clipping / density review
+  - whether categorized groups should support horizontal swipe
+  - crown-scroll hand-feel differences versus touch drag
+- Those belong to the next launcher-detail round rather than this settings + mode-switch closure.
+
+## 2026-05-19: Launcher Shell Consolidation v0.3-A
+
+### What Changed
+
+- Reframed `Launcher` from a flat icon wall into a grouped app-entry shell as the first v0.3 launcher baseline.
+- Kept the currently exposed launcher entries narrow and explicit:
+  - `Settings`
+  - `Weather`
+  - `Steps`
+  - `Sleep`
+  - `Heart`
+  - `SpO2`
+  - `Stress`
+  - `Breathe`
+  - `NFC`
+  - `Alipay`
+  - `WeChat`
+- Added visible launcher grouping:
+  - `System`
+  - `Daily`
+  - `Health`
+  - `Wallet`
+- Updated the regression matrix so launcher-shell structure becomes part of future shell checks.
+- Updated `docs/v0_2_shell_closure.md` so its "next step" note matches the current real roadmap.
+
+### Why This Step Matters
+
+- Crown press into `Launcher` is already a main-path shell interaction.
+- The page previously worked as a raw grid, but it did not yet read like a stable product entry shell.
+- This round improves product structure without dragging the project into real business-page implementation.
+
+### Current Boundary
+
+- This round does not implement any real application logic.
+- Hidden historical entries remain registered in code when useful for future placeholder work, but they are not
+  surfaced in the launcher shell.
+- Touch scroll, crown scroll, edge-back, and crown-return-home behavior remain under the existing shell rules.
+- Later rounds may still reshape launcher presentation now that `应用布局` mode switching has been added.
+
 ## 2026-05-19: DisplayPolicyRules Narrow Extraction
 
 ### What Changed

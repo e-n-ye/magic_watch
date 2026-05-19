@@ -244,6 +244,17 @@ void DataCenter::set_manual_brightness_level(std::uint8_t level) {
   event_bus_.publish({EventId::DisplayPolicyChanged, *display_policy_});
 }
 
+void DataCenter::set_launcher_layout_mode(LauncherLayoutMode mode) {
+  if (!display_policy_) {
+    display_policy_ = DisplayPolicyModel {};
+  }
+  if (display_policy_->launcher_layout_mode == mode) {
+    return;
+  }
+  display_policy_->launcher_layout_mode = mode;
+  event_bus_.publish({EventId::DisplayPolicyChanged, *display_policy_});
+}
+
 void DataCenter::show_toast_for(std::string_view id) {
   const NotificationItem* item = find_notification(id);
   if (item == nullptr) {

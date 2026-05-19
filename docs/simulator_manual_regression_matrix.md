@@ -73,6 +73,44 @@ Before testing:
   - top-left back arrow returns to previous page
   - crown press returns to watchface-centered home surface according to current shell rule
 
+### A4. Launcher Shell Structure
+
+- Action:
+  - enter `Launcher`
+  - switch `设置 -> 应用布局` among `多列布局 / 列表布局 / 分类布局`
+  - return to `Launcher` after each switch
+  - scroll through the full page by touch drag / flick
+  - scroll through the full page by `Q / E`
+- Expected:
+  - `Launcher` follows the saved `应用布局` mode
+  - current exposed entries remain limited to:
+    - `Settings`
+    - `Weather`
+    - `Steps`
+    - `Sleep`
+    - `Heart`
+    - `SpO2`
+    - `Stress`
+    - `Breathe`
+    - `NFC`
+    - `Alipay`
+    - `WeChat`
+  - `多列布局`:
+    - shows an icon wall without per-app text labels
+    - still supports vertical drag / flick and `Q / E` scrolling
+  - `列表布局`:
+    - shows a vertical one-row-per-app list
+    - app labels remain visible
+  - `分类布局`:
+    - shows grouped sections:
+      - `System`
+      - `Daily`
+      - `Health`
+      - `Wallet`
+  - historical or currently non-shell-facing entries such as `GPS`, `Recorder`, `AudioPlayer`,
+    `VideoPlayer`, `Infrared`, `LoRa`, and similar placeholders are not surfaced here
+  - touch scroll and crown scroll both keep working
+
 ## B. Settings Display Page
 
 ### B1. Display Settings Visible Structure

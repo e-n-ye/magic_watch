@@ -49,6 +49,7 @@ class LauncherPage : public PageBase {
 
  private:
   struct Item {
+    const char* section_title;
     const char* label;
     NavigationCommand command;
     const char* icon_text;
@@ -59,9 +60,14 @@ class LauncherPage : public PageBase {
 
   static void back_event_cb(lv_event_t* event);
   static void item_event_cb(lv_event_t* event);
+  void rebuild_layout_if_needed(bool force = false);
+  void build_multi_column_layout(lv_obj_t* parent);
+  void build_list_layout(lv_obj_t* parent);
+  void build_categorized_layout(lv_obj_t* parent);
   void bind_input();
   lv_obj_t* list_root_ {nullptr};
   std::vector<Item> items_;
+  LauncherLayoutMode current_layout_mode_ {LauncherLayoutMode::Categorized};
 };
 
 class HomeRingHostPage : public PageBase {

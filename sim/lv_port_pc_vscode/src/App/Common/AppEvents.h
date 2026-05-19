@@ -91,6 +91,12 @@ enum class ScreenOffStyleId {
   InfoDigits,
 };
 
+enum class LauncherLayoutMode {
+  MultiColumn,
+  List,
+  Categorized,
+};
+
 struct DailyTimeWindow {
   std::uint8_t start_hour {8};
   std::uint8_t start_minute {0};
@@ -114,6 +120,7 @@ struct DisplayPolicyModel {
   std::uint32_t keep_screen_on_duration_ms {0};
   BrightnessMode brightness_mode {BrightnessMode::Auto};
   std::uint8_t manual_brightness_level {60};
+  LauncherLayoutMode launcher_layout_mode {LauncherLayoutMode::Categorized};
 };
 
 struct ShellPreviewModel {

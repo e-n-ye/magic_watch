@@ -266,16 +266,41 @@ The shell is now coherent enough to freeze, but a few debts should be kept visib
 
 ## Recommended Next Step
 
-The most suitable next step after this closure is:
+The earlier recommended next step for this closure has already been completed:
 
-`Build and maintain a simulator manual regression matrix for the current shell baseline.`
+- a simulator manual regression matrix now exists
+- one paired manual regression run has already been executed
+- a narrow `DisplayPolicyRules` refinement has already been landed and re-checked
+
+That earlier next step has also already been completed in two small launcher rounds:
+
+- `v0.3-A`: launcher / app-entry shell consolidation
+- `v0.3-B1 / v0.3-B2`: app-layout setting closure plus three launcher layout modes
+
+Current launcher baseline now includes:
+
+- explicit exposed-entry curation
+- saved `应用布局` mode
+- three shell presentation variants:
+  - `多列布局`
+  - `列表布局`
+  - `分类布局`
+
+The current most suitable next step after this is:
+
+`v0.3-B3: launcher detail polish`
 
 Reason:
 
-- the shell is now rich enough to regress silently
-- future changes in quick settings, wake policy, or page restoration can easily break one another
-- a stable matrix now is more valuable than more placeholder feature pages
+- launcher is now structurally flexible enough to compare multiple shell shapes
+- the next remaining value is no longer "add another launcher mode", but "close layout and interaction rough edges"
+- this still stays shell-scoped and does not force real app-service implementation
 
-For that matrix, see:
+Recommended v0.3-B3 boundary:
 
-- `docs/simulator_manual_regression_matrix.md`
+- only polish launcher detail behavior
+- do not implement real application logic
+- review categorized-layout clipping and density
+- decide whether categorized groups should support horizontal swipe
+- refine crown-scroll / touch-scroll feel differences where needed
+- extend the regression matrix with launcher layout mode checks if the validation path changes

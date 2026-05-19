@@ -40,12 +40,24 @@ constexpr lv_coord_t kQuickSettingsOpenCommitThreshold = 148;
 constexpr lv_coord_t kQuickSettingsSheetY = 46;
 constexpr lv_coord_t kQuickSettingsSheetWidth = 228;
 constexpr lv_coord_t kQuickSettingsSheetHeight = 228;
-constexpr lv_coord_t kLauncherTileSize = 71;
-constexpr lv_coord_t kLauncherIconSize = 60;
-constexpr lv_coord_t kLauncherPadTop = 10;
-constexpr lv_coord_t kLauncherPadBottom = 10;
-constexpr lv_coord_t kLauncherRowGap = 4;
-constexpr lv_coord_t kLauncherColumnGap = 2;
+constexpr lv_coord_t kLauncherScrollTop = 10;
+constexpr lv_coord_t kLauncherScrollBottom = 0;
+constexpr lv_coord_t kLauncherScrollInset = 8;
+constexpr lv_coord_t kLauncherScrollPadTop = 10;
+constexpr lv_coord_t kLauncherScrollPadBottom = 12;
+constexpr lv_coord_t kLauncherScrollGap = 10;
+constexpr lv_coord_t kLauncherSectionPad = 10;
+constexpr lv_coord_t kLauncherSectionGap = 8;
+constexpr lv_coord_t kLauncherSectionHeaderBottom = 8;
+constexpr lv_coord_t kLauncherTileWidth = 60;
+constexpr lv_coord_t kLauncherTileHeight = 84;
+constexpr lv_coord_t kLauncherMultiColumnTileHeight = 58;
+constexpr lv_coord_t kLauncherIconSize = 52;
+constexpr lv_coord_t kLauncherColumnGap = 8;
+constexpr lv_coord_t kLauncherRowGap = 10;
+constexpr lv_coord_t kLauncherMultiColumnElasticSpacerHeight = 40;
+constexpr lv_coord_t kLauncherListRowHeight = 62;
+constexpr lv_coord_t kLauncherListIconSize = 38;
 constexpr lv_coord_t kClickDragThreshold = 12;
 constexpr lv_coord_t kHomePagerStep = 15;
 
@@ -693,6 +705,28 @@ lv_obj_t* create_app_round_icon(lv_obj_t* parent, const AppVisualSpec& spec, lv_
   lv_obj_remove_flag(label, LV_OBJ_FLAG_CLICKABLE);
   lv_obj_center(label);
   return icon_root;
+}
+
+LauncherLayoutMode current_launcher_layout_mode(DataCenter& data_center) {
+  return data_center.display_policy().value_or(DisplayPolicyModel {}).launcher_layout_mode;
+}
+
+lv_obj_t* create_launcher_scroll_root(lv_obj_t* root, lv_coord_t screen_w, lv_coord_t screen_h) {
+  lv_obj_t* scroll = lv_obj_create(root);
+  if (scroll == nullptr) {
+    return nullptr;
+  }
+
+  lv_obj_set_size(scroll, screen_w - kLauncherScrollInset * 2, screen_h - kLauncherScrollTop - kLauncherScrollBottom);
+  lv_obj_align(scroll, LV_ALIGN_TOP_MID, 0, kLauncherScrollTop);
+  lv_obj_set_scroll_dir(scroll, LV_DIR_VER);
+  lv_obj_set_scrollbar_mode(scroll, LV_SCROLLBAR_MODE_OFF);
+  lv_obj_add_flag(scroll, LV_OBJ_FLAG_SCROLL_ELASTIC);
+  lv_obj_add_flag(scroll, LV_OBJ_FLAG_SCROLL_MOMENTUM);
+  lv_obj_set_style_bg_opa(scroll, LV_OPA_TRANSP, 0);
+  lv_obj_set_style_border_width(scroll, 0, 0);
+  lv_obj_set_style_radius(scroll, 0, 0);
+  return scroll;
 }
 
 }  // namespace
@@ -1623,28 +1657,34 @@ lv_obj_t* HomeRingHostPage::build() {
 }
 
 LauncherPage::LauncherPage(DataCenter& data_center) : PageBase(data_center) {
-  const std::array<PageId, 11> launcher_targets {{
-      PageId::SettingsHome,
-      PageId::AppWeather,
-      PageId::Pedometer,
-      PageId::AppHeartRate,
-      PageId::AppBloodOxygen,
-      PageId::AppSleep,
-      PageId::AppStress,
-      PageId::AppBreathing,
-      PageId::AppNfc,
-      PageId::AppAlipay,
-      PageId::AppWeChatPay,
+  struct LauncherEntrySpec {
+    const char* section_title;
+    PageId target;
+  };
+
+  const std::array<LauncherEntrySpec, 11> launcher_targets {{
+      {"System", PageId::SettingsHome},
+      {"Daily", PageId::AppWeather},
+      {"Daily", PageId::Pedometer},
+      {"Daily", PageId::AppSleep},
+      {"Health", PageId::AppHeartRate},
+      {"Health", PageId::AppBloodOxygen},
+      {"Health", PageId::AppStress},
+      {"Health", PageId::AppBreathing},
+      {"Wallet", PageId::AppNfc},
+      {"Wallet", PageId::AppAlipay},
+      {"Wallet", PageId::AppWeChatPay},
   }};
 
   items_.reserve(launcher_targets.size());
-  for (PageId target : launcher_targets) {
-    const AppVisualSpec* spec = find_app_visual_spec(target);
+  for (const auto& entry : launcher_targets) {
+    const AppVisualSpec* spec = find_app_visual_spec(entry.target);
     if (spec == nullptr) {
       continue;
     }
-    items_.push_back({spec->label,
-                      {NavigationAction::LaunchApp, target},
+    items_.push_back({entry.section_title,
+                      spec->label,
+                      {NavigationAction::LaunchApp, entry.target},
                       spec->icon_text,
                       spec->icon_asset_path,
                       lv_color_hex(spec->icon_bg),
@@ -1661,6 +1701,7 @@ const char* LauncherPage::name() const {
 }
 
 void LauncherPage::on_will_appear() {
+  rebuild_layout_if_needed();
   if (list_root_ != nullptr) {
     lv_obj_update_layout(list_root_);
     lv_obj_scroll_to_y(list_root_, 0, LV_ANIM_OFF);
@@ -1677,46 +1718,78 @@ lv_obj_t* LauncherPage::build() {
   const lv_coord_t screen_w = static_cast<lv_coord_t>(lv_display_get_horizontal_resolution(nullptr));
   const lv_coord_t screen_h = static_cast<lv_coord_t>(lv_display_get_vertical_resolution(nullptr));
 
-  list_root_ = lv_obj_create(root);
-  if (list_root_ == nullptr) {
-    return nullptr;
+  rebuild_layout_if_needed(true);
+
+  bind_input();
+  return root;
+}
+
+void LauncherPage::rebuild_layout_if_needed(bool force) {
+  const LauncherLayoutMode target_mode = current_launcher_layout_mode(data_center_);
+  if (!force && list_root_ != nullptr && current_layout_mode_ == target_mode) {
+    return;
   }
 
-  lv_obj_set_size(list_root_, screen_w, screen_h);
-  lv_obj_align(list_root_, LV_ALIGN_TOP_MID, 0, 0);
-  lv_obj_set_flex_flow(list_root_, LV_FLEX_FLOW_ROW_WRAP);
-  lv_obj_set_scroll_dir(list_root_, LV_DIR_VER);
-  lv_obj_set_scrollbar_mode(list_root_, LV_SCROLLBAR_MODE_OFF);
-  lv_obj_add_flag(list_root_, LV_OBJ_FLAG_SCROLL_ELASTIC);
-  lv_obj_add_flag(list_root_, LV_OBJ_FLAG_SCROLL_MOMENTUM);
-  lv_obj_set_flex_align(list_root_, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
-  lv_obj_set_style_pad_top(list_root_, kLauncherPadTop, 0);
-  lv_obj_set_style_pad_bottom(list_root_, kLauncherPadBottom, 0);
-  lv_obj_set_style_pad_left(list_root_, 0, 0);
-  lv_obj_set_style_pad_right(list_root_, 0, 0);
-  lv_obj_set_style_pad_row(list_root_, kLauncherRowGap, 0);
-  lv_obj_set_style_pad_column(list_root_, kLauncherColumnGap, 0);
-  lv_obj_set_style_bg_opa(list_root_, LV_OPA_TRANSP, 0);
-  lv_obj_set_style_border_width(list_root_, 0, 0);
-  lv_obj_set_style_radius(list_root_, 0, 0);
+  current_layout_mode_ = target_mode;
+
+  if (list_root_ != nullptr) {
+    lv_obj_delete(list_root_);
+    list_root_ = nullptr;
+  }
+  if (root_ == nullptr) {
+    return;
+  }
+
+  const lv_coord_t screen_w = static_cast<lv_coord_t>(lv_display_get_horizontal_resolution(nullptr));
+  const lv_coord_t screen_h = static_cast<lv_coord_t>(lv_display_get_vertical_resolution(nullptr));
+  list_root_ = create_launcher_scroll_root(root_, screen_w, screen_h);
+  if (list_root_ == nullptr) {
+    return;
+  }
+
+  switch (current_layout_mode_) {
+    case LauncherLayoutMode::MultiColumn:
+      build_multi_column_layout(list_root_);
+      break;
+    case LauncherLayoutMode::List:
+      build_list_layout(list_root_);
+      break;
+    case LauncherLayoutMode::Categorized:
+    default:
+      build_categorized_layout(list_root_);
+      break;
+  }
+}
+
+void LauncherPage::build_multi_column_layout(lv_obj_t* parent) {
+  lv_obj_set_layout(parent, LV_LAYOUT_FLEX);
+  lv_obj_set_flex_flow(parent, LV_FLEX_FLOW_ROW_WRAP);
+  lv_obj_set_flex_align(parent, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
+  lv_obj_set_style_pad_top(parent, kLauncherScrollPadTop, 0);
+  lv_obj_set_style_pad_bottom(parent, kLauncherScrollPadBottom, 0);
+  lv_obj_set_style_pad_left(parent, 12, 0);
+  lv_obj_set_style_pad_right(parent, 12, 0);
+  lv_obj_set_style_pad_row(parent, kLauncherRowGap, 0);
+  lv_obj_set_style_pad_column(parent, kLauncherColumnGap, 0);
 
   for (std::size_t index = 0; index < items_.size(); ++index) {
-    lv_obj_t* tile = lv_button_create(list_root_);
+    const Item& item = items_[index];
+    lv_obj_t* tile = lv_button_create(parent);
     if (tile == nullptr) {
-      return nullptr;
+      return;
     }
     ui_prepare_box(tile);
     ui_set_touch_target(tile, 8);
-    lv_obj_set_size(tile, kLauncherTileSize, kLauncherTileSize);
+    lv_obj_set_size(tile, kLauncherTileWidth, kLauncherMultiColumnTileHeight);
     lv_obj_set_style_bg_opa(tile, LV_OPA_TRANSP, 0);
     lv_obj_set_style_border_width(tile, 0, 0);
     lv_obj_set_style_shadow_width(tile, 0, 0);
     lv_obj_set_style_pad_all(tile, 0, 0);
+    lv_obj_remove_flag(tile, LV_OBJ_FLAG_SCROLLABLE);
     attach_click_guard(tile);
     lv_obj_add_event_cb(tile, &LauncherPage::item_event_cb, LV_EVENT_CLICKED, this);
     lv_obj_set_user_data(tile, reinterpret_cast<void*>(static_cast<std::uintptr_t>(index)));
 
-    const Item& item = items_[index];
     const AppVisualSpec render_spec {
         item.command.target,
         item.label,
@@ -1726,31 +1799,198 @@ lv_obj_t* LauncherPage::build() {
         lv_color_to_u32(item.icon_fg),
     };
     lv_obj_t* icon = create_app_round_icon(tile, render_spec, kLauncherIconSize);
-    if (icon == nullptr) {
-      return nullptr;
+    lv_obj_t* label = lv_label_create(tile);
+    if (icon == nullptr || label == nullptr) {
+      return;
     }
-    lv_obj_align(icon, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_align(icon, LV_ALIGN_TOP_MID, 0, 0);
+    ui_prepare_label(label);
+    ui_apply_text(label, TextStyle::Tiny);
+    lv_obj_add_flag(label, LV_OBJ_FLAG_HIDDEN);
   }
 
-  const std::size_t remainder = items_.size() % 3U;
-  if (remainder != 0U) {
-    const std::size_t filler_count = 3U - remainder;
-    for (std::size_t filler_index = 0; filler_index < filler_count; ++filler_index) {
-      lv_obj_t* filler = lv_obj_create(list_root_);
-      if (filler == nullptr) {
-        return nullptr;
+  lv_obj_t* elastic_spacer = lv_obj_create(parent);
+  if (elastic_spacer == nullptr) {
+    return;
+  }
+  lv_obj_set_width(elastic_spacer, LV_PCT(100));
+  lv_obj_set_height(elastic_spacer, kLauncherMultiColumnElasticSpacerHeight);
+  lv_obj_set_style_bg_opa(elastic_spacer, LV_OPA_TRANSP, 0);
+  lv_obj_set_style_border_width(elastic_spacer, 0, 0);
+  lv_obj_set_style_pad_all(elastic_spacer, 0, 0);
+  lv_obj_remove_flag(elastic_spacer, LV_OBJ_FLAG_CLICKABLE);
+  lv_obj_remove_flag(elastic_spacer, LV_OBJ_FLAG_SCROLLABLE);
+}
+
+void LauncherPage::build_list_layout(lv_obj_t* parent) {
+  lv_obj_set_layout(parent, LV_LAYOUT_FLEX);
+  lv_obj_set_flex_flow(parent, LV_FLEX_FLOW_COLUMN);
+  lv_obj_set_flex_align(parent, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_START);
+  lv_obj_set_style_pad_top(parent, kLauncherScrollPadTop, 0);
+  lv_obj_set_style_pad_bottom(parent, kLauncherScrollPadBottom, 0);
+  lv_obj_set_style_pad_left(parent, 0, 0);
+  lv_obj_set_style_pad_right(parent, 0, 0);
+  lv_obj_set_style_pad_row(parent, kLauncherScrollGap, 0);
+
+  for (std::size_t index = 0; index < items_.size(); ++index) {
+    const Item& item = items_[index];
+    lv_obj_t* row = lv_button_create(parent);
+    if (row == nullptr) {
+      return;
+    }
+    ui_prepare_box(row);
+    ui_apply_surface(row, SurfaceStyle::PanelSubtle);
+    ui_set_touch_target(row, 8);
+    lv_obj_set_width(row, LV_PCT(100));
+    lv_obj_set_height(row, kLauncherListRowHeight);
+    lv_obj_set_style_bg_color(row, lv_color_hex(0x0C131D), 0);
+    lv_obj_set_style_border_color(row, lv_color_hex(0x1A2635), 0);
+    lv_obj_set_style_radius(row, 22, 0);
+    lv_obj_set_style_pad_all(row, 0, 0);
+    lv_obj_remove_flag(row, LV_OBJ_FLAG_SCROLLABLE);
+    attach_click_guard(row);
+    lv_obj_add_event_cb(row, &LauncherPage::item_event_cb, LV_EVENT_CLICKED, this);
+    lv_obj_set_user_data(row, reinterpret_cast<void*>(static_cast<std::uintptr_t>(index)));
+
+    const AppVisualSpec render_spec {
+        item.command.target,
+        item.label,
+        item.icon_text,
+        item.icon_asset,
+        lv_color_to_u32(item.icon_bg),
+        lv_color_to_u32(item.icon_fg),
+    };
+    lv_obj_t* icon = create_app_round_icon(row, render_spec, kLauncherListIconSize);
+    lv_obj_t* label = lv_label_create(row);
+    if (icon == nullptr || label == nullptr) {
+      return;
+    }
+    lv_obj_align(icon, LV_ALIGN_LEFT_MID, 14, 0);
+    ui_prepare_label(label);
+    ui_apply_text(label, TextStyle::Title);
+    lv_obj_set_style_text_font(label, &lv_font_montserrat_16, 0);
+    lv_obj_set_style_text_color(label, lv_color_hex(0xF7FBFF), 0);
+    lv_obj_set_width(label, 136);
+    lv_label_set_long_mode(label, LV_LABEL_LONG_DOT);
+    lv_label_set_text(label, item.label);
+    lv_obj_align(label, LV_ALIGN_LEFT_MID, 66, 0);
+  }
+}
+
+void LauncherPage::build_categorized_layout(lv_obj_t* parent) {
+  lv_obj_set_layout(parent, LV_LAYOUT_FLEX);
+  lv_obj_set_flex_flow(parent, LV_FLEX_FLOW_COLUMN);
+  lv_obj_set_flex_align(parent, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_START);
+  lv_obj_set_style_pad_top(parent, kLauncherScrollPadTop, 0);
+  lv_obj_set_style_pad_bottom(parent, kLauncherScrollPadBottom, 0);
+  lv_obj_set_style_pad_left(parent, 0, 0);
+  lv_obj_set_style_pad_right(parent, 0, 0);
+  lv_obj_set_style_pad_row(parent, kLauncherScrollGap, 0);
+  lv_obj_set_style_pad_column(parent, 0, 0);
+
+  std::size_t index = 0;
+  while (index < items_.size()) {
+    const char* section_title = items_[index].section_title;
+    lv_obj_t* section = lv_obj_create(parent);
+    lv_obj_t* section_title_label = lv_label_create(section);
+    lv_obj_t* section_grid = lv_obj_create(section);
+    if (section == nullptr || section_title_label == nullptr || section_grid == nullptr) {
+      return;
+    }
+
+    ui_prepare_box(section);
+    ui_apply_surface(section, SurfaceStyle::PanelSubtle);
+    lv_obj_set_width(section, LV_PCT(100));
+    lv_obj_set_layout(section, LV_LAYOUT_FLEX);
+    lv_obj_set_flex_flow(section, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(section, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
+    lv_obj_set_style_pad_all(section, kLauncherSectionPad, 0);
+    lv_obj_set_style_pad_gap(section, kLauncherSectionGap, 0);
+    lv_obj_set_style_bg_color(section, lv_color_hex(0x0C131D), 0);
+    lv_obj_set_style_border_color(section, lv_color_hex(0x1A2635), 0);
+    lv_obj_set_style_radius(section, 22, 0);
+    lv_obj_remove_flag(section, LV_OBJ_FLAG_SCROLLABLE);
+
+    ui_prepare_label(section_title_label);
+    ui_apply_text(section_title_label, TextStyle::Eyebrow);
+    lv_label_set_text(section_title_label, section_title);
+    lv_obj_set_style_pad_bottom(section_title_label, kLauncherSectionHeaderBottom, 0);
+
+    ui_prepare_box(section_grid);
+    lv_obj_set_width(section_grid, LV_PCT(100));
+    lv_obj_set_layout(section_grid, LV_LAYOUT_FLEX);
+    lv_obj_set_flex_flow(section_grid, LV_FLEX_FLOW_ROW_WRAP);
+    lv_obj_set_flex_align(section_grid, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
+    lv_obj_set_style_pad_all(section_grid, 0, 0);
+    lv_obj_set_style_pad_row(section_grid, kLauncherRowGap, 0);
+    lv_obj_set_style_pad_column(section_grid, kLauncherColumnGap, 0);
+    lv_obj_set_style_bg_opa(section_grid, LV_OPA_TRANSP, 0);
+    lv_obj_set_style_border_width(section_grid, 0, 0);
+    lv_obj_remove_flag(section_grid, LV_OBJ_FLAG_SCROLLABLE);
+
+    std::size_t section_count = 0;
+    while (index < items_.size() && std::strcmp(items_[index].section_title, section_title) == 0) {
+      const Item& item = items_[index];
+      lv_obj_t* tile = lv_button_create(section_grid);
+      if (tile == nullptr) {
+        return;
       }
-      lv_obj_set_size(filler, kLauncherTileSize, kLauncherTileSize);
-      lv_obj_set_style_bg_opa(filler, LV_OPA_TRANSP, 0);
-      lv_obj_set_style_border_width(filler, 0, 0);
-      lv_obj_set_style_pad_all(filler, 0, 0);
-      lv_obj_remove_flag(filler, LV_OBJ_FLAG_CLICKABLE);
-      lv_obj_remove_flag(filler, LV_OBJ_FLAG_SCROLLABLE);
+      ui_prepare_box(tile);
+      ui_set_touch_target(tile, 8);
+      lv_obj_set_size(tile, kLauncherTileWidth, kLauncherTileHeight);
+      lv_obj_set_style_bg_opa(tile, LV_OPA_TRANSP, 0);
+      lv_obj_set_style_border_width(tile, 0, 0);
+      lv_obj_set_style_shadow_width(tile, 0, 0);
+      lv_obj_set_style_pad_all(tile, 0, 0);
+      lv_obj_remove_flag(tile, LV_OBJ_FLAG_SCROLLABLE);
+      attach_click_guard(tile);
+      lv_obj_add_event_cb(tile, &LauncherPage::item_event_cb, LV_EVENT_CLICKED, this);
+      lv_obj_set_user_data(tile, reinterpret_cast<void*>(static_cast<std::uintptr_t>(index)));
+
+      const AppVisualSpec render_spec {
+          item.command.target,
+          item.label,
+          item.icon_text,
+          item.icon_asset,
+          lv_color_to_u32(item.icon_bg),
+          lv_color_to_u32(item.icon_fg),
+      };
+      lv_obj_t* icon = create_app_round_icon(tile, render_spec, kLauncherIconSize);
+      lv_obj_t* label = lv_label_create(tile);
+      if (icon == nullptr || label == nullptr) {
+        return;
+      }
+      lv_obj_align(icon, LV_ALIGN_TOP_MID, 0, 0);
+      ui_prepare_label(label);
+      ui_apply_text(label, TextStyle::Tiny);
+      lv_obj_set_width(label, kLauncherTileWidth);
+      lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
+      lv_obj_set_style_text_color(label, lv_color_hex(0xDCE6F4), 0);
+      lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP);
+      lv_label_set_text(label, item.label);
+      lv_obj_align(label, LV_ALIGN_BOTTOM_MID, 0, 0);
+
+      ++index;
+      ++section_count;
+    }
+
+    const std::size_t remainder = section_count % 3U;
+    if (remainder != 0U) {
+      const std::size_t filler_count = 3U - remainder;
+      for (std::size_t filler_index = 0; filler_index < filler_count; ++filler_index) {
+        lv_obj_t* filler = lv_obj_create(section_grid);
+        if (filler == nullptr) {
+          return;
+        }
+        lv_obj_set_size(filler, kLauncherTileWidth, kLauncherTileHeight);
+        lv_obj_set_style_bg_opa(filler, LV_OPA_TRANSP, 0);
+        lv_obj_set_style_border_width(filler, 0, 0);
+        lv_obj_set_style_pad_all(filler, 0, 0);
+        lv_obj_remove_flag(filler, LV_OBJ_FLAG_CLICKABLE);
+        lv_obj_remove_flag(filler, LV_OBJ_FLAG_SCROLLABLE);
+      }
     }
   }
-
-  bind_input();
-  return root;
 }
 
 HomeShortcutPage::HomeShortcutPage(DataCenter& data_center, Config config)
@@ -2600,6 +2840,11 @@ lv_obj_t* HealthShortcutPage::build() {
 void LauncherPage::back_event_cb(lv_event_t* event) {
   auto* self = static_cast<LauncherPage*>(lv_event_get_user_data(event));
   if (self == nullptr) {
+    return;
+  }
+
+  lv_obj_t* target = lv_event_get_current_target_obj(event);
+  if (target == nullptr || !click_guard_allows(target)) {
     return;
   }
 
