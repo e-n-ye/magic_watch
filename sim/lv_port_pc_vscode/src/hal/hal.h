@@ -98,6 +98,7 @@ struct DebugSample {
     InjectBatteryLowNotification,
     SimRaiseToWake,
     SimRaiseDismiss,
+    SimCoverSleep,
   };
 
   Action action {Action::InjectMessageNotification};

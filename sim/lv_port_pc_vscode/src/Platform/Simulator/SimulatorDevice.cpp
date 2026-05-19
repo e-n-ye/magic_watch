@@ -297,6 +297,12 @@ class SimulatorDevice final : public hal::Device {
       emit_debug(hal::DebugSample::Action::SimRaiseDismiss);
     }
     raise_dismiss_latched_ = dismiss_pressed;
+
+    const bool cover_pressed = key_pressed_fallback(SDL_SCANCODE_C, 'C');
+    if (cover_pressed && !cover_sleep_latched_) {
+      emit_debug(hal::DebugSample::Action::SimCoverSleep);
+    }
+    cover_sleep_latched_ = cover_pressed;
   }
 
   void process_pointer() {
@@ -538,6 +544,7 @@ class SimulatorDevice final : public hal::Device {
   bool battery_notification_latched_ {false};
   bool raise_to_wake_latched_ {false};
   bool raise_dismiss_latched_ {false};
+  bool cover_sleep_latched_ {false};
   bool pointer_pressed_ {false};
   PointerGesture pointer_gesture_ {PointerGesture::None};
   bool horizontal_swipe_progress_active_ {false};

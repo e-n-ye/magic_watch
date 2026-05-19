@@ -15,6 +15,13 @@ bool PageManager::set_root(PageId page_id, PageTransition transition) {
   return load(page_id, transition);
 }
 
+bool PageManager::set_root_preserving_current(PageId page_id, PageTransition transition) {
+  temporary_page_.reset();
+  stack_.clear();
+  stack_.push_back(page_id);
+  return load(page_id, transition, false, true);
+}
+
 bool PageManager::push(PageId page_id, PageTransition transition) {
   if (std::find(stack_.begin(), stack_.end(), page_id) != stack_.end()) {
     return false;
@@ -72,6 +79,32 @@ bool PageManager::dismiss_temporary(PageTransition transition) {
   return load(stack_.back(), transition);
 }
 
+PageManager::State PageManager::capture_state() const {
+  return State {stack_, temporary_page_};
+}
+
+bool PageManager::restore_state(const State& state, PageTransition transition) {
+  if (state.stack.empty()) {
+    return false;
+  }
+
+  stack_ = state.stack;
+  temporary_page_ = state.temporary;
+  const PageId target = temporary_page_.value_or(stack_.back());
+  return load(target, transition);
+}
+
+bool PageManager::restore_state_preserving_target(const State& state, PageTransition transition) {
+  if (state.stack.empty()) {
+    return false;
+  }
+
+  stack_ = state.stack;
+  temporary_page_ = state.temporary;
+  const PageId target = temporary_page_.value_or(stack_.back());
+  return load(target, transition, true, false);
+}
+
 PageBase* PageManager::acquire(PageId page_id) {
   const auto existing = pages_.find(page_id);
   if (existing != pages_.end()) {
@@ -111,8 +144,11 @@ lv_screen_load_anim_t PageManager::to_lvgl_transition(PageTransition transition)
   }
 }
 
-bool PageManager::load(PageId page_id, PageTransition transition) {
-  if (visible_page_ && *visible_page_ != page_id) {
+bool PageManager::load(PageId page_id,
+                       PageTransition transition,
+                       bool notify_current_disappear,
+                       bool notify_target_appear) {
+  if (notify_current_disappear && visible_page_ && *visible_page_ != page_id) {
     if (auto* current_page = acquire(*visible_page_)) {
       current_page->on_will_disappear();
     }
@@ -124,7 +160,9 @@ bool PageManager::load(PageId page_id, PageTransition transition) {
   }
 
   const lv_screen_load_anim_t anim = to_lvgl_transition(transition);
-  next_page->on_will_appear();
+  if (notify_target_appear) {
+    next_page->on_will_appear();
+  }
   lv_screen_load_anim(next_page->root(), anim, anim == LV_SCREEN_LOAD_ANIM_NONE ? 0U : 220U, 0U, false);
   visible_page_ = page_id;
   return true;

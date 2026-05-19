@@ -62,6 +62,16 @@ const char* page_name(PageId page_id) {
       return "SettingDisplayRaiseToWakeEndTime";
     case PageId::SettingDisplayKeepScreenOn:
       return "SettingDisplayKeepScreenOn";
+    case PageId::SettingDisplayScreenOffDisplay:
+      return "SettingDisplayScreenOffDisplay";
+    case PageId::SettingDisplayScreenOffDisplaySchedule:
+      return "SettingDisplayScreenOffDisplaySchedule";
+    case PageId::SettingDisplayScreenOffDisplayStartTime:
+      return "SettingDisplayScreenOffDisplayStartTime";
+    case PageId::SettingDisplayScreenOffDisplayEndTime:
+      return "SettingDisplayScreenOffDisplayEndTime";
+    case PageId::SettingDisplayScreenOffStyle:
+      return "SettingDisplayScreenOffStyle";
     case PageId::SettingSound:
       return "SettingSound";
     case PageId::SettingDoNotDisturb:

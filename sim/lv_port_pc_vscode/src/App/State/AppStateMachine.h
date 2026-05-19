@@ -36,6 +36,7 @@ class AppStateMachine {
   void handle_notification_wake_request(const NotificationItem& item);
   void boot_to_home(PageTransition transition = PageTransition::Fade);
   void return_home(PageTransition transition = PageTransition::Fade);
+  bool wake_from_screen_off(PageTransition transition = PageTransition::Fade);
   void enter_screen_off();
   void enter_powered_off();
   void open_shell_surface(ShellSurface surface);
@@ -86,6 +87,8 @@ class AppStateMachine {
   lv_timer_t* keep_screen_on_timer_ {nullptr};
   std::uint32_t keep_screen_on_timer_duration_ms_ {0};
   std::size_t home_surface_index_ {0};
+  std::optional<PageManager::State> screen_off_page_state_;
+  std::size_t screen_off_home_surface_index_ {0};
   bool notifications_pull_preview_active_ {false};
   bool quick_settings_pull_preview_active_ {false};
   static constexpr std::size_t kHomeSurfaceCount = 5;

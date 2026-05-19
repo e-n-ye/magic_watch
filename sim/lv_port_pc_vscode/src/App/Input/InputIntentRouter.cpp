@@ -48,6 +48,8 @@ std::optional<InputCommand> from_debug(const hal::DebugSample& sample) {
       return InputCommand {InputAction::SimRaiseToWake, 0, 0, 0};
     case hal::DebugSample::Action::SimRaiseDismiss:
       return InputCommand {InputAction::SimRaiseDismiss, 0, 0, 0};
+    case hal::DebugSample::Action::SimCoverSleep:
+      return InputCommand {InputAction::SimCoverSleep, 0, 0, 0};
     default:
       return std::nullopt;
   }

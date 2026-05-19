@@ -141,6 +141,53 @@ void DataCenter::set_tap_to_wake_enabled(bool enabled) {
   event_bus_.publish({EventId::DisplayPolicyChanged, *display_policy_});
 }
 
+void DataCenter::set_cover_to_sleep_enabled(bool enabled) {
+  if (!display_policy_) {
+    display_policy_ = DisplayPolicyModel {};
+  }
+  if (display_policy_->cover_to_sleep_enabled == enabled) {
+    return;
+  }
+  display_policy_->cover_to_sleep_enabled = enabled;
+  event_bus_.publish({EventId::DisplayPolicyChanged, *display_policy_});
+}
+
+void DataCenter::set_screen_off_display_mode(ScreenOffDisplayMode mode) {
+  if (!display_policy_) {
+    display_policy_ = DisplayPolicyModel {};
+  }
+  if (display_policy_->screen_off_display_mode == mode) {
+    return;
+  }
+  display_policy_->screen_off_display_mode = mode;
+  event_bus_.publish({EventId::DisplayPolicyChanged, *display_policy_});
+}
+
+void DataCenter::set_screen_off_display_window(const DailyTimeWindow& window) {
+  if (!display_policy_) {
+    display_policy_ = DisplayPolicyModel {};
+  }
+  if (display_policy_->screen_off_display_window.start_hour == window.start_hour &&
+      display_policy_->screen_off_display_window.start_minute == window.start_minute &&
+      display_policy_->screen_off_display_window.end_hour == window.end_hour &&
+      display_policy_->screen_off_display_window.end_minute == window.end_minute) {
+    return;
+  }
+  display_policy_->screen_off_display_window = window;
+  event_bus_.publish({EventId::DisplayPolicyChanged, *display_policy_});
+}
+
+void DataCenter::set_screen_off_style_id(ScreenOffStyleId style_id) {
+  if (!display_policy_) {
+    display_policy_ = DisplayPolicyModel {};
+  }
+  if (display_policy_->screen_off_style_id == style_id) {
+    return;
+  }
+  display_policy_->screen_off_style_id = style_id;
+  event_bus_.publish({EventId::DisplayPolicyChanged, *display_policy_});
+}
+
 void DataCenter::set_always_on_display_enabled(bool enabled) {
   if (!display_policy_) {
     display_policy_ = DisplayPolicyModel {};

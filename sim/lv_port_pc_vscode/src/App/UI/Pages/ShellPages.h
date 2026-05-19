@@ -362,6 +362,41 @@ class PowerMenuPage : public PageBase {
   static void action_event_cb(lv_event_t* event);
 };
 
+class ScreenOffPage : public PageBase {
+ public:
+  explicit ScreenOffPage(DataCenter& data_center);
+
+  PageId id() const override;
+  const char* name() const override;
+  void on_will_appear() override;
+
+ protected:
+  lv_obj_t* build() override;
+
+ private:
+  void apply_time(const TimeModel& model);
+  void apply_battery(const BatteryModel& model);
+  void apply_policy(const DisplayPolicyModel& policy);
+  void refresh_view();
+  void update_analog_preview();
+  void update_info_preview();
+
+  TimeModel time_model_ {};
+  BatteryModel battery_model_ {};
+  DisplayPolicyModel display_policy_ {};
+  lv_obj_t* analog_root_ {nullptr};
+  lv_obj_t* analog_hour_hand_ {nullptr};
+  lv_obj_t* analog_minute_hand_ {nullptr};
+  lv_obj_t* analog_battery_label_ {nullptr};
+  lv_obj_t* info_root_ {nullptr};
+  lv_obj_t* info_hour_label_ {nullptr};
+  lv_obj_t* info_minute_label_ {nullptr};
+  lv_obj_t* info_date_label_ {nullptr};
+  lv_obj_t* info_battery_label_ {nullptr};
+  lv_point_precise_t analog_hour_points_[2] {};
+  lv_point_precise_t analog_minute_points_[2] {};
+};
+
 class PassiveShellPage : public PageBase {
  public:
   PassiveShellPage(DataCenter& data_center, PageId page_id, const char* title, const char* detail);

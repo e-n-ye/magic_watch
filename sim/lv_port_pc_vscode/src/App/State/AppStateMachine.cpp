@@ -307,7 +307,7 @@ void AppStateMachine::handle_input(const InputCommand& command) {
         return;
       }
       if (power_state_ == PowerState::ScreenOff) {
-        return_home();
+        wake_from_screen_off();
         return;
       }
       enter_screen_off();
@@ -328,7 +328,7 @@ void AppStateMachine::handle_input(const InputCommand& command) {
       if (!raise_to_wake_allowed(data_center_)) {
         return;
       }
-      return_home();
+      wake_from_screen_off();
       raise_to_wake_session_active_ = true;
       return;
     case InputAction::SimRaiseDismiss:
@@ -338,6 +338,16 @@ void AppStateMachine::handle_input(const InputCommand& command) {
       }
       if (keep_screen_on_active()) {
         clear_raise_session(raise_to_wake_session_active_);
+        return;
+      }
+      enter_screen_off();
+      return;
+    case InputAction::SimCoverSleep:
+      overlay.hide();
+      if (power_state_ != PowerState::Running) {
+        return;
+      }
+      if (const auto policy = data_center_.display_policy(); policy && !policy->cover_to_sleep_enabled) {
         return;
       }
       enter_screen_off();
@@ -458,7 +468,7 @@ void AppStateMachine::handle_input(const InputCommand& command) {
         if (policy && !policy->crown_press_wake_enabled) {
           return;
         }
-        return_home();
+        wake_from_screen_off();
         return;
       }
       if (is_current_watchface_surface()) {
@@ -494,7 +504,7 @@ void AppStateMachine::handle_input(const InputCommand& command) {
       if (const auto policy = data_center_.display_policy(); policy && !policy->tap_to_wake_enabled) {
         return;
       }
-      return_home();
+      wake_from_screen_off();
       return;
     case InputAction::ScrollDrag:
     case InputAction::ScrollFlick:
@@ -520,6 +530,24 @@ void AppStateMachine::return_home(PageTransition transition) {
   boot_to_home(transition);
 }
 
+bool AppStateMachine::wake_from_screen_off(PageTransition transition) {
+  cancel_notification_screen_off(true);
+  clear_raise_session(raise_to_wake_session_active_);
+
+  if (screen_off_page_state_ && page_manager_.restore_state_preserving_target(*screen_off_page_state_, transition)) {
+    power_state_ = PowerState::Running;
+    home_surface_index_ = screen_off_home_surface_index_;
+    sync_shell_surface();
+    publish_home_ring_preview(static_cast<std::uint8_t>(home_surface_index_), 0, 0, false, false);
+    sync_keep_screen_on_policy();
+    schedule_auto_screen_off();
+    return true;
+  }
+
+  boot_to_home(transition);
+  return power_state_ == PowerState::Running;
+}
+
 void AppStateMachine::enter_screen_off() {
   cancel_notification_screen_off(true);
   cancel_auto_screen_off();
@@ -527,7 +555,9 @@ void AppStateMachine::enter_screen_off() {
   cancel_keep_screen_on_timer(true);
   suppress_display_policy_sync_ = false;
   clear_raise_session(raise_to_wake_session_active_);
-  if (page_manager_.set_root(PageId::ScreenOff, PageTransition::Fade)) {
+  screen_off_page_state_ = page_manager_.capture_state();
+  screen_off_home_surface_index_ = home_surface_index_;
+  if (page_manager_.set_root_preserving_current(PageId::ScreenOff, PageTransition::Fade)) {
     power_state_ = PowerState::ScreenOff;
     shell_surface_ = ShellSurface::None;
   }
@@ -540,6 +570,7 @@ void AppStateMachine::enter_powered_off() {
   cancel_keep_screen_on_timer(true);
   suppress_display_policy_sync_ = false;
   clear_raise_session(raise_to_wake_session_active_);
+  screen_off_page_state_.reset();
   if (page_manager_.set_root(PageId::PoweredOff, PageTransition::Fade)) {
     power_state_ = PowerState::PoweredOff;
     shell_surface_ = ShellSurface::None;
@@ -798,14 +829,9 @@ void AppStateMachine::handle_notification_wake_request(const NotificationItem& i
     }
 
     cancel_notification_screen_off(false);
-    if (!page_manager_.set_root(PageId::HomeRingHost, PageTransition::None)) {
+    if (!wake_from_screen_off(PageTransition::None)) {
       return;
     }
-
-    power_state_ = PowerState::Running;
-    shell_surface_ = ShellSurface::None;
-    home_surface_index_ = 0;
-    publish_home_ring_preview(0, 0, 0, false, false);
     notification_wake_session_active_ = true;
     open_shell_surface(ShellSurface::NotificationWakePreview);
     return;

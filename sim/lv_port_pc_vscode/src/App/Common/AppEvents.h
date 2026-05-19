@@ -80,6 +80,17 @@ enum class RaiseToWakeMode {
   Scheduled,
 };
 
+enum class ScreenOffDisplayMode {
+  Off,
+  Smart,
+  Scheduled,
+};
+
+enum class ScreenOffStyleId {
+  AnalogHands,
+  InfoDigits,
+};
+
 struct DailyTimeWindow {
   std::uint8_t start_hour {8};
   std::uint8_t start_minute {0};
@@ -93,6 +104,10 @@ struct DisplayPolicyModel {
   RaiseToWakeMode raise_to_wake_mode {RaiseToWakeMode::AllDay};
   DailyTimeWindow raise_to_wake_window {};
   bool tap_to_wake_enabled {false};
+  bool cover_to_sleep_enabled {true};
+  ScreenOffDisplayMode screen_off_display_mode {ScreenOffDisplayMode::Off};
+  DailyTimeWindow screen_off_display_window {};
+  ScreenOffStyleId screen_off_style_id {ScreenOffStyleId::AnalogHands};
   bool always_on_display_enabled {false};
   bool auto_screen_off_enabled {true};
   std::uint32_t screen_off_timeout_ms {5000};
@@ -142,6 +157,7 @@ enum class InputAction {
   DebugOpenPowerMenu,
   SimRaiseToWake,
   SimRaiseDismiss,
+  SimCoverSleep,
   CrownPress,
   CrownRotateCW,
   CrownRotateCCW,

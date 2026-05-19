@@ -30,6 +30,10 @@ class DataCenter {
   void set_raise_to_wake_mode(RaiseToWakeMode mode);
   void set_raise_to_wake_window(const DailyTimeWindow& window);
   void set_tap_to_wake_enabled(bool enabled);
+  void set_cover_to_sleep_enabled(bool enabled);
+  void set_screen_off_display_mode(ScreenOffDisplayMode mode);
+  void set_screen_off_display_window(const DailyTimeWindow& window);
+  void set_screen_off_style_id(ScreenOffStyleId style_id);
   void set_always_on_display_enabled(bool enabled);
   void set_screen_off_timeout_ms(std::uint32_t timeout_ms);
   void set_keep_screen_on_duration_ms(std::uint32_t duration_ms);

@@ -7,6 +7,7 @@
 #include <chrono>
 #include <cstdio>
 #include <cstdint>
+#include <ctime>
 #include <cstring>
 #include <algorithm>
 #include <array>
@@ -327,6 +328,12 @@ const lv_font_t* cjk_font_16() {
   static std::string font_path = resolve_windows_cjk_font_path();
   static lv_font_t* font = font_path.empty() ? nullptr : lv_tiny_ttf_create_file(font_path.c_str(), 16);
   return font != nullptr ? font : &lv_font_montserrat_16;
+}
+
+const lv_font_t* cjk_font_72() {
+  static std::string font_path = resolve_windows_cjk_font_path();
+  static lv_font_t* font = font_path.empty() ? nullptr : lv_tiny_ttf_create_file(font_path.c_str(), 72);
+  return font != nullptr ? font : &lv_font_montserrat_48;
 }
 
 void set_translate_y_exec(void* obj, int32_t value) {
@@ -4313,6 +4320,352 @@ void PowerMenuPage::action_event_cb(lv_event_t* event) {
       self->request_navigation({NavigationAction::ReturnHome, PageId::Watchface});
       break;
   }
+}
+
+namespace {
+
+constexpr float kPi = 3.14159265358979323846f;
+
+std::uint16_t minutes_of_day(std::uint8_t hour, std::uint8_t minute) {
+  return static_cast<std::uint16_t>(hour) * 60U + static_cast<std::uint16_t>(minute);
+}
+
+bool time_in_window(const DailyTimeWindow& window, const TimeModel& time) {
+  const std::uint16_t start = minutes_of_day(window.start_hour, window.start_minute);
+  const std::uint16_t end = minutes_of_day(window.end_hour, window.end_minute);
+  const std::uint16_t current = minutes_of_day(time.hour, time.minute);
+  if (start == end) {
+    return true;
+  }
+  if (start < end) {
+    return current >= start && current < end;
+  }
+  return current >= start || current < end;
+}
+
+bool is_screen_off_display_active(const DisplayPolicyModel& policy, const TimeModel& time) {
+  switch (policy.screen_off_display_mode) {
+    case ScreenOffDisplayMode::Smart:
+      return true;
+    case ScreenOffDisplayMode::Scheduled:
+      return time.valid && time_in_window(policy.screen_off_display_window, time);
+    case ScreenOffDisplayMode::Off:
+    default:
+      return false;
+  }
+}
+
+int weekday_index(const TimeModel& time) {
+  if (!time.valid) {
+    return -1;
+  }
+  std::tm calendar {};
+  calendar.tm_year = static_cast<int>(time.year) - 1900;
+  calendar.tm_mon = static_cast<int>(time.month) - 1;
+  calendar.tm_mday = static_cast<int>(time.day);
+  calendar.tm_hour = 12;
+  if (std::mktime(&calendar) == -1) {
+    return -1;
+  }
+  return calendar.tm_wday;
+}
+
+const char* weekday_text(int index) {
+  switch (index) {
+    case 0:
+      return "\xE5\x91\xA8\xE6\x97\xA5";
+    case 1:
+      return "\xE5\x91\xA8\xE4\xB8\x80";
+    case 2:
+      return "\xE5\x91\xA8\xE4\xBA\x8C";
+    case 3:
+      return "\xE5\x91\xA8\xE4\xB8\x89";
+    case 4:
+      return "\xE5\x91\xA8\xE5\x9B\x9B";
+    case 5:
+      return "\xE5\x91\xA8\xE4\xBA\x94";
+    case 6:
+      return "\xE5\x91\xA8\xE5\x85\xAD";
+    default:
+      return "--";
+  }
+}
+
+std::string screen_off_date_text(const TimeModel& time) {
+  if (!time.valid) {
+    return "--";
+  }
+  char buffer[48] = {};
+  std::snprintf(buffer,
+                sizeof(buffer),
+                "%u\xE6\x9C\x88%u\xE6\x97\xA5 %s",
+                static_cast<unsigned>(time.month),
+                static_cast<unsigned>(time.day),
+                weekday_text(weekday_index(time)));
+  return buffer;
+}
+
+void set_hand_points(lv_point_precise_t points[2],
+                     float angle_degrees,
+                     float center_x,
+                     float center_y,
+                     float back_length,
+                     float front_length) {
+  const float radians = (angle_degrees - 90.0f) * (kPi / 180.0f);
+  const float direction_x = std::cos(radians);
+  const float direction_y = std::sin(radians);
+  points[0].x = center_x - direction_x * back_length;
+  points[0].y = center_y - direction_y * back_length;
+  points[1].x = center_x + direction_x * front_length;
+  points[1].y = center_y + direction_y * front_length;
+}
+
+}  // namespace
+
+ScreenOffPage::ScreenOffPage(DataCenter& data_center) : PageBase(data_center) {}
+
+PageId ScreenOffPage::id() const {
+  return PageId::ScreenOff;
+}
+
+const char* ScreenOffPage::name() const {
+  return page_name(PageId::ScreenOff);
+}
+
+void ScreenOffPage::on_will_appear() {
+  if (const auto time = data_center_.time()) {
+    time_model_ = *time;
+  }
+  if (const auto battery = data_center_.battery()) {
+    battery_model_ = *battery;
+  }
+  if (const auto policy = data_center_.display_policy()) {
+    display_policy_ = *policy;
+  }
+  refresh_view();
+}
+
+lv_obj_t* ScreenOffPage::build() {
+  lv_obj_t* root = lv_obj_create(nullptr);
+  if (root == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_box(root);
+  lv_obj_set_size(root, LV_PCT(100), LV_PCT(100));
+  lv_obj_set_style_bg_color(root, lv_color_hex(0x000000), 0);
+  lv_obj_set_style_bg_opa(root, LV_OPA_COVER, 0);
+
+  analog_root_ = lv_obj_create(root);
+  info_root_ = lv_obj_create(root);
+  if (analog_root_ == nullptr || info_root_ == nullptr) {
+    return nullptr;
+  }
+
+  ui_prepare_box(analog_root_);
+  lv_obj_set_size(analog_root_, LV_PCT(100), LV_PCT(100));
+  lv_obj_center(analog_root_);
+  lv_obj_set_style_bg_opa(analog_root_, LV_OPA_TRANSP, 0);
+
+  analog_hour_hand_ = lv_line_create(analog_root_);
+  analog_minute_hand_ = lv_line_create(analog_root_);
+  lv_obj_t* analog_dot = lv_obj_create(analog_root_);
+  analog_battery_label_ = lv_label_create(analog_root_);
+  if (analog_hour_hand_ == nullptr || analog_minute_hand_ == nullptr || analog_dot == nullptr ||
+      analog_battery_label_ == nullptr) {
+    return nullptr;
+  }
+
+  lv_line_set_points_mutable(analog_hour_hand_, analog_hour_points_, 2);
+  lv_obj_set_size(analog_hour_hand_, LV_PCT(100), LV_PCT(100));
+  lv_obj_set_style_line_width(analog_hour_hand_, 10, 0);
+  lv_obj_set_style_line_color(analog_hour_hand_, lv_color_hex(0xE2F6FF), 0);
+  lv_obj_set_style_line_rounded(analog_hour_hand_, true, 0);
+
+  lv_line_set_points_mutable(analog_minute_hand_, analog_minute_points_, 2);
+  lv_obj_set_size(analog_minute_hand_, LV_PCT(100), LV_PCT(100));
+  lv_obj_set_style_line_width(analog_minute_hand_, 10, 0);
+  lv_obj_set_style_line_color(analog_minute_hand_, lv_color_hex(0xE2F6FF), 0);
+  lv_obj_set_style_line_rounded(analog_minute_hand_, true, 0);
+
+  ui_prepare_box(analog_dot);
+  lv_obj_set_size(analog_dot, 8, 8);
+  lv_obj_set_style_radius(analog_dot, LV_RADIUS_CIRCLE, 0);
+  lv_obj_set_style_bg_color(analog_dot, lv_color_hex(0xE2F6FF), 0);
+  lv_obj_set_style_bg_opa(analog_dot, LV_OPA_COVER, 0);
+  lv_obj_set_style_border_width(analog_dot, 0, 0);
+  lv_obj_align(analog_dot, LV_ALIGN_CENTER, 0, -8);
+
+  ui_prepare_label(analog_battery_label_);
+  lv_obj_set_style_text_font(analog_battery_label_, &lv_font_montserrat_18, 0);
+  lv_obj_set_style_text_color(analog_battery_label_, lv_color_hex(0xD6F3FF), 0);
+  lv_label_set_text(analog_battery_label_, "80%");
+  lv_obj_align(analog_battery_label_, LV_ALIGN_BOTTOM_MID, 0, -26);
+
+  ui_prepare_box(info_root_);
+  lv_obj_set_size(info_root_, LV_PCT(100), LV_PCT(100));
+  lv_obj_center(info_root_);
+  lv_obj_set_style_bg_opa(info_root_, LV_OPA_TRANSP, 0);
+
+  info_hour_label_ = lv_label_create(info_root_);
+  info_minute_label_ = lv_label_create(info_root_);
+  info_date_label_ = lv_label_create(info_root_);
+  info_battery_label_ = lv_label_create(info_root_);
+  if (info_hour_label_ == nullptr || info_minute_label_ == nullptr || info_date_label_ == nullptr ||
+      info_battery_label_ == nullptr) {
+    return nullptr;
+  }
+
+  ui_prepare_label(info_hour_label_);
+  lv_obj_set_style_text_font(info_hour_label_, cjk_font_72(), 0);
+  lv_obj_set_style_text_color(info_hour_label_, lv_color_hex(0xE2F6FF), 0);
+  lv_label_set_text(info_hour_label_, "09");
+  lv_obj_align(info_hour_label_, LV_ALIGN_CENTER, 0, -52);
+
+  ui_prepare_label(info_minute_label_);
+  lv_obj_set_style_text_font(info_minute_label_, cjk_font_72(), 0);
+  lv_obj_set_style_text_color(info_minute_label_, lv_color_hex(0xE2F6FF), 0);
+  lv_label_set_text(info_minute_label_, "28");
+  lv_obj_align_to(info_minute_label_, info_hour_label_, LV_ALIGN_OUT_BOTTOM_MID, 0, -4);
+
+  ui_prepare_label(info_date_label_);
+  lv_obj_set_style_text_font(info_date_label_, cjk_font_16(), 0);
+  lv_obj_set_style_text_color(info_date_label_, lv_color_hex(0xD6F3FF), 0);
+  lv_label_set_text(info_date_label_, "--");
+  lv_obj_align(info_date_label_, LV_ALIGN_BOTTOM_MID, 0, -52);
+
+  ui_prepare_label(info_battery_label_);
+  lv_obj_set_style_text_font(info_battery_label_, &lv_font_montserrat_18, 0);
+  lv_obj_set_style_text_color(info_battery_label_, lv_color_hex(0xD6F3FF), 0);
+  lv_label_set_text(info_battery_label_, "80%");
+  lv_obj_align(info_battery_label_, LV_ALIGN_BOTTOM_MID, 0, -24);
+
+  track(data_center_.subscribe(EventId::TimeUpdated,
+                               [this](const Event& event) {
+                                 if (const auto* model = std::get_if<TimeModel>(&event.payload)) {
+                                   apply_time(*model);
+                                 }
+                               }));
+  track(data_center_.subscribe(EventId::BatteryChanged,
+                               [this](const Event& event) {
+                                 if (const auto* model = std::get_if<BatteryModel>(&event.payload)) {
+                                   apply_battery(*model);
+                                 }
+                               }));
+  track(data_center_.subscribe(EventId::DisplayPolicyChanged,
+                               [this](const Event& event) {
+                                 if (const auto* model = std::get_if<DisplayPolicyModel>(&event.payload)) {
+                                   apply_policy(*model);
+                                 }
+                               }));
+
+  if (const auto time = data_center_.time()) {
+    time_model_ = *time;
+  }
+  if (const auto battery = data_center_.battery()) {
+    battery_model_ = *battery;
+  }
+  if (const auto policy = data_center_.display_policy()) {
+    display_policy_ = *policy;
+  }
+  refresh_view();
+  return root;
+}
+
+void ScreenOffPage::apply_time(const TimeModel& model) {
+  time_model_ = model;
+  refresh_view();
+}
+
+void ScreenOffPage::apply_battery(const BatteryModel& model) {
+  battery_model_ = model;
+  refresh_view();
+}
+
+void ScreenOffPage::apply_policy(const DisplayPolicyModel& policy) {
+  display_policy_ = policy;
+  refresh_view();
+}
+
+void ScreenOffPage::refresh_view() {
+  if (analog_root_ == nullptr || info_root_ == nullptr) {
+    return;
+  }
+
+  const bool active = is_screen_off_display_active(display_policy_, time_model_);
+  if (!active) {
+    lv_obj_add_flag(analog_root_, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(info_root_, LV_OBJ_FLAG_HIDDEN);
+    return;
+  }
+
+  switch (display_policy_.screen_off_style_id) {
+    case ScreenOffStyleId::InfoDigits:
+      lv_obj_add_flag(analog_root_, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_clear_flag(info_root_, LV_OBJ_FLAG_HIDDEN);
+      update_info_preview();
+      break;
+    case ScreenOffStyleId::AnalogHands:
+    default:
+      lv_obj_add_flag(info_root_, LV_OBJ_FLAG_HIDDEN);
+      lv_obj_clear_flag(analog_root_, LV_OBJ_FLAG_HIDDEN);
+      update_analog_preview();
+      break;
+  }
+}
+
+void ScreenOffPage::update_analog_preview() {
+  if (analog_hour_hand_ == nullptr || analog_minute_hand_ == nullptr || analog_battery_label_ == nullptr) {
+    return;
+  }
+
+  const float center_x = 120.0f;
+  const float center_y = 128.0f;
+  const unsigned hour = time_model_.valid ? static_cast<unsigned>(time_model_.hour % 12U) : 0U;
+  const unsigned minute = time_model_.valid ? static_cast<unsigned>(time_model_.minute) : 0U;
+  const float hour_angle = (static_cast<float>(hour) + static_cast<float>(minute) / 60.0f) * 30.0f;
+  const float minute_angle = static_cast<float>(minute) * 6.0f;
+  set_hand_points(analog_hour_points_, hour_angle, center_x, center_y, 12.0f, 50.0f);
+  set_hand_points(analog_minute_points_, minute_angle, center_x, center_y, 12.0f, 76.0f);
+  lv_obj_invalidate(analog_hour_hand_);
+  lv_obj_invalidate(analog_minute_hand_);
+
+  char battery_text[24] = {};
+  std::snprintf(battery_text,
+                sizeof(battery_text),
+                "%d%%%s",
+                static_cast<int>(battery_model_.percent),
+                battery_model_.charging ? "+" : "");
+  lv_label_set_text(analog_battery_label_, battery_text);
+}
+
+void ScreenOffPage::update_info_preview() {
+  if (info_hour_label_ == nullptr || info_minute_label_ == nullptr || info_date_label_ == nullptr ||
+      info_battery_label_ == nullptr) {
+    return;
+  }
+
+  if (!time_model_.valid) {
+    lv_label_set_text(info_hour_label_, "--");
+    lv_label_set_text(info_minute_label_, "--");
+    lv_label_set_text(info_date_label_, "--");
+  } else {
+    char hour_text[8] = {};
+    char minute_text[8] = {};
+    std::snprintf(hour_text, sizeof(hour_text), "%02u", static_cast<unsigned>(time_model_.hour));
+    std::snprintf(minute_text, sizeof(minute_text), "%02u", static_cast<unsigned>(time_model_.minute));
+    lv_label_set_text(info_hour_label_, hour_text);
+    lv_label_set_text(info_minute_label_, minute_text);
+    const std::string date_text = screen_off_date_text(time_model_);
+    lv_label_set_text(info_date_label_, date_text.c_str());
+  }
+
+  char battery_text[32] = {};
+  std::snprintf(battery_text,
+                sizeof(battery_text),
+                "%d%%%s",
+                static_cast<int>(battery_model_.percent),
+                battery_model_.charging ? "+" : "");
+  lv_label_set_text(info_battery_label_, battery_text);
 }
 
 PassiveShellPage::PassiveShellPage(DataCenter& data_center, PageId page_id, const char* title, const char* detail)

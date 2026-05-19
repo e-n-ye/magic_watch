@@ -353,8 +353,7 @@ void Application::register_pages() {
   page_manager_.register_page(
       PageId::ScreenOff,
       [this]() {
-        return std::make_unique<PassiveShellPage>(
-            data_center_, PageId::ScreenOff, "Screen Off", "Press P / Enter to wake\nLong press P for power");
+        return std::make_unique<ScreenOffPage>(data_center_);
       });
   page_manager_.register_page(
       PageId::PoweredOff,
@@ -472,6 +471,39 @@ void Application::register_pages() {
       PageId::SettingDisplayKeepScreenOn,
       [this]() {
         return std::make_unique<DisplayKeepScreenOnPage>(data_center_);
+      });
+  page_manager_.register_page(
+      PageId::SettingDisplayScreenOffDisplay,
+      [this]() {
+        return std::make_unique<DisplayScreenOffDisplayPage>(data_center_);
+      });
+  page_manager_.register_page(
+      PageId::SettingDisplayScreenOffDisplaySchedule,
+      [this]() {
+        return std::make_unique<DisplayScreenOffDisplaySchedulePage>(data_center_);
+      });
+  page_manager_.register_page(
+      PageId::SettingDisplayScreenOffDisplayStartTime,
+      [this]() {
+        return std::make_unique<DisplayScreenOffDisplayTimePage>(
+            data_center_,
+            PageId::SettingDisplayScreenOffDisplayStartTime,
+            "\xE5\xBC\x80\xE5\xA7\x8B\xE6\x97\xB6\xE9\x97\xB4",
+            true);
+      });
+  page_manager_.register_page(
+      PageId::SettingDisplayScreenOffDisplayEndTime,
+      [this]() {
+        return std::make_unique<DisplayScreenOffDisplayTimePage>(
+            data_center_,
+            PageId::SettingDisplayScreenOffDisplayEndTime,
+            "\xE7\xBB\x93\xE6\x9D\x9F\xE6\x97\xB6\xE9\x97\xB4",
+            false);
+      });
+  page_manager_.register_page(
+      PageId::SettingDisplayScreenOffStyle,
+      [this]() {
+        return std::make_unique<DisplayScreenOffStylePage>(data_center_);
       });
   page_manager_.register_page(
       PageId::SettingSound,
@@ -637,6 +669,7 @@ void Application::handle_hal_event(const hal::Event& event) {
           }
           case hal::DebugSample::Action::SimRaiseToWake:
           case hal::DebugSample::Action::SimRaiseDismiss:
+          case hal::DebugSample::Action::SimCoverSleep:
             if (const auto input = input_router_.translate(event)) {
               data_center_.publish_input(*input);
             }
