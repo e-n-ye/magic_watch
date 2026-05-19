@@ -73,6 +73,7 @@ set(MAIN_SOURCES
     src/mouse_cursor_icon.c
     src/App/Common/EventBus.cpp
     src/App/Common/DataCenter.cpp
+    src/App/Common/DisplayPolicyRules.cpp
     src/App/Input/InputIntentRouter.cpp
     src/App/UI/PageId.cpp
     src/App/UI/PageBase.cpp

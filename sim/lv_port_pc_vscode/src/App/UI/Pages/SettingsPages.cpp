@@ -9,6 +9,7 @@
 #include <tuple>
 #include <unordered_map>
 
+#include "App/Common/DisplayPolicyRules.h"
 #include "App/UI/UiStyles.h"
 #include "lvgl/src/libs/tiny_ttf/lv_tiny_ttf.h"
 
@@ -1485,8 +1486,9 @@ void DisplayRaiseToWakePage::option_event_cb(lv_event_t* event) {
   }
   if (index < self->options_.size()) {
     const auto mode = self->options_[index].mode;
-    if (mode != RaiseToWakeMode::Off &&
-        current_display_policy(self->data_center_).screen_off_display_mode != ScreenOffDisplayMode::Off) {
+    if (DisplayPolicyRules::HasRaiseToWakeAndScreenOffDisplayConflict(
+            mode,
+            current_display_policy(self->data_center_).screen_off_display_mode)) {
       self->show_conflict_overlay(mode);
       return;
     }
@@ -2155,7 +2157,9 @@ void DisplayScreenOffDisplayPage::apply_pending_mode() {
     refresh_selection();
     return;
   }
-  if (current_display_policy(data_center_).raise_to_wake_mode != RaiseToWakeMode::Off) {
+  if (DisplayPolicyRules::HasRaiseToWakeAndScreenOffDisplayConflict(
+          current_display_policy(data_center_).raise_to_wake_mode,
+          mode)) {
     show_conflict_overlay();
     return;
   }

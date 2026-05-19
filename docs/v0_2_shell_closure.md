@@ -191,6 +191,55 @@ Issues found and closed during that run included:
 - manual brightness slider accidental value changes during left-edge back
 - raise-to-wake scheduled-card selection-dot layout inconsistency
 
+## Post-Closure Architecture Refinement
+
+After the main v0.2 regression issues were closed, the project completed one deliberately narrow
+architecture-cleanup round without changing visible behavior.
+
+What changed:
+
+- extracted a pure rule layer:
+  - `sim/lv_port_pc_vscode/src/App/Common/DisplayPolicyRules.h`
+  - `sim/lv_port_pc_vscode/src/App/Common/DisplayPolicyRules.cpp`
+- moved only non-LVGL, non-timer, non-page-flow display-policy judgments into that layer
+- kept:
+  - `AppStateMachine` responsible for state transitions, timers, wake/sleep entry, and page restore
+  - `SettingsPages` responsible for UI state, selection flows, and confirm / conflict overlays
+  - `ScreenOffPage` responsible for actual screen-off rendering
+
+Rules now centralized there include:
+
+- time-window membership
+- raise-to-wake allowance
+- screen-off display activation
+- auto screen-off suppression
+- raise-to-wake vs screen-off-display conflict detection
+
+Why this matters:
+
+- before this step, the same family of display-policy logic had already started to drift across
+  the state machine, settings pages, and screen-off page
+- this extraction reduces the chance that future policy fixes land in one path but miss another
+- it improves explainability without prematurely forcing a larger coordinator rewrite
+
+Current boundary:
+
+- this is not yet a `DisplayPolicyCoordinator`
+- no timers were moved
+- no UI flow was moved
+- no visible behavior was intentionally changed
+- this was a small-scope consolidation, not a subsystem redesign
+
+Validation for this refinement:
+
+- `cmake --build build --target main` passed
+- targeted regression re-checks passed for:
+  - `C2` raise-to-wake simulator path
+  - `D2` keep-screen-on suppressing normal auto screen-off
+  - `E2` screen-off display activation in off / smart / scheduled modes
+  - `F1` raise-to-wake vs screen-off-display conflict flow
+  - `H1 / H2` wake restore for normal pages and overlay pages
+
 ## What Is Intentionally Not In This Closure
 
 This closure does not claim the following are done:

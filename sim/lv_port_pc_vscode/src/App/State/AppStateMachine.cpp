@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <cstdint>
 
+#include "App/Common/DisplayPolicyRules.h"
 #include "lvgl/lvgl.h"
 
 namespace twsim::app {
@@ -113,43 +114,6 @@ PageTransition close_transition_for(PageId page_id) {
     case PageId::PowerMenu:
     default:
       return PageTransition::Fade;
-  }
-}
-
-bool is_time_in_window(const TimeModel& time, const DailyTimeWindow& window) {
-  if (!time.valid) {
-    return false;
-  }
-
-  const int current_minutes = static_cast<int>(time.hour) * 60 + static_cast<int>(time.minute);
-  const int start_minutes = static_cast<int>(window.start_hour) * 60 + static_cast<int>(window.start_minute);
-  const int end_minutes = static_cast<int>(window.end_hour) * 60 + static_cast<int>(window.end_minute);
-
-  if (start_minutes == end_minutes) {
-    return true;
-  }
-  if (start_minutes < end_minutes) {
-    return current_minutes >= start_minutes && current_minutes < end_minutes;
-  }
-  return current_minutes >= start_minutes || current_minutes < end_minutes;
-}
-
-bool raise_to_wake_allowed(DataCenter& data_center) {
-  const auto policy = data_center.display_policy();
-  if (!policy) {
-    return true;
-  }
-
-  switch (policy->raise_to_wake_mode) {
-    case RaiseToWakeMode::Off:
-      return false;
-    case RaiseToWakeMode::Scheduled: {
-      const auto& time = data_center.time();
-      return time && is_time_in_window(*time, policy->raise_to_wake_window);
-    }
-    case RaiseToWakeMode::AllDay:
-    default:
-      return true;
   }
 }
 
@@ -325,7 +289,8 @@ void AppStateMachine::handle_input(const InputCommand& command) {
       if (power_state_ != PowerState::ScreenOff) {
         return;
       }
-      if (!raise_to_wake_allowed(data_center_)) {
+      if (const auto policy = data_center_.display_policy();
+          policy && !DisplayPolicyRules::IsRaiseToWakeAllowed(*policy, data_center_.time())) {
         return;
       }
       wake_from_screen_off();
@@ -978,8 +943,7 @@ void AppStateMachine::schedule_auto_screen_off() {
   }
 
   const auto policy = data_center_.display_policy();
-  if (policy &&
-      (!policy->auto_screen_off_enabled || policy->always_on_display_enabled || policy->keep_screen_on_duration_ms > 0U)) {
+  if (policy && DisplayPolicyRules::ShouldSuppressAutoScreenOff(*policy)) {
     return;
   }
 

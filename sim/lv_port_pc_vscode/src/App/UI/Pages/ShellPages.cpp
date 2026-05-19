@@ -1,5 +1,6 @@
 #include "App/UI/Pages/ShellPages.h"
 
+#include "App/Common/DisplayPolicyRules.h"
 #include "App/UI/UiStyles.h"
 #include "lvgl/src/libs/tiny_ttf/lv_tiny_ttf.h"
 #include "lvgl/src/misc/lv_fs.h"
@@ -4334,35 +4335,6 @@ namespace {
 
 constexpr float kPi = 3.14159265358979323846f;
 
-std::uint16_t minutes_of_day(std::uint8_t hour, std::uint8_t minute) {
-  return static_cast<std::uint16_t>(hour) * 60U + static_cast<std::uint16_t>(minute);
-}
-
-bool time_in_window(const DailyTimeWindow& window, const TimeModel& time) {
-  const std::uint16_t start = minutes_of_day(window.start_hour, window.start_minute);
-  const std::uint16_t end = minutes_of_day(window.end_hour, window.end_minute);
-  const std::uint16_t current = minutes_of_day(time.hour, time.minute);
-  if (start == end) {
-    return true;
-  }
-  if (start < end) {
-    return current >= start && current < end;
-  }
-  return current >= start || current < end;
-}
-
-bool is_screen_off_display_active(const DisplayPolicyModel& policy, const TimeModel& time) {
-  switch (policy.screen_off_display_mode) {
-    case ScreenOffDisplayMode::Smart:
-      return true;
-    case ScreenOffDisplayMode::Scheduled:
-      return time.valid && time_in_window(policy.screen_off_display_window, time);
-    case ScreenOffDisplayMode::Off:
-    default:
-      return false;
-  }
-}
-
 int weekday_index(const TimeModel& time) {
   if (!time.valid) {
     return -1;
@@ -4599,7 +4571,7 @@ void ScreenOffPage::refresh_view() {
     return;
   }
 
-  const bool active = is_screen_off_display_active(display_policy_, time_model_);
+  const bool active = DisplayPolicyRules::IsScreenOffDisplayActive(display_policy_, time_model_);
   if (!active) {
     lv_obj_add_flag(analog_root_, LV_OBJ_FLAG_HIDDEN);
     lv_obj_add_flag(info_root_, LV_OBJ_FLAG_HIDDEN);

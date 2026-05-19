@@ -1,5 +1,49 @@
 # Prototype Progress
 
+## 2026-05-19: DisplayPolicyRules Narrow Extraction
+
+### What Changed
+
+- Extracted a pure rule layer for display-policy judgments:
+  - `sim/lv_port_pc_vscode/src/App/Common/DisplayPolicyRules.h`
+  - `sim/lv_port_pc_vscode/src/App/Common/DisplayPolicyRules.cpp`
+- Centralized these pure decisions:
+  - time-window evaluation
+  - raise-to-wake allowance
+  - screen-off display activation
+  - auto screen-off suppression
+  - raise-to-wake vs screen-off-display conflict detection
+- Replaced duplicated call sites in:
+  - `AppStateMachine`
+  - `SettingsPages`
+  - `ShellPages`
+
+### Why This Step Matters
+
+- The project had already started to accumulate parallel copies of the same display-policy rules.
+- This was the smallest useful architecture refinement that improved consistency without pulling UI,
+  timers, or state ownership into a larger rewrite.
+- It creates a cleaner seam for any future coordinator work, while still preserving the current
+  v0.2 shell behavior.
+
+### Validation
+
+- `cmake --build build --target main` passed.
+- Targeted manual regression checks passed for:
+  - `C2`
+  - `D2`
+  - `E2`
+  - `F1`
+  - `H1 / H2`
+
+### Current Boundary
+
+- This is not a `DisplayPolicyCoordinator` rollout.
+- `AppStateMachine` still owns timers, sleep/wake transitions, and restore logic.
+- `SettingsPages` still owns confirmation and conflict UI.
+- `ScreenOffPage` still owns rendering.
+- No new feature or intended visible behavior change was introduced.
+
 ## 2026-05-19: v0.2 Shell Closure Baseline
 
 ### What Changed
