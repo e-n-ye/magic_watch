@@ -111,6 +111,27 @@ Before testing:
     `VideoPlayer`, `Infrared`, `LoRa`, and similar placeholders are not surfaced here
   - touch scroll and crown scroll both keep working
 
+### A5. Weather App Shell
+
+- Action:
+  - enter Weather from the home-ring Weather card
+  - enter `Launcher`, switch among `多列布局 / 列表布局 / 分类布局`, and open Weather from each mode
+  - vertically drag / flick through the Weather app sections
+  - horizontally drag the hourly forecast section
+  - horizontally drag the seven-day forecast section
+  - press `Q / E`
+  - use left-edge right swipe
+  - press crown from Weather
+- Expected:
+  - Weather is a real mock app page, not a placeholder
+  - home-ring and all three Launcher layouts enter the same Weather app
+  - vertical touch scrolling snaps to Weather sections instead of resting between pages
+  - hourly and seven-day forecast sections support horizontal browsing
+  - `Q / E` pages through Weather sections
+  - left-edge right swipe returns to the previous page
+  - crown press returns to the watchface-centered home surface
+  - no weather API, city management, settings linkage, or other app behavior is introduced
+
 ## B. Settings Display Page
 
 ### B1. Display Settings Visible Structure

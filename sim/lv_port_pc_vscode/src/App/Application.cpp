@@ -601,7 +601,7 @@ void Application::register_pages() {
   register_app_placeholder(PageId::AppBreathing, "Breathing", "Breathing training placeholder page.");
   register_app_placeholder(PageId::AppStress, "Stress", "Stress app placeholder page.");
   register_app_placeholder(PageId::AppSleep, "Sleep", "Sleep app placeholder page.");
-  register_app_placeholder(PageId::AppWeather, "Weather", "Weather app placeholder page.");
+  page_manager_.register_page(PageId::AppWeather, [this]() { return std::make_unique<WeatherAppPage>(data_center_); });
   register_app_placeholder(PageId::AppNfc, "NFC", "NFC wallet placeholder page.");
   register_app_placeholder(PageId::AppAlipay, "Alipay", "Alipay app placeholder page.");
   register_app_placeholder(PageId::AppWeChatPay, "WeChat Pay", "WeChat Pay app placeholder page.");

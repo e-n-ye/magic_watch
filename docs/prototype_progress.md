@@ -1,5 +1,45 @@
 # Prototype Progress
 
+## 2026-05-21: Weather App Shell Closure v0.3-C1
+
+### What Changed
+
+- Replaced `AppWeather` with a real mock Weather app page instead of a placeholder.
+- Kept the entry scope narrow:
+  - home-ring Weather card
+  - `Launcher` Weather entry across all three launcher layout modes
+- Built the Weather app as a page-shell closure with mock data only:
+  - current weather
+  - hourly forecast
+  - seven-day forecast
+  - weather indices
+  - sunrise / sunset
+- Added vertical page snapping for the Weather app so touch drag settles to a page instead of stopping between sections.
+- Kept horizontal scrolling inside the hourly and seven-day forecast sections.
+- Wired `Q / E` crown rotation to Weather page-level paging while keeping left-edge return and crown-press return-home under the existing shell rules.
+- Tuned the first Weather page and weather-index layout after simulator review:
+  - aligned page height to the simulator's current `240 x 296` display
+  - removed a conflicting current-weather icon from the main temperature area
+  - fixed weather-index value wrapping
+
+### Validation
+
+- `cmake --build build --target main` passed from `sim/lv_port_pc_vscode`.
+- Manual acceptance passed:
+  - home-ring Weather card enters the Weather app
+  - `Launcher` Weather entry works in `多列布局 / 列表布局 / 分类布局`
+  - touch vertical drag snaps between Weather sections
+  - sections 2 and 3 support horizontal scrolling
+  - `Q / E` pages through Weather sections
+  - left-edge right swipe returns to the previous page
+  - crown press returns to the watchface-centered home surface
+
+### Current Boundary
+
+- This is still a mock app shell, not a weather service.
+- No weather API, city management, multi-city logic, settings linkage, or real forecast model was added.
+- Visual polish is intentionally not treated as the next core task; the current value is proving that a Launcher app can graduate from placeholder to a stable mock app page.
+
 ## 2026-05-19: Launcher Layout Modes v0.3-B1 / v0.3-B2
 
 ### What Changed
