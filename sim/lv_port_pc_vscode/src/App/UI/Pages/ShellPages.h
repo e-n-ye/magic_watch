@@ -64,10 +64,15 @@ class LauncherPage : public PageBase {
   void build_multi_column_layout(lv_obj_t* parent);
   void build_list_layout(lv_obj_t* parent);
   void build_categorized_layout(lv_obj_t* parent);
+  void apply_crown_drag(bool forward, std::int16_t detents);
+  void schedule_crown_release();
+  void stop_crown_release_timer();
+  static void crown_release_timer_cb(lv_timer_t* timer);
   void bind_input();
   lv_obj_t* list_root_ {nullptr};
   std::vector<Item> items_;
   LauncherLayoutMode current_layout_mode_ {LauncherLayoutMode::Categorized};
+  lv_timer_t* crown_release_timer_ {nullptr};
 };
 
 class HomeRingHostPage : public PageBase {

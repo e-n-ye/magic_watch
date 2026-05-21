@@ -58,6 +58,8 @@ constexpr lv_coord_t kLauncherRowGap = 10;
 constexpr lv_coord_t kLauncherMultiColumnElasticSpacerHeight = 40;
 constexpr lv_coord_t kLauncherListRowHeight = 62;
 constexpr lv_coord_t kLauncherListIconSize = 38;
+constexpr std::int32_t kLauncherCrownDragStep = 28;
+constexpr std::uint32_t kLauncherCrownReleaseDelayMs = 95U;
 constexpr lv_coord_t kClickDragThreshold = 12;
 constexpr lv_coord_t kHomePagerStep = 15;
 
@@ -1731,6 +1733,7 @@ void LauncherPage::rebuild_layout_if_needed(bool force) {
   }
 
   current_layout_mode_ = target_mode;
+  stop_crown_release_timer();
 
   if (list_root_ != nullptr) {
     lv_obj_delete(list_root_);
@@ -2870,6 +2873,56 @@ void LauncherPage::item_event_cb(lv_event_t* event) {
   self->request_navigation(self->items_[item_index].command);
 }
 
+void LauncherPage::apply_crown_drag(bool forward, std::int16_t detents) {
+  if (list_root_ == nullptr) {
+    return;
+  }
+
+  stop_crown_release_timer();
+  const std::int32_t step = kLauncherCrownDragStep * std::max<std::int16_t>(1, detents);
+  const std::int32_t elastic_limit = std::max<std::int32_t>(24, lv_obj_get_height(list_root_) / 5);
+  const std::int32_t current_y = lv_obj_get_scroll_y(list_root_);
+  const std::int32_t scroll_top = lv_obj_get_scroll_top(list_root_);
+  const std::int32_t scroll_bottom = lv_obj_get_scroll_bottom(list_root_);
+  const std::int32_t scroll_max = std::max<std::int32_t>(0, scroll_top + scroll_bottom);
+
+  std::int32_t target_y = current_y + (forward ? step : -step);
+  target_y = std::clamp(target_y, -elastic_limit, scroll_max + elastic_limit);
+
+  lv_obj_scroll_to_y(list_root_, target_y, LV_ANIM_OFF);
+  schedule_crown_release();
+}
+
+void LauncherPage::schedule_crown_release() {
+  stop_crown_release_timer();
+  crown_release_timer_ = lv_timer_create(&LauncherPage::crown_release_timer_cb, kLauncherCrownReleaseDelayMs, this);
+  if (crown_release_timer_ != nullptr) {
+    lv_timer_set_repeat_count(crown_release_timer_, 1);
+  }
+}
+
+void LauncherPage::stop_crown_release_timer() {
+  if (crown_release_timer_ == nullptr) {
+    return;
+  }
+  lv_timer_delete(crown_release_timer_);
+  crown_release_timer_ = nullptr;
+}
+
+void LauncherPage::crown_release_timer_cb(lv_timer_t* timer) {
+  auto* self = static_cast<LauncherPage*>(lv_timer_get_user_data(timer));
+  if (self == nullptr || self->list_root_ == nullptr) {
+    return;
+  }
+
+  self->crown_release_timer_ = nullptr;
+  const std::int32_t current_y = lv_obj_get_scroll_y(self->list_root_);
+  const std::int32_t scroll_max =
+      std::max<std::int32_t>(0, lv_obj_get_scroll_top(self->list_root_) + lv_obj_get_scroll_bottom(self->list_root_));
+  const std::int32_t clamped_y = std::clamp(current_y, 0, scroll_max);
+  lv_obj_scroll_to_y(self->list_root_, clamped_y, LV_ANIM_ON);
+}
+
 void LauncherPage::bind_input() {
   track(data_center_.subscribe(EventId::InputRequested,
                                [this](const Event& event) {
@@ -2884,10 +2937,10 @@ void LauncherPage::bind_input() {
 
                                  switch (command->action) {
                                    case InputAction::CrownRotateCW:
-                                     lv_obj_scroll_by(list_root_, 0, 82 * std::max<std::int16_t>(1, command->value), LV_ANIM_ON);
+                                     apply_crown_drag(true, command->value);
                                      break;
                                    case InputAction::CrownRotateCCW:
-                                     lv_obj_scroll_by(list_root_, 0, -82 * std::max<std::int16_t>(1, command->value), LV_ANIM_ON);
+                                     apply_crown_drag(false, command->value);
                                      break;
                                    default:
                                      break;
