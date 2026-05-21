@@ -62,6 +62,9 @@ constexpr std::int32_t kLauncherCrownDragStep = 28;
 constexpr std::uint32_t kLauncherCrownReleaseDelayMs = 95U;
 constexpr lv_coord_t kWeatherSectionGap = 10;
 constexpr std::int32_t kWeatherSectionCount = 5;
+constexpr lv_coord_t kStepsScrollInset = 8;
+constexpr lv_coord_t kStepsScrollTop = 8;
+constexpr lv_coord_t kStepsScrollBottom = 0;
 constexpr lv_coord_t kClickDragThreshold = 12;
 constexpr lv_coord_t kHomePagerStep = 15;
 
@@ -849,6 +852,238 @@ void create_weather_mini_icon(lv_obj_t* parent, lv_coord_t x, lv_coord_t y, lv_c
   lv_obj_set_style_bg_opa(cloud, LV_OPA_COVER, 0);
   lv_obj_set_style_radius(cloud, size / 4, 0);
   lv_obj_align(cloud, LV_ALIGN_TOP_LEFT, x, y + size / 3);
+}
+
+lv_obj_t* create_steps_label(lv_obj_t* parent,
+                             const char* text,
+                             const lv_font_t* font,
+                             std::uint32_t color,
+                             lv_coord_t width,
+                             lv_label_long_mode_t long_mode = LV_LABEL_LONG_DOT) {
+  lv_obj_t* label = lv_label_create(parent);
+  if (label == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_label(label);
+  lv_obj_set_width(label, width);
+  lv_label_set_long_mode(label, long_mode);
+  lv_obj_set_style_text_font(label, font, 0);
+  lv_obj_set_style_text_color(label, lv_color_hex(color), 0);
+  lv_label_set_text(label, text);
+  return label;
+}
+
+lv_obj_t* create_steps_panel(lv_obj_t* parent, lv_coord_t width, lv_coord_t height, std::uint32_t bg = 0x0A1626) {
+  lv_obj_t* panel = lv_obj_create(parent);
+  if (panel == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_box(panel);
+  ui_apply_surface(panel, SurfaceStyle::PanelSubtle);
+  lv_obj_set_size(panel, width, height);
+  lv_obj_set_style_bg_color(panel, lv_color_hex(bg), 0);
+  lv_obj_set_style_border_color(panel, lv_color_hex(0x17304A), 0);
+  lv_obj_set_style_border_width(panel, 1, 0);
+  lv_obj_set_style_radius(panel, 28, 0);
+  lv_obj_set_style_shadow_width(panel, 0, 0);
+  return panel;
+}
+
+lv_obj_t* create_steps_scroll_root(lv_obj_t* root, lv_coord_t screen_w, lv_coord_t screen_h) {
+  lv_obj_t* scroll = lv_obj_create(root);
+  if (scroll == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_box(scroll);
+  lv_obj_add_flag(scroll, LV_OBJ_FLAG_SCROLLABLE);
+  lv_obj_add_flag(scroll, LV_OBJ_FLAG_SCROLL_ELASTIC);
+  lv_obj_add_flag(scroll, LV_OBJ_FLAG_SCROLL_MOMENTUM);
+  lv_obj_set_size(scroll, screen_w - kStepsScrollInset * 2, screen_h - kStepsScrollTop - kStepsScrollBottom);
+  lv_obj_align(scroll, LV_ALIGN_TOP_MID, 0, kStepsScrollTop);
+  lv_obj_set_scroll_dir(scroll, LV_DIR_VER);
+  lv_obj_set_scrollbar_mode(scroll, LV_SCROLLBAR_MODE_OFF);
+  lv_obj_set_style_bg_opa(scroll, LV_OPA_TRANSP, 0);
+  lv_obj_set_style_border_width(scroll, 0, 0);
+  lv_obj_set_style_radius(scroll, 0, 0);
+  ui_set_flex_column(scroll, 0, 10);
+  lv_obj_set_style_pad_top(scroll, 0, 0);
+  lv_obj_set_style_pad_bottom(scroll, 10, 0);
+  lv_obj_set_style_pad_left(scroll, 0, 0);
+  lv_obj_set_style_pad_right(scroll, 0, 0);
+  return scroll;
+}
+
+lv_obj_t* create_steps_icon(lv_obj_t* parent, lv_coord_t size, std::uint32_t bg, std::uint32_t fg, bool use_foot_asset) {
+  lv_obj_t* icon = lv_obj_create(parent);
+  if (icon == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_box(icon);
+  lv_obj_set_size(icon, size, size);
+  lv_obj_set_style_radius(icon, LV_RADIUS_CIRCLE, 0);
+  lv_obj_set_style_bg_color(icon, lv_color_hex(bg), 0);
+  lv_obj_set_style_bg_opa(icon, LV_OPA_COVER, 0);
+  lv_obj_set_style_border_width(icon, 0, 0);
+  lv_obj_remove_flag(icon, LV_OBJ_FLAG_CLICKABLE);
+
+  const char* asset_path = use_foot_asset ? steps_icon_asset_path() : nullptr;
+  if (file_exists(asset_path)) {
+    lv_obj_t* image = lv_image_create(icon);
+    if (image != nullptr) {
+      lv_image_set_src(image, asset_path);
+      lv_obj_set_size(image, static_cast<lv_coord_t>(size * 2 / 3), static_cast<lv_coord_t>(size * 2 / 3));
+      lv_image_set_inner_align(image, LV_IMAGE_ALIGN_CONTAIN);
+      lv_obj_center(image);
+      lv_obj_remove_flag(image, LV_OBJ_FLAG_CLICKABLE);
+      return icon;
+    }
+  }
+
+  lv_obj_t* mark = lv_label_create(icon);
+  if (mark == nullptr) {
+    return icon;
+  }
+  ui_prepare_label(mark);
+  lv_obj_set_style_text_font(mark, &lv_font_montserrat_20, 0);
+  lv_obj_set_style_text_color(mark, lv_color_hex(fg), 0);
+  lv_label_set_text(mark, use_foot_asset ? "S" : "i");
+  lv_obj_center(mark);
+  return icon;
+}
+
+lv_obj_t* create_steps_arc(lv_obj_t* parent,
+                           lv_coord_t size,
+                           lv_coord_t width,
+                           std::uint32_t color,
+                           std::int32_t value,
+                           std::int32_t max_value) {
+  lv_obj_t* arc = lv_arc_create(parent);
+  if (arc == nullptr) {
+    return nullptr;
+  }
+  lv_obj_set_size(arc, size, size);
+  lv_arc_set_bg_angles(arc, 180, 360);
+  lv_arc_set_angles(arc, 180, 180 + std::clamp(value * 180 / std::max(1, max_value), 6, 180));
+  lv_obj_set_style_arc_width(arc, width, LV_PART_MAIN);
+  lv_obj_set_style_arc_width(arc, width, LV_PART_INDICATOR);
+  lv_obj_set_style_arc_color(arc, lv_color_hex(0x142030), LV_PART_MAIN);
+  lv_obj_set_style_arc_color(arc, lv_color_hex(color), LV_PART_INDICATOR);
+  lv_obj_set_style_arc_opa(arc, LV_OPA_80, LV_PART_MAIN);
+  lv_obj_set_style_arc_opa(arc, LV_OPA_COVER, LV_PART_INDICATOR);
+  lv_obj_remove_style(arc, nullptr, LV_PART_KNOB);
+  lv_obj_remove_flag(arc, LV_OBJ_FLAG_CLICKABLE);
+  return arc;
+}
+
+bool create_steps_metric_line(lv_obj_t* parent,
+                              lv_coord_t y,
+                              std::uint32_t accent,
+                              const char* value,
+                              const char* target) {
+  lv_obj_t* icon = create_steps_icon(parent, 34, 0x1A2430, accent, accent == 0xF6D34D);
+  lv_obj_t* value_label = create_steps_label(parent, value, &lv_font_montserrat_28, 0xF8FAFC, 74);
+  lv_obj_t* target_label = create_steps_label(parent, target, &lv_font_montserrat_16, 0xB9C7D9, 80);
+  if (icon == nullptr || value_label == nullptr || target_label == nullptr) {
+    return false;
+  }
+  lv_obj_set_style_bg_color(icon, lv_color_mix(lv_color_hex(accent), lv_color_hex(0x0A1626), LV_OPA_70), 0);
+  lv_obj_align(icon, LV_ALIGN_TOP_LEFT, 18, y);
+  lv_obj_align(value_label, LV_ALIGN_TOP_LEFT, 64, y - 1);
+  lv_obj_align_to(target_label, value_label, LV_ALIGN_OUT_RIGHT_MID, -2, 1);
+  return true;
+}
+
+lv_obj_t* create_steps_distribution_card(lv_obj_t* parent,
+                                         lv_coord_t width,
+                                         const char* title,
+                                         const char* value,
+                                         const char* unit,
+                                         const char* target,
+                                         std::uint32_t accent,
+                                         lv_coord_t dot_x,
+                                         lv_coord_t dot_y,
+                                         bool use_foot_asset) {
+  lv_obj_t* card = create_steps_panel(parent, width, 220);
+  if (card == nullptr) {
+    return nullptr;
+  }
+
+  lv_obj_t* icon = create_steps_icon(card, 36, 0x1A2430, accent, use_foot_asset);
+  lv_obj_t* title_label = create_steps_label(card, title, cjk_font_16(), 0xF8FAFC, 148);
+  lv_obj_t* divider = lv_obj_create(card);
+  lv_obj_t* value_label = create_steps_label(card, value, &lv_font_montserrat_42, 0xF8FAFC, 76);
+  lv_obj_t* unit_label = create_steps_label(card, unit, cjk_font_16(), 0xF8FAFC, 88);
+  lv_obj_t* target_label = create_steps_label(card, target, cjk_font_16(), 0xAFC4DA, width - 36);
+  if (icon == nullptr || title_label == nullptr || divider == nullptr || value_label == nullptr ||
+      unit_label == nullptr || target_label == nullptr) {
+    return nullptr;
+  }
+  lv_obj_align(icon, LV_ALIGN_TOP_LEFT, 20, 16);
+  lv_obj_align(title_label, LV_ALIGN_TOP_LEFT, 66, 22);
+
+  ui_prepare_box(divider);
+  lv_obj_set_size(divider, width - 36, 1);
+  lv_obj_set_style_bg_color(divider, lv_color_hex(0x23354A), 0);
+  lv_obj_set_style_bg_opa(divider, LV_OPA_70, 0);
+  lv_obj_align(divider, LV_ALIGN_TOP_MID, 0, 62);
+
+  lv_obj_align(value_label, LV_ALIGN_TOP_LEFT, 18, 78);
+  lv_obj_align_to(unit_label, value_label, LV_ALIGN_OUT_RIGHT_MID, -2, 3);
+  lv_obj_align(target_label, LV_ALIGN_TOP_LEFT, 22, 126);
+
+  lv_coord_t xs[] = {24, static_cast<lv_coord_t>(width / 2), static_cast<lv_coord_t>(width - 24)};
+  const char* labels[] = {"0", "12", "24"};
+  for (std::size_t i = 0; i < 3; ++i) {
+    lv_obj_t* tick = lv_obj_create(card);
+    lv_obj_t* tick_label = create_steps_label(card, labels[i], &lv_font_montserrat_16, 0x8DB9E3, 32);
+    if (tick == nullptr || tick_label == nullptr) {
+      return nullptr;
+    }
+    ui_prepare_box(tick);
+    lv_obj_set_size(tick, 1, 46);
+    lv_obj_set_style_bg_color(tick, lv_color_hex(0x5AA4DD), 0);
+    lv_obj_set_style_bg_opa(tick, LV_OPA_70, 0);
+    lv_obj_align(tick, LV_ALIGN_TOP_LEFT, xs[i], 150);
+    lv_obj_align(tick_label, LV_ALIGN_TOP_LEFT, static_cast<lv_coord_t>(xs[i] - 10), 194);
+  }
+
+  lv_obj_t* dot = lv_obj_create(card);
+  if (dot == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_box(dot);
+  lv_obj_set_size(dot, 7, 7);
+  lv_obj_set_style_radius(dot, LV_RADIUS_CIRCLE, 0);
+  lv_obj_set_style_bg_color(dot, lv_color_hex(accent), 0);
+  lv_obj_set_style_bg_opa(dot, LV_OPA_COVER, 0);
+  lv_obj_align(dot, LV_ALIGN_TOP_LEFT, dot_x, dot_y);
+
+  return card;
+}
+
+void apply_stream_crown_drag(lv_obj_t* scroll_root, bool forward, std::int16_t detents) {
+  if (scroll_root == nullptr) {
+    return;
+  }
+  const std::int32_t step = kLauncherCrownDragStep * std::max<std::int16_t>(1, detents);
+  const std::int32_t elastic_limit = std::max<std::int32_t>(24, lv_obj_get_height(scroll_root) / 5);
+  const std::int32_t current_y = lv_obj_get_scroll_y(scroll_root);
+  const std::int32_t scroll_top = lv_obj_get_scroll_top(scroll_root);
+  const std::int32_t scroll_bottom = lv_obj_get_scroll_bottom(scroll_root);
+  const std::int32_t scroll_max = std::max<std::int32_t>(0, scroll_top + scroll_bottom);
+  std::int32_t target_y = current_y + (forward ? step : -step);
+  target_y = std::clamp(target_y, -elastic_limit, scroll_max + elastic_limit);
+  lv_obj_scroll_to_y(scroll_root, target_y, LV_ANIM_OFF);
+}
+
+void release_stream_crown_drag(lv_obj_t* scroll_root) {
+  if (scroll_root == nullptr) {
+    return;
+  }
+  const std::int32_t current_y = lv_obj_get_scroll_y(scroll_root);
+  const std::int32_t scroll_max =
+      std::max<std::int32_t>(0, lv_obj_get_scroll_top(scroll_root) + lv_obj_get_scroll_bottom(scroll_root));
+  lv_obj_scroll_to_y(scroll_root, std::clamp(current_y, 0, scroll_max), LV_ANIM_ON);
 }
 
 }  // namespace
@@ -1698,12 +1933,14 @@ lv_obj_t* HomeRingHostPage::build() {
       lv_obj_set_style_bg_opa(icon_root, LV_OPA_TRANSP, 0);
       lv_obj_set_style_border_width(icon_root, 0, 0);
       lv_obj_align(icon_root, LV_ALIGN_TOP_LEFT, 0, 2);
+      lv_obj_remove_flag(icon_root, LV_OBJ_FLAG_CLICKABLE);
 
       const char* icon_path = sleep_icon ? sleep_icon_asset_path() : steps_icon_asset_path();
       lv_obj_set_size(icon_image, 58, 58);
       lv_image_set_inner_align(icon_image, LV_IMAGE_ALIGN_CONTAIN);
       lv_image_set_src(icon_image, icon_path);
       lv_obj_center(icon_image);
+      lv_obj_remove_flag(icon_image, LV_OBJ_FLAG_CLICKABLE);
 
       ui_prepare_label(value_label);
       ui_apply_text(value_label, TextStyle::HeroSoft);
@@ -2486,12 +2723,14 @@ lv_obj_t* WeatherShortcutPage::build() {
     lv_obj_set_style_bg_opa(icon_root, LV_OPA_TRANSP, 0);
     lv_obj_set_style_border_width(icon_root, 0, 0);
     lv_obj_align(icon_root, LV_ALIGN_TOP_LEFT, 0, metric_icon_y);
+    lv_obj_remove_flag(icon_root, LV_OBJ_FLAG_CLICKABLE);
 
     const char* icon_path = sleep_icon ? sleep_icon_asset_path() : steps_icon_asset_path();
     lv_obj_set_size(icon_image, metric_icon_size, metric_icon_size);
     lv_image_set_inner_align(icon_image, LV_IMAGE_ALIGN_CONTAIN);
     lv_image_set_src(icon_image, icon_path);
     lv_obj_center(icon_image);
+    lv_obj_remove_flag(icon_image, LV_OBJ_FLAG_CLICKABLE);
 
     if (sleep_icon) {
       lv_obj_t* bed_frame = lv_obj_create(icon_root);
@@ -2512,6 +2751,7 @@ lv_obj_t* WeatherShortcutPage::build() {
         lv_obj_set_style_bg_color(part, lv_color_hex(0xF8FBFF), 0);
         lv_obj_set_style_bg_opa(part, LV_OPA_90, 0);
         lv_obj_set_style_border_width(part, 0, 0);
+        lv_obj_remove_flag(part, LV_OBJ_FLAG_CLICKABLE);
         if (has_icon_asset) {
           lv_obj_add_flag(part, LV_OBJ_FLAG_HIDDEN);
         }
@@ -2548,6 +2788,7 @@ lv_obj_t* WeatherShortcutPage::build() {
         lv_obj_set_style_bg_opa(part, LV_OPA_90, 0);
         lv_obj_set_style_border_width(part, 0, 0);
         lv_obj_set_style_radius(part, LV_RADIUS_CIRCLE, 0);
+        lv_obj_remove_flag(part, LV_OBJ_FLAG_CLICKABLE);
         if (has_icon_asset) {
           lv_obj_add_flag(part, LV_OBJ_FLAG_HIDDEN);
         }
@@ -2896,6 +3137,341 @@ void WeatherAppPage::bind_input() {
                                      break;
                                    case InputAction::CrownRotateCCW:
                                      scroll_to_page(false);
+                                     break;
+                                   default:
+                                     break;
+                                 }
+                               }));
+}
+
+StepsAppPage::StepsAppPage(DataCenter& data_center) : PageBase(data_center) {}
+
+PageId StepsAppPage::id() const {
+  return PageId::Pedometer;
+}
+
+const char* StepsAppPage::name() const {
+  return page_name(PageId::Pedometer);
+}
+
+void StepsAppPage::on_will_disappear() {
+  stop_crown_release_timer();
+}
+
+lv_obj_t* StepsAppPage::build() {
+  lv_obj_t* root = lv_obj_create(nullptr);
+  if (root == nullptr) {
+    return nullptr;
+  }
+  style_root(root, 0x02070D);
+
+  const lv_coord_t screen_w = static_cast<lv_coord_t>(lv_display_get_horizontal_resolution(nullptr));
+  const lv_coord_t screen_h = static_cast<lv_coord_t>(lv_display_get_vertical_resolution(nullptr));
+  const lv_coord_t card_w = std::min<lv_coord_t>(screen_w - 18, 224);
+  const lv_coord_t overview_h = std::max<lv_coord_t>(254, screen_h - 16);
+
+  scroll_root_ = create_steps_scroll_root(root, screen_w, screen_h);
+  if (scroll_root_ == nullptr) {
+    return nullptr;
+  }
+
+  lv_obj_t* overview = create_steps_panel(scroll_root_, card_w, overview_h, 0x050A12);
+  if (overview == nullptr) {
+    return nullptr;
+  }
+
+  lv_obj_t* arc_outer = create_steps_arc(overview, 174, 16, 0xF97316, 1, 400);
+  lv_obj_t* arc_mid = create_steps_arc(overview, 138, 15, 0xF6D34D, 0, 6000);
+  lv_obj_t* arc_inner = create_steps_arc(overview, 102, 14, 0x14B8FF, 0, 30);
+  if (arc_outer == nullptr || arc_mid == nullptr || arc_inner == nullptr) {
+    return nullptr;
+  }
+  lv_obj_align(arc_outer, LV_ALIGN_TOP_MID, 0, 14);
+  lv_obj_align(arc_mid, LV_ALIGN_TOP_MID, 0, 32);
+  lv_obj_align(arc_inner, LV_ALIGN_TOP_MID, 0, 50);
+
+  if (!create_steps_metric_line(overview, static_cast<lv_coord_t>(overview_h - 122), 0xF97316, "1", "/400") ||
+      !create_steps_metric_line(overview, static_cast<lv_coord_t>(overview_h - 76), 0xF6D34D, "0", "/6000") ||
+      !create_steps_metric_line(overview, static_cast<lv_coord_t>(overview_h - 38), 0x14B8FF, "0", "/30")) {
+    return nullptr;
+  }
+
+  lv_obj_t* kcal = create_steps_distribution_card(scroll_root_,
+                                                  card_w,
+                                                  "\xE5\x8D\xA1\xE8\xB7\xAF\xE9\x87\x8C",
+                                                  "1",
+                                                  "\xE5\x8D\x83\xE5\x8D\xA1",
+                                                  "\xE7\x9B\xAE\xE6\xA0\x87 400\xE5\x8D\x83\xE5\x8D\xA1",
+                                                  0xF97316,
+                                                  card_w / 2,
+                                                  174,
+                                                  false);
+  lv_obj_t* steps = create_steps_distribution_card(scroll_root_,
+                                                   card_w,
+                                                   "\xE6\xAD\xA5\xE6\x95\xB0",
+                                                   "0",
+                                                   "\xE6\xAD\xA5",
+                                                   "\xE7\x9B\xAE\xE6\xA0\x87 6000\xE6\xAD\xA5",
+                                                   0xF6D34D,
+                                                   card_w - 30,
+                                                   146,
+                                                   true);
+  lv_obj_t* active = create_steps_distribution_card(scroll_root_,
+                                                    card_w,
+                                                    "\xE4\xB8\xAD\xE9\xAB\x98\xE5\xBC\xBA\xE5\xBA\xA6\xE6\xB4\xBB\xE5\x8A\xA8",
+                                                    "0",
+                                                    "\xE5\x88\x86\xE9\x92\x9F",
+                                                    "\xE7\x9B\xAE\xE6\xA0\x87 30\xE5\x88\x86\xE9\x92\x9F",
+                                                    0x14B8FF,
+                                                    card_w - 30,
+                                                    146,
+                                                    false);
+  if (kcal == nullptr || steps == nullptr || active == nullptr) {
+    return nullptr;
+  }
+
+  lv_obj_t* info = create_steps_panel(scroll_root_, card_w, 78, 0x111D2E);
+  lv_obj_t* info_icon = info == nullptr ? nullptr : create_steps_icon(info, 38, 0x075985, 0x7DD3FC, false);
+  lv_obj_t* info_label =
+      info == nullptr ? nullptr : create_steps_label(info, "\xE6\x95\xB0\xE6\x8D\xAE\xE8\xAF\xB4\xE6\x98\x8E", cjk_font_16(), 0xF8FAFC, 132);
+  if (info == nullptr || info_icon == nullptr || info_label == nullptr) {
+    return nullptr;
+  }
+  lv_obj_set_style_radius(info, 18, 0);
+  lv_obj_align(info_icon, LV_ALIGN_LEFT_MID, 20, 0);
+  lv_obj_align(info_label, LV_ALIGN_LEFT_MID, 72, 0);
+  attach_click_guard(info);
+  lv_obj_add_event_cb(info, data_info_event_cb, LV_EVENT_CLICKED, this);
+
+  bind_input();
+  return root;
+}
+
+void StepsAppPage::data_info_event_cb(lv_event_t* event) {
+  auto* self = static_cast<StepsAppPage*>(lv_event_get_user_data(event));
+  if (self == nullptr || self->should_ignore_click()) {
+    return;
+  }
+  lv_obj_t* target = lv_event_get_current_target_obj(event);
+  if (target == nullptr || !click_guard_allows(target)) {
+    return;
+  }
+  self->request_navigation({NavigationAction::Push, PageId::PedometerDataInfo});
+}
+
+void StepsAppPage::apply_crown_drag(bool forward, std::int16_t detents) {
+  stop_crown_release_timer();
+  apply_stream_crown_drag(scroll_root_, forward, detents);
+  schedule_crown_release();
+}
+
+void StepsAppPage::schedule_crown_release() {
+  stop_crown_release_timer();
+  crown_release_timer_ = lv_timer_create(&StepsAppPage::crown_release_timer_cb, kLauncherCrownReleaseDelayMs, this);
+  if (crown_release_timer_ != nullptr) {
+    lv_timer_set_repeat_count(crown_release_timer_, 1);
+  }
+}
+
+void StepsAppPage::stop_crown_release_timer() {
+  if (crown_release_timer_ == nullptr) {
+    return;
+  }
+  lv_timer_delete(crown_release_timer_);
+  crown_release_timer_ = nullptr;
+}
+
+void StepsAppPage::crown_release_timer_cb(lv_timer_t* timer) {
+  auto* self = static_cast<StepsAppPage*>(lv_timer_get_user_data(timer));
+  if (self == nullptr) {
+    return;
+  }
+  self->crown_release_timer_ = nullptr;
+  release_stream_crown_drag(self->scroll_root_);
+}
+
+void StepsAppPage::bind_input() {
+  track(data_center_.subscribe(EventId::InputRequested,
+                               [this](const Event& event) {
+                                 if (root_ == nullptr || lv_screen_active() != root_ || scroll_root_ == nullptr) {
+                                   return;
+                                 }
+
+                                 const auto* command = std::get_if<InputCommand>(&event.payload);
+                                 if (command == nullptr) {
+                                   return;
+                                 }
+
+                                 switch (command->action) {
+                                   case InputAction::CrownRotateCW:
+                                     apply_crown_drag(true, command->value);
+                                     break;
+                                   case InputAction::CrownRotateCCW:
+                                     apply_crown_drag(false, command->value);
+                                     break;
+                                   default:
+                                     break;
+                                 }
+                               }));
+}
+
+StepsDataInfoPage::StepsDataInfoPage(DataCenter& data_center) : PageBase(data_center) {}
+
+PageId StepsDataInfoPage::id() const {
+  return PageId::PedometerDataInfo;
+}
+
+const char* StepsDataInfoPage::name() const {
+  return page_name(PageId::PedometerDataInfo);
+}
+
+void StepsDataInfoPage::on_will_disappear() {
+  stop_crown_release_timer();
+}
+
+lv_obj_t* StepsDataInfoPage::build() {
+  struct InfoBlock {
+    const char* title;
+    const char* body;
+    std::uint32_t accent;
+    bool foot;
+  };
+
+  static const std::array<InfoBlock, 4> kInfoBlocks {{
+      {"\xE6\xAD\xA5\xE6\x95\xB0",
+       "\xE6\xAD\xA5\xE6\x95\xB0\xE7\x94\xA8\xE4\xBA\x8E\xE4\xBC\xB0\xE8\xAE\xA1\xE6\x97\xA5\xE5\xB8\xB8\xE6\xB4\xBB\xE5\x8A\xA8\xE9\x87\x8F\xEF\xBC\x8C\xE4\xBD\x8E\xE4\xBA\x8E\x35\x30\x30\x30\xE6\xAD\xA5\xE9\x80\x9A\xE5\xB8\xB8\xE5\xB1\x9E\xE4\xBA\x8E\xE9\x9D\x99\xE5\x9D\x90\xE5\xB0\x91\xE5\x8A\xA8\xEF\xBC\x9B\x38\x30\x30\x30\x2D\x31\x30\x30\x30\x30\xE6\xAD\xA5\xE6\x9B\xB4\xE6\x8E\xA5\xE8\xBF\x91\xE6\xB4\xBB\xE8\xB7\x83\xE7\x94\x9F\xE6\xB4\xBB\xE6\x96\xB9\xE5\xBC\x8F\xE3\x80\x82",
+       0xF6D34D,
+       true},
+      {"\xE5\x8D\xA1\xE8\xB7\xAF\xE9\x87\x8C",
+       "\xE5\x8D\xA1\xE8\xB7\xAF\xE9\x87\x8C\xE5\x8F\x8D\xE6\x98\xA0\xE4\xBD\x93\xE5\x8A\x9B\xE6\xB4\xBB\xE5\x8A\xA8\xE6\xB6\x88\xE8\x80\x97\xE7\x9A\x84\xE8\x83\xBD\xE9\x87\x8F\xEF\xBC\x8C\xE6\x9C\xAC\xE9\xA1\xB5\xE4\xBB\x85\xE5\xB1\x95\xE7\xA4\xBA\xE6\xA8\xA1\xE6\x8B\x9F\xE6\x95\xB0\xE6\x8D\xAE\xEF\xBC\x8C\xE5\x90\x8E\xE7\xBB\xAD\xE5\x8F\xAF\xE7\x94\xB1\xE4\xBC\xA0\xE6\x84\x9F\xE5\x99\xA8\xE5\x92\x8C\xE7\xAE\x97\xE6\xB3\x95\xE6\x9B\xBF\xE6\x8D\xA2\xE3\x80\x82",
+       0xF97316,
+       false},
+      {"\xE4\xB8\xAD\xE9\xAB\x98\xE5\xBC\xBA\xE5\xBA\xA6\xE6\xB4\xBB\xE5\x8A\xA8",
+       "\xE4\xB8\xAD\xE9\xAB\x98\xE5\xBC\xBA\xE5\xBA\xA6\xE6\xB4\xBB\xE5\x8A\xA8\xE5\x9C\xA8\xE5\xBF\x83\xE7\x8E\x87\xE6\x88\x96\xE6\xAD\xA5\xE9\xA2\x91\xE8\xBE\xBE\xE5\x88\xB0\xE9\x98\x88\xE5\x80\xBC\xE6\x97\xB6\xE8\xAE\xB0\xE5\xBD\x95\xEF\xBC\x8C\xE7\x94\xA8\xE4\xBA\x8E\xE8\xA7\x82\xE5\xAF\x9F\xE6\xAF\x8F\xE5\xA4\xA9\xE6\x9C\x89\xE6\x95\x88\xE8\xBF\x90\xE5\x8A\xA8\xE6\x97\xB6\xE9\x95\xBF\xE3\x80\x82",
+       0x14B8FF,
+       false},
+      {"\xE7\xAB\x99\xE7\xAB\x8B",
+       "\xE4\xB9\x85\xE5\x9D\x90\xE5\xB0\x91\xE5\x8A\xA8\xE5\x8F\xAF\xE8\x83\xBD\xE5\xB8\xA6\xE6\x9D\xA5\xE5\x81\xA5\xE5\xBA\xB7\xE9\xA3\x8E\xE9\x99\xA9\xEF\xBC\x8C\xE6\x97\xA5\xE5\xB8\xB8\xE4\xBD\xA9\xE6\x88\xB4\xE6\x89\x8B\xE8\xA1\xA8\xE6\x97\xB6\xE5\xBB\xBA\xE8\xAE\xAE\xE6\xAF\x8F\xE5\xB0\x8F\xE6\x97\xB6\xE8\xB5\xB7\xE8\xBA\xAB\xE6\xB4\xBB\xE5\x8A\xA8\xE4\xB8\x80\xE6\xAC\xA1\xE3\x80\x82",
+       0x7DD3FC,
+       false},
+  }};
+
+  lv_obj_t* root = lv_obj_create(nullptr);
+  if (root == nullptr) {
+    return nullptr;
+  }
+  style_root(root, 0x02070D);
+
+  const lv_coord_t screen_w = static_cast<lv_coord_t>(lv_display_get_horizontal_resolution(nullptr));
+  const lv_coord_t screen_h = static_cast<lv_coord_t>(lv_display_get_vertical_resolution(nullptr));
+  const lv_coord_t card_w = std::min<lv_coord_t>(screen_w - 18, 224);
+  scroll_root_ = create_steps_scroll_root(root, screen_w, screen_h);
+  if (scroll_root_ == nullptr) {
+    return nullptr;
+  }
+
+  lv_obj_t* header = create_steps_panel(scroll_root_, card_w, 58, 0x07111D);
+  lv_obj_t* back_button = header == nullptr ? nullptr : lv_button_create(header);
+  lv_obj_t* back = back_button == nullptr ? nullptr : create_steps_label(back_button, "<", &lv_font_montserrat_20, 0xCDEBFF, 18);
+  lv_obj_t* title =
+      header == nullptr ? nullptr : create_steps_label(header, "\xE6\x95\xB0\xE6\x8D\xAE\xE8\xAF\xB4\xE6\x98\x8E", cjk_font_16(), 0xF8FAFC, 126);
+  lv_obj_t* time = header == nullptr ? nullptr : create_steps_label(header, "17:47", &lv_font_montserrat_18, 0xD8E9FF, 58);
+  if (header == nullptr || back_button == nullptr || back == nullptr || title == nullptr || time == nullptr) {
+    return nullptr;
+  }
+  lv_obj_set_style_radius(header, 20, 0);
+  ui_prepare_box(back_button);
+  lv_obj_set_size(back_button, 40, 40);
+  lv_obj_align(back_button, LV_ALIGN_LEFT_MID, 6, 0);
+  lv_obj_set_style_bg_opa(back_button, LV_OPA_TRANSP, 0);
+  attach_click_guard(back_button);
+  lv_obj_add_event_cb(back_button, &StepsDataInfoPage::back_event_cb, LV_EVENT_CLICKED, this);
+  ui_set_touch_target(back_button, 18);
+  lv_obj_add_flag(back, LV_OBJ_FLAG_EVENT_BUBBLE);
+  lv_obj_remove_flag(back, LV_OBJ_FLAG_CLICKABLE);
+  lv_obj_align(back, LV_ALIGN_LEFT_MID, 10, 0);
+  lv_obj_align(title, LV_ALIGN_LEFT_MID, 34, 0);
+  lv_obj_align(time, LV_ALIGN_RIGHT_MID, -14, 0);
+
+  for (const InfoBlock& block : kInfoBlocks) {
+    lv_obj_t* card = create_steps_panel(scroll_root_, card_w, 170, 0x07111D);
+    lv_obj_t* icon = card == nullptr ? nullptr : create_steps_icon(card, 30, 0x1A2430, block.accent, block.foot);
+    lv_obj_t* label = card == nullptr ? nullptr : create_steps_label(card, block.title, cjk_font_16(), 0xF8FAFC, card_w - 64);
+    lv_obj_t* body = card == nullptr ? nullptr : create_steps_label(card, block.body, cjk_font_16(), 0xD8E9FF, card_w - 32, LV_LABEL_LONG_WRAP);
+    if (card == nullptr || icon == nullptr || label == nullptr || body == nullptr) {
+      return nullptr;
+    }
+    lv_obj_set_style_radius(card, 18, 0);
+    lv_obj_align(icon, LV_ALIGN_TOP_LEFT, 14, 14);
+    lv_obj_align(label, LV_ALIGN_TOP_LEFT, 52, 17);
+    lv_obj_align(body, LV_ALIGN_TOP_LEFT, 16, 58);
+  }
+
+  bind_input();
+  return root;
+}
+
+void StepsDataInfoPage::back_event_cb(lv_event_t* event) {
+  auto* self = static_cast<StepsDataInfoPage*>(lv_event_get_user_data(event));
+  if (self == nullptr || self->should_ignore_click()) {
+    return;
+  }
+  lv_obj_t* target = lv_event_get_current_target_obj(event);
+  if (target == nullptr || !click_guard_allows(target)) {
+    return;
+  }
+  self->request_navigation({NavigationAction::Pop, PageId::Watchface});
+}
+
+void StepsDataInfoPage::apply_crown_drag(bool forward, std::int16_t detents) {
+  stop_crown_release_timer();
+  apply_stream_crown_drag(scroll_root_, forward, detents);
+  schedule_crown_release();
+}
+
+void StepsDataInfoPage::schedule_crown_release() {
+  stop_crown_release_timer();
+  crown_release_timer_ = lv_timer_create(&StepsDataInfoPage::crown_release_timer_cb, kLauncherCrownReleaseDelayMs, this);
+  if (crown_release_timer_ != nullptr) {
+    lv_timer_set_repeat_count(crown_release_timer_, 1);
+  }
+}
+
+void StepsDataInfoPage::stop_crown_release_timer() {
+  if (crown_release_timer_ == nullptr) {
+    return;
+  }
+  lv_timer_delete(crown_release_timer_);
+  crown_release_timer_ = nullptr;
+}
+
+void StepsDataInfoPage::crown_release_timer_cb(lv_timer_t* timer) {
+  auto* self = static_cast<StepsDataInfoPage*>(lv_timer_get_user_data(timer));
+  if (self == nullptr) {
+    return;
+  }
+  self->crown_release_timer_ = nullptr;
+  release_stream_crown_drag(self->scroll_root_);
+}
+
+void StepsDataInfoPage::bind_input() {
+  track(data_center_.subscribe(EventId::InputRequested,
+                               [this](const Event& event) {
+                                 if (root_ == nullptr || lv_screen_active() != root_ || scroll_root_ == nullptr) {
+                                   return;
+                                 }
+
+                                 const auto* command = std::get_if<InputCommand>(&event.payload);
+                                 if (command == nullptr) {
+                                   return;
+                                 }
+
+                                 switch (command->action) {
+                                   case InputAction::CrownRotateCW:
+                                     apply_crown_drag(true, command->value);
+                                     break;
+                                   case InputAction::CrownRotateCCW:
+                                     apply_crown_drag(false, command->value);
                                      break;
                                    default:
                                      break;

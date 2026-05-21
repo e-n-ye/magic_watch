@@ -22,6 +22,7 @@ enum class PageId {
   VideoPlayer,
   Infrared,
   Pedometer,
+  PedometerDataInfo,
   Lora,
   SettingsHome,
   SettingDisplay,

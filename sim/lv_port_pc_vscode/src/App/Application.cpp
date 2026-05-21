@@ -406,11 +406,11 @@ void Application::register_pages() {
         return std::make_unique<PlaceholderPage>(
             data_center_, PageId::Infrared, "Infrared", "IR control placeholder for future device routing.");
       });
+  page_manager_.register_page(PageId::Pedometer, [this]() { return std::make_unique<StepsAppPage>(data_center_); });
   page_manager_.register_page(
-      PageId::Pedometer,
+      PageId::PedometerDataInfo,
       [this]() {
-        return std::make_unique<PlaceholderPage>(
-            data_center_, PageId::Pedometer, "Pedometer", "Step counting placeholder wired for future IMU data.");
+        return std::make_unique<StepsDataInfoPage>(data_center_);
       });
   page_manager_.register_page(PageId::Lora,
                               [this]() {

@@ -42,6 +42,8 @@ const char* page_name(PageId page_id) {
       return "Infrared";
     case PageId::Pedometer:
       return "Pedometer";
+    case PageId::PedometerDataInfo:
+      return "PedometerDataInfo";
     case PageId::Lora:
       return "Lora";
     case PageId::SettingsHome:

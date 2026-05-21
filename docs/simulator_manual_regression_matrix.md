@@ -132,6 +132,32 @@ Before testing:
   - crown press returns to the watchface-centered home surface
   - no weather API, city management, settings linkage, or other app behavior is introduced
 
+### A6. Steps App Stream Shell
+
+- Action:
+  - enter Steps from the home-ring Steps card
+  - enter `Launcher`, switch among `多列布局 / 列表布局 / 分类布局`, and open Steps from each mode
+  - vertically drag / flick through the Steps app
+  - press `Q / E`
+  - tap `数据说明`
+  - tap the top-left back button on the data-description page
+  - vertically drag / flick through the data-description page
+  - use left-edge right swipe from both Steps pages
+  - press crown from both Steps pages
+- Expected:
+  - Steps is a real mock app page, not a placeholder
+  - home-ring and all three Launcher layouts enter the same Steps app
+  - vertical touch scrolling is continuous / flowing, not page-snapped
+  - `Q / E` scrolls the same vertical content context
+  - `数据说明` opens a normal pushed page
+  - the data-description top-left back button returns to the Steps page
+  - the data-description page supports vertical scrolling
+  - the home-ring Steps foot icon does not block card navigation
+  - the first Steps overview card is sized against the current simulator display height
+  - left-edge right swipe returns to the previous page
+  - crown press returns to the watchface-centered home surface
+  - no sensor stream, health data model, goal setting, historical trend, or settings linkage is introduced
+
 ## B. Settings Display Page
 
 ### B1. Display Settings Visible Structure

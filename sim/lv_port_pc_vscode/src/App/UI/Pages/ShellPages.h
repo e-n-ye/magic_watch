@@ -168,6 +168,52 @@ class WeatherAppPage : public PageBase {
   lv_coord_t page_pitch_ {0};
 };
 
+class StepsAppPage : public PageBase {
+ public:
+  explicit StepsAppPage(DataCenter& data_center);
+
+  PageId id() const override;
+  const char* name() const override;
+  void on_will_disappear() override;
+
+ protected:
+  lv_obj_t* build() override;
+
+ private:
+  static void data_info_event_cb(lv_event_t* event);
+  static void crown_release_timer_cb(lv_timer_t* timer);
+  void bind_input();
+  void apply_crown_drag(bool forward, std::int16_t detents);
+  void schedule_crown_release();
+  void stop_crown_release_timer();
+
+  lv_obj_t* scroll_root_ {nullptr};
+  lv_timer_t* crown_release_timer_ {nullptr};
+};
+
+class StepsDataInfoPage : public PageBase {
+ public:
+  explicit StepsDataInfoPage(DataCenter& data_center);
+
+  PageId id() const override;
+  const char* name() const override;
+  void on_will_disappear() override;
+
+ protected:
+  lv_obj_t* build() override;
+
+ private:
+  static void back_event_cb(lv_event_t* event);
+  static void crown_release_timer_cb(lv_timer_t* timer);
+  void bind_input();
+  void apply_crown_drag(bool forward, std::int16_t detents);
+  void schedule_crown_release();
+  void stop_crown_release_timer();
+
+  lv_obj_t* scroll_root_ {nullptr};
+  lv_timer_t* crown_release_timer_ {nullptr};
+};
+
 class PaymentsShortcutPage : public PageBase {
  public:
   explicit PaymentsShortcutPage(DataCenter& data_center);

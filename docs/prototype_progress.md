@@ -1,5 +1,36 @@
 # Prototype Progress
 
+## 2026-05-21: Steps App Stream Shell v0.3-D1
+
+### What Changed
+
+- Replaced the legacy `Pedometer` placeholder with a real mock Steps app page.
+- Kept the entry scope narrow:
+  - home-ring Steps card
+  - `Launcher` Steps entry across all three launcher layout modes
+- Built the Steps app as a flowing vertical page instead of a snap-paged app:
+  - activity-ring overview
+  - calories card
+  - steps card
+  - moderate / vigorous activity card
+  - data-description entry
+- Added a dedicated `PedometerDataInfo` page for the data-description entry.
+- Kept `Q / E` crown rotation wired to the same vertical scroll context as touch scrolling.
+- Fixed simulator review issues:
+  - home-ring Steps card now opens even when tapping directly on the foot icon
+  - the Steps overview card height follows the current simulator display instead of the old fixed screen size
+  - the data-description back control now uses a settings-style clickable back button
+
+### Validation
+
+- `cmake --build build --target main` passed from `sim/lv_port_pc_vscode`.
+- Manual review confirmed the follow-up fixes were needed for the home-ring entry, first-card height, and data-description back button.
+
+### Current Boundary
+
+- This is still a mock activity app shell, not a pedometer or health-service implementation.
+- No real sensor stream, health data model, goal setting, historical trend, or settings linkage was added.
+
 ## 2026-05-21: Weather App Shell Closure v0.3-C1
 
 ### What Changed
