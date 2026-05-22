@@ -13,7 +13,7 @@ constexpr uint32_t kTouchMoveLogIntervalMs = 150;
 constexpr int16_t kTouchMoveThresholdPx = 3;
 constexpr uint8_t kBringupBrightness = 160;
 constexpr uint8_t kScreenOffBrightness = 0;
-constexpr uint32_t kDeepSleepTimerSeconds = 15;
+constexpr uint32_t kPmuSleepReleaseTimeoutMs = 5000;
 
 lv_obj_t *g_uptime_label = nullptr;
 lv_obj_t *g_status_label = nullptr;
@@ -165,28 +165,39 @@ void setScreenState(bool on, const char *reason)
         watch.getBrightness());
 }
 
-void enterTimerDeepSleep()
+bool waitForPmuIrqRelease(uint32_t timeout_ms)
+{
+    const uint32_t start_ms = millis();
+    while (digitalRead(BOARD_PMU_INT) == LOW) {
+        if (millis() - start_ms >= timeout_ms) {
+            return false;
+        }
+        delay(10);
+    }
+    return true;
+}
+
+void enterPmuButtonDeepSleep()
 {
     if (!g_screen_on) {
         setScreenState(true, "sleep-test");
     }
 
     Serial.printf(
-        "[bringup-sleep] timer_deep_sleep_prepare seconds=%lu boot=%lu wake=%s\n",
-        static_cast<unsigned long>(kDeepSleepTimerSeconds),
+        "[bringup-sleep] pmu_deep_sleep_prepare boot=%lu wake=%s pmu_int=%d\n",
         static_cast<unsigned long>(g_rtc_boot_count),
-        wakeupCauseName(g_wakeup_cause));
+        wakeupCauseName(g_wakeup_cause),
+        digitalRead(BOARD_PMU_INT));
 
     for (int remaining = 3; remaining > 0; --remaining) {
         lv_label_set_text_fmt(
             g_status_label,
-            "Deep sleep in %d\nWake: timer %lu s\nBoot %lu",
+            "Deep sleep in %d\nWake: PMU side key\nBoot %lu",
             remaining,
-            static_cast<unsigned long>(kDeepSleepTimerSeconds),
             static_cast<unsigned long>(g_rtc_boot_count));
         lv_label_set_text(g_touch_label, "Long PEK accepted");
-        lv_label_set_text(g_pmu_label, "Display will turn off");
-        lv_label_set_text(g_bma_label, "ESP32-S3 restarts after wake");
+        lv_label_set_text(g_pmu_label, "Release PEK after black screen");
+        lv_label_set_text(g_bma_label, "Short PEK should wake/restart");
         lv_label_set_text(g_uptime_label, "sleep test");
         lv_task_handler();
         delay(1000);
@@ -197,16 +208,22 @@ void enterTimerDeepSleep()
     delay(250);
 
     Serial.printf(
-        "[bringup-sleep] entering_deep_sleep wake=timer seconds=%lu\n",
-        static_cast<unsigned long>(kDeepSleepTimerSeconds));
-    delay(50);
-
+        "[bringup-sleep] entering_deep_sleep wake=pmu ext1_pin=%d pmu_int=%d\n",
+        BOARD_PMU_INT,
+        digitalRead(BOARD_PMU_INT));
     watch.setBrightness(kScreenOffBrightness);
     g_screen_on = false;
     delay(150);
 
-    esp_sleep_enable_timer_wakeup(1000000ULL * kDeepSleepTimerSeconds);
-    esp_deep_sleep_start();
+    watch.clearPMU();
+    const bool released = waitForPmuIrqRelease(kPmuSleepReleaseTimeoutMs);
+    Serial.printf(
+        "[bringup-sleep] pmu_irq_release=%s pmu_int=%d\n",
+        yesNo(released),
+        digitalRead(BOARD_PMU_INT));
+
+    watch.setSleepMode(PMU_BTN_WAKEUP);
+    watch.sleep(0);
 }
 
 void buildBringupScreen()
@@ -270,7 +287,7 @@ void buildBringupScreen()
     lv_obj_align(g_uptime_label, LV_ALIGN_BOTTOM_LEFT, 0, 0);
 
     lv_obj_t *footer = lv_label_create(screen);
-    lv_label_set_text(footer, "Short PEK: screen | Long PEK: timer sleep");
+    lv_label_set_text(footer, "Short PEK: screen | Long PEK: PMU sleep");
     lv_obj_set_style_text_color(footer, lv_color_hex(0x64748b), 0);
     lv_obj_set_style_text_font(footer, &lv_font_montserrat_12, 0);
     lv_obj_align(footer, LV_ALIGN_BOTTOM_MID, 0, -10);
@@ -427,7 +444,7 @@ void processPmuInterrupts()
     watch.clearPMU();
 
     if (long_press) {
-        enterTimerDeepSleep();
+        enterPmuButtonDeepSleep();
         return;
     }
 

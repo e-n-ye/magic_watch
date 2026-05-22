@@ -39,6 +39,12 @@
 - timer deep sleep 唤醒后是否能重启并重新初始化屏幕、LVGL 和日志。
 - 串口是否能显示 `wake=timer`。
 
+第七小闭环只验证：
+
+- 长按侧键后是否能进入 PMU 侧键唤醒 deep sleep。
+- deep sleep 后短按侧键是否能唤醒并重启回到 LVGL 页面。
+- 页面和串口是否能显示 `wake=ext1` 或等价 GPIO 唤醒原因。
+
 本目录不代表最终硬件选型，不接入 Magic Watch 模拟器页面，不做真实计步、触摸完整手势、AXP2101 深度电源策略或完整 sleep/wake 策略。
 
 ## 依赖来源
@@ -74,14 +80,14 @@ pio device monitor -b 115200
 - 页面显示 `Touch idle/press/release`、最近触摸坐标和事件计数。
 - 页面显示 AXP2101 基础供电摘要。
 - 页面显示 BMA423 基础加速度摘要。
-- 页面底部显示 `Short PEK: screen | Long PEK: timer sleep`。
+- 页面底部显示 `Short PEK: screen | Long PEK: PMU sleep`。
 - 点按或拖动屏幕后，串口应出现 `[bringup-touch] press`、节流后的 `[bringup-touch] move` 和 `[bringup-touch] release`。
 - 串口每两秒输出一次 `[bringup-pmu] usb=... charging=... batt=... vbus=... sys=... percent=...`。
 - 串口每 0.5 秒输出一次 `[bringup-bma] x=... y=... z=... dir=...`。
 - 短按侧键时，串口应出现 `[bringup-screen] state=off/on reason=pmu-short`。
 - screen off 后触摸屏幕时，串口应出现 `[bringup-screen] state=on reason=touch`。
-- 长按侧键时，屏幕应显示 deep sleep 倒计时，串口应出现 `[bringup-sleep] entering_deep_sleep wake=timer seconds=15`。
-- 约 15 秒后设备应重新启动，串口应出现 `[bringup-sleep] boot=... wake=timer cause=4`。
+- 长按侧键时，屏幕应显示 PMU deep sleep 倒计时，串口应出现 `[bringup-sleep] entering_deep_sleep wake=pmu ext1_pin=...`。
+- 屏幕变黑后释放侧键，再短按侧键，设备应重新启动，串口应出现 `[bringup-sleep] boot=... wake=ext1 ...` 或等价 GPIO 唤醒原因。
 
 ## 2026-05-21 首次验证
 
@@ -183,3 +189,16 @@ pio device monitor -b 115200
 - 实物确认：复位到亮屏约 2 到 3 秒。
 - 结论：当前 bring-up 工程复位到 LVGL 首屏耗时已收敛到可接受范围。
 - 边界说明：跳过 GPS、Radio、DRV2605 和 FFat 只用于当前 bring-up 低变量验证，不代表这些外设无效或后续不需要验证。
+
+## 2026-05-22 PMU 侧键 Deep Sleep 唤醒闭环验证
+
+- 本轮实现：长按侧键触发 3 秒倒计时，然后进入 PMU 侧键唤醒 deep sleep。
+- 本轮实现：进入 sleep 前关闭显示和背光，清除 PMU IRQ，并等待 `BOARD_PMU_INT` 释放，避免仍按住侧键导致立即唤醒。
+- 本轮实现：使用官方库 `PMU_BTN_WAKEUP` 路径，底层配置 `BOARD_PMU_INT` 的 ext1 唤醒。
+- 编译：通过，命令为 `pio run -e twatch-s3 -j 1`。
+- 上传：通过，端口 `COM9`。
+- 实物确认：正常亮屏后长按侧键，可看到 3 秒倒计时。
+- 实物确认：倒计时结束后屏幕变黑，松开侧键后再短按侧键，可约 2 到 3 秒重新亮回页面。
+- 实物确认：页面第一行 `Wake ...` 显示 `ext1` 或等价 GPIO 唤醒原因，不是 `timer`。
+- 结论：T-Watch S3 Plus 参考板具备最小 PMU/PEK 物理按键 deep sleep 唤醒路径。
+- 边界说明：本闭环不测触摸 deep sleep 唤醒、BMA deep sleep 唤醒或实际低功耗电流。

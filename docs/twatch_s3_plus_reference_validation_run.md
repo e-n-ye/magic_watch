@@ -320,3 +320,39 @@
 - 当前 bring-up 工程的复位到首屏耗时已从约 7 秒收敛到约 2 到 3 秒。
 - 2 到 3 秒对当前硬件前哨验证已可接受，后续若要继续优化应单独拆为更细的启动阶段剖析闭环。
 - 本轮跳过 GPS、Radio、DRV2605 和 FFat 是 bring-up 边界收敛，不代表这些外设在最终平台或后续实验中不需要。
+
+## H. PMU 侧键 Deep Sleep 唤醒观察
+
+日期：2026-05-22
+
+状态：通过。
+
+本轮边界：
+
+- 只验证 T-Watch S3 Plus 在 deep sleep 后能否通过 PMU/PEK 侧键唤醒重启。
+- 不验证触摸、BMA423、RTC 作为 deep sleep 唤醒源。
+- 不评估真实低功耗电流。
+- 不改变最终产品硬件选型判断。
+
+已完成：
+
+- 将 bring-up 工程长按侧键行为从 timer deep sleep 切换为 PMU 侧键 deep sleep。
+- 进入 sleep 前关闭显示和背光，清除 PMU IRQ，并等待 `BOARD_PMU_INT` 释放，降低仍按住侧键导致立即唤醒的干扰。
+- 复用本地裁剪官方库的 `PMU_BTN_WAKEUP` 路径，底层配置 `BOARD_PMU_INT` 的 ext1 唤醒。
+- 页面底部提示改为 `Short PEK: screen | Long PEK: PMU sleep`。
+- 串口加入 `[bringup-sleep] pmu_deep_sleep_prepare ...`、`entering_deep_sleep wake=pmu ...` 和 `pmu_irq_release=...` 日志。
+- 编译通过：`pio run -e twatch-s3 -j 1`。
+- 上传通过：`COM9`。
+
+实物观察：
+
+- 长按侧键后，屏幕显示 PMU deep sleep 倒计时。
+- 倒计时结束后，屏幕稳定变黑。
+- 释放侧键后，再短按侧键，设备可唤醒并重启回到 LVGL 页面。
+- 页面第一行 `Wake ...` 显示 `ext1` 或等价 GPIO 唤醒原因，不再是 `timer`。
+- 唤醒后启动到首屏约 2 到 3 秒。
+
+结论：
+
+- T-Watch S3 Plus 参考板具备最小物理按键 deep sleep 唤醒路径。
+- 该结论只覆盖 PMU/PEK 侧键唤醒，不覆盖触摸、BMA423、RTC 唤醒或真实低功耗电流表现。
