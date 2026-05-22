@@ -241,3 +241,48 @@
 
 - screen off/on 第一层代码路径可用，运行态显示关闭和恢复能通过侧键与触摸完成。
 - 本轮结果不能外推到 light sleep/deep sleep 低功耗唤醒能力。
+
+## F. Deep Sleep Timer 第一层观察
+
+日期：2026-05-22
+
+状态：通过，有启动耗时边界。
+
+本轮边界：
+
+- 只验证 ESP32-S3 timer deep sleep 的最小进入与自动唤醒路径。
+- 只观察长按侧键触发 15 秒 deep sleep、屏幕熄灭、定时唤醒后重启、LVGL 页面重新显示和串口 wake cause。
+- 不验证 PMU 侧键 deep sleep 唤醒。
+- 不验证触摸、BMA423、RTC 作为 deep sleep 唤醒源。
+- 不评估真实低功耗电流。
+
+已完成：
+
+- 在 `prototypes/twatch_s3_plus_bringup/src/main.cpp` 中加入启动 wake cause 读取和 RTC boot 计数。
+- 页面状态区显示 `Wake ...` 与 `Boot ...`。
+- 保留短按侧键的 screen off/on 行为。
+- 长按侧键触发 3 秒倒计时。
+- 串口加入 `[bringup-sleep]` 日志，用于记录进入 deep sleep 前和唤醒后的状态。
+- 编译通过：`pio run -e twatch-s3 -j 1`。
+- 上传通过：`COM9`。
+- 第一次实物观察未通过：长按后倒计时正常，结束后停在 `Deep sleep now` 页面，没有出现黑屏；按下复位键后屏幕黑屏，过一段时间后屏幕亮起。
+- 修正方向：进入 sleep 前显式调用 `setBrightness(0)`，去掉 `Serial.flush()`，改用 `esp_sleep_enable_timer_wakeup()` 与 `esp_deep_sleep_start()` 直接进入 ESP-IDF deep sleep。
+- 复位观察新增线索：无论处于什么状态，按下复位后都需要约 15 秒才亮屏，屏幕刚亮时 `uptime` 已约 15 秒。
+- 解释假设：启动黑屏等待更像 `watch.begin()` 期间的参考库初始化耗时，而不是 LVGL 页面本身的问题；当前 bring-up 不验证 GPS，因此默认跳过 I2C 扫描和 GPS 探测以缩短复位到亮屏时间。
+- 影响：后续 `probe` 不再把 GPS 位作为当前闭环观察项；这不代表 GPS 硬件不可用，只表示本闭环主动不测 GPS。
+- 修正后编译通过：`pio run -e twatch-s3 -j 1`。
+- 修正后上传通过：`COM9`。
+
+实物观察：
+
+- 长按侧键后，屏幕显示 deep sleep 倒计时。
+- 进入 deep sleep 后，屏幕稳定变黑。
+- 约 23 秒后，设备自动亮回 LVGL 页面。
+- 按复位键后，页面约 7 秒后亮起，已明显短于跳过扫描/GPS 前的约 15 秒。
+
+结论：
+
+- timer deep sleep 的最小进入、黑屏和自动重启式恢复路径可用。
+- 约 23 秒黑屏到亮回可解释为 15 秒 timer deep sleep 加约 7 秒启动到首屏耗时。
+- 当前首屏启动仍有约 7 秒延迟，后续可单独做“启动耗时收敛”闭环。
+- 本闭环不代表运行态恢复，也不代表 PMU/触摸/BMA 作为真实低功耗唤醒源已经可用。

@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <LV_Helper.h>
 #include <LilyGoLib.h>
+#include <esp_sleep.h>
 #include <lvgl.h>
 
 namespace {
@@ -12,6 +13,7 @@ constexpr uint32_t kTouchMoveLogIntervalMs = 150;
 constexpr int16_t kTouchMoveThresholdPx = 3;
 constexpr uint8_t kBringupBrightness = 160;
 constexpr uint8_t kScreenOffBrightness = 0;
+constexpr uint32_t kDeepSleepTimerSeconds = 15;
 
 lv_obj_t *g_uptime_label = nullptr;
 lv_obj_t *g_status_label = nullptr;
@@ -29,6 +31,8 @@ bool g_screen_on = true;
 uint32_t g_screen_toggles = 0;
 lv_point_t g_last_touch_point = {0, 0};
 volatile bool g_pmu_irq = false;
+esp_sleep_wakeup_cause_t g_wakeup_cause = ESP_SLEEP_WAKEUP_UNDEFINED;
+RTC_DATA_ATTR uint32_t g_rtc_boot_count = 0;
 
 struct PmuSnapshot {
     bool charging = false;
@@ -57,6 +61,28 @@ const char *probeStatus(uint32_t probe_mask, uint32_t bit)
 const char *yesNo(bool value)
 {
     return value ? "Y" : "N";
+}
+
+const char *wakeupCauseName(esp_sleep_wakeup_cause_t cause)
+{
+    switch (cause) {
+    case ESP_SLEEP_WAKEUP_EXT0:
+        return "ext0";
+    case ESP_SLEEP_WAKEUP_EXT1:
+        return "ext1";
+    case ESP_SLEEP_WAKEUP_TIMER:
+        return "timer";
+    case ESP_SLEEP_WAKEUP_TOUCHPAD:
+        return "touchpad";
+    case ESP_SLEEP_WAKEUP_ULP:
+        return "ulp";
+    case ESP_SLEEP_WAKEUP_GPIO:
+        return "gpio";
+    case ESP_SLEEP_WAKEUP_UART:
+        return "uart";
+    default:
+        return "none";
+    }
 }
 
 const char *chargeStatusName(uint8_t status)
@@ -139,6 +165,50 @@ void setScreenState(bool on, const char *reason)
         watch.getBrightness());
 }
 
+void enterTimerDeepSleep()
+{
+    if (!g_screen_on) {
+        setScreenState(true, "sleep-test");
+    }
+
+    Serial.printf(
+        "[bringup-sleep] timer_deep_sleep_prepare seconds=%lu boot=%lu wake=%s\n",
+        static_cast<unsigned long>(kDeepSleepTimerSeconds),
+        static_cast<unsigned long>(g_rtc_boot_count),
+        wakeupCauseName(g_wakeup_cause));
+
+    for (int remaining = 3; remaining > 0; --remaining) {
+        lv_label_set_text_fmt(
+            g_status_label,
+            "Deep sleep in %d\nWake: timer %lu s\nBoot %lu",
+            remaining,
+            static_cast<unsigned long>(kDeepSleepTimerSeconds),
+            static_cast<unsigned long>(g_rtc_boot_count));
+        lv_label_set_text(g_touch_label, "Long PEK accepted");
+        lv_label_set_text(g_pmu_label, "Display will turn off");
+        lv_label_set_text(g_bma_label, "ESP32-S3 restarts after wake");
+        lv_label_set_text(g_uptime_label, "sleep test");
+        lv_task_handler();
+        delay(1000);
+    }
+
+    lv_label_set_text(g_status_label, "Deep sleep now");
+    lv_task_handler();
+    delay(250);
+
+    Serial.printf(
+        "[bringup-sleep] entering_deep_sleep wake=timer seconds=%lu\n",
+        static_cast<unsigned long>(kDeepSleepTimerSeconds));
+    delay(50);
+
+    watch.setBrightness(kScreenOffBrightness);
+    g_screen_on = false;
+    delay(150);
+
+    esp_sleep_enable_timer_wakeup(1000000ULL * kDeepSleepTimerSeconds);
+    esp_deep_sleep_start();
+}
+
 void buildBringupScreen()
 {
     lv_obj_t *screen = lv_scr_act();
@@ -178,21 +248,21 @@ void buildBringupScreen()
     lv_obj_set_width(g_touch_label, 194);
     lv_obj_set_style_text_color(g_touch_label, lv_color_hex(0xbae6fd), 0);
     lv_obj_set_style_text_font(g_touch_label, &lv_font_montserrat_12, 0);
-    lv_obj_align(g_touch_label, LV_ALIGN_TOP_LEFT, 0, 36);
+    lv_obj_align(g_touch_label, LV_ALIGN_TOP_LEFT, 0, 46);
 
     g_pmu_label = lv_label_create(panel);
     lv_label_set_long_mode(g_pmu_label, LV_LABEL_LONG_WRAP);
     lv_obj_set_width(g_pmu_label, 194);
     lv_obj_set_style_text_color(g_pmu_label, lv_color_hex(0xfde68a), 0);
     lv_obj_set_style_text_font(g_pmu_label, &lv_font_montserrat_12, 0);
-    lv_obj_align(g_pmu_label, LV_ALIGN_TOP_LEFT, 0, 58);
+    lv_obj_align(g_pmu_label, LV_ALIGN_TOP_LEFT, 0, 68);
 
     g_bma_label = lv_label_create(panel);
     lv_label_set_long_mode(g_bma_label, LV_LABEL_LONG_WRAP);
     lv_obj_set_width(g_bma_label, 194);
     lv_obj_set_style_text_color(g_bma_label, lv_color_hex(0xc4b5fd), 0);
     lv_obj_set_style_text_font(g_bma_label, &lv_font_montserrat_12, 0);
-    lv_obj_align(g_bma_label, LV_ALIGN_TOP_LEFT, 0, 96);
+    lv_obj_align(g_bma_label, LV_ALIGN_TOP_LEFT, 0, 106);
 
     g_uptime_label = lv_label_create(panel);
     lv_obj_set_style_text_color(g_uptime_label, lv_color_hex(0x7dd3fc), 0);
@@ -200,7 +270,7 @@ void buildBringupScreen()
     lv_obj_align(g_uptime_label, LV_ALIGN_BOTTOM_LEFT, 0, 0);
 
     lv_obj_t *footer = lv_label_create(screen);
-    lv_label_set_text(footer, "PEK: screen off/on | touch wakes");
+    lv_label_set_text(footer, "Short PEK: screen | Long PEK: timer sleep");
     lv_obj_set_style_text_color(footer, lv_color_hex(0x64748b), 0);
     lv_obj_set_style_text_font(footer, &lv_font_montserrat_12, 0);
     lv_obj_align(footer, LV_ALIGN_BOTTOM_MID, 0, -10);
@@ -215,7 +285,9 @@ void updateBringupScreen()
 
     lv_label_set_text_fmt(
         g_status_label,
-        "Scr %s | Rot %u | Tog %lu\nPMU %s T %s BMA %s",
+        "Wake %s | Boot %lu\nScr %s Rot %u Tog %lu\nPMU %s T %s BMA %s",
+        wakeupCauseName(g_wakeup_cause),
+        static_cast<unsigned long>(g_rtc_boot_count),
         g_screen_on ? "on" : "off",
         watch.getRotation(),
         static_cast<unsigned long>(g_screen_toggles),
@@ -342,18 +414,26 @@ void processPmuInterrupts()
     g_pmu_irq = false;
 
     const uint64_t status = watch.readPMU();
-    if (watch.isPekeyShortPressIrq()) {
-        setScreenState(!g_screen_on, "pmu-short");
-    }
+    const bool long_press = watch.isPekeyLongPressIrq();
+    const bool short_press = watch.isPekeyShortPressIrq();
 
     Serial.printf(
         "[bringup-screen] pmu_irq=0x%08lx short=%s long=%s screen=%s\n",
         static_cast<unsigned long>(status),
-        yesNo(watch.isPekeyShortPressIrq()),
-        yesNo(watch.isPekeyLongPressIrq()),
+        yesNo(short_press),
+        yesNo(long_press),
         g_screen_on ? "on" : "off");
 
     watch.clearPMU();
+
+    if (long_press) {
+        enterTimerDeepSleep();
+        return;
+    }
+
+    if (short_press) {
+        setScreenState(!g_screen_on, "pmu-short");
+    }
 }
 
 void logHeartbeat()
@@ -428,6 +508,14 @@ void setup()
     Serial.println();
     Serial.println("[bringup] Magic Watch T-Watch S3 Plus minimal bring-up");
     Serial.println("[bringup] Scope: serial log + 240x240 display + minimal LVGL");
+
+    g_wakeup_cause = esp_sleep_get_wakeup_cause();
+    ++g_rtc_boot_count;
+    Serial.printf(
+        "[bringup-sleep] boot=%lu wake=%s cause=%d\n",
+        static_cast<unsigned long>(g_rtc_boot_count),
+        wakeupCauseName(g_wakeup_cause),
+        static_cast<int>(g_wakeup_cause));
 
     watch.disableBootDisplay();
     if (!watch.begin(&Serial)) {

@@ -83,14 +83,18 @@ bool LilyGoLib::begin(Stream *stream)
     pinMode(BOARD_TOUCH_INT, INPUT);
 
     Wire.begin(BOARD_I2C_SDA, BOARD_I2C_SCL);
+#ifndef MW_BRINGUP_SKIP_I2C_SCAN
     if (stream) {
         deviceScan(&Wire, stream);
     }
+#endif
 
     Wire1.begin(BOARD_TOUCH_SDA, BOARD_TOUCH_SCL);
+#ifndef MW_BRINGUP_SKIP_I2C_SCAN
     if (stream) {
         deviceScan(&Wire1, stream);
     }
+#endif
 
     log_println("Init PMU");
     if (!beginPower()) {
@@ -212,6 +216,7 @@ bool LilyGoLib::begin(Stream *stream)
         devices_probe |= WATCH_DRV_ONLINE;
     }
 
+#ifndef MW_BRINGUP_SKIP_GPS_PROBE
     log_println("Init GPS");
     res = initGPS();
     if (res) {
@@ -222,6 +227,10 @@ bool LilyGoLib::begin(Stream *stream)
         // if not detect gps , turn off dc3
         disableDC3();
     }
+#else
+    log_println("Skip GPS probe for bring-up");
+    disableDC3();
+#endif
 
 #ifdef USING_TWATCH_S3
     log_println("Init Radio SPI Bus");
@@ -817,7 +826,6 @@ bool LilyGoLib::factoryGPS()
 
 
 LilyGoLib watch;
-
 
 
 

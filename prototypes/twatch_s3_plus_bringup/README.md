@@ -33,7 +33,13 @@
 - screen off 后触摸是否能恢复显示。
 - 串口输出 `[bringup-screen]`，用于记录 screen off/on 原因和次数。
 
-本目录不代表最终硬件选型，不接入 Magic Watch 模拟器页面，不做真实计步、触摸完整手势、AXP2101 深度电源策略或 screen off / wake。
+第六小闭环只验证：
+
+- 长按侧键后是否能进入 15 秒 timer deep sleep。
+- timer deep sleep 唤醒后是否能重启并重新初始化屏幕、LVGL 和日志。
+- 串口是否能显示 `wake=timer`。
+
+本目录不代表最终硬件选型，不接入 Magic Watch 模拟器页面，不做真实计步、触摸完整手势、AXP2101 深度电源策略或完整 sleep/wake 策略。
 
 ## 依赖来源
 
@@ -64,15 +70,18 @@ pio device monitor -b 115200
 - 串口出现 `[bringup] Magic Watch T-Watch S3 Plus minimal bring-up`。
 - 串口每秒输出一次 `[bringup] uptime=...` 心跳。
 - 屏幕显示 `Magic Watch`、`T-Watch S3 Plus bring-up` 和 `uptime ... s`。
+- 页面显示 `Wake ...` 和 deep sleep 后保留的 `Boot ...` 计数。
 - 页面显示 `Touch idle/press/release`、最近触摸坐标和事件计数。
 - 页面显示 AXP2101 基础供电摘要。
 - 页面显示 BMA423 基础加速度摘要。
-- 页面底部显示 `touch + AXP2101 monitor`。
+- 页面底部显示 `Short PEK: screen | Long PEK: timer sleep`。
 - 点按或拖动屏幕后，串口应出现 `[bringup-touch] press`、节流后的 `[bringup-touch] move` 和 `[bringup-touch] release`。
 - 串口每两秒输出一次 `[bringup-pmu] usb=... charging=... batt=... vbus=... sys=... percent=...`。
 - 串口每 0.5 秒输出一次 `[bringup-bma] x=... y=... z=... dir=...`。
 - 短按侧键时，串口应出现 `[bringup-screen] state=off/on reason=pmu-short`。
 - screen off 后触摸屏幕时，串口应出现 `[bringup-screen] state=on reason=touch`。
+- 长按侧键时，屏幕应显示 deep sleep 倒计时，串口应出现 `[bringup-sleep] entering_deep_sleep wake=timer seconds=15`。
+- 约 15 秒后设备应重新启动，串口应出现 `[bringup-sleep] boot=... wake=timer cause=4`。
 
 ## 2026-05-21 首次验证
 
@@ -136,3 +145,29 @@ pio device monitor -b 115200
 - 实物确认：黑屏后再次短按侧键，屏幕稳定恢复。
 - 实物确认：黑屏后触摸屏幕，屏幕稳定恢复。
 - 本闭环仍不进入 light sleep/deep sleep，不验证真实低功耗唤醒源。
+
+## 2026-05-22 Deep Sleep Timer 第一闭环验证
+
+- 编译：通过，命令为 `pio run -e twatch-s3 -j 1`。
+- 上传：通过，端口 `COM9`。
+- 本轮实现：长按侧键触发 3 秒倒计时，然后进入 15 秒 timer deep sleep。
+- 本轮实现：唤醒后设备会重启，页面和串口显示 wake cause 与 RTC boot 计数。
+- 第一次实物观察：倒计时正常，但结束后停在 `Deep sleep now` 页面，没有出现黑屏。
+- 修正实现：进入 deep sleep 前先显式关闭显示和背光，并改用 ESP-IDF timer deep sleep 入口。
+- 修正后编译：通过，命令为 `pio run -e twatch-s3 -j 1`。
+- 修正后上传：通过，端口 `COM9`。
+- 预期串口：进入前出现 `[bringup-sleep] entering_deep_sleep wake=timer seconds=15`。
+- 预期串口：定时唤醒重启后出现 `[bringup-sleep] boot=... wake=timer cause=4`。
+- 实物确认：倒计时结束后会黑屏。
+- 实物确认：约 23 秒后会自动亮回 LVGL 页面。
+- 解释：约 23 秒包含 15 秒 timer deep sleep 和约 7 秒启动到首屏耗时。
+- 本闭环仍不验证 PMU 侧键 deep sleep 唤醒、触摸 deep sleep 唤醒、BMA deep sleep 唤醒或低功耗电流。
+
+## 2026-05-22 复位亮屏延迟修正验证
+
+- 实物观察：按下复位后，无论当前状态如何，都需要约 15 秒才亮屏，刚亮屏时 `uptime` 已约 15 秒。
+- 修正实现：bring-up 默认跳过参考库启动阶段的 I2C 扫描。
+- 修正实现：bring-up 默认跳过 GPS 探测，并关闭 GPS 供电路径。
+- 边界说明：GPS 不在当前硬件前哨闭环验收范围内，跳过 GPS 只用于缩短启动和降低变量，不代表 GPS 硬件结论。
+- 实物确认：复位后页面约 7 秒亮起，明显快于修正前约 15 秒。
+- 剩余观察：约 7 秒首屏延迟仍偏长，可后续单独做启动耗时收敛闭环。
