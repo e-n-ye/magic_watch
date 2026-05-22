@@ -59,3 +59,96 @@
 - 记录坐标范围和旋转映射。
 - 初步观察边缘触摸可靠性。
 - 不引入复杂手势，不接入 Magic Watch 页面状态机。
+
+## B. FT6336U 基础触摸事件实验
+
+日期：2026-05-22
+
+状态：通过。
+
+本轮边界：
+
+- 只验证 FT6336U 经官方 `LV_Helper` 接入 LVGL 后的基础指针事件。
+- 只观察按下、拖动、释放、坐标方向和边缘可靠性。
+- 不实现复杂手势，不接入 Magic Watch 页面状态机，不扩展到 BMA423、AXP2101 或 screen off / wake。
+
+已完成：
+
+- 在 `prototypes/twatch_s3_plus_bringup/src/main.cpp` 中加入触摸状态显示。
+- 页面显示最近触摸状态：`Touch idle`、`Touch press x,y` 或 `Touch release x,y`。
+- 页面显示触摸事件计数，用于确认按下和释放边沿被捕获。
+- 串口加入 `[bringup-touch] press/move/release` 日志，move 日志做了节流，避免拖动时刷屏。
+- 编译通过：`pio run -e twatch-s3 -j 1`。
+- 上传通过：`COM9`。
+- 上传后启动日志和心跳正常。
+
+关键串口观察：
+
+- `probe=0x0000007e`
+- `rotation=2`
+- `brightness=160`
+- `free_heap` 约 `354036`
+- `psram` 约 `8107935`
+
+待人工观察：
+
+- 更细的边缘可靠性统计，例如多次点击四边和四角的丢点率。
+- 是否需要增加原始 FT6336U 坐标记录，用于和 LVGL 旋转后坐标对照。
+
+实物观察：
+
+- 按下和释放均能被页面反映。
+- `Events` 计数会随按下、释放边沿增加。
+- `Touch release` 会实时更新最后一次触摸坐标。
+- 屏幕左上角对应坐标约 `0,0`。
+- 屏幕右下角对应坐标约 `240,240`。
+- 当前 `rotation=2` 下，坐标方向与视觉方向一致。
+
+结论：
+
+- FT6336U 通过官方 `LV_Helper` 接入 LVGL pointer 的基础路径可用。
+- 本轮只证明基础触摸点、边沿事件和坐标方向可用，不代表复杂手势、滚动物理、触摸唤醒或最终触摸器件选型已经完成。
+
+## C. AXP2101 基础供电状态实验
+
+日期：2026-05-22
+
+状态：通过。
+
+本轮边界：
+
+- 只读取 AXP2101 的基础供电状态和电压值。
+- 只观察 USB 接入、充电、放电、电池电压、VBUS 电压、系统电压和电量百分比。
+- 不修改供电轨，不调整充电策略，不处理 PMU 中断、PEK 按键、关机策略或 sleep/wake。
+
+已完成：
+
+- 在 `prototypes/twatch_s3_plus_bringup/src/main.cpp` 中加入 `PmuSnapshot` 基础读数。
+- 页面显示 USB、充电、放电、充电阶段、电池电压、电量百分比和系统电压。
+- 串口每两秒输出 `[bringup-pmu]` 状态日志。
+- 编译通过：`pio run -e twatch-s3 -j 1`。
+- 上传通过：`COM9`。
+- 上传后启动日志、心跳和 PMU 状态日志正常。
+
+关键串口观察：
+
+- `usb=Y`
+- `charging=Y`
+- `discharging=N`
+- `chg=cc`
+- `batt` 约 `3538` 到 `3541mV`
+- `vbus` 约 `4757` 到 `4759mV`
+- `sys` 约 `4745` 到 `4753mV`
+- `percent=4`
+- 心跳观察：`free_heap` 约 `353740`，`psram` 约 `8107935`
+
+实物观察：
+
+- USB 接入时，显示 `usb=Y`、`charging=Y`、`discharging=N`。
+- 拔掉 USB 后，显示 `usb=N`、`charging=N`、`discharging=Y`。
+- 重新插入 USB 后，状态恢复为 USB 接入和充电路径。
+
+结论：
+
+- AXP2101 基础状态读取路径可用，USB 插入、拔出、充电和放电状态变化能被页面和串口观察到。
+- 本轮只证明基础读数可用，不代表 PMU 中断、PEK 按键、充电策略、低功耗策略或最终 PMIC 选型已经完成。
