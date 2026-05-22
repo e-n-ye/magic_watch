@@ -503,11 +503,12 @@ void logBma()
 void setup()
 {
     Serial.begin(115200);
-    delay(300);
+    delay(50);
 
     Serial.println();
     Serial.println("[bringup] Magic Watch T-Watch S3 Plus minimal bring-up");
     Serial.println("[bringup] Scope: serial log + 240x240 display + minimal LVGL");
+    const uint32_t setup_start_ms = millis();
 
     g_wakeup_cause = esp_sleep_get_wakeup_cause();
     ++g_rtc_boot_count;
@@ -524,6 +525,7 @@ void setup()
             delay(1000);
         }
     }
+    Serial.printf("[bringup-boot] watch.begin_ms=%lu\n", static_cast<unsigned long>(millis() - setup_start_ms));
 
     watch.setBrightness(kBringupBrightness);
     watch.configAccelerometer();
@@ -533,6 +535,7 @@ void setup()
     beginLvglHelper(false);
     buildBringupScreen();
     updateBringupScreen();
+    Serial.printf("[bringup-boot] first_screen_ms=%lu\n", static_cast<unsigned long>(millis() - setup_start_ms));
 
     Serial.printf(
         "[bringup] LVGL ready: hor=%d ver=%d rotation=%u probe=0x%08lx\n",

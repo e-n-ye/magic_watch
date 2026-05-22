@@ -286,3 +286,37 @@
 - 约 23 秒黑屏到亮回可解释为 15 秒 timer deep sleep 加约 7 秒启动到首屏耗时。
 - 当前首屏启动仍有约 7 秒延迟，后续可单独做“启动耗时收敛”闭环。
 - 本闭环不代表运行态恢复，也不代表 PMU/触摸/BMA 作为真实低功耗唤醒源已经可用。
+
+## G. 启动耗时收敛观察
+
+日期：2026-05-22
+
+状态：通过。
+
+本轮边界：
+
+- 只收敛 T-Watch S3 Plus bring-up 工程的复位到 LVGL 首屏耗时。
+- 只跳过当前闭环不需要的参考库初始化项。
+- 不改变最终产品硬件选型判断。
+- 不验证 GPS、Radio、DRV2605、FFat 文件系统或音频路径。
+
+已完成：
+
+- 在 `prototypes/twatch_s3_plus_bringup/platformio.ini` 中加入 bring-up 快速启动宏。
+- 默认跳过 I2C 扫描、GPS 探测、FFat 挂载、DRV2605 初始化、Radio SPI Bus 初始化和 PMU 大段供电轨日志。
+- 移除 `watch.begin()` 尾部固定 1 秒等待。
+- 将 `setup()` 开头等待从 300ms 降为 50ms。
+- 加入 `[bringup-boot] watch.begin_ms=...` 和 `[bringup-boot] first_screen_ms=...` 日志，用于后续继续定位。
+- 编译通过：`pio run -e twatch-s3 -j 1`。
+- 上传通过：`COM9`。
+
+实物观察：
+
+- 修正前，复位到亮屏约 7 秒。
+- 快速启动修正后，复位到亮屏约 2 到 3 秒。
+
+结论：
+
+- 当前 bring-up 工程的复位到首屏耗时已从约 7 秒收敛到约 2 到 3 秒。
+- 2 到 3 秒对当前硬件前哨验证已可接受，后续若要继续优化应单独拆为更细的启动阶段剖析闭环。
+- 本轮跳过 GPS、Radio、DRV2605 和 FFat 是 bring-up 边界收敛，不代表这些外设在最终平台或后续实验中不需要。

@@ -121,6 +121,7 @@ bool LilyGoLib::begin(Stream *stream)
     setTextFont(2);
     fillScreen(TFT_BLACK);
 
+#ifndef MW_BRINGUP_SKIP_FFAT
     log_println("Init FFat");
     if (!FFat.begin()) {
 
@@ -136,6 +137,9 @@ bool LilyGoLib::begin(Stream *stream)
         drawString("Hello T-Watch", 120, 120);
         setBrightness(50);
     }
+#else
+    log_println("Skip FFat for bring-up");
+#endif
 
     log_println("Init Touch");
     res = TouchDrvFT6X36::begin(Wire1, FT6X36_SLAVE_ADDRESS, BOARD_TOUCH_SDA, BOARD_TOUCH_SCL);
@@ -194,6 +198,7 @@ bool LilyGoLib::begin(Stream *stream)
 #endif
 
     log_println("Init DRV2605");
+#ifndef MW_BRINGUP_SKIP_DRV2605
 #if SENSORLIB_VERSION_MINOR > 2
     res = SensorDRV2605::begin(Wire);
 #else
@@ -215,6 +220,10 @@ bool LilyGoLib::begin(Stream *stream)
         SensorDRV2605::run();
         devices_probe |= WATCH_DRV_ONLINE;
     }
+#else
+    log_println("Skip DRV2605 for bring-up");
+    disableBLDO2();
+#endif
 
 #ifndef MW_BRINGUP_SKIP_GPS_PROBE
     log_println("Init GPS");
@@ -232,16 +241,21 @@ bool LilyGoLib::begin(Stream *stream)
     disableDC3();
 #endif
 
-#ifdef USING_TWATCH_S3
+#if defined(USING_TWATCH_S3) && !defined(MW_BRINGUP_SKIP_RADIO_BUS)
     log_println("Init Radio SPI Bus");
     radioBus.begin(BOARD_RADIO_SCK,
                    BOARD_RADIO_MISO,
                    BOARD_RADIO_MOSI);
+#elif defined(USING_TWATCH_S3)
+    log_println("Skip Radio SPI Bus for bring-up");
+    disableALDO4();
 #endif
 
     beginCore();
 
+#ifndef MW_BRINGUP_FAST_BOOT
     delay(1000);
+#endif
 
     return true;
 }
@@ -450,6 +464,7 @@ bool LilyGoLib::beginPower()
     enableDLDO1();  //! Speaker 
 
 
+#ifndef MW_BRINGUP_SKIP_PMU_DUMP
     if (stream) {
         log_println("DCDC=======================================================================");
         stream->printf("DC1  : %s   Voltage:%u mV \n", isEnableDC1()  ? "+" : "-", getDC1Voltage());
@@ -472,6 +487,9 @@ bool LilyGoLib::beginPower()
         stream->printf("DLDO2: %s   Voltage:%u mV\n", isEnableDLDO2()  ? "+" : "-", getDLDO2Voltage());
         log_println("===========================================================================");
     }
+#else
+    log_println("Skip PMU rail dump for bring-up");
+#endif
 
 
     // Set the time of pressing the button to turn off
@@ -826,7 +844,6 @@ bool LilyGoLib::factoryGPS()
 
 
 LilyGoLib watch;
-
 
 
 

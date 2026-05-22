@@ -171,3 +171,15 @@ pio device monitor -b 115200
 - 边界说明：GPS 不在当前硬件前哨闭环验收范围内，跳过 GPS 只用于缩短启动和降低变量，不代表 GPS 硬件结论。
 - 实物确认：复位后页面约 7 秒亮起，明显快于修正前约 15 秒。
 - 剩余观察：约 7 秒首屏延迟仍偏长，可后续单独做启动耗时收敛闭环。
+
+## 2026-05-22 快速启动闭环验证
+
+- 本轮实现：bring-up 默认跳过 I2C 扫描、GPS 探测、FFat 挂载、DRV2605 初始化、Radio SPI Bus 初始化和 PMU 大段供电轨日志。
+- 本轮实现：移除 `watch.begin()` 尾部固定 1 秒等待。
+- 本轮实现：将 `setup()` 开头等待从 300ms 降为 50ms。
+- 本轮实现：串口加入 `[bringup-boot] watch.begin_ms=...` 与 `[bringup-boot] first_screen_ms=...` 启动耗时日志。
+- 编译：通过，命令为 `pio run -e twatch-s3 -j 1`。
+- 上传：通过，端口 `COM9`。
+- 实物确认：复位到亮屏约 2 到 3 秒。
+- 结论：当前 bring-up 工程复位到 LVGL 首屏耗时已收敛到可接受范围。
+- 边界说明：跳过 GPS、Radio、DRV2605 和 FFat 只用于当前 bring-up 低变量验证，不代表这些外设无效或后续不需要验证。
