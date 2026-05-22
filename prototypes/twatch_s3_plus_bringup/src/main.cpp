@@ -11,6 +11,7 @@ constexpr uint32_t kBmaLogIntervalMs = 500;
 constexpr uint32_t kTouchMoveLogIntervalMs = 150;
 constexpr int16_t kTouchMoveThresholdPx = 3;
 constexpr uint8_t kBringupBrightness = 160;
+constexpr uint8_t kScreenOffBrightness = 0;
 
 lv_obj_t *g_uptime_label = nullptr;
 lv_obj_t *g_status_label = nullptr;
@@ -24,7 +25,10 @@ uint32_t g_last_touch_log_ms = 0;
 uint32_t g_touch_events = 0;
 bool g_touch_pressed = false;
 bool g_touch_seen = false;
+bool g_screen_on = true;
+uint32_t g_screen_toggles = 0;
 lv_point_t g_last_touch_point = {0, 0};
+volatile bool g_pmu_irq = false;
 
 struct PmuSnapshot {
     bool charging = false;
@@ -113,6 +117,28 @@ BmaSnapshot readBmaSnapshot()
     return snapshot;
 }
 
+void setPmuIrqFlag()
+{
+    g_pmu_irq = true;
+}
+
+void setScreenState(bool on, const char *reason)
+{
+    if (g_screen_on == on) {
+        return;
+    }
+
+    g_screen_on = on;
+    ++g_screen_toggles;
+    watch.setBrightness(on ? kBringupBrightness : kScreenOffBrightness);
+    Serial.printf(
+        "[bringup-screen] state=%s reason=%s toggles=%lu brightness=%u\n",
+        on ? "on" : "off",
+        reason,
+        static_cast<unsigned long>(g_screen_toggles),
+        watch.getBrightness());
+}
+
 void buildBringupScreen()
 {
     lv_obj_t *screen = lv_scr_act();
@@ -132,13 +158,13 @@ void buildBringupScreen()
     lv_obj_align(subtitle, LV_ALIGN_TOP_MID, 0, 50);
 
     lv_obj_t *panel = lv_obj_create(screen);
-    lv_obj_set_size(panel, 214, 154);
+    lv_obj_set_size(panel, 214, 158);
     lv_obj_set_style_radius(panel, 8, 0);
     lv_obj_set_style_bg_color(panel, lv_color_hex(0x151b24), 0);
     lv_obj_set_style_border_color(panel, lv_color_hex(0x334155), 0);
     lv_obj_set_style_border_width(panel, 1, 0);
     lv_obj_set_style_pad_all(panel, 10, 0);
-    lv_obj_align(panel, LV_ALIGN_CENTER, 0, 27);
+    lv_obj_align(panel, LV_ALIGN_CENTER, 0, 26);
 
     g_status_label = lv_label_create(panel);
     lv_label_set_long_mode(g_status_label, LV_LABEL_LONG_WRAP);
@@ -152,21 +178,21 @@ void buildBringupScreen()
     lv_obj_set_width(g_touch_label, 194);
     lv_obj_set_style_text_color(g_touch_label, lv_color_hex(0xbae6fd), 0);
     lv_obj_set_style_text_font(g_touch_label, &lv_font_montserrat_12, 0);
-    lv_obj_align(g_touch_label, LV_ALIGN_TOP_LEFT, 0, 24);
+    lv_obj_align(g_touch_label, LV_ALIGN_TOP_LEFT, 0, 36);
 
     g_pmu_label = lv_label_create(panel);
     lv_label_set_long_mode(g_pmu_label, LV_LABEL_LONG_WRAP);
     lv_obj_set_width(g_pmu_label, 194);
     lv_obj_set_style_text_color(g_pmu_label, lv_color_hex(0xfde68a), 0);
     lv_obj_set_style_text_font(g_pmu_label, &lv_font_montserrat_12, 0);
-    lv_obj_align(g_pmu_label, LV_ALIGN_TOP_LEFT, 0, 48);
+    lv_obj_align(g_pmu_label, LV_ALIGN_TOP_LEFT, 0, 58);
 
     g_bma_label = lv_label_create(panel);
     lv_label_set_long_mode(g_bma_label, LV_LABEL_LONG_WRAP);
     lv_obj_set_width(g_bma_label, 194);
     lv_obj_set_style_text_color(g_bma_label, lv_color_hex(0xc4b5fd), 0);
     lv_obj_set_style_text_font(g_bma_label, &lv_font_montserrat_12, 0);
-    lv_obj_align(g_bma_label, LV_ALIGN_TOP_LEFT, 0, 86);
+    lv_obj_align(g_bma_label, LV_ALIGN_TOP_LEFT, 0, 96);
 
     g_uptime_label = lv_label_create(panel);
     lv_obj_set_style_text_color(g_uptime_label, lv_color_hex(0x7dd3fc), 0);
@@ -174,7 +200,7 @@ void buildBringupScreen()
     lv_obj_align(g_uptime_label, LV_ALIGN_BOTTOM_LEFT, 0, 0);
 
     lv_obj_t *footer = lv_label_create(screen);
-    lv_label_set_text(footer, "touch + AXP2101 monitor");
+    lv_label_set_text(footer, "PEK: screen off/on | touch wakes");
     lv_obj_set_style_text_color(footer, lv_color_hex(0x64748b), 0);
     lv_obj_set_style_text_font(footer, &lv_font_montserrat_12, 0);
     lv_obj_align(footer, LV_ALIGN_BOTTOM_MID, 0, -10);
@@ -189,8 +215,10 @@ void updateBringupScreen()
 
     lv_label_set_text_fmt(
         g_status_label,
-        "Rot %u | PMU %s | Touch %s | BMA %s",
+        "Scr %s | Rot %u | Tog %lu\nPMU %s T %s BMA %s",
+        g_screen_on ? "on" : "off",
         watch.getRotation(),
+        static_cast<unsigned long>(g_screen_toggles),
         probeStatus(probe, WATCH_PMU_ONLINE),
         probeStatus(probe, WATCH_TOUCH_ONLINE),
         probeStatus(probe, WATCH_BMA_ONLINE));
@@ -283,6 +311,9 @@ void pollTouch()
         abs(point.y - g_last_touch_point.y) >= kTouchMoveThresholdPx;
 
     if (pressed) {
+        if (!g_screen_on) {
+            setScreenState(true, "touch");
+        }
         if (!g_touch_pressed) {
             ++g_touch_events;
             g_touch_seen = true;
@@ -301,6 +332,28 @@ void pollTouch()
     }
 
     g_touch_pressed = pressed;
+}
+
+void processPmuInterrupts()
+{
+    if (!g_pmu_irq) {
+        return;
+    }
+    g_pmu_irq = false;
+
+    const uint64_t status = watch.readPMU();
+    if (watch.isPekeyShortPressIrq()) {
+        setScreenState(!g_screen_on, "pmu-short");
+    }
+
+    Serial.printf(
+        "[bringup-screen] pmu_irq=0x%08lx short=%s long=%s screen=%s\n",
+        static_cast<unsigned long>(status),
+        yesNo(watch.isPekeyShortPressIrq()),
+        yesNo(watch.isPekeyLongPressIrq()),
+        g_screen_on ? "on" : "off");
+
+    watch.clearPMU();
 }
 
 void logHeartbeat()
@@ -387,6 +440,8 @@ void setup()
     watch.setBrightness(kBringupBrightness);
     watch.configAccelerometer();
     watch.enableAccelerometer();
+    watch.attachPMU(setPmuIrqFlag);
+    watch.clearPMU();
     beginLvglHelper(false);
     buildBringupScreen();
     updateBringupScreen();
@@ -402,6 +457,7 @@ void setup()
 void loop()
 {
     lv_task_handler();
+    processPmuInterrupts();
     pollTouch();
     updateBringupScreen();
     logHeartbeat();

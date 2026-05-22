@@ -197,3 +197,47 @@
 - BMA423 基础加速度读取路径可用，当前静置读数和姿态变化都能被页面和串口观察到。
 - 主导轴和符号随姿态变化明显，后续可作为 RaiseToWake 替代路径的输入线索继续评估。
 - 本轮仍未证明计步可用；这与已知“BMA423 计步中断疑似硬件问题”的边界保持一致。
+
+## E. Screen Off / Wake 第一层观察
+
+日期：2026-05-22
+
+状态：通过。
+
+本轮边界：
+
+- 只验证显示 sleep / 背光关闭与恢复。
+- 只观察 PMU 短按侧键切换 screen off/on，以及 screen off 后触摸恢复显示。
+- 不进入 light sleep 或 deep sleep。
+- 不评估真实低功耗电流，不验证 RTC/PMU/BMA/Touch 作为 deep sleep 唤醒源的完整路径。
+
+已完成：
+
+- 在 `prototypes/twatch_s3_plus_bringup/src/main.cpp` 中加入 `g_screen_on` 和 `g_screen_toggles`。
+- 使用 `watch.setBrightness(0)` 关闭显示和背光。
+- 使用 `watch.setBrightness(160)` 恢复显示和背光。
+- 接入 `watch.attachPMU()`，PMU 短按侧键触发 screen off/on 切换。
+- screen off 状态下检测到触摸时恢复显示。
+- 串口输出 `[bringup-screen]`，记录状态、原因、次数和亮度。
+- 编译通过：`pio run -e twatch-s3 -j 1`。
+- 上传通过：`COM9`。
+- 上传后启动日志、心跳、PMU 状态日志和 BMA 状态日志正常。
+
+关键串口观察：
+
+- `probe=0x0000007e`
+- `rotation=2`
+- `brightness=160`
+- `free_heap` 约 `352196`
+- `psram` 约 `8107935`
+
+实物观察：
+
+- 短按侧键后，屏幕稳定变黑。
+- 黑屏后再次短按侧键，屏幕稳定恢复。
+- 黑屏后触摸屏幕，屏幕稳定恢复。
+
+结论：
+
+- screen off/on 第一层代码路径可用，运行态显示关闭和恢复能通过侧键与触摸完成。
+- 本轮结果不能外推到 light sleep/deep sleep 低功耗唤醒能力。

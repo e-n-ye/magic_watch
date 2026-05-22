@@ -26,6 +26,13 @@
 - 屏幕上显示 X/Y/Z 加速度和官方库方向判断。
 - 串口输出 `[bringup-bma]`，用于观察平放、竖起、翻转时的姿态变化。
 
+第五小闭环只验证：
+
+- `setBrightness(0)` 的显示 sleep / 背光关闭路径是否可用。
+- PMU 短按侧键是否能在非 deep sleep 状态下切换 screen off/on。
+- screen off 后触摸是否能恢复显示。
+- 串口输出 `[bringup-screen]`，用于记录 screen off/on 原因和次数。
+
 本目录不代表最终硬件选型，不接入 Magic Watch 模拟器页面，不做真实计步、触摸完整手势、AXP2101 深度电源策略或 screen off / wake。
 
 ## 依赖来源
@@ -64,6 +71,8 @@ pio device monitor -b 115200
 - 点按或拖动屏幕后，串口应出现 `[bringup-touch] press`、节流后的 `[bringup-touch] move` 和 `[bringup-touch] release`。
 - 串口每两秒输出一次 `[bringup-pmu] usb=... charging=... batt=... vbus=... sys=... percent=...`。
 - 串口每 0.5 秒输出一次 `[bringup-bma] x=... y=... z=... dir=...`。
+- 短按侧键时，串口应出现 `[bringup-screen] state=off/on reason=pmu-short`。
+- screen off 后触摸屏幕时，串口应出现 `[bringup-screen] state=on reason=touch`。
 
 ## 2026-05-21 首次验证
 
@@ -113,3 +122,17 @@ pio device monitor -b 115200
 - 姿态观察：竖立时 `x=520`、`dir=top_left`。
 - 姿态观察：屏幕左边缘贴地时 `y=500`、`dir=top_right`。
 - 本闭环仍不验证计步、BMA 中断、RaiseToWake 策略落地或 sleep/wake。
+
+## 2026-05-22 Screen Off / Wake 第一闭环验证
+
+- 编译：通过，命令为 `pio run -e twatch-s3 -j 1`。
+- 固件大小：RAM 约 7.2%，Flash 约 19.2%。
+- 上传：通过，端口 `COM9`。
+- 串口启动：通过，可见 `[bringup]` 启动日志、每秒心跳、PMU 日志和 BMA 日志。
+- 当前实现：PMU 短按侧键切换 `setBrightness(0)` 与 `setBrightness(160)`。
+- 当前实现：screen off 状态下触摸屏幕会调用 `setBrightness(160)` 恢复显示。
+- 关键日志：`[bringup-screen] state=off/on reason=pmu-short/touch toggles=... brightness=...`。
+- 实物确认：短按侧键后，屏幕稳定变黑。
+- 实物确认：黑屏后再次短按侧键，屏幕稳定恢复。
+- 实物确认：黑屏后触摸屏幕，屏幕稳定恢复。
+- 本闭环仍不进入 light sleep/deep sleep，不验证真实低功耗唤醒源。
