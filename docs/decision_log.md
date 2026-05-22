@@ -360,3 +360,31 @@
 
 - 2026-05-22 串口观察确认 USB 接入充电状态：`usb=Y`、`charging=Y`、`discharging=N`、`chg=cc`，电池约 `3540mV`，VBUS 约 `4758mV`，SYS 约 `4747mV`，电量约 `4%`。
 - 2026-05-22 实物拔插确认：拔掉 USB 后显示 `usb=N`、`charging=N`、`discharging=Y`，插回 USB 后恢复为 USB 接入充电状态。
+
+## 2026-05-22: T-Watch S3 Plus 第四闭环只读取 BMA423 基础加速度
+
+背景：
+
+- 用户已说明当前 T-Watch S3 Plus 的 BMA423 计步中断疑似存在硬件问题。
+- 前三轮已经验证显示、触摸和 AXP2101 基础供电状态。
+- 本轮目标是观察 BMA423 基础加速度和姿态变化，不证明计步。
+
+决定：
+
+- 第四闭环只在 `prototypes/twatch_s3_plus_bringup` 中加入 BMA423 基础读数观察。
+- 使用 `watch.configAccelerometer()`、`watch.enableAccelerometer()` 和 `watch.getAccelerometer(x, y, z)`。
+- 页面显示 X/Y/Z 加速度和官方库 `direction()` 结果。
+- 串口输出 `[bringup-bma]`，每 0.5 秒记录一次 X/Y/Z 和方向。
+- 不启用 `enablePedometer()`，不启用 `FEATURE_STEP_CNTR`，不配置计步中断。
+
+理由：
+
+- 基础加速度读数能独立验证 IMU 的最低可用性。
+- 姿态变化可作为后续 RaiseToWake 替代路径的输入线索，但本轮不实现唤醒策略。
+- 保持已知硬件问题边界，不把计步能力误判为通过。
+
+复盘点：
+
+- 2026-05-22 串口静置观察确认基础读数可用：约 `x=30`、`y=-19`、`z=-519`、`dir=bottom`。
+- 2026-05-22 实物姿态观察确认主导轴和方向明显变化：平放 `z=-520 dir=bottom`，倒扣 `z=520 dir=top`，竖立 `x=520 dir=top_left`，屏幕左边缘贴地 `y=500 dir=top_right`。
+- 本轮结果可作为后续 RaiseToWake 替代路径的输入线索，但仍不证明计步或 BMA 中断可用。

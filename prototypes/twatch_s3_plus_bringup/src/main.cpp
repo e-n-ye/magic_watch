@@ -7,6 +7,7 @@ namespace {
 
 constexpr uint32_t kLogIntervalMs = 1000;
 constexpr uint32_t kPmuLogIntervalMs = 2000;
+constexpr uint32_t kBmaLogIntervalMs = 500;
 constexpr uint32_t kTouchMoveLogIntervalMs = 150;
 constexpr int16_t kTouchMoveThresholdPx = 3;
 constexpr uint8_t kBringupBrightness = 160;
@@ -15,8 +16,10 @@ lv_obj_t *g_uptime_label = nullptr;
 lv_obj_t *g_status_label = nullptr;
 lv_obj_t *g_touch_label = nullptr;
 lv_obj_t *g_pmu_label = nullptr;
+lv_obj_t *g_bma_label = nullptr;
 uint32_t g_last_log_ms = 0;
 uint32_t g_last_pmu_log_ms = 0;
+uint32_t g_last_bma_log_ms = 0;
 uint32_t g_last_touch_log_ms = 0;
 uint32_t g_touch_events = 0;
 bool g_touch_pressed = false;
@@ -32,6 +35,14 @@ struct PmuSnapshot {
     uint16_t vbus_mv = 0;
     uint16_t sys_mv = 0;
     int batt_percent = 0;
+};
+
+struct BmaSnapshot {
+    bool ok = false;
+    int16_t x = 0;
+    int16_t y = 0;
+    int16_t z = 0;
+    uint8_t direction = 0;
 };
 
 const char *probeStatus(uint32_t probe_mask, uint32_t bit)
@@ -58,6 +69,26 @@ const char *chargeStatusName(uint8_t status)
     return status < sizeof(kChargeStatus) / sizeof(kChargeStatus[0]) ? kChargeStatus[status] : "unk";
 }
 
+const char *bmaDirectionName(uint8_t direction)
+{
+    switch (direction) {
+    case SensorBMA423::DIRECTION_BOTTOM_LEFT:
+        return "bottom-left";
+    case SensorBMA423::DIRECTION_TOP_RIGHT:
+        return "top-right";
+    case SensorBMA423::DIRECTION_TOP_LEFT:
+        return "top-left";
+    case SensorBMA423::DIRECTION_BOTTOM_RIGHT:
+        return "bottom-right";
+    case SensorBMA423::DIRECTION_BOTTOM:
+        return "bottom";
+    case SensorBMA423::DIRECTION_TOP:
+        return "top";
+    default:
+        return "unknown";
+    }
+}
+
 PmuSnapshot readPmuSnapshot()
 {
     PmuSnapshot snapshot;
@@ -69,6 +100,16 @@ PmuSnapshot readPmuSnapshot()
     snapshot.vbus_mv = watch.getVbusVoltage();
     snapshot.sys_mv = watch.getSystemVoltage();
     snapshot.batt_percent = watch.getBatteryPercent();
+    return snapshot;
+}
+
+BmaSnapshot readBmaSnapshot()
+{
+    BmaSnapshot snapshot;
+    snapshot.ok = watch.getAccelerometer(snapshot.x, snapshot.y, snapshot.z);
+    if (snapshot.ok) {
+        snapshot.direction = watch.direction();
+    }
     return snapshot;
 }
 
@@ -91,34 +132,41 @@ void buildBringupScreen()
     lv_obj_align(subtitle, LV_ALIGN_TOP_MID, 0, 50);
 
     lv_obj_t *panel = lv_obj_create(screen);
-    lv_obj_set_size(panel, 212, 146);
+    lv_obj_set_size(panel, 214, 154);
     lv_obj_set_style_radius(panel, 8, 0);
     lv_obj_set_style_bg_color(panel, lv_color_hex(0x151b24), 0);
     lv_obj_set_style_border_color(panel, lv_color_hex(0x334155), 0);
     lv_obj_set_style_border_width(panel, 1, 0);
     lv_obj_set_style_pad_all(panel, 10, 0);
-    lv_obj_align(panel, LV_ALIGN_CENTER, 0, 24);
+    lv_obj_align(panel, LV_ALIGN_CENTER, 0, 27);
 
     g_status_label = lv_label_create(panel);
     lv_label_set_long_mode(g_status_label, LV_LABEL_LONG_WRAP);
-    lv_obj_set_width(g_status_label, 190);
+    lv_obj_set_width(g_status_label, 194);
     lv_obj_set_style_text_color(g_status_label, lv_color_hex(0xe5e7eb), 0);
     lv_obj_set_style_text_font(g_status_label, &lv_font_montserrat_12, 0);
     lv_obj_align(g_status_label, LV_ALIGN_TOP_LEFT, 0, 0);
 
     g_touch_label = lv_label_create(panel);
     lv_label_set_long_mode(g_touch_label, LV_LABEL_LONG_WRAP);
-    lv_obj_set_width(g_touch_label, 190);
+    lv_obj_set_width(g_touch_label, 194);
     lv_obj_set_style_text_color(g_touch_label, lv_color_hex(0xbae6fd), 0);
     lv_obj_set_style_text_font(g_touch_label, &lv_font_montserrat_12, 0);
-    lv_obj_align(g_touch_label, LV_ALIGN_TOP_LEFT, 0, 38);
+    lv_obj_align(g_touch_label, LV_ALIGN_TOP_LEFT, 0, 24);
 
     g_pmu_label = lv_label_create(panel);
     lv_label_set_long_mode(g_pmu_label, LV_LABEL_LONG_WRAP);
-    lv_obj_set_width(g_pmu_label, 190);
+    lv_obj_set_width(g_pmu_label, 194);
     lv_obj_set_style_text_color(g_pmu_label, lv_color_hex(0xfde68a), 0);
     lv_obj_set_style_text_font(g_pmu_label, &lv_font_montserrat_12, 0);
-    lv_obj_align(g_pmu_label, LV_ALIGN_TOP_LEFT, 0, 76);
+    lv_obj_align(g_pmu_label, LV_ALIGN_TOP_LEFT, 0, 48);
+
+    g_bma_label = lv_label_create(panel);
+    lv_label_set_long_mode(g_bma_label, LV_LABEL_LONG_WRAP);
+    lv_obj_set_width(g_bma_label, 194);
+    lv_obj_set_style_text_color(g_bma_label, lv_color_hex(0xc4b5fd), 0);
+    lv_obj_set_style_text_font(g_bma_label, &lv_font_montserrat_12, 0);
+    lv_obj_align(g_bma_label, LV_ALIGN_TOP_LEFT, 0, 86);
 
     g_uptime_label = lv_label_create(panel);
     lv_obj_set_style_text_color(g_uptime_label, lv_color_hex(0x7dd3fc), 0);
@@ -137,10 +185,11 @@ void updateBringupScreen()
     const uint32_t seconds = millis() / 1000;
     const uint32_t probe = watch.getDeviceProbe();
     const PmuSnapshot pmu = readPmuSnapshot();
+    const BmaSnapshot bma = readBmaSnapshot();
 
     lv_label_set_text_fmt(
         g_status_label,
-        "Disp 240x240 | Rot %u\nPMU %s | Touch %s | BMA %s",
+        "Rot %u | PMU %s | Touch %s | BMA %s",
         watch.getRotation(),
         probeStatus(probe, WATCH_PMU_ONLINE),
         probeStatus(probe, WATCH_TOUCH_ONLINE),
@@ -149,21 +198,21 @@ void updateBringupScreen()
     if (g_touch_pressed) {
         lv_label_set_text_fmt(
             g_touch_label,
-            "Touch press %d,%d\nEvents %lu",
+            "Touch press %d,%d | Ev %lu",
             g_last_touch_point.x,
             g_last_touch_point.y,
             static_cast<unsigned long>(g_touch_events));
     } else if (g_touch_seen) {
         lv_label_set_text_fmt(
             g_touch_label,
-            "Touch release %d,%d\nEvents %lu",
+            "Touch rel %d,%d | Ev %lu",
             g_last_touch_point.x,
             g_last_touch_point.y,
             static_cast<unsigned long>(g_touch_events));
     } else {
         lv_label_set_text_fmt(
             g_touch_label,
-            "Touch idle\nEvents %lu",
+            "Touch idle | Ev %lu",
             static_cast<unsigned long>(g_touch_events));
     }
 
@@ -177,6 +226,18 @@ void updateBringupScreen()
         pmu.batt_mv,
         pmu.batt_percent,
         pmu.sys_mv);
+
+    if (bma.ok) {
+        lv_label_set_text_fmt(
+            g_bma_label,
+            "BMA x:%d y:%d z:%d\nDir %s",
+            bma.x,
+            bma.y,
+            bma.z,
+            bmaDirectionName(bma.direction));
+    } else {
+        lv_label_set_text(g_bma_label, "BMA read failed");
+    }
 
     lv_label_set_text_fmt(g_uptime_label, "uptime %lu s", static_cast<unsigned long>(seconds));
 }
@@ -281,6 +342,29 @@ void logPmu()
         pmu.batt_percent);
 }
 
+void logBma()
+{
+    const uint32_t now = millis();
+    if (now - g_last_bma_log_ms < kBmaLogIntervalMs) {
+        return;
+    }
+    g_last_bma_log_ms = now;
+
+    const BmaSnapshot bma = readBmaSnapshot();
+    if (!bma.ok) {
+        Serial.printf("[bringup-bma] read_failed rotation=%u\n", watch.getRotation());
+        return;
+    }
+
+    Serial.printf(
+        "[bringup-bma] x=%d y=%d z=%d dir=%s rotation=%u\n",
+        bma.x,
+        bma.y,
+        bma.z,
+        bmaDirectionName(bma.direction),
+        watch.getRotation());
+}
+
 }  // namespace
 
 void setup()
@@ -301,6 +385,8 @@ void setup()
     }
 
     watch.setBrightness(kBringupBrightness);
+    watch.configAccelerometer();
+    watch.enableAccelerometer();
     beginLvglHelper(false);
     buildBringupScreen();
     updateBringupScreen();
@@ -320,5 +406,6 @@ void loop()
     updateBringupScreen();
     logHeartbeat();
     logPmu();
+    logBma();
     delay(5);
 }

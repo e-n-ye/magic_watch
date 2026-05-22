@@ -20,6 +20,12 @@
 - 屏幕上显示 USB、充电、放电、电池电压、电量和系统电压摘要。
 - 串口输出 `[bringup-pmu]`，用于记录 USB 插入、充电状态和电压变化。
 
+第四小闭环只验证：
+
+- BMA423 基础加速度读数是否可用。
+- 屏幕上显示 X/Y/Z 加速度和官方库方向判断。
+- 串口输出 `[bringup-bma]`，用于观察平放、竖起、翻转时的姿态变化。
+
 本目录不代表最终硬件选型，不接入 Magic Watch 模拟器页面，不做真实计步、触摸完整手势、AXP2101 深度电源策略或 screen off / wake。
 
 ## 依赖来源
@@ -53,9 +59,11 @@ pio device monitor -b 115200
 - 屏幕显示 `Magic Watch`、`T-Watch S3 Plus bring-up` 和 `uptime ... s`。
 - 页面显示 `Touch idle/press/release`、最近触摸坐标和事件计数。
 - 页面显示 AXP2101 基础供电摘要。
+- 页面显示 BMA423 基础加速度摘要。
 - 页面底部显示 `touch + AXP2101 monitor`。
 - 点按或拖动屏幕后，串口应出现 `[bringup-touch] press`、节流后的 `[bringup-touch] move` 和 `[bringup-touch] release`。
 - 串口每两秒输出一次 `[bringup-pmu] usb=... charging=... batt=... vbus=... sys=... percent=...`。
+- 串口每 0.5 秒输出一次 `[bringup-bma] x=... y=... z=... dir=...`。
 
 ## 2026-05-21 首次验证
 
@@ -90,3 +98,18 @@ pio device monitor -b 115200
 - 电压观察示例：`batt=3540mV`、`vbus=4758mV`、`sys=4747mV`、`percent=4`。
 - 实物拔插确认：拔掉 USB 后显示 `usb=N`、`charging=N`、`discharging=Y`，插回 USB 后恢复为 USB 接入充电状态。
 - 本闭环仍不验证 PMU 中断、PEK 按键事件、充电策略、关机策略或 sleep/wake。
+
+## 2026-05-22 BMA423 基础加速度闭环验证
+
+- 编译：通过，命令为 `pio run -e twatch-s3 -j 1`。
+- 固件大小：RAM 约 7.0%，Flash 约 19.1%。
+- 上传：通过，端口 `COM9`。
+- 串口启动：通过，可见 `[bringup]` 启动日志、每秒心跳和 `[bringup-bma]` 状态日志。
+- 当前静置观察示例：`x=30`、`y=-19`、`z=-519`、`dir=bottom`、`rotation=2`。
+- 本闭环没有启用 `enablePedometer()`，没有启用 `FEATURE_STEP_CNTR`，也没有把计步中断作为验收项。
+- 实物确认：平放、竖起、翻转时 X/Y/Z 主导轴和 `dir` 均明显变化。
+- 姿态观察：平放时 `z=-520`、`dir=bottom`。
+- 姿态观察：倒扣置桌面时 `z=520`、`dir=top`。
+- 姿态观察：竖立时 `x=520`、`dir=top_left`。
+- 姿态观察：屏幕左边缘贴地时 `y=500`、`dir=top_right`。
+- 本闭环仍不验证计步、BMA 中断、RaiseToWake 策略落地或 sleep/wake。

@@ -152,3 +152,48 @@
 
 - AXP2101 基础状态读取路径可用，USB 插入、拔出、充电和放电状态变化能被页面和串口观察到。
 - 本轮只证明基础读数可用，不代表 PMU 中断、PEK 按键、充电策略、低功耗策略或最终 PMIC 选型已经完成。
+
+## D. BMA423 基础加速度与姿态实验
+
+日期：2026-05-22
+
+状态：通过。
+
+本轮边界：
+
+- 只读取 BMA423 基础 X/Y/Z 加速度和官方库 `direction()` 结果。
+- 只观察平放、竖起、翻转时数值是否明显变化。
+- 不启用计步，不接入 Steps/Pedometer，不把计步中断作为验收项。
+- 不处理 BMA 中断、RaiseToWake 策略落地、screen off / wake 或 sleep。
+
+已完成：
+
+- 在 `prototypes/twatch_s3_plus_bringup/src/main.cpp` 中加入 `BmaSnapshot` 基础读数。
+- 调用 `watch.configAccelerometer()` 和 `watch.enableAccelerometer()`。
+- 页面显示 BMA423 X/Y/Z 加速度和方向判断。
+- 串口每 0.5 秒输出 `[bringup-bma]` 状态日志。
+- 编译通过：`pio run -e twatch-s3 -j 1`。
+- 上传通过：`COM9`。
+- 上传后启动日志、心跳、PMU 状态日志和 BMA 状态日志正常。
+
+关键串口观察：
+
+- `probe=0x0000007e`
+- `rotation=2`
+- `free_heap` 约 `353452`
+- `psram` 约 `8107935`
+- BMA 静置示例：`x=30`、`y=-19`、`z=-519`、`dir=bottom`
+
+实物观察：
+
+- 平放、竖起、翻转时，X/Y/Z 主导轴和 `dir` 均有明显变化。
+- 平放时：`z=-520`、`dir=bottom`。
+- 倒扣置桌面时：`z=520`、`dir=top`。
+- 竖立时：`x=520`、`dir=top_left`。
+- 屏幕左边缘贴地时：`y=500`、`dir=top_right`。
+
+结论：
+
+- BMA423 基础加速度读取路径可用，当前静置读数和姿态变化都能被页面和串口观察到。
+- 主导轴和符号随姿态变化明显，后续可作为 RaiseToWake 替代路径的输入线索继续评估。
+- 本轮仍未证明计步可用；这与已知“BMA423 计步中断疑似硬件问题”的边界保持一致。
