@@ -1,5 +1,104 @@
 # Magic Watch Decision Log
 
+## 2026-05-22: v0.4 收口，v0.5 进入 Power Status 页面闭环
+
+背景：
+- v0.4 已完成阶段入口、模拟器系统边界审计、Platform / HAL 事件契约收口和 `Battery / PowerStatus service` 最小边界。
+- `BatteryPowerService` 已接走 `Application` 中的电池样本解释、低电量阈值和低电量通知 latch。
+- 构建通过，且手工验证启动模拟器后按 `B` 热键低电量通知仍出现。
+- 当前 `PageId::SettingBattery` 仍是 placeholder，且 `SettingsHomePage` 没有电池入口，尚没有一个明确、可从设置进入的页面作为 `BatteryPowerService -> DataCenter -> UI` 的真实消费者。
+
+决定：
+- 新增 `docs/v0_4_stage_closure.md`，将 v0.4 阶段收口。
+- 新增 `docs/v0_5_power_status_page_entry.md`，将 v0.5 第一小闭环定为只读 `Power Status` 页面。
+- v0.5 第一轮优先在设置首页新增电池入口，并把 `PageId::SettingBattery` 从 placeholder 改成只读电池 / 电源状态页。
+- 暂不继续抽第二个 service，不新增 `PowerStatusModel`，不扩展 `HAL.h`，不接回 T-Watch 真机。
+
+理由：
+- 继续抽 `Time`、`Motion` 或 `Notification` service 会扩大范围，但不一定提升当前主链路的确定性。
+- 只读 `Power Status` 页面能以低风险验证 `Platform / HAL -> service -> DataCenter -> UI` 的完整路径。
+- 页面只消费现有 `BatteryModel`，能训练 UI 与 service 解耦，而不是继续让页面解释硬件样本。
+
+边界：
+- 本轮不是新增普通 mock 页面，而是为已经抽出的 service 找真实 UI 消费者。
+- 不做电池曲线、续航预测、长续航模式、PMU 详细字段或真实硬件适配。
+- 不引入通用 service framework、RTOS 任务体系或新的平台生命周期契约。
+
+复盘点：
+- v0.5 第一轮完成后，检查设置首页是否能进入 Battery 页面，以及该页面是否只订阅模型、不接触 HAL、不拥有低电量策略。
+- 检查 `B` 热键低电量通知、设置页返回路径和表盘电池显示是否仍正常。
+- 只有这个页面稳定后，再讨论是否需要 `PowerStatusModel` 或更多 PMU 字段。
+
+结果补充：
+- 用户提供小米手表电池页参考，确认 v0.5 拆为四轮：设置页电池主页和说明页、长续航模式与续航优化子页面、进入长续航后的表盘和退出、Quick Settings 长续航入口。
+- 第一轮已完成设置首页电池入口、`BatteryStatusPage` 和 `BatteryInfoPage`。
+- 长续航模式和续航优化卡片已在电池主页展示，但子页面和策略留到下一轮。
+- 构建通过：`cmake --build build --config Debug`。
+
+第二轮结果补充：
+- 新增长续航模式页和续航优化页，电池主页两张卡片已进入对应子页面。
+- 长续航模式页的开关先保留本页交互状态；它代表未来要与 Quick Settings 长续航开关收敛的同一语义，但本轮不触发真实长续航表盘或退出策略。
+- 续航优化页的睡眠、心脏健康、压力、血氧等开关先作为可交互接口占位，后续再与对应健康设置页和 domain model 对接。
+- 构建通过：`cmake --build build --config Debug`。
+
+第三轮结果补充：
+- 新增最小 `PowerModeModel`，让长续航模式从页面本地状态升级为系统可观察状态。
+- 设置页长续航开关开启后进入专用长续航表盘；表盘只显示日期/星期、时间、电量和计步占位。
+- 单击长续航表盘进入退出提示页，旋转表冠累计进度满后退出长续航模式并回到主线表盘。
+- 充电或外部供电样本会退出长续航模式。
+- 本轮只做最小模式闭环；Quick Settings 共用开关、真实计步接入、真实硬件表冠一圈校准和完整低功耗输入矩阵留到后续小轮。
+- 构建通过：`cmake --build build --config Debug`。
+
+第三轮 bugfix：
+- 长续航表盘电量和计步前缀暂改为文本，避免 LVGL 图标符号使用 CJK 字体时显示方框乱码。
+- 长续航模式下 `CrownPress` 不再落入普通回主页逻辑，而是回到长续航表盘。
+- 长续航退出提示页熄屏后再唤醒时，不再恢复退出页，而是统一回到长续航表盘。
+- 构建通过：`cmake --build build --config Debug`。
+
+第四轮结果补充：
+- Quick Settings 长续航入口已接入 `PowerModeModel`。
+- 从 Quick Settings 开启长续航前会显示确认弹窗；确认后进入的模式行为与设置页入口一致。
+- Quick Settings 的长续航按钮会跟随 `PowerModeChanged` 刷新状态。
+- 长续航退出页的表冠进度改为方向性操作：顺时针增加，逆时针减少。
+- 确认弹窗目前是 Quick Settings 内局部 overlay，暂不抽通用弹窗框架。
+- 构建通过：`cmake --build build --config Debug`。
+
+第四轮 bugfix：
+- 长续航表盘不再由全局 `TouchActivity` 打开退出页，避免滑动起手误触。
+- 退出页入口改到 `LongBatteryWatchfacePage` 的 `LV_EVENT_CLICKED`，并复用 click guard 过滤拖动。
+- 构建通过：`cmake --build build --config Debug`。
+
+## 2026-05-22: 进入 v0.4 系统骨架与平台契约收口阶段
+
+背景：
+- v0.2 / v0.3 模拟器壳层已经形成表盘、主页环、Launcher、Settings、显示策略、screen off / wake、Weather mock app 和 Steps mock app 等可回归主路径。
+- T-Watch S3 Plus 硬件前哨已经完成最小显示、触摸、PMU、BMA、screen off / on、timer deep sleep、PMU 侧键 deep sleep 唤醒和启动耗时收敛。
+- 继续扩展模拟器页面会更多变成 UI 细化，继续深挖 T-Watch 会更多进入板级细节；两者都不再是当前训练复杂系统架构能力的最高收益方向。
+- InfiniTime 的经验表明，复杂手表固件不是靠完整模拟器先行落成，而是靠真实运行骨架、清晰任务 / 控制器边界、资源约束和可回归工具共同推进。
+
+决定：
+- 新增 `docs/v0_4_system_skeleton_entry.md` 作为当前阶段入口文档。
+- 暂停 T-Watch S3 Plus 随机硬件实验；T-Watch 继续作为参考验证板和后续对照组，不作为最终平台。
+- 模拟器继续作为主线工具，但任务从“继续堆 UI 页面”调整为“验证输入、状态、导航、显示策略、平台契约和 service 边界是否能持续长大”。
+- 不立刻迁移旧 F411 手表项目，不采购或切换 STM32H7、STM32F407、ESP32-S3 最小系统板。
+- 下一轮优先进入当前模拟器系统边界审计，而不是新增业务页面或继续硬件 bring-up。
+
+理由：
+- 当前硬件前哨已经足以证明真实硬件不会立即推翻现有 `HAL::Device` 和显示 / 输入假设，但尚不足以决定最终主控、屏幕、触摸、IMU 或 PMIC。
+- 当前模拟器已经足够复杂，继续加页面会增加回归压力，却不一定提升系统边界能力。
+- 先把 Application、InputIntentRouter、AppStateMachine、PageManager、DataCenter、DisplayPolicyRules 和 SimulatorDevice 的职责讲清楚，能为后续 Battery / PowerStatus service、Sensor service 和真实平台适配打基础。
+
+边界：
+- 本阶段不启动正式 BSP、完整 RTOS 任务体系、完整 QPC 或通用 service framework。
+- 本阶段不实现真实天气、计步、通知、健康、支付或 NFC 服务。
+- 本阶段不宣布 T-Watch S3 Plus、ESP32-S3、FT6336U、BMA423 或 AXP2101 为最终选型。
+- 抽象只在出现明确重复、状态归属冲突，或至少存在“模拟器 + 参考硬件”两个映射点时推进。
+
+复盘点：
+- 下一轮检查 `docs/v0_4_system_skeleton_entry.md` 是否能让新会话明确“不堆页面、不随机硬件实验、先看系统边界”。
+- 完成系统边界审计后，再决定是否进入 Platform / HAL 事件契约收口。
+- 第一批真实 service 边界默认优先考虑 `Battery / PowerStatus service`，除非审计发现更高风险边界。
+
 ## 2026-05-21: 进入硬件前哨验证 / 选型约束收敛阶段
 
 背景：

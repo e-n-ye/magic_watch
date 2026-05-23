@@ -14,6 +14,7 @@ enum class EventId {
   TimeUpdated,
   BatteryChanged,
   MotionUpdated,
+  PowerModeChanged,
   DisplayPolicyChanged,
   NotificationsChanged,
   NotificationToastRequested,
@@ -47,6 +48,10 @@ struct MotionModel {
   std::int16_t x_mg {0};
   std::int16_t y_mg {0};
   std::int16_t z_mg {0};
+};
+
+struct PowerModeModel {
+  bool long_battery_mode_enabled {false};
 };
 
 enum class NotificationCategory {
@@ -199,6 +204,7 @@ using EventPayload =
                  TimeModel,
                  BatteryModel,
                  MotionModel,
+                 PowerModeModel,
                  DisplayPolicyModel,
                  NotificationItem,
                  NotificationCenterModel,

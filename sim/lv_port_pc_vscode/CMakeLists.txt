@@ -75,6 +75,7 @@ set(MAIN_SOURCES
     src/App/Common/DataCenter.cpp
     src/App/Common/DisplayPolicyRules.cpp
     src/App/Input/InputIntentRouter.cpp
+    src/App/Services/BatteryPowerService.cpp
     src/App/UI/PageId.cpp
     src/App/UI/PageBase.cpp
     src/App/UI/PageManager.cpp

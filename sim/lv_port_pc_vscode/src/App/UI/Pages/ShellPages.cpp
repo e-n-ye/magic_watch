@@ -26,6 +26,8 @@ namespace {
 constexpr const char* kTextClear = "\xE6\xB8\x85\xE7\xA9\xBA";
 constexpr const char* kTextNoMessages = "\xE6\x9A\x82\xE6\x97\xA0\xE6\xB6\x88\xE6\x81\xAF";
 constexpr const char* kTextDismiss = "\xE5\xBF\xBD\xE7\x95\xA5";
+constexpr const char* kTextLongBatteryConfirmBody =
+    "长续航模式开启后仅保留时间、计步、NFC功能。旋转表冠或充电可退出此功能。确定开启？";
 constexpr lv_coord_t kNotificationsCloseDragThreshold = 96;
 constexpr lv_coord_t kNotificationsCloseFlickThreshold = 20;
 constexpr lv_coord_t kNotificationsMaxDragOffset = 220;
@@ -348,6 +350,12 @@ const lv_font_t* cjk_font_16() {
   static std::string font_path = resolve_windows_cjk_font_path();
   static lv_font_t* font = font_path.empty() ? nullptr : lv_tiny_ttf_create_file(font_path.c_str(), 16);
   return font != nullptr ? font : &lv_font_montserrat_16;
+}
+
+const lv_font_t* cjk_font_20() {
+  static std::string font_path = resolve_windows_cjk_font_path();
+  static lv_font_t* font = font_path.empty() ? nullptr : lv_tiny_ttf_create_file(font_path.c_str(), 20);
+  return font != nullptr ? font : &lv_font_montserrat_20;
 }
 
 const lv_font_t* cjk_font_72() {
@@ -4795,6 +4803,7 @@ void QuickSettingsPage::on_will_disappear() {
   stop_toast_timer();
   stop_preview_close_timer();
   hide_toggle_toast();
+  hide_long_battery_confirm();
   if (!suppress_next_click_) {
     long_press_source_button_ = nullptr;
   }
@@ -4812,7 +4821,9 @@ lv_obj_t* QuickSettingsPage::build() {
   backdrop_root_ = lv_obj_create(root);
   sheet_container_ = lv_obj_create(root);
   toast_container_ = lv_obj_create(root);
-  if (backdrop_root_ == nullptr || sheet_container_ == nullptr || toast_container_ == nullptr) {
+  long_battery_confirm_overlay_ = lv_obj_create(root);
+  if (backdrop_root_ == nullptr || sheet_container_ == nullptr || toast_container_ == nullptr ||
+      long_battery_confirm_overlay_ == nullptr) {
     return nullptr;
   }
 
@@ -4931,6 +4942,61 @@ lv_obj_t* QuickSettingsPage::build() {
   lv_obj_set_style_text_align(toast_label_, LV_TEXT_ALIGN_CENTER, 0);
   lv_label_set_text(toast_label_, "");
   lv_obj_center(toast_label_);
+
+  ui_prepare_box(long_battery_confirm_overlay_);
+  lv_obj_set_size(long_battery_confirm_overlay_, LV_PCT(100), LV_PCT(100));
+  lv_obj_align(long_battery_confirm_overlay_, LV_ALIGN_TOP_LEFT, 0, 0);
+  lv_obj_set_style_bg_color(long_battery_confirm_overlay_, lv_color_hex(0x02060D), 0);
+  lv_obj_set_style_bg_opa(long_battery_confirm_overlay_, LV_OPA_COVER, 0);
+  lv_obj_set_style_border_width(long_battery_confirm_overlay_, 0, 0);
+  lv_obj_set_style_radius(long_battery_confirm_overlay_, 0, 0);
+  lv_obj_add_flag(long_battery_confirm_overlay_, LV_OBJ_FLAG_HIDDEN);
+
+  lv_obj_t* confirm_body = lv_label_create(long_battery_confirm_overlay_);
+  lv_obj_t* cancel_button = lv_button_create(long_battery_confirm_overlay_);
+  lv_obj_t* confirm_button = lv_button_create(long_battery_confirm_overlay_);
+  if (confirm_body == nullptr || cancel_button == nullptr || confirm_button == nullptr) {
+    return nullptr;
+  }
+
+  ui_prepare_label(confirm_body);
+  lv_obj_set_width(confirm_body, 196);
+  lv_obj_set_style_text_font(confirm_body, cjk_font_20(), 0);
+  lv_obj_set_style_text_color(confirm_body, lv_color_hex(0xF7FBFF), 0);
+  lv_obj_set_style_text_align(confirm_body, LV_TEXT_ALIGN_CENTER, 0);
+  lv_label_set_long_mode(confirm_body, LV_LABEL_LONG_WRAP);
+  lv_label_set_text(confirm_body, kTextLongBatteryConfirmBody);
+  lv_obj_align(confirm_body, LV_ALIGN_TOP_MID, 0, 34);
+
+  for (lv_obj_t* button : {cancel_button, confirm_button}) {
+    attach_click_guard(button);
+    ui_prepare_box(button);
+    lv_obj_set_size(button, 92, 50);
+    lv_obj_set_style_radius(button, 18, 0);
+    lv_obj_set_style_border_width(button, 0, 0);
+    lv_obj_add_event_cb(button, &QuickSettingsPage::long_battery_confirm_event_cb, LV_EVENT_CLICKED, this);
+  }
+  lv_obj_align(cancel_button, LV_ALIGN_BOTTOM_LEFT, 24, -34);
+  lv_obj_align(confirm_button, LV_ALIGN_BOTTOM_RIGHT, -24, -34);
+  lv_obj_set_style_bg_color(cancel_button, lv_color_hex(0x17314C), 0);
+  lv_obj_set_style_bg_opa(cancel_button, LV_OPA_COVER, 0);
+  lv_obj_set_style_bg_color(confirm_button, lv_color_hex(0x11B8FF), 0);
+  lv_obj_set_style_bg_opa(confirm_button, LV_OPA_COVER, 0);
+  lv_obj_set_user_data(cancel_button, reinterpret_cast<void*>(0U));
+  lv_obj_set_user_data(confirm_button, reinterpret_cast<void*>(1U));
+
+  for (const auto [button, text] : {std::pair {cancel_button, LV_SYMBOL_CLOSE}, std::pair {confirm_button, LV_SYMBOL_OK}}) {
+    lv_obj_t* label = lv_label_create(button);
+    if (label == nullptr) {
+      return nullptr;
+    }
+    ui_prepare_label(label);
+    lv_obj_set_style_text_font(label, &lv_font_montserrat_24, 0);
+    lv_obj_set_style_text_color(label, lv_color_hex(0xE8FBFF), 0);
+    lv_label_set_text(label, text);
+    lv_obj_center(label);
+  }
+  lv_obj_move_foreground(long_battery_confirm_overlay_);
 
   drag_handle_ = lv_obj_create(sheet_container_);
   if (drag_handle_ == nullptr) {
@@ -5080,6 +5146,16 @@ void QuickSettingsPage::toggle_event_cb(lv_event_t* event) {
     self->data_center_.set_keep_screen_on_duration_ms(current ? 0U : 300000U);
     toggle.mode = current ? 0 : 1;
     self->show_toggle_toast(current ? "持续亮屏已关闭" : "持续亮屏5分钟");
+  } else if (toggle.kind == ToggleKind::LongBattery) {
+    const auto mode = self->data_center_.power_mode();
+    const bool current = mode && mode->long_battery_mode_enabled;
+    if (current) {
+      self->data_center_.set_long_battery_mode_enabled(false);
+      toggle.mode = 0;
+    } else {
+      self->show_long_battery_confirm();
+      return;
+    }
   } else {
     toggle.mode = toggle.mode == 0 ? 1 : 0;
   }
@@ -5165,6 +5241,25 @@ void QuickSettingsPage::toast_timeout_cb(lv_timer_t* timer) {
   self->hide_toggle_toast();
 }
 
+void QuickSettingsPage::long_battery_confirm_event_cb(lv_event_t* event) {
+  auto* self = static_cast<QuickSettingsPage*>(lv_event_get_user_data(event));
+  if (self == nullptr || self->should_ignore_click()) {
+    return;
+  }
+  lv_obj_t* target = lv_event_get_current_target_obj(event);
+  if (target == nullptr || !click_guard_allows(target)) {
+    return;
+  }
+
+  const auto confirmed = reinterpret_cast<std::uintptr_t>(lv_obj_get_user_data(target)) == 1U;
+  self->hide_long_battery_confirm();
+  if (!confirmed) {
+    return;
+  }
+
+  self->data_center_.set_long_battery_mode_enabled(true);
+}
+
 void QuickSettingsPage::bind_input() {
   track(data_center_.subscribe(EventId::InputRequested,
                                [this](const Event& event) {
@@ -5226,6 +5321,19 @@ void QuickSettingsPage::bind_display_policy() {
                                        break;
                                      default:
                                        break;
+                                   }
+                                 }
+                               }));
+  track(data_center_.subscribe(EventId::PowerModeChanged,
+                               [this](const Event& event) {
+                                 const auto* mode = std::get_if<PowerModeModel>(&event.payload);
+                                 if (mode == nullptr) {
+                                   return;
+                                 }
+                                 for (std::size_t index = 0; index < toggles_.size(); ++index) {
+                                   if (toggles_[index].kind == ToggleKind::LongBattery) {
+                                     toggles_[index].mode = mode->long_battery_mode_enabled ? 1 : 0;
+                                     apply_toggle_visual(index);
                                    }
                                  }
                                }));
@@ -5341,26 +5449,49 @@ void QuickSettingsPage::apply_toggle_visual(std::size_t index) {
   }
 
   auto& toggle = toggles_[index];
-  bool active = toggle.mode != 0;
-  if (toggle.kind == ToggleKind::NotifyWake) {
-    const auto policy = data_center_.display_policy();
-    active = !policy || policy->notification_wake_enabled;
-  }
-  if (toggle.kind == ToggleKind::RaiseToWake) {
-    const auto policy = data_center_.display_policy();
-    active = !policy || policy->raise_to_wake_mode != RaiseToWakeMode::Off;
-  }
-  if (toggle.kind == ToggleKind::AodFiveMinutes) {
-    const auto policy = data_center_.display_policy();
-    active = policy && policy->keep_screen_on_duration_ms > 0U;
-  }
-  if (toggle.kind == ToggleKind::OpenSettings) {
-    active = false;
-  }
+  const bool active = is_toggle_active(toggle);
 
   lv_obj_set_style_bg_color(toggle.button, active ? lv_color_hex(0x1493FF) : lv_color_hex(0x15294A), 0);
   lv_obj_set_style_bg_opa(toggle.button, LV_OPA_COVER, 0);
   lv_obj_set_style_text_color(toggle.icon_label, lv_color_hex(0xF5FAFF), 0);
+}
+
+bool QuickSettingsPage::is_toggle_active(const ToggleState& toggle) const {
+  if (toggle.kind == ToggleKind::NotifyWake) {
+    const auto policy = data_center_.display_policy();
+    return !policy || policy->notification_wake_enabled;
+  }
+  if (toggle.kind == ToggleKind::RaiseToWake) {
+    const auto policy = data_center_.display_policy();
+    return !policy || policy->raise_to_wake_mode != RaiseToWakeMode::Off;
+  }
+  if (toggle.kind == ToggleKind::AodFiveMinutes) {
+    const auto policy = data_center_.display_policy();
+    return policy && policy->keep_screen_on_duration_ms > 0U;
+  }
+  if (toggle.kind == ToggleKind::LongBattery) {
+    const auto mode = data_center_.power_mode();
+    return mode && mode->long_battery_mode_enabled;
+  }
+  if (toggle.kind == ToggleKind::OpenSettings) {
+    return false;
+  }
+  return toggle.mode != 0;
+}
+
+void QuickSettingsPage::show_long_battery_confirm() {
+  if (long_battery_confirm_overlay_ == nullptr) {
+    return;
+  }
+  hide_toggle_toast();
+  lv_obj_clear_flag(long_battery_confirm_overlay_, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_move_foreground(long_battery_confirm_overlay_);
+}
+
+void QuickSettingsPage::hide_long_battery_confirm() {
+  if (long_battery_confirm_overlay_ != nullptr) {
+    lv_obj_add_flag(long_battery_confirm_overlay_, LV_OBJ_FLAG_HIDDEN);
+  }
 }
 
 void QuickSettingsPage::show_toggle_toast(const char* text) {
@@ -5673,6 +5804,20 @@ std::string screen_off_date_text(const TimeModel& time) {
   return buffer;
 }
 
+std::string long_battery_date_text(const TimeModel& time) {
+  if (!time.valid) {
+    return "--/-- --";
+  }
+  char buffer[32] = {};
+  std::snprintf(buffer,
+                sizeof(buffer),
+                "%02u/%02u %s",
+                static_cast<unsigned>(time.month),
+                static_cast<unsigned>(time.day),
+                weekday_text(weekday_index(time)));
+  return buffer;
+}
+
 void set_hand_points(lv_point_precise_t points[2],
                      float angle_degrees,
                      float center_x,
@@ -5934,6 +6079,254 @@ void ScreenOffPage::update_info_preview() {
                 static_cast<int>(battery_model_.percent),
                 battery_model_.charging ? "+" : "");
   lv_label_set_text(info_battery_label_, battery_text);
+}
+
+LongBatteryWatchfacePage::LongBatteryWatchfacePage(DataCenter& data_center) : PageBase(data_center) {}
+
+PageId LongBatteryWatchfacePage::id() const {
+  return PageId::LongBatteryWatchface;
+}
+
+const char* LongBatteryWatchfacePage::name() const {
+  return page_name(PageId::LongBatteryWatchface);
+}
+
+void LongBatteryWatchfacePage::on_will_appear() {
+  if (const auto time = data_center_.time()) {
+    time_model_ = *time;
+  }
+  if (const auto battery = data_center_.battery()) {
+    battery_model_ = *battery;
+  }
+  refresh_view();
+}
+
+lv_obj_t* LongBatteryWatchfacePage::build() {
+  lv_obj_t* root = lv_obj_create(nullptr);
+  if (root == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_box(root);
+  lv_obj_set_size(root, LV_PCT(100), LV_PCT(100));
+  lv_obj_set_style_bg_color(root, lv_color_hex(0x000000), 0);
+  lv_obj_set_style_bg_opa(root, LV_OPA_COVER, 0);
+  lv_obj_add_flag(root, LV_OBJ_FLAG_CLICKABLE);
+  attach_click_guard(root);
+  lv_obj_add_event_cb(root, &LongBatteryWatchfacePage::watchface_click_event_cb, LV_EVENT_CLICKED, this);
+
+  date_label_ = lv_label_create(root);
+  time_label_ = lv_label_create(root);
+  battery_label_ = lv_label_create(root);
+  steps_label_ = lv_label_create(root);
+  if (date_label_ == nullptr || time_label_ == nullptr || battery_label_ == nullptr || steps_label_ == nullptr) {
+    return nullptr;
+  }
+
+  ui_prepare_label(date_label_);
+  lv_obj_set_style_text_font(date_label_, cjk_font_20(), 0);
+  lv_obj_set_style_text_color(date_label_, lv_color_hex(0xE2F6FF), 0);
+  lv_label_set_text(date_label_, "--/-- --");
+  lv_obj_align(date_label_, LV_ALIGN_CENTER, 0, -48);
+
+  ui_prepare_label(time_label_);
+  lv_obj_set_style_text_font(time_label_, cjk_font_72(), 0);
+  lv_obj_set_style_text_color(time_label_, lv_color_hex(0xE2F6FF), 0);
+  lv_label_set_text(time_label_, "--:--");
+  lv_obj_align(time_label_, LV_ALIGN_CENTER, 0, 4);
+
+  ui_prepare_label(battery_label_);
+  lv_obj_set_style_text_font(battery_label_, cjk_font_20(), 0);
+  lv_obj_set_style_text_color(battery_label_, lv_color_hex(0xE2F6FF), 0);
+  lv_label_set_text(battery_label_, "电量 0%");
+  lv_obj_align(battery_label_, LV_ALIGN_CENTER, 0, 58);
+
+  ui_prepare_label(steps_label_);
+  lv_obj_set_style_text_font(steps_label_, cjk_font_20(), 0);
+  lv_obj_set_style_text_color(steps_label_, lv_color_hex(0xE2F6FF), 0);
+  lv_label_set_text(steps_label_, "步数 0");
+  lv_obj_align(steps_label_, LV_ALIGN_BOTTOM_MID, 0, -28);
+
+  track(data_center_.subscribe(EventId::TimeUpdated,
+                               [this](const Event& event) {
+                                 if (const auto* model = std::get_if<TimeModel>(&event.payload)) {
+                                   apply_time(*model);
+                                 }
+                               }));
+  track(data_center_.subscribe(EventId::BatteryChanged,
+                               [this](const Event& event) {
+                                 if (const auto* model = std::get_if<BatteryModel>(&event.payload)) {
+                                   apply_battery(*model);
+                                 }
+                               }));
+
+  on_will_appear();
+  return root;
+}
+
+void LongBatteryWatchfacePage::watchface_click_event_cb(lv_event_t* event) {
+  auto* self = static_cast<LongBatteryWatchfacePage*>(lv_event_get_user_data(event));
+  if (self == nullptr || self->should_ignore_click()) {
+    return;
+  }
+  lv_obj_t* target = lv_event_get_current_target_obj(event);
+  if (target == nullptr || !click_guard_allows(target)) {
+    return;
+  }
+  self->request_navigation({NavigationAction::Push, PageId::LongBatteryExit});
+}
+
+void LongBatteryWatchfacePage::apply_time(const TimeModel& model) {
+  time_model_ = model;
+  refresh_view();
+}
+
+void LongBatteryWatchfacePage::apply_battery(const BatteryModel& model) {
+  battery_model_ = model;
+  refresh_view();
+}
+
+void LongBatteryWatchfacePage::refresh_view() {
+  if (date_label_ == nullptr || time_label_ == nullptr || battery_label_ == nullptr || steps_label_ == nullptr) {
+    return;
+  }
+
+  const std::string date_text = long_battery_date_text(time_model_);
+  lv_label_set_text(date_label_, date_text.c_str());
+
+  char time_text[8] = {};
+  if (time_model_.valid) {
+    std::snprintf(time_text,
+                  sizeof(time_text),
+                  "%02u:%02u",
+                  static_cast<unsigned>(time_model_.hour),
+                  static_cast<unsigned>(time_model_.minute));
+  } else {
+    std::snprintf(time_text, sizeof(time_text), "--:--");
+  }
+  lv_label_set_text(time_label_, time_text);
+
+  char battery_text[24] = {};
+  std::snprintf(battery_text,
+                sizeof(battery_text),
+                "\xE7\x94\xB5\xE9\x87\x8F %d%%",
+                std::clamp<int>(battery_model_.percent, 0, 100));
+  lv_label_set_text(battery_label_, battery_text);
+  lv_label_set_text(steps_label_, "\xE6\xAD\xA5\xE6\x95\xB0 0");
+}
+
+LongBatteryExitPage::LongBatteryExitPage(DataCenter& data_center) : PageBase(data_center) {}
+
+PageId LongBatteryExitPage::id() const {
+  return PageId::LongBatteryExit;
+}
+
+const char* LongBatteryExitPage::name() const {
+  return page_name(PageId::LongBatteryExit);
+}
+
+void LongBatteryExitPage::on_will_appear() {
+  exit_progress_ = 0;
+  refresh_progress();
+}
+
+lv_obj_t* LongBatteryExitPage::build() {
+  lv_obj_t* root = lv_obj_create(nullptr);
+  if (root == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_box(root);
+  lv_obj_set_size(root, LV_PCT(100), LV_PCT(100));
+  lv_obj_set_style_bg_color(root, lv_color_hex(0x000000), 0);
+  lv_obj_set_style_bg_opa(root, LV_OPA_COVER, 0);
+
+  progress_arc_ = lv_arc_create(root);
+  if (progress_arc_ == nullptr) {
+    return nullptr;
+  }
+  lv_obj_set_size(progress_arc_, 104, 104);
+  lv_obj_align(progress_arc_, LV_ALIGN_CENTER, 0, -36);
+  lv_arc_set_range(progress_arc_, 0, 12);
+  lv_arc_set_value(progress_arc_, 0);
+  lv_obj_remove_flag(progress_arc_, LV_OBJ_FLAG_CLICKABLE);
+  lv_obj_set_style_arc_width(progress_arc_, 10, LV_PART_MAIN);
+  lv_obj_set_style_arc_color(progress_arc_, lv_color_hex(0x12315A), LV_PART_MAIN);
+  lv_obj_set_style_arc_width(progress_arc_, 10, LV_PART_INDICATOR);
+  lv_obj_set_style_arc_color(progress_arc_, lv_color_hex(0x12BFFF), LV_PART_INDICATOR);
+  lv_obj_set_style_bg_opa(progress_arc_, LV_OPA_TRANSP, LV_PART_KNOB);
+  lv_obj_set_style_pad_all(progress_arc_, 0, 0);
+
+  lv_obj_t* center = lv_obj_create(root);
+  if (center == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_box(center);
+  lv_obj_set_size(center, 72, 72);
+  lv_obj_align_to(center, progress_arc_, LV_ALIGN_CENTER, 0, 0);
+  lv_obj_set_style_radius(center, LV_RADIUS_CIRCLE, 0);
+  lv_obj_set_style_bg_color(center, lv_color_hex(0x102D67), 0);
+  lv_obj_set_style_bg_opa(center, LV_OPA_COVER, 0);
+  lv_obj_set_style_border_width(center, 0, 0);
+
+  lv_obj_t* icon = lv_label_create(center);
+  if (icon == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_label(icon);
+  lv_obj_set_style_text_font(icon, &lv_font_montserrat_26, 0);
+  lv_obj_set_style_text_color(icon, lv_color_hex(0x12D6FF), 0);
+  lv_label_set_text(icon, LV_SYMBOL_BATTERY_FULL);
+  lv_obj_center(icon);
+
+  lv_obj_t* text = lv_label_create(root);
+  if (text == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_label(text);
+  lv_obj_set_width(text, 190);
+  lv_obj_set_style_text_font(text, cjk_font_20(), 0);
+  lv_obj_set_style_text_color(text, lv_color_hex(0xE2F6FF), 0);
+  lv_obj_set_style_text_align(text, LV_TEXT_ALIGN_CENTER, 0);
+  lv_label_set_long_mode(text, LV_LABEL_LONG_WRAP);
+  lv_label_set_text(text, "旋转表冠退出长续航\n模式...");
+  lv_obj_align(text, LV_ALIGN_CENTER, 0, 48);
+
+  track(data_center_.subscribe(EventId::InputRequested,
+                               [this](const Event& event) {
+                                 if (root_ == nullptr || lv_screen_active() != root_) {
+                                   return;
+                                 }
+                                 const auto* command = std::get_if<InputCommand>(&event.payload);
+                                 if (command == nullptr) {
+                                   return;
+                                 }
+                                 switch (command->action) {
+                                   case InputAction::CrownRotateCW:
+                                     apply_crown_delta(std::max<std::int16_t>(1, command->value));
+                                     break;
+                                   case InputAction::CrownRotateCCW:
+                                     apply_crown_delta(static_cast<std::int16_t>(-std::max<std::int16_t>(1, command->value)));
+                                     break;
+                                   default:
+                                     break;
+                                 }
+                               }));
+
+  refresh_progress();
+  return root;
+}
+
+void LongBatteryExitPage::apply_crown_delta(std::int16_t detents) {
+  exit_progress_ = static_cast<std::int16_t>(std::clamp<int>(exit_progress_ + detents, 0, 12));
+  refresh_progress();
+  if (exit_progress_ >= 12) {
+    data_center_.set_long_battery_mode_enabled(false);
+  }
+}
+
+void LongBatteryExitPage::refresh_progress() {
+  if (progress_arc_ != nullptr) {
+    lv_arc_set_value(progress_arc_, exit_progress_);
+  }
 }
 
 PassiveShellPage::PassiveShellPage(DataCenter& data_center, PageId page_id, const char* title, const char* detail)

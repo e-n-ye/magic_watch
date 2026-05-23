@@ -34,8 +34,12 @@ class AppStateMachine {
   void handle_navigation(const NavigationCommand& command);
   void handle_input(const InputCommand& command);
   void handle_notification_wake_request(const NotificationItem& item);
+  void handle_power_mode(const PowerModeModel& model);
+  void handle_battery_changed(const BatteryModel& model);
   void boot_to_home(PageTransition transition = PageTransition::Fade);
   void return_home(PageTransition transition = PageTransition::Fade);
+  void enter_long_battery_mode(PageTransition transition = PageTransition::Fade);
+  void exit_long_battery_mode(PageTransition transition = PageTransition::Fade);
   bool wake_from_screen_off(PageTransition transition = PageTransition::Fade);
   void enter_screen_off();
   void enter_powered_off();
@@ -66,7 +70,9 @@ class AppStateMachine {
   void cancel_keep_screen_on_timer(bool clear_policy);
   static void keep_screen_on_timer_cb(lv_timer_t* timer);
   bool keep_screen_on_active() const;
+  bool long_battery_mode_enabled() const;
   bool is_home_surface_page(PageId page_id) const;
+  bool is_long_battery_page(PageId page_id) const;
   bool is_current_home_surface() const;
   bool is_current_watchface_surface() const;
   bool is_watchface_shell_preview_context() const;
@@ -80,6 +86,8 @@ class AppStateMachine {
   EventBus::Subscription navigation_subscription_;
   EventBus::Subscription input_subscription_;
   EventBus::Subscription notification_wake_subscription_;
+  EventBus::Subscription power_mode_subscription_;
+  EventBus::Subscription battery_subscription_;
   EventBus::Subscription display_policy_subscription_;
   PowerState power_state_ {PowerState::Booting};
   ShellSurface shell_surface_ {ShellSurface::None};

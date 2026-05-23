@@ -134,6 +134,20 @@ AppStateMachine::AppStateMachine(DataCenter& data_center, PageManager& page_mana
   notification_wake_subscription_ =
       data_center_.subscribe(EventId::NotificationWakeRequested,
                              [this](const Event& event) { handle_event(event); });
+  power_mode_subscription_ =
+      data_center_.subscribe(EventId::PowerModeChanged,
+                             [this](const Event& event) {
+                               if (const auto* model = std::get_if<PowerModeModel>(&event.payload)) {
+                                 handle_power_mode(*model);
+                               }
+                             });
+  battery_subscription_ =
+      data_center_.subscribe(EventId::BatteryChanged,
+                             [this](const Event& event) {
+                               if (const auto* model = std::get_if<BatteryModel>(&event.payload)) {
+                                 handle_battery_changed(*model);
+                               }
+                             });
   display_policy_subscription_ =
       data_center_.subscribe(EventId::DisplayPolicyChanged,
                              [this](const Event&) {
@@ -254,14 +268,67 @@ void AppStateMachine::handle_navigation(const NavigationCommand& command) {
   }
 }
 
+void AppStateMachine::handle_power_mode(const PowerModeModel& model) {
+  if (model.long_battery_mode_enabled) {
+    enter_long_battery_mode();
+    return;
+  }
+  exit_long_battery_mode();
+}
+
+void AppStateMachine::handle_battery_changed(const BatteryModel& model) {
+  if (!long_battery_mode_enabled()) {
+    return;
+  }
+  if (model.charging || model.external_power) {
+    data_center_.set_long_battery_mode_enabled(false);
+  }
+}
+
 void AppStateMachine::handle_input(const InputCommand& command) {
   static EdgeBackOverlay overlay;
 
+  const bool long_mode = long_battery_mode_enabled();
   if (power_state_ == PowerState::Running && notification_screen_off_timer_ != nullptr) {
     cancel_notification_screen_off(true);
   }
   if (power_state_ == PowerState::Running) {
     reset_auto_screen_off_timer();
+  }
+
+  if (long_mode) {
+    switch (command.action) {
+      case InputAction::SimRaiseToWake:
+      case InputAction::SimRaiseDismiss:
+      case InputAction::SimCoverSleep:
+      case InputAction::OpenNotifications:
+      case InputAction::OpenQuickSettings:
+      case InputAction::TopEdgeProgress:
+      case InputAction::TopEdgeCancel:
+      case InputAction::BottomEdgeProgress:
+      case InputAction::BottomEdgeCancel:
+      case InputAction::HomeSwipeProgress:
+      case InputAction::HomeSwipeCancel:
+      case InputAction::HomeEdgeBackRight:
+      case InputAction::HomeSwipeLeft:
+        overlay.hide();
+        return;
+      case InputAction::CrownPress:
+        overlay.hide();
+        if (power_state_ == PowerState::PoweredOff) {
+          return;
+        }
+        screen_off_page_state_.reset();
+        if (page_manager_.set_root(PageId::LongBatteryWatchface, PageTransition::Fade)) {
+          power_state_ = PowerState::Running;
+          shell_surface_ = ShellSurface::None;
+          home_surface_index_ = 0;
+          schedule_auto_screen_off();
+        }
+        return;
+      default:
+        break;
+    }
   }
 
   switch (command.action) {
@@ -495,9 +562,51 @@ void AppStateMachine::return_home(PageTransition transition) {
   boot_to_home(transition);
 }
 
+void AppStateMachine::enter_long_battery_mode(PageTransition transition) {
+  cancel_notification_screen_off(true);
+  cancel_auto_screen_off();
+  suppress_display_policy_sync_ = true;
+  cancel_keep_screen_on_timer(true);
+  suppress_display_policy_sync_ = false;
+  clear_raise_session(raise_to_wake_session_active_);
+  screen_off_page_state_.reset();
+  if (page_manager_.set_root(PageId::LongBatteryWatchface, transition)) {
+    power_state_ = PowerState::Running;
+    shell_surface_ = ShellSurface::None;
+    home_surface_index_ = 0;
+    schedule_auto_screen_off();
+  }
+}
+
+void AppStateMachine::exit_long_battery_mode(PageTransition transition) {
+  const auto stack_top = page_manager_.stack_top_page_id();
+  const bool on_long_battery_page =
+      (stack_top && is_long_battery_page(*stack_top)) ||
+      (screen_off_page_state_ && !screen_off_page_state_->stack.empty() &&
+       is_long_battery_page(screen_off_page_state_->stack.back()));
+  if (!on_long_battery_page) {
+    return;
+  }
+
+  screen_off_page_state_.reset();
+  boot_to_home(transition);
+}
+
 bool AppStateMachine::wake_from_screen_off(PageTransition transition) {
   cancel_notification_screen_off(true);
   clear_raise_session(raise_to_wake_session_active_);
+
+  if (long_battery_mode_enabled()) {
+    screen_off_page_state_.reset();
+    if (page_manager_.set_root(PageId::LongBatteryWatchface, transition)) {
+      power_state_ = PowerState::Running;
+      shell_surface_ = ShellSurface::None;
+      home_surface_index_ = 0;
+      schedule_auto_screen_off();
+      return true;
+    }
+    return false;
+  }
 
   if (screen_off_page_state_ && page_manager_.restore_state_preserving_target(*screen_off_page_state_, transition)) {
     power_state_ = PowerState::Running;
@@ -697,6 +806,15 @@ void AppStateMachine::launch_app(PageId target) {
 
 bool AppStateMachine::is_home_surface_page(PageId page_id) const {
   return page_id == PageId::HomeRingHost;
+}
+
+bool AppStateMachine::long_battery_mode_enabled() const {
+  const auto& mode = data_center_.power_mode();
+  return mode && mode->long_battery_mode_enabled;
+}
+
+bool AppStateMachine::is_long_battery_page(PageId page_id) const {
+  return page_id == PageId::LongBatteryWatchface || page_id == PageId::LongBatteryExit;
 }
 
 bool AppStateMachine::is_current_home_surface() const {

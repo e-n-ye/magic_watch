@@ -1,7 +1,6 @@
 #include "App/Application.h"
 
 #include <array>
-#include <cstdio>
 #include <filesystem>
 #include <string>
 
@@ -19,11 +18,6 @@ namespace {
 constexpr const char* kTextWeChat = "\xE5\xBE\xAE\xE4\xBF\xA1";
 constexpr const char* kTextSenderChenHongzhi = "\xE9\x99\x88\xE5\xAE\x8F\xE5\xBF\x97";
 constexpr const char* kTextJustNow = "\xE5\x88\x9A\xE5\x88\x9A";
-constexpr const char* kTextBattery = "\xE7\x94\xB5\xE9\x87\x8F";
-constexpr const char* kTextBatteryLow = "\xE7\x94\xB5\xE9\x87\x8F\xE4\xBD\x8E";
-constexpr const char* kTextBatteryBodyPrefix =
-    "\xE6\x89\x8B\xE8\xA1\xA8\xE7\x94\xB5\xE9\x87\x8F\xE8\xBF\x87\xE4\xBD\x8E\xEF\xBC\x8C"
-    "\xE8\xAF\xB7\xE5\x8F\x8A\xE6\x97\xB6\xE5\x85\x85\xE7\x94\xB5\xE3\x80\x82";
 
 std::string make_lvgl_stdio_path(const std::filesystem::path& absolute_path) {
   if (absolute_path.empty()) {
@@ -285,6 +279,7 @@ std::vector<MenuItem> game_items() {
 
 Application::Application(std::unique_ptr<hal::Device> device)
     : device_(std::move(device)),
+      battery_power_service_(data_center_),
       input_router_(page_manager_),
       state_machine_(data_center_, page_manager_) {}
 
@@ -354,6 +349,16 @@ void Application::register_pages() {
       PageId::ScreenOff,
       [this]() {
         return std::make_unique<ScreenOffPage>(data_center_);
+      });
+  page_manager_.register_page(
+      PageId::LongBatteryWatchface,
+      [this]() {
+        return std::make_unique<LongBatteryWatchfacePage>(data_center_);
+      });
+  page_manager_.register_page(
+      PageId::LongBatteryExit,
+      [this]() {
+        return std::make_unique<LongBatteryExitPage>(data_center_);
       });
   page_manager_.register_page(
       PageId::PoweredOff,
@@ -570,8 +575,22 @@ void Application::register_pages() {
   page_manager_.register_page(
       PageId::SettingBattery,
       [this]() {
-        return std::make_unique<PlaceholderPage>(
-            data_center_, PageId::SettingBattery, "Battery", "Battery and charging placeholder.");
+        return std::make_unique<BatteryStatusPage>(data_center_);
+      });
+  page_manager_.register_page(
+      PageId::SettingBatteryLifeMode,
+      [this]() {
+        return std::make_unique<BatteryLifeModePage>(data_center_);
+      });
+  page_manager_.register_page(
+      PageId::SettingBatteryOptimization,
+      [this]() {
+        return std::make_unique<BatteryOptimizationPage>(data_center_);
+      });
+  page_manager_.register_page(
+      PageId::SettingBatteryInfo,
+      [this]() {
+        return std::make_unique<BatteryInfoPage>(data_center_);
       });
   page_manager_.register_page(
       PageId::SettingBluetooth,
@@ -633,10 +652,7 @@ void Application::handle_hal_event(const hal::Event& event) {
       break;
     case hal::EventKind::BatteryChanged:
       if (const auto* model = std::get_if<hal::BatterySample>(&event.payload)) {
-        const BatteryModel battery_model {
-            model->present, model->charging, model->external_power, model->percent, model->millivolts};
-        data_center_.publish_battery(battery_model);
-        maybe_emit_battery_low_notification(battery_model);
+        battery_power_service_.handle_sample(*model);
       }
       break;
     case hal::EventKind::ButtonChanged:
@@ -659,7 +675,7 @@ void Application::handle_hal_event(const hal::Event& event) {
             break;
           case hal::DebugSample::Action::InjectBatteryLowNotification: {
             const auto* battery = data_center_.battery() ? &(*data_center_.battery()) : nullptr;
-            data_center_.push_notification(make_mock_battery_low_notification(battery ? battery->percent : 20));
+            battery_power_service_.inject_low_battery_notification(battery ? battery->percent : 20);
             break;
           }
           case hal::DebugSample::Action::SimRaiseToWake:
@@ -691,20 +707,6 @@ NotificationItem Application::make_mock_message_notification() {
   return item;
 }
 
-NotificationItem Application::make_mock_battery_low_notification(std::int16_t percent) {
-  NotificationItem item;
-  item.id = "battery-" + std::to_string(percent) + "-" + std::to_string(next_notification_id_++);
-  item.category = NotificationCategory::BatteryLow;
-  item.source_label = kTextBattery;
-  item.title = kTextBatteryLow;
-  char body_buffer[96] = {};
-  std::snprintf(body_buffer, sizeof(body_buffer), "%s %d%%", kTextBatteryBodyPrefix, static_cast<int>(percent));
-  item.body = body_buffer;
-  item.time_text = kTextJustNow;
-  item.badge_text = std::to_string(static_cast<int>(percent)) + "%";
-  return item;
-}
-
 #if 0
 NotificationItem Application::make_mock_message_notification() {
   NotificationItem item;
@@ -718,32 +720,6 @@ NotificationItem Application::make_mock_message_notification() {
   return item;
 }
 
-NotificationItem Application::make_mock_battery_low_notification(std::int16_t percent) {
-  NotificationItem item;
-  item.id = "battery-" + std::to_string(percent) + "-" + std::to_string(next_notification_id_++);
-  item.category = NotificationCategory::BatteryLow;
-  item.source_label = "电量";
-  item.title = "电量低";
-  char body_buffer[96] = {};
-  std::snprintf(body_buffer, sizeof(body_buffer), "手表电量过低，请及时充电。%d%%", static_cast<int>(percent));
-  item.body = body_buffer;
-  item.time_text = "刚刚";
-  item.badge_text = std::to_string(static_cast<int>(percent)) + "%";
-  return item;
-}
-
 #endif
-
-void Application::maybe_emit_battery_low_notification(const BatteryModel& model) {
-  if (model.percent > 20) {
-    battery_low_notification_latched_ = false;
-    return;
-  }
-  if (battery_low_notification_latched_) {
-    return;
-  }
-  battery_low_notification_latched_ = true;
-  data_center_.push_notification(make_mock_battery_low_notification(model.percent));
-}
 
 }  // namespace twsim::app

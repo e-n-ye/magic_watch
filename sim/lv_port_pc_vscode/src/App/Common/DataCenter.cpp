@@ -23,6 +23,11 @@ void DataCenter::publish_motion(const MotionModel& model) {
   event_bus_.publish({EventId::MotionUpdated, model});
 }
 
+void DataCenter::publish_power_mode(const PowerModeModel& model) {
+  power_mode_ = model;
+  event_bus_.publish({EventId::PowerModeChanged, model});
+}
+
 void DataCenter::publish_navigation(const NavigationCommand& command) {
   event_bus_.publish({EventId::NavigationRequested, command});
 }
@@ -255,6 +260,17 @@ void DataCenter::set_launcher_layout_mode(LauncherLayoutMode mode) {
   event_bus_.publish({EventId::DisplayPolicyChanged, *display_policy_});
 }
 
+void DataCenter::set_long_battery_mode_enabled(bool enabled) {
+  if (!power_mode_) {
+    power_mode_ = PowerModeModel {};
+  }
+  if (power_mode_->long_battery_mode_enabled == enabled) {
+    return;
+  }
+  power_mode_->long_battery_mode_enabled = enabled;
+  event_bus_.publish({EventId::PowerModeChanged, *power_mode_});
+}
+
 void DataCenter::show_toast_for(std::string_view id) {
   const NotificationItem* item = find_notification(id);
   if (item == nullptr) {
@@ -286,6 +302,10 @@ const std::optional<BatteryModel>& DataCenter::battery() const {
 
 const std::optional<MotionModel>& DataCenter::motion() const {
   return last_motion_;
+}
+
+const std::optional<PowerModeModel>& DataCenter::power_mode() const {
+  return power_mode_;
 }
 
 const std::optional<NotificationCenterModel>& DataCenter::notifications() const {

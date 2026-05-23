@@ -15,6 +15,7 @@ class DataCenter {
   void publish_time(const TimeModel& model);
   void publish_battery(const BatteryModel& model);
   void publish_motion(const MotionModel& model);
+  void publish_power_mode(const PowerModeModel& model);
   void publish_navigation(const NavigationCommand& command);
   void publish_input(const InputCommand& command);
   void publish_shell_preview(const ShellPreviewModel& model);
@@ -40,12 +41,14 @@ class DataCenter {
   void set_brightness_mode(BrightnessMode mode);
   void set_manual_brightness_level(std::uint8_t level);
   void set_launcher_layout_mode(LauncherLayoutMode mode);
+  void set_long_battery_mode_enabled(bool enabled);
   void show_toast_for(std::string_view id);
   void clear_toast();
 
   const std::optional<TimeModel>& time() const;
   const std::optional<BatteryModel>& battery() const;
   const std::optional<MotionModel>& motion() const;
+  const std::optional<PowerModeModel>& power_mode() const;
   const std::optional<NotificationCenterModel>& notifications() const;
   const std::optional<DisplayPolicyModel>& display_policy() const;
   const std::optional<HomeRingPreviewModel>& home_ring_preview() const;
@@ -59,6 +62,7 @@ class DataCenter {
   std::optional<TimeModel> last_time_;
   std::optional<BatteryModel> last_battery_;
   std::optional<MotionModel> last_motion_;
+  std::optional<PowerModeModel> power_mode_ {PowerModeModel {}};
   std::optional<NotificationCenterModel> notification_center_ {NotificationCenterModel {}};
   std::optional<DisplayPolicyModel> display_policy_ {DisplayPolicyModel {}};
   std::optional<HomeRingPreviewModel> home_ring_preview_ {HomeRingPreviewModel {}};

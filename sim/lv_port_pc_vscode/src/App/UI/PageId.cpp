@@ -22,6 +22,10 @@ const char* page_name(PageId page_id) {
       return "ScreenOff";
     case PageId::PoweredOff:
       return "PoweredOff";
+    case PageId::LongBatteryWatchface:
+      return "LongBatteryWatchface";
+    case PageId::LongBatteryExit:
+      return "LongBatteryExit";
     case PageId::HomeShortcutPayments:
       return "HomeShortcutPayments";
     case PageId::HomeShortcutNfc:
@@ -90,6 +94,12 @@ const char* page_name(PageId page_id) {
       return "SettingTimeDate";
     case PageId::SettingBattery:
       return "SettingBattery";
+    case PageId::SettingBatteryLifeMode:
+      return "SettingBatteryLifeMode";
+    case PageId::SettingBatteryOptimization:
+      return "SettingBatteryOptimization";
+    case PageId::SettingBatteryInfo:
+      return "SettingBatteryInfo";
     case PageId::SettingBluetooth:
       return "SettingBluetooth";
     case PageId::SettingWifi:

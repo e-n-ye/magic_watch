@@ -46,7 +46,7 @@ class SettingsHomePage : public SettingsPageBase {
 
   static void item_event_cb(lv_event_t* event);
 
-  std::array<Entry, 7> entries_;
+  std::array<Entry, 8> entries_;
 };
 
 class SettingsPlaceholderPage : public SettingsPageBase {
@@ -80,6 +80,78 @@ class AppLayoutSettingsPage : public SettingsPageBase {
   void refresh_selection();
 
   std::array<LayoutOptionState, 3> options_;
+};
+
+class BatteryStatusPage : public SettingsPageBase {
+ public:
+  explicit BatteryStatusPage(DataCenter& data_center);
+  void on_will_appear() override;
+
+ protected:
+  lv_obj_t* build() override;
+
+ private:
+  enum class RowAction {
+    OpenLifeMode,
+    OpenOptimization,
+  };
+
+  static void info_event_cb(lv_event_t* event);
+  static void row_event_cb(lv_event_t* event);
+  void refresh_from_model();
+  void apply_battery(const BatteryModel& model);
+
+  lv_obj_t* percent_label_ {nullptr};
+  lv_obj_t* duration_label_ {nullptr};
+  lv_obj_t* status_label_ {nullptr};
+};
+
+class BatteryLifeModePage : public SettingsPageBase {
+ public:
+  explicit BatteryLifeModePage(DataCenter& data_center);
+  void on_will_appear() override;
+
+ protected:
+  lv_obj_t* build() override;
+
+ private:
+  static void switch_event_cb(lv_event_t* event);
+  void refresh_switch();
+  void apply_power_mode(const PowerModeModel& model);
+
+  bool enabled_ {false};
+  lv_obj_t* switch_track_ {nullptr};
+};
+
+class BatteryOptimizationPage : public SettingsPageBase {
+ public:
+  explicit BatteryOptimizationPage(DataCenter& data_center);
+  void on_will_appear() override;
+
+ protected:
+  lv_obj_t* build() override;
+
+ private:
+  struct OptionState {
+    const char* title {nullptr};
+    const char* detail {nullptr};
+    bool enabled {true};
+    lv_obj_t* button {nullptr};
+    lv_obj_t* switch_track {nullptr};
+  };
+
+  static void option_event_cb(lv_event_t* event);
+  void refresh_options();
+
+  std::array<OptionState, 5> options_;
+};
+
+class BatteryInfoPage : public SettingsPageBase {
+ public:
+  explicit BatteryInfoPage(DataCenter& data_center);
+
+ protected:
+  lv_obj_t* build() override;
 };
 
 class DisplaySettingsPage : public SettingsPageBase {

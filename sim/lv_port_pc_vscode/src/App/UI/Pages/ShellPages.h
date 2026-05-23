@@ -369,6 +369,7 @@ class QuickSettingsPage : public PageBase {
   static void toggle_long_press_event_cb(lv_event_t* event);
   static void toggle_release_event_cb(lv_event_t* event);
   static void toggle_press_lost_event_cb(lv_event_t* event);
+  static void long_battery_confirm_event_cb(lv_event_t* event);
   static void toast_timeout_cb(lv_timer_t* timer);
 
   void bind_input();
@@ -378,6 +379,9 @@ class QuickSettingsPage : public PageBase {
   void apply_backdrop_time(const TimeModel& model);
   void apply_backdrop_battery(const BatteryModel& model);
   void apply_toggle_visual(std::size_t index);
+  bool is_toggle_active(const ToggleState& toggle) const;
+  void show_long_battery_confirm();
+  void hide_long_battery_confirm();
   void show_toggle_toast(const char* text);
   void hide_toggle_toast();
   void stop_toast_timer();
@@ -398,6 +402,7 @@ class QuickSettingsPage : public PageBase {
   lv_obj_t* drag_handle_ {nullptr};
   lv_obj_t* toast_container_ {nullptr};
   lv_obj_t* toast_label_ {nullptr};
+  lv_obj_t* long_battery_confirm_overlay_ {nullptr};
   lv_coord_t shell_drag_offset_ {0};
   lv_coord_t open_preview_progress_ {0};
   bool shell_drag_active_ {false};
@@ -469,6 +474,50 @@ class ScreenOffPage : public PageBase {
   lv_obj_t* info_battery_label_ {nullptr};
   lv_point_precise_t analog_hour_points_[2] {};
   lv_point_precise_t analog_minute_points_[2] {};
+};
+
+class LongBatteryWatchfacePage : public PageBase {
+ public:
+  explicit LongBatteryWatchfacePage(DataCenter& data_center);
+
+  PageId id() const override;
+  const char* name() const override;
+  void on_will_appear() override;
+
+ protected:
+  lv_obj_t* build() override;
+
+ private:
+  static void watchface_click_event_cb(lv_event_t* event);
+  void apply_time(const TimeModel& model);
+  void apply_battery(const BatteryModel& model);
+  void refresh_view();
+
+  TimeModel time_model_ {};
+  BatteryModel battery_model_ {true, false, false, 52, 0};
+  lv_obj_t* date_label_ {nullptr};
+  lv_obj_t* time_label_ {nullptr};
+  lv_obj_t* battery_label_ {nullptr};
+  lv_obj_t* steps_label_ {nullptr};
+};
+
+class LongBatteryExitPage : public PageBase {
+ public:
+  explicit LongBatteryExitPage(DataCenter& data_center);
+
+  PageId id() const override;
+  const char* name() const override;
+  void on_will_appear() override;
+
+ protected:
+  lv_obj_t* build() override;
+
+ private:
+  void apply_crown_delta(std::int16_t detents);
+  void refresh_progress();
+
+  std::int16_t exit_progress_ {0};
+  lv_obj_t* progress_arc_ {nullptr};
 };
 
 class PassiveShellPage : public PageBase {
