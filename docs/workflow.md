@@ -5,8 +5,9 @@
 每次新会话先做三件事：
 
 1. 阅读 `AGENTS.md`。
-2. 阅读和当前任务相关的 `docs/` 文档。
-3. 用非破坏性命令观察当前 Git 状态和相关文件。
+2. 先阅读 [document_map.md](/D:/MY_Desk/watch/magic_watch/docs/document_map.md)，确认当前必读与历史参考文档的分层。
+3. 阅读和当前任务相关的 `docs/` 文档。
+4. 用非破坏性命令观察当前 Git 状态和相关文件。
 
 推荐命令：
 

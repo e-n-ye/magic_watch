@@ -65,9 +65,9 @@ That means:
 - display wake policy is not yet modeled as a dedicated module
 - launcher visual design is still functional, not final
 
-## Recommended Next Step After This Baseline
+## Historical Next Step At That Time
 
-After this baseline commit, the most suitable next task is:
+At the time of this baseline, the most suitable next task was:
 
 `Build a reusable HomeShortcutPage template and unify the visual / structural language of the watchface-centered home ring.`
 
@@ -76,6 +76,12 @@ This is a better next step than adding more business features because:
 - the interaction shell now exists
 - the next missing piece is surface quality and structural consistency
 - the home ring still uses generic placeholders, which blocks meaningful product refinement
+
+Historical note:
+
+- This recommendation belongs to the 2026-05-14 baseline context.
+- The later standalone `HomeShortcutPage / WeatherShortcutPage` route has already been cleaned out of the current codebase.
+- The current home-ring implementation lives in `HomeRingHostPage` surfaces, not in standalone `HomeShortcut*` pages.
 
 ## Status Note
 

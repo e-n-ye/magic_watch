@@ -1,4 +1,49 @@
 ﻿# Magic Watch Decision Log
+## 2026-05-24: 增加文档导航图，区分当前主线与历史参考
+
+背景：
+- 随着电池、长续航、Steps service、页面清理和文档历史说明的累积，docs/ 目录里的内容已经足够多，新会话容易出现“不知道先读哪份”或“把历史探索文档误当当前主线”的问题。
+- 尤其是 HomeShortcutPage / WeatherShortcutPage 相关历史路线，在代码已清理后，如果文档没有入口分层，仍会持续制造认知噪音。
+
+决定：
+- 新增 docs/document_map.md 作为文档导航入口。
+- 在导航图中明确区分：
+  - 当前主线必读
+  - 按任务类型选读
+  - 历史参考文档
+  - 视觉与素材工作流文档
+- 更新 AGENTS.md 与 docs/workflow.md，让新会话默认先经过这份导航图。
+
+理由：
+- 当前最需要收口的不是更多页面，而是阅读路径本身的清晰度。
+- 与其让每次新会话都从大量文档里重新猜主次，不如显式维护一份“先读什么、哪些是历史”的索引。
+- 这不会改变任何代码行为，却能明显降低后续上下文恢复成本。
+
+复盘点：
+- 以后新增阶段文档或视觉探索文档时，应同时标明它属于“当前必读”还是“历史参考”。
+- 如果一份文档已经不再适合作为当前主线入口，不一定删除，但至少应在导航图或文档顶部补清楚历史语境。
+## 2026-05-24: 删除未参与构建的 Watchface / QuickStatus 孤儿源码文件
+
+背景：
+- 在当前页面清理完成后，仓库中仍残留 WatchfacePage.cpp/.h 与 QuickStatusPage.cpp/.h 这组旧文件。
+- 它们不在 sim/lv_port_pc_vscode/CMakeLists.txt 的编译源列表中，当前构建只使用 CommonPages.cpp、SettingsPages.cpp、ShellPages.cpp 这组页面实现。
+- WatchfacePage 的现行实现已经存在于 ShellPages.cpp/.h，继续保留未参与构建的同名旧文件，会制造“双份实现”的误导。
+
+决定：
+- 删除 sim/lv_port_pc_vscode/src/App/UI/Pages/WatchfacePage.cpp
+- 删除 sim/lv_port_pc_vscode/src/App/UI/Pages/WatchfacePage.h
+- 删除 sim/lv_port_pc_vscode/src/App/UI/Pages/QuickStatusPage.cpp
+- 删除 sim/lv_port_pc_vscode/src/App/UI/Pages/QuickStatusPage.h
+- 同步更新阅读入口和页面可达性文档，明确当前有效实现位置。
+
+理由：
+- 这组文件不参与构建，不承载当前主线路径，也没有保留成备用实现的直接收益。
+- 与其让阅读者先猜“这两个 WatchfacePage 哪个是真的”，不如让仓库中的页面实现和实际构建结果保持一致。
+- 这轮只清理孤儿源码，不触碰 PageId::Watchface 的语义锚点，也不改动状态机与可达页面行为，风险可控。
+
+复盘点：
+- PageId::Watchface 当前仍被 AppStateMachine、InputIntentRouter 和多处返回主页导航当作语义别名使用，不应因为清理孤儿源码就顺手移除。
+- 后续若要继续收口，应优先区分“未参与构建的孤儿文件”和“虽非默认主根页但仍承担导航语义的现行对象”。
 ## 2026-05-23: 第二轮删除未开放遗留设置页并取消 Quick Settings 长按详情
 
 背景：
@@ -581,7 +626,7 @@
 
 - 2026-05-22 实物观察确认：短按侧键可稳定黑屏，黑屏后再次短按侧键可稳定恢复，黑屏后触摸屏幕也可稳定恢复。
 - 若运行态 screen off/on 可靠，下一轮再拆 light sleep 或 deep sleep 唤醒源实验。
-# 2026-05-23: v0.6 第三小轮让主页快捷卡复用同一个 StepsModel
+## 2026-05-23: v0.6 第三小轮让主页快捷卡复用同一个 StepsModel
 
 背景：
 - v0.6 前两小轮已经让 `LongBatteryWatchfacePage` 和 `StepsAppPage` 复用共享 `StepsModel`
@@ -596,7 +641,7 @@
 - 这是一个影响面很小、可独立回归的小闭环
 - 它能继续强化“平台样本 -> service -> DataCenter -> 多页面共享消费者”的主线
 - 不需要为了首页卡片去新增第二套步数状态或快捷页专属 mock
-# 2026-05-23: 增加“当前可达页面 / 遗留未接入页面”清单
+## 2026-05-23: 增加“当前可达页面 / 遗留未接入页面”清单
 
 背景：
 - v0.6 做 StepsModel 多页面复用时，出现过“代码里页面类存在，但当前主路径并不走那一页”的混淆
@@ -614,7 +659,7 @@
 - 这是一个低风险但高收益的认知收口
 - 它能减少后续“改对代码、改错页面”的概率
 - 它也为后续是否保留、重接或收敛遗留页面提供了共同语境
-# 2026-05-23: 第一轮删除非主路径旧工具/能力遗留页
+## 2026-05-23: 第一轮删除非主路径旧工具/能力遗留页
 
 背景：
 - 这些页面大多来自早期围绕 LilyGo 板级能力展开的规划资产

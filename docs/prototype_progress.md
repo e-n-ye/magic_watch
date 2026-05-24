@@ -274,6 +274,13 @@
 
 ## 2026-05-14: Weather Shortcut Layout Variant v1
 
+Historical note:
+
+- This section records the route that was valid on 2026-05-14.
+- At that time the project still used standalone `HomeShortcutPage / WeatherShortcutPage` assets.
+- Those standalone pages were removed from the current codebase on 2026-05-24.
+- The current equivalent implementation target is `HomeRingHostPage` with embedded surfaces.
+
 ### What Changed
 
 - Kept `HomeShortcutPage` as the reusable home-ring baseline for generic shortcut surfaces.
@@ -298,6 +305,11 @@
 - The current implementation focuses on proportion and visual hierarchy first; icon polish and richer card internals can come in later rounds.
 
 ## 2026-05-14: Home Shortcut Template + Visual Workflow
+
+Historical note:
+
+- This section describes an early intermediate structure, not the current page graph.
+- The reusable `HomeShortcutPage` template and standalone `HomeShortcutWeather` route were valuable at that stage, but later became cleanup targets once `HomeRingHostPage` absorbed the active main path.
 
 ### What Changed
 

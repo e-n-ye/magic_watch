@@ -118,9 +118,14 @@
 在这之前，不建议继续扩展步数页面视觉细节或联动更多健康页面。
 # 2026-05-23 补充：主页快捷卡接入共享 StepsModel
 
-- `WeatherShortcutPage` 里的右下角步数小卡已经开始消费共享 `StepsModel`
+- 主页环天气/睡眠/步数快捷面（`HomeRingHostPage` 的 `surface[4]`）里的步数小卡已经开始消费共享 `StepsModel`
 - 当前共享 `StepsModel` 的消费者共有三个：
   - `LongBatteryWatchfacePage`
   - `StepsAppPage`
-  - `WeatherShortcutPage`
+  - `HomeRingHostPage` 的 `surface[4]`
 - 本轮仍然只接入“步数数字”本身，不扩展睡眠卡、天气卡、卡路里或活跃分钟的数据模型
+
+补充说明：
+
+- 文档最初记录这一轮时，代码里还存在独立 `WeatherShortcutPage` 资产。
+- 该独立页已在后续清理中删除；当前有效消费者应以上面的 `HomeRingHostPage` 内嵌快捷面为准。

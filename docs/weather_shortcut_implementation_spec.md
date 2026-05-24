@@ -4,6 +4,13 @@
 
 本文档把第一轮满意的生成图，转换为可落到模拟器代码中的实现规格。
 
+历史说明：
+
+- 这份文档描述的是 2026-05-14 时点的主页环天气快捷页探索路线。
+- 当时代码里还存在 `HomeShortcutPage / WeatherShortcutPage` 这组独立页面资产。
+- 截至 2026-05-24，这组独立页已经从当前代码主线中移除；当前等价的实现目标应理解为 `HomeRingHostPage` 的 `surface[4]`。
+- 因此本文档应作为历史设计推导记录阅读，而不是当前代码结构的直接索引。
+
 参考图：
 
 - [第一轮生成图](/D:/MY_Desk/watch/magic_watch/.agents/generated/home-shortcut-weather-round1/20260514_125859_image_generation.png)
@@ -14,7 +21,7 @@
 
 - 稳定的层级
 - 可缩放的比例关系
-- 可映射到当前 `HomeShortcutPage` / 后续 `WeatherShortcutPage` 的组件边界
+- 可映射到当时的 `HomeShortcutPage` / `WeatherShortcutPage`，以及当前 `HomeRingHostPage::surface[4]` 的组件边界
 
 ## 一句话结论
 
@@ -117,7 +124,7 @@
 
 ## 对当前代码骨架的影响
 
-当前 `HomeShortcutPage` 模板更适合：
+当时的 `HomeShortcutPage` 模板更适合：
 
 - 1 个主卡
 - 下方 4 个对等小卡
@@ -139,7 +146,7 @@
 
 ## 推荐实现顺序
 
-1. 不急着推翻当前 `HomeShortcutPage`
+1. 不急着推翻当时的 `HomeShortcutPage`
 2. 先抽出更稳定的公共视觉片段：
    - 外层黑底
    - 内容舞台
@@ -153,8 +160,13 @@
 
 下一步最合适的代码工作，不是继续生图，而是：
 
-- 给 `HomeShortcutPage` 做轻量收口
+- 给当时的 `HomeShortcutPage` 做轻量收口
 - 然后新增 `WeatherShortcutPage` 作为第一个主页环布局变体
+
+如果映射到当前代码主线，应理解为：
+
+- 继续细化 `HomeRingHostPage` 的 `surface[4]`
+- 而不是恢复独立 `WeatherShortcutPage`
 
 这样我们就完成了一次真正有意义的闭环：
 

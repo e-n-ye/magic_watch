@@ -398,18 +398,15 @@ lv_obj_t* build() override;
 当前 `CMakeLists.txt` 实际编译的是：
 
 - `CommonPages.cpp`
+- `SettingsPages.cpp`
 - `ShellPages.cpp`
-- `ToolPages.cpp`
 
-而不是单独的：
+当前主线应以 `CMakeLists.txt` 中真正参与编译的文件为准。
 
-- `WatchfacePage.cpp`
-- `QuickStatusPage.cpp`
+补充说明：
 
-这说明：
-
-- 项目里确实保留了预研演化过程中的旧文件或备用实现
-- 当前主线应以 `CMakeLists.txt` 中真正参与编译的文件为准
+- 过去这里确实保留过 `WatchfacePage.cpp`、`QuickStatusPage.cpp` 这类未参与构建的旧文件
+- 它们已在 2026-05-24 的孤儿源码清理轮次中删除
 
 这和项目文档“不要因为它有残留就直接清理或重写”的原则是一致的。
 

@@ -33,6 +33,7 @@ Remove-Item "C:\path\to\file.txt"
 - Git 仓库内文档是长期记忆的主载体。
 - Trellis 可作为后续索引、任务拆分和过程记忆，但不能替代仓库内可读、可审阅、可版本管理的文档。
 - 关键背景入口：
+  - `docs/document_map.md`: 文档导航图，区分当前必读、历史参考和视觉探索文档。
   - `docs/project_charter.md`: 项目定位、目标、边界、成功标准。
   - `docs/v0_scope.md`: 当前 v0 闭环范围和验收标准。
   - `docs/home_interaction_model.md`: 表盘中心交互模型。

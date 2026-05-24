@@ -231,6 +231,11 @@
 - 保留实现
 - 非当前主路径根页面
 
+补充说明：
+
+- 2026-05-24 已删除未参与构建的旧 `WatchfacePage.cpp/.h` 与 `QuickStatusPage.cpp/.h` 孤儿文件
+- 当前有效的 `WatchfacePage` 实现在 [ShellPages.cpp](/D:/MY_Desk/watch/magic_watch/sim/lv_port_pc_vscode/src/App/UI/Pages/ShellPages.cpp) / [ShellPages.h](/D:/MY_Desk/watch/magic_watch/sim/lv_port_pc_vscode/src/App/UI/Pages/ShellPages.h)
+
 ### 3. 已在 2026-05-23 第一轮收口中删除的旧工具/能力页
 
 以下页面属于围绕早期 LilyGo 板级能力规划产生的遗留资产，当前既不在主页环，也不在 Launcher / Settings 主路径中，已在第一轮收口中删除：
