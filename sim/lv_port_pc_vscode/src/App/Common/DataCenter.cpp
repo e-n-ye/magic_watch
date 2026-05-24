@@ -18,6 +18,11 @@ void DataCenter::publish_battery(const BatteryModel& model) {
   event_bus_.publish({EventId::BatteryChanged, model});
 }
 
+void DataCenter::publish_steps(const StepsModel& model) {
+  last_steps_ = model;
+  event_bus_.publish({EventId::StepsChanged, model});
+}
+
 void DataCenter::publish_motion(const MotionModel& model) {
   last_motion_ = model;
   event_bus_.publish({EventId::MotionUpdated, model});
@@ -298,6 +303,10 @@ const std::optional<TimeModel>& DataCenter::time() const {
 
 const std::optional<BatteryModel>& DataCenter::battery() const {
   return last_battery_;
+}
+
+const std::optional<StepsModel>& DataCenter::steps() const {
+  return last_steps_;
 }
 
 const std::optional<MotionModel>& DataCenter::motion() const {

@@ -99,6 +99,7 @@ class SimulatorDevice final : public hal::Device {
     if (!initial_publish_done_) {
       emit_time();
       emit_battery();
+      emit_activity();
       initial_publish_done_ = true;
       return;
     }
@@ -160,6 +161,13 @@ class SimulatorDevice final : public hal::Device {
       return;
     }
     callback_({hal::EventKind::BatteryChanged, battery_});
+  }
+
+  void emit_activity() const {
+    if (!callback_) {
+      return;
+    }
+    callback_({hal::EventKind::ActivityUpdated, activity_});
   }
 
   void emit_button(hal::ButtonSample::Action action) const {
@@ -303,6 +311,14 @@ class SimulatorDevice final : public hal::Device {
       emit_debug(hal::DebugSample::Action::SimCoverSleep);
     }
     cover_sleep_latched_ = cover_pressed;
+
+    const bool steps_pressed = key_pressed_fallback(SDL_SCANCODE_S, 'S');
+    if (steps_pressed && !steps_increment_latched_) {
+      activity_.valid = true;
+      activity_.daily_steps += 100U;
+      emit_activity();
+    }
+    steps_increment_latched_ = steps_pressed;
   }
 
   void process_pointer() {
@@ -529,6 +545,7 @@ class SimulatorDevice final : public hal::Device {
   lv_display_t* display_ {nullptr};
   hal::EventCallback callback_;
   mutable hal::BatterySample battery_ {true, false, false, 82, 4060};
+  mutable hal::ActivitySample activity_ {true, 0};
   std::int32_t width_ {240};
   std::int32_t height_ {240};
   std::uint32_t time_accumulator_ms_ {0};
@@ -545,6 +562,7 @@ class SimulatorDevice final : public hal::Device {
   bool raise_to_wake_latched_ {false};
   bool raise_dismiss_latched_ {false};
   bool cover_sleep_latched_ {false};
+  bool steps_increment_latched_ {false};
   bool pointer_pressed_ {false};
   PointerGesture pointer_gesture_ {PointerGesture::None};
   bool horizontal_swipe_progress_active_ {false};

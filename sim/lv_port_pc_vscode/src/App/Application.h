@@ -6,6 +6,7 @@
 #include "App/Common/DataCenter.h"
 #include "App/Input/InputIntentRouter.h"
 #include "App/Services/BatteryPowerService.h"
+#include "App/Services/StepsActivityService.h"
 #include "App/State/AppStateMachine.h"
 #include "App/UI/PageManager.h"
 #include "HAL/HAL.h"
@@ -27,6 +28,7 @@ class Application {
   std::unique_ptr<hal::Device> device_;
   DataCenter data_center_;
   BatteryPowerService battery_power_service_;
+  StepsActivityService steps_activity_service_;
   PageManager page_manager_;
   InputIntentRouter input_router_;
   AppStateMachine state_machine_;

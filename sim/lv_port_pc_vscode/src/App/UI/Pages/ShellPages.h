@@ -1,9 +1,10 @@
-#pragma once
+﻿#pragma once
 
 #include <array>
 #include <chrono>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -89,6 +90,7 @@ class HomeRingHostPage : public PageBase {
  private:
   void apply_time(const TimeModel& model);
   void apply_battery(const BatteryModel& model);
+  void apply_steps(const StepsModel& model);
   void apply_home_ring_preview(const HomeRingPreviewModel& model);
   void layout_surfaces_for_preview(std::uint8_t base_index, std::int8_t direction);
   void set_track_x(lv_coord_t x);
@@ -100,55 +102,15 @@ class HomeRingHostPage : public PageBase {
   lv_obj_t* minute_label_ {nullptr};
   lv_obj_t* battery_label_ {nullptr};
   lv_obj_t* style_stage_ {nullptr};
+  lv_obj_t* weather_steps_value_label_ {nullptr};
   lv_obj_t* pager_root_ {nullptr};
   lv_obj_t* pager_active_dot_ {nullptr};
   std::array<lv_obj_t*, 4> pager_dots_ {{nullptr, nullptr, nullptr, nullptr}};
   WatchfaceConfig config_ {default_watchface_config()};
   WatchfaceRenderState render_state_ {};
   std::unique_ptr<IWatchfaceStyleRenderer> renderer_;
+  StepsModel steps_model_ {true, 0};
   std::size_t settled_surface_index_ {0};
-};
-
-class HomeShortcutPage : public PageBase {
- public:
-  struct Metric {
-    const char* label;
-    const char* value;
-    const char* detail;
-  };
-
-  struct Config {
-    PageId page_id;
-    const char* orbit_label;
-    const char* title;
-    const char* subtitle;
-    const char* focus_label;
-    const char* focus_value;
-    const char* focus_detail;
-    std::array<Metric, 4> metrics;
-  };
-
-  HomeShortcutPage(DataCenter& data_center, Config config);
-
-  PageId id() const override;
-  const char* name() const override;
-
- protected:
-  lv_obj_t* build() override;
-
- private:
-  Config config_;
-};
-
-class WeatherShortcutPage : public PageBase {
- public:
-  explicit WeatherShortcutPage(DataCenter& data_center);
-
-  PageId id() const override;
-  const char* name() const override;
-
- protected:
-  lv_obj_t* build() override;
 };
 
 class WeatherAppPage : public PageBase {
@@ -174,6 +136,7 @@ class StepsAppPage : public PageBase {
 
   PageId id() const override;
   const char* name() const override;
+  void on_will_appear() override;
   void on_will_disappear() override;
 
  protected:
@@ -184,10 +147,18 @@ class StepsAppPage : public PageBase {
   static void crown_release_timer_cb(lv_timer_t* timer);
   void bind_input();
   void apply_crown_drag(bool forward, std::int16_t detents);
+  void apply_steps(const StepsModel& model);
+  void refresh_steps_view();
   void schedule_crown_release();
   void stop_crown_release_timer();
 
+  StepsModel steps_model_ {true, 0};
   lv_obj_t* scroll_root_ {nullptr};
+  lv_obj_t* steps_arc_ {nullptr};
+  lv_obj_t* steps_metric_value_label_ {nullptr};
+  lv_obj_t* steps_metric_target_label_ {nullptr};
+  lv_obj_t* steps_card_value_label_ {nullptr};
+  lv_obj_t* steps_card_unit_label_ {nullptr};
   lv_timer_t* crown_release_timer_ {nullptr};
 };
 
@@ -212,39 +183,6 @@ class StepsDataInfoPage : public PageBase {
 
   lv_obj_t* scroll_root_ {nullptr};
   lv_timer_t* crown_release_timer_ {nullptr};
-};
-
-class PaymentsShortcutPage : public PageBase {
- public:
-  explicit PaymentsShortcutPage(DataCenter& data_center);
-
-  PageId id() const override;
-  const char* name() const override;
-
- protected:
-  lv_obj_t* build() override;
-};
-
-class NfcShortcutPage : public PageBase {
- public:
-  explicit NfcShortcutPage(DataCenter& data_center);
-
-  PageId id() const override;
-  const char* name() const override;
-
- protected:
-  lv_obj_t* build() override;
-};
-
-class HealthShortcutPage : public PageBase {
- public:
-  explicit HealthShortcutPage(DataCenter& data_center);
-
-  PageId id() const override;
-  const char* name() const override;
-
- protected:
-  lv_obj_t* build() override;
 };
 
 class NotificationsPage : public PageBase {
@@ -358,7 +296,7 @@ class QuickSettingsPage : public PageBase {
     const char* label;
     const char* icon_text;
     ToggleKind kind;
-    PageId detail_page;
+    std::optional<PageId> detail_page;
     std::int16_t mode {0};
     lv_obj_t* button {nullptr};
     lv_obj_t* icon_label {nullptr};
@@ -420,7 +358,7 @@ class QuickSettingsPage : public PageBase {
       {"翻腕亮屏", LV_SYMBOL_EYE_OPEN, ToggleKind::RaiseToWake, PageId::SettingDisplayRaiseToWake, 1, nullptr, nullptr},
       {"设置界面", LV_SYMBOL_SETTINGS, ToggleKind::OpenSettings, PageId::SettingsHome, 0, nullptr, nullptr},
       {"手电筒", LV_SYMBOL_CHARGE, ToggleKind::Flashlight, PageId::SettingDisplay, 0, nullptr, nullptr},
-      {"寻找手机", LV_SYMBOL_CALL, ToggleKind::FindPhone, PageId::SettingBluetooth, 0, nullptr, nullptr},
+      {"寻找手机", LV_SYMBOL_CALL, ToggleKind::FindPhone, std::nullopt, 0, nullptr, nullptr},
       {"排水模式", LV_SYMBOL_REFRESH, ToggleKind::Drain, PageId::SettingDisplay, 1, nullptr, nullptr},
       {"长续航模式", LV_SYMBOL_BATTERY_FULL, ToggleKind::LongBattery, PageId::SettingBattery, 0, nullptr, nullptr},
       {"持续亮屏", LV_SYMBOL_EYE_CLOSE, ToggleKind::AodFiveMinutes, PageId::SettingDisplayKeepScreenOn, 0, nullptr, nullptr},
@@ -491,10 +429,12 @@ class LongBatteryWatchfacePage : public PageBase {
   static void watchface_click_event_cb(lv_event_t* event);
   void apply_time(const TimeModel& model);
   void apply_battery(const BatteryModel& model);
+  void apply_steps(const StepsModel& model);
   void refresh_view();
 
   TimeModel time_model_ {};
   BatteryModel battery_model_ {true, false, false, 52, 0};
+  StepsModel steps_model_ {true, 0};
   lv_obj_t* date_label_ {nullptr};
   lv_obj_t* time_label_ {nullptr};
   lv_obj_t* battery_label_ {nullptr};
@@ -537,3 +477,4 @@ class PassiveShellPage : public PageBase {
 };
 
 }  // namespace twsim::app
+

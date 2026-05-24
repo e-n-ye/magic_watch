@@ -1,14 +1,15 @@
 # Simulator Manual Regression Matrix
 
-Date: 2026-05-19
+Date: 2026-05-23
 
 ## Purpose
 
-This checklist is the manual regression baseline for the current v0.2 simulator shell.
+This checklist is the manual regression baseline for the current simulator shell.
 
 Use it when:
 
 - closing a shell-related task
+- closing a battery / power-mode task
 - changing display policy behavior
 - changing settings detail flow
 - changing quick settings behavior
@@ -24,6 +25,7 @@ Primary simulator inputs:
 
 - `Enter` / `Space`: crown press
 - `Q / E`: crown rotate
+- `S`: simulate +100 daily steps
 - `R`: simulate raise-to-wake
 - `F`: simulate raise-dismiss
 - `C`: simulate cover-to-sleep
@@ -37,7 +39,7 @@ Primary simulator inputs:
 
 Before testing:
 
-1. Build with `cmake --build build --target main`
+1. Build with `cmake --build build --config Debug`
 2. Start the simulator from `sim/lv_port_pc_vscode`
 3. Make sure the app can boot to the normal watchface path
 4. Record the current time and battery display once, so obvious stale rendering is easy to spot
@@ -107,8 +109,6 @@ Before testing:
       - `Daily`
       - `Health`
       - `Wallet`
-  - historical or currently non-shell-facing entries such as `GPS`, `Recorder`, `AudioPlayer`,
-    `VideoPlayer`, `Infrared`, `LoRa`, and similar placeholders are not surfaced here
   - touch scroll and crown scroll both keep working
 
 ### A5. Weather App Shell
@@ -157,6 +157,20 @@ Before testing:
   - left-edge right swipe returns to the previous page
   - crown press returns to the watchface-centered home surface
   - no sensor stream, health data model, goal setting, historical trend, or settings linkage is introduced
+
+### A7. Home Shortcut Shared StepsModel
+
+- Action:
+  - stay on the home-ring Weather shortcut page
+  - note the current steps value shown on the small bottom-right steps card
+  - press `S`
+  - confirm the Weather shortcut page steps card updates by `+100`
+  - enter `Steps`
+  - confirm the key step numbers match the Weather shortcut card
+- Expected:
+  - the Weather shortcut steps card is no longer a fixed mock value
+  - `S` updates the home shortcut card and the Steps page through the same shared `StepsModel`
+  - the Weather hero card and sleep card remain unchanged in this round
 
 ## B. Settings Display Page
 
@@ -364,11 +378,150 @@ Before testing:
   - returns to the same prompt state
   - prompt content and buttons remain visible
 
+## I. Battery And Long Battery Mode
+
+### I1. Battery Settings Entry
+
+- Action:
+  - enter `设置`
+  - confirm `电池` is visible on the settings home page
+  - enter `电池`
+- Expected:
+  - `电池` is a first-level settings entry, not a hidden path
+  - entering it opens the battery status page instead of a placeholder
+  - battery page shows current percent, duration estimate, and status text
+
+### I2. Battery Sub-Pages
+
+- Action:
+  - from `电池`, open `说明`
+  - return to `电池`
+  - open `长续航模式`
+  - return to `电池`
+  - open `续航优化`
+  - return to `电池`
+- Expected:
+  - all three entries are reachable from the battery page
+  - back arrow, edge-back, and crown press return correctly
+  - `续航优化` page keeps its local toggle interaction without breaking navigation
+
+### I3. Low Battery Notification Baseline
+
+- Action:
+  - from a normal watchface path, press `B`
+  - open the notifications surface if needed
+- Expected:
+  - low battery notification still appears
+  - battery notification styling remains readable
+  - battery page and watchface battery text do not become stale after the injection
+
+### I4. Enter Long Battery From Settings
+
+- Action:
+  - go to `设置 -> 电池 -> 长续航模式`
+  - enable the main switch
+- Expected:
+  - enabling the switch enters the long-battery watchface
+  - the long-battery watchface only shows date / week, time, battery, and steps model value
+  - home-ring swipe, notifications pull, and quick-settings pull do not open shell surfaces in this mode
+
+### I5. Long Battery Watchface Interaction Contract
+
+- Action:
+  - on the long-battery watchface, single tap the screen
+  - return to the long-battery watchface and try drag / flick / swipe gestures
+  - press crown from the long-battery watchface
+- Expected:
+  - only a confirmed single tap enters the long-battery exit page
+  - drag / flick / swipe do not accidentally enter the exit page
+  - crown press does not jump back to the normal home watchface path
+
+### I6. Long Battery Exit Direction And Wake Restore
+
+- Action:
+  - from the long-battery exit page, rotate `E`
+  - rotate `Q`
+  - let the device auto screen-off on the exit page
+  - wake again with the currently allowed wake path
+- Expected:
+  - `E` increases exit progress
+  - `Q` decreases exit progress
+  - progress is clamped and does not wrap
+  - after screen-off and wake, the app returns to the long-battery watchface instead of restoring the exit page
+
+### I7. Exit Long Battery
+
+- Action:
+  - from the long-battery exit page, rotate `E` until the progress completes
+  - re-enter long-battery mode
+  - trigger charging or external power with the simulator battery stream if available
+- Expected:
+  - completed crown progress exits long-battery mode and returns to the normal home watchface path
+  - charging or external power also exits long-battery mode
+  - after exit, notifications pull, quick-settings pull, and home-ring navigation work again
+
+### I8. Enter Long Battery From Quick Settings
+
+- Action:
+  - from the normal watchface path, open `Quick Settings`
+  - tap the `长续航模式` tile while it is off
+  - cancel once
+  - tap it again and confirm
+- Expected:
+  - opening from quick settings first shows the confirmation prompt
+  - cancel keeps the app in the normal mode
+  - confirm enters the same long-battery watchface path as the settings entry
+  - the quick-settings tile visual state stays aligned with the current power mode
+
+## J. Steps / Activity Service
+
+### J1. Simulator Step Sample Injection
+
+- Action:
+  - enter long-battery mode
+  - note the current steps value on the long-battery watchface
+  - press `S` once
+  - return to or stay on the long-battery watchface
+  - press `S` again
+- Expected:
+  - each `S` press increases the displayed steps by `100`
+  - the updated value comes from the shared model path, not from a page-local button
+  - long-battery watchface rendering updates without breaking the current battery / time display
+
+### J2. Existing Battery Paths Stay Stable
+
+- Action:
+  - after using `S`, press `B`
+  - open the long-battery exit page
+  - rotate `E / Q`
+- Expected:
+  - low-battery notification baseline still works
+  - long-battery exit interaction is unchanged
+  - adding the steps service does not break the v0.5 battery / power-mode path
+
+### J3. Steps App Shared Model Consumer
+
+- Action:
+  - stay in normal mode
+  - open `Steps`
+  - note the current step number in the overview and the large steps card
+  - press `S`
+  - confirm both visible step numbers update
+  - press `S` again
+- Expected:
+  - `StepsAppPage` no longer shows a page-local fixed steps value
+  - the overview step metric and the large steps card stay in sync
+  - each `S` press increases both values by `100`
+  - when the steps value reaches four digits, it stays on one line instead of wrapping
+  - steps / kcal / active cards follow the current simulator width instead of relying on legacy fixed sizing
+  - vertical scroll, crown scroll, and `数据说明` navigation still work
+
 ## Exit Criteria
 
-The current v0.2 shell baseline can be considered stable enough for a new round when:
+The current simulator baseline can be considered stable enough for a new round when:
 
 - all sections above pass without obvious regression
+- all long-battery entry / exit paths pass without page-jump regressions
 - no display-policy state saves to the wrong page
 - no wake / screen-off path jumps to an unexpected page
 - no quick-settings control drifts away from settings-page state

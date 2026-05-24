@@ -14,6 +14,7 @@ class DataCenter {
 
   void publish_time(const TimeModel& model);
   void publish_battery(const BatteryModel& model);
+  void publish_steps(const StepsModel& model);
   void publish_motion(const MotionModel& model);
   void publish_power_mode(const PowerModeModel& model);
   void publish_navigation(const NavigationCommand& command);
@@ -47,6 +48,7 @@ class DataCenter {
 
   const std::optional<TimeModel>& time() const;
   const std::optional<BatteryModel>& battery() const;
+  const std::optional<StepsModel>& steps() const;
   const std::optional<MotionModel>& motion() const;
   const std::optional<PowerModeModel>& power_mode() const;
   const std::optional<NotificationCenterModel>& notifications() const;
@@ -61,6 +63,7 @@ class DataCenter {
   EventBus event_bus_;
   std::optional<TimeModel> last_time_;
   std::optional<BatteryModel> last_battery_;
+  std::optional<StepsModel> last_steps_;
   std::optional<MotionModel> last_motion_;
   std::optional<PowerModeModel> power_mode_ {PowerModeModel {}};
   std::optional<NotificationCenterModel> notification_center_ {NotificationCenterModel {}};

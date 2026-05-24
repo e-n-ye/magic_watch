@@ -7,7 +7,6 @@
 #include "App/UI/Pages/CommonPages.h"
 #include "App/UI/Pages/SettingsPages.h"
 #include "App/UI/Pages/ShellPages.h"
-#include "App/UI/Pages/ToolPages.h"
 #include "lvgl/lvgl.h"
 #include "lvgl/src/libs/tiny_ttf/lv_tiny_ttf.h"
 
@@ -259,27 +258,12 @@ class NotificationToastOverlay {
 
 NotificationToastOverlay g_notification_toast_overlay;
 
-using MenuItem = MenuPage::Item;
-
-std::vector<MenuItem> timing_items() {
-  return {
-      {"Stopwatch", {NavigationAction::Push, PageId::Stopwatch}, "Elapsed timing"},
-      {"Timer", {NavigationAction::Push, PageId::Timer}, "Countdown mode"},
-      {"Alarm", {NavigationAction::Push, PageId::Alarm}, "Weekly schedule"},
-  };
-}
-
-std::vector<MenuItem> game_items() {
-  return {
-      {"2048", {NavigationAction::Push, PageId::Game2048}, "Puzzle placeholder"},
-  };
-}
-
 }  // namespace
 
 Application::Application(std::unique_ptr<hal::Device> device)
     : device_(std::move(device)),
       battery_power_service_(data_center_),
+      steps_activity_service_(data_center_),
       input_router_(page_manager_),
       state_machine_(data_center_, page_manager_) {}
 
@@ -317,26 +301,6 @@ void Application::register_pages() {
 
   page_manager_.register_page(PageId::HomeRingHost, [this]() { return std::make_unique<HomeRingHostPage>(data_center_); });
   page_manager_.register_page(PageId::Watchface, [this]() { return std::make_unique<WatchfacePage>(data_center_); });
-  page_manager_.register_page(
-      PageId::HomeShortcutPayments,
-      [this]() {
-        return std::make_unique<PaymentsShortcutPage>(data_center_);
-      });
-  page_manager_.register_page(
-      PageId::HomeShortcutNfc,
-      [this]() {
-        return std::make_unique<NfcShortcutPage>(data_center_);
-      });
-  page_manager_.register_page(
-      PageId::HomeShortcutHealth,
-      [this]() {
-        return std::make_unique<HealthShortcutPage>(data_center_);
-      });
-  page_manager_.register_page(
-      PageId::HomeShortcutWeather,
-      [this]() {
-        return std::make_unique<WeatherShortcutPage>(data_center_);
-      });
   page_manager_.register_page(PageId::Launcher, [this]() { return std::make_unique<LauncherPage>(data_center_); });
   page_manager_.register_page(PageId::Notifications,
                               [this]() { return std::make_unique<NotificationsPage>(data_center_); });
@@ -371,62 +335,11 @@ void Application::register_pages() {
                               [this]() {
                                 return std::make_unique<SettingsHomePage>(data_center_);
                               });
-  page_manager_.register_page(PageId::TimingToolsHome,
-                              [this]() {
-                                return std::make_unique<MenuPage>(
-                                    data_center_, PageId::TimingToolsHome, "Timing", "Stopwatch / timer / alarm", timing_items());
-                              });
-  page_manager_.register_page(PageId::GamesHome,
-                              [this]() {
-                                return std::make_unique<MenuPage>(
-                                    data_center_, PageId::GamesHome, "Games", "Expandable game hub", game_items());
-                              });
-
-  page_manager_.register_page(PageId::Gps,
-                              [this]() {
-                                return std::make_unique<PlaceholderPage>(
-                                    data_center_, PageId::Gps, "GPS", "Simulator placeholder for future mock location streams.");
-                              });
-  page_manager_.register_page(
-      PageId::Recorder,
-      [this]() {
-        return std::make_unique<PlaceholderPage>(
-            data_center_, PageId::Recorder, "Recorder", "Voice recording shell. Playback routing can attach later.");
-      });
-  page_manager_.register_page(
-      PageId::AudioPlayer,
-      [this]() {
-        return std::make_unique<PlaceholderPage>(
-            data_center_, PageId::AudioPlayer, "Audio Player", "Audio file playback placeholder.");
-      });
-  page_manager_.register_page(
-      PageId::VideoPlayer,
-      [this]() {
-        return std::make_unique<PlaceholderPage>(
-            data_center_, PageId::VideoPlayer, "Video Player", "Video file playback placeholder.");
-      });
-  page_manager_.register_page(
-      PageId::Infrared,
-      [this]() {
-        return std::make_unique<PlaceholderPage>(
-            data_center_, PageId::Infrared, "Infrared", "IR control placeholder for future device routing.");
-      });
   page_manager_.register_page(PageId::Pedometer, [this]() { return std::make_unique<StepsAppPage>(data_center_); });
   page_manager_.register_page(
       PageId::PedometerDataInfo,
       [this]() {
         return std::make_unique<StepsDataInfoPage>(data_center_);
-      });
-  page_manager_.register_page(PageId::Lora,
-                              [this]() {
-                                return std::make_unique<PlaceholderPage>(
-                                    data_center_, PageId::Lora, "LoRa", "LoRa placeholder page.");
-                              });
-  page_manager_.register_page(
-      PageId::Calculator,
-      [this]() {
-        return std::make_unique<PlaceholderPage>(
-            data_center_, PageId::Calculator, "Calculator", "Calculator placeholder page.");
       });
 
   page_manager_.register_page(
@@ -567,12 +480,6 @@ void Application::register_pages() {
             "\xE7\x89\x88\xE6\x9C\xAC\xE5\x8F\xB7\xE5\xB1\x95\xE7\xA4\xBA\xE5\x90\x8E\xE7\xBB\xAD\xE5\x86\x8D\xE8\xBF\x81\xE7\xA7\xBB\xE8\xBF\x9B\xE6\x9D\xA5\xE3\x80\x82");
       });
   page_manager_.register_page(
-      PageId::SettingTimeDate,
-      [this]() {
-        return std::make_unique<PlaceholderPage>(
-            data_center_, PageId::SettingTimeDate, "Time & Date", "Clock, date, and timezone placeholder.");
-      });
-  page_manager_.register_page(
       PageId::SettingBattery,
       [this]() {
         return std::make_unique<BatteryStatusPage>(data_center_);
@@ -592,29 +499,6 @@ void Application::register_pages() {
       [this]() {
         return std::make_unique<BatteryInfoPage>(data_center_);
       });
-  page_manager_.register_page(
-      PageId::SettingBluetooth,
-      [this]() {
-        return std::make_unique<PlaceholderPage>(
-            data_center_, PageId::SettingBluetooth, "Bluetooth", "Bluetooth settings placeholder.");
-      });
-  page_manager_.register_page(
-      PageId::SettingWifi,
-      [this]() {
-        return std::make_unique<PlaceholderPage>(
-            data_center_, PageId::SettingWifi, "Wi-Fi", "Wi-Fi settings placeholder.");
-      });
-  page_manager_.register_page(
-      PageId::SettingDeveloper,
-      [this]() {
-        return std::make_unique<PlaceholderPage>(
-            data_center_, PageId::SettingDeveloper, "Developer", "Developer mode placeholder with future diagnostics.");
-      });
-  page_manager_.register_page(PageId::SettingVersion,
-                              [this]() {
-                                return std::make_unique<PlaceholderPage>(
-                                    data_center_, PageId::SettingVersion, "Version", "Version information placeholder.");
-                              });
   register_app_placeholder(PageId::AppHeartRate, "Heart Rate", "Heart rate app placeholder page.");
   register_app_placeholder(PageId::AppBloodOxygen, "Blood Oxygen", "SpO2 app placeholder page.");
   register_app_placeholder(PageId::AppBreathing, "Breathing", "Breathing training placeholder page.");
@@ -624,17 +508,6 @@ void Application::register_pages() {
   register_app_placeholder(PageId::AppNfc, "NFC", "NFC wallet placeholder page.");
   register_app_placeholder(PageId::AppAlipay, "Alipay", "Alipay app placeholder page.");
   register_app_placeholder(PageId::AppWeChatPay, "WeChat Pay", "WeChat Pay app placeholder page.");
-  page_manager_.register_page(
-      PageId::Game2048,
-      [this]() {
-        return std::make_unique<PlaceholderPage>(
-            data_center_, PageId::Game2048, "2048", "Game placeholder under the Games hub.");
-      });
-
-  page_manager_.register_page(PageId::Stopwatch,
-                              [this]() { return std::make_unique<StopwatchPage>(data_center_); });
-  page_manager_.register_page(PageId::Timer, [this]() { return std::make_unique<TimerPage>(data_center_); });
-  page_manager_.register_page(PageId::Alarm, [this]() { return std::make_unique<AlarmPage>(data_center_); });
 }
 
 void Application::handle_hal_event(const hal::Event& event) {
@@ -653,6 +526,11 @@ void Application::handle_hal_event(const hal::Event& event) {
     case hal::EventKind::BatteryChanged:
       if (const auto* model = std::get_if<hal::BatterySample>(&event.payload)) {
         battery_power_service_.handle_sample(*model);
+      }
+      break;
+    case hal::EventKind::ActivityUpdated:
+      if (const auto* model = std::get_if<hal::ActivitySample>(&event.payload)) {
+        steps_activity_service_.handle_sample(*model);
       }
       break;
     case hal::EventKind::ButtonChanged:

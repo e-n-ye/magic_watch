@@ -32,6 +32,11 @@ struct BatterySample {
   std::uint16_t millivolts {0};
 };
 
+struct ActivitySample {
+  bool valid {false};
+  std::uint32_t daily_steps {0};
+};
+
 struct ButtonSample {
   enum class Button {
     Main,
@@ -107,6 +112,7 @@ struct DebugSample {
 enum class EventKind {
   TimeUpdated,
   BatteryChanged,
+  ActivityUpdated,
   ButtonChanged,
   CrownUpdated,
   TouchUpdated,
@@ -115,7 +121,7 @@ enum class EventKind {
 };
 
 using EventPayload =
-    std::variant<TimeSample, BatterySample, ButtonSample, CrownSample, TouchSample, MotionSample, DebugSample>;
+    std::variant<TimeSample, ActivitySample, BatterySample, ButtonSample, CrownSample, TouchSample, MotionSample, DebugSample>;
 
 struct Event {
   EventKind kind;

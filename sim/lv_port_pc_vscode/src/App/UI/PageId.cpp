@@ -26,30 +26,10 @@ const char* page_name(PageId page_id) {
       return "LongBatteryWatchface";
     case PageId::LongBatteryExit:
       return "LongBatteryExit";
-    case PageId::HomeShortcutPayments:
-      return "HomeShortcutPayments";
-    case PageId::HomeShortcutNfc:
-      return "HomeShortcutNfc";
-    case PageId::HomeShortcutHealth:
-      return "HomeShortcutHealth";
-    case PageId::HomeShortcutWeather:
-      return "HomeShortcutWeather";
-    case PageId::Gps:
-      return "Gps";
-    case PageId::Recorder:
-      return "Recorder";
-    case PageId::AudioPlayer:
-      return "AudioPlayer";
-    case PageId::VideoPlayer:
-      return "VideoPlayer";
-    case PageId::Infrared:
-      return "Infrared";
     case PageId::Pedometer:
       return "Pedometer";
     case PageId::PedometerDataInfo:
       return "PedometerDataInfo";
-    case PageId::Lora:
-      return "Lora";
     case PageId::SettingsHome:
       return "SettingsHome";
     case PageId::SettingDisplay:
@@ -90,8 +70,6 @@ const char* page_name(PageId page_id) {
       return "SettingSystemActions";
     case PageId::SettingAbout:
       return "SettingAbout";
-    case PageId::SettingTimeDate:
-      return "SettingTimeDate";
     case PageId::SettingBattery:
       return "SettingBattery";
     case PageId::SettingBatteryLifeMode:
@@ -100,14 +78,6 @@ const char* page_name(PageId page_id) {
       return "SettingBatteryOptimization";
     case PageId::SettingBatteryInfo:
       return "SettingBatteryInfo";
-    case PageId::SettingBluetooth:
-      return "SettingBluetooth";
-    case PageId::SettingWifi:
-      return "SettingWifi";
-    case PageId::SettingDeveloper:
-      return "SettingDeveloper";
-    case PageId::SettingVersion:
-      return "SettingVersion";
     case PageId::AppHeartRate:
       return "AppHeartRate";
     case PageId::AppBloodOxygen:
@@ -126,20 +96,6 @@ const char* page_name(PageId page_id) {
       return "AppAlipay";
     case PageId::AppWeChatPay:
       return "AppWeChatPay";
-    case PageId::TimingToolsHome:
-      return "TimingToolsHome";
-    case PageId::Stopwatch:
-      return "Stopwatch";
-    case PageId::Timer:
-      return "Timer";
-    case PageId::Alarm:
-      return "Alarm";
-    case PageId::GamesHome:
-      return "GamesHome";
-    case PageId::Game2048:
-      return "Game2048";
-    case PageId::Calculator:
-      return "Calculator";
     default:
       return "Unknown";
   }

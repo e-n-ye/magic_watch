@@ -33,23 +33,13 @@ The current v0 visible path should be understood as:
 
 These are the surfaces that define the current product shell.
 
-## Hidden But Retained Legacy Content
+## Legacy Content Note
 
-The following content is intentionally still present in code, but should not be treated as the current v0 main path:
+Historically, the simulator retained a batch of non-main-path legacy pages such as GPS, Recorder,
+Infrared, timing tools, game hubs, calculator placeholders, and standalone HomeShortcut pages.
 
-- GPS
-- Recorder
-- Audio Player
-- Video Player
-- Infrared
-- Pedometer
-- LoRa
-- Timing tools home
-- Games home
-- 2048
-- Calculator
-
-They are kept as retained assets or future placeholders, not as the current interaction story.
+As of the 2026-05-24 cleanup rounds, those non-main-path legacy pages have been removed from the current simulator codebase.
+`Pedometer` remains part of the current main path and is not legacy content.
 
 ## Behaviors Verified So Far
 

@@ -13,6 +13,7 @@ namespace twsim::app {
 enum class EventId {
   TimeUpdated,
   BatteryChanged,
+  StepsChanged,
   MotionUpdated,
   PowerModeChanged,
   DisplayPolicyChanged,
@@ -41,6 +42,11 @@ struct BatteryModel {
   bool external_power {false};
   std::int16_t percent {0};
   std::uint16_t millivolts {0};
+};
+
+struct StepsModel {
+  bool valid {false};
+  std::uint32_t daily_steps {0};
 };
 
 struct MotionModel {
@@ -203,6 +209,7 @@ using EventPayload =
     std::variant<std::monostate,
                  TimeModel,
                  BatteryModel,
+                 StepsModel,
                  MotionModel,
                  PowerModeModel,
                  DisplayPolicyModel,

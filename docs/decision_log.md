@@ -1,4 +1,71 @@
-# Magic Watch Decision Log
+﻿# Magic Watch Decision Log
+## 2026-05-23: 第二轮删除未开放遗留设置页并取消 Quick Settings 长按详情
+
+背景：
+- 第一轮已删除旧工具/能力页，但仍保留一组未进入当前主路径的旧设置页：SettingTimeDate、SettingBluetooth、SettingWifi、SettingDeveloper、SettingVersion。
+- 其中 SettingBluetooth 虽然不在 SettingsHome 中显示，但仍被 QuickSettings 的“寻找手机”按钮长按详情入口引用。
+- 这些页面主要来自早期围绕 LilyGo 板级能力进行的规划，不再符合当前自顶而下的主线收口目标。
+
+决定：
+- 删除 SettingTimeDate、SettingBluetooth、SettingWifi、SettingDeveloper、SettingVersion 这组未开放遗留设置页的 PageId 与注册入口。
+- QuickSettings 不再默认要求每个开关都具备详情页；将 ToggleState::detail_page 改为可选值。
+- “寻找手机”按钮取消长按详情行为，长按时不再跳转到旧蓝牙页面。
+
+理由：
+- 这些设置页既不在当前 SettingsHome 主路径中，也不承载当前系统骨架训练的关键闭环，继续保留只会增加页面认知负担。
+- 若仅删除 SettingBluetooth 而不同时收掉 QuickSettings 长按详情，会留下隐蔽入口，后续更容易出现“看似删了，实际上还能跳转旧页面”的问题。
+- 将详情页改为可选，而不是立刻补一个新详情页，能把本轮范围稳定收在“删除遗留入口 + 保持 Quick Settings 正常可用”这个小闭环里。
+
+复盘点：
+- 后续若要继续完善 QuickSettings，应先明确哪些开关真的需要“长按进入详情页”，哪些只保留点击切换即可。
+- 未来如重新引入蓝牙/连接相关设置，应以当前主路径和服务边界重新设计，而不是直接恢复这批旧页面。
+
+## 2026-05-23: v0.6 进入 Steps / Activity service 最小闭环
+
+背景：
+- v0.5 长续航主链路手工回归已通过，说明设置入口、Quick Settings 入口、长续航表盘、退出页、screen off / wake 恢复和低电量通知基线当前稳定。
+- 但长续航表盘中的“步数”仍是占位 `0`，这会让“长续航模式保留计步”的系统语义停留在假数据层。
+- 当前最重要的不是继续扩展页面，而是把第二条真实数据边界做出来。
+
+决定：
+- 新增 [v0_6_steps_activity_service_entry.md](/D:/MY_Desk/watch/magic_watch/docs/v0_6_steps_activity_service_entry.md)，将下一轮收窄为“平台样本 -> service -> DataCenter -> 长续航表盘”的最小闭环。
+- 引入最小 `hal::ActivitySample`、`StepsModel` 与 `StepsActivityService`。
+- 模拟器暂时通过 `S` 热键每次增加 `100` 步，用来驱动这条链。
+- 当前只让长续航表盘消费 `StepsModel`；Steps app、主页快捷卡和健康页面暂不接入。
+
+理由：
+- 这条链能训练 service 边界，而不是继续让页面直接持有假数据。
+- 如果现在同时改 Steps app、主页快捷卡、健康开关联动和真机传感器，风险会明显高于收益。
+- 用模拟器热键生成平台样本，能保留将来切换到真实传感器时的结构稳定性。
+
+复盘点：
+- 下一轮手工验证时，应明确检查 `S` 热键是否只影响步数链，不破坏长续航和低电量已有路径。
+- 如果这条链稳定，再决定是先让 `StepsAppPage` 消费 `StepsModel`，还是先补充真机映射文档。
+
+结果补充：
+- v0.6 第二小轮已让 `StepsAppPage` 开始消费共享 `StepsModel`。
+- 当前接入范围仍刻意收窄在 Steps 页的关键步数数字，不扩到主页快捷卡、卡路里换算或活跃分钟模型。
+
+## 2026-05-23: v0.5 长续航主链路手工回归通过
+
+背景：
+- v0.5 已完成电池主页、说明页、长续航模式页、续航优化页、长续航表盘、退出页和 `Quick Settings` 长续航入口收口。
+- 该链路涉及设置页、快捷设置、`PowerModeModel`、`AppStateMachine`、screen off / wake、输入过滤和低电量通知基线，影响面已经超过单页 UI。
+- 在继续推进下一阶段前，需要先确认这条主链路不再存在明显回归。
+
+决定：
+- 新增 [v0_5_long_battery_regression_closure.md](/D:/MY_Desk/watch/magic_watch/docs/v0_5_long_battery_regression_closure.md) 记录 v0.5 长续航主链路的手工回归收口结果。
+- 将 v0.5 当前状态视为“可构建、可手工回归、长续航主链路稳定”。
+- 下一步不继续扩展长续航页面族，而是优先转向 `Steps / Activity` 的真实 service 边界。
+
+理由：
+- 这轮最重要的不是再补一个页面，而是确认现有状态机和入口一致性已经站稳。
+- 长续航表盘里“步数”仍是占位值，继续推进 `Steps / Activity` 会比继续细化电池页更符合当前的系统训练目标。
+- 先做真实数据边界，再反过来丰富 UI，比继续堆页面更有收益。
+
+复盘点：
+- 下一轮入口文档应明确 `Steps / Activity` 的最小边界：平台样本、service 解释、DataCenter 发布、长续航表盘与普通页面的消费方式。
+- 如果后续再修改长续航输入或 screen off / wake 逻辑，应回跑 v0.5 的手工回归矩阵，而不是只做构建验证。
 
 ## 2026-05-22: v0.4 收口，v0.5 进入 Power Status 页面闭环
 
@@ -514,3 +581,54 @@
 
 - 2026-05-22 实物观察确认：短按侧键可稳定黑屏，黑屏后再次短按侧键可稳定恢复，黑屏后触摸屏幕也可稳定恢复。
 - 若运行态 screen off/on 可靠，下一轮再拆 light sleep 或 deep sleep 唤醒源实验。
+# 2026-05-23: v0.6 第三小轮让主页快捷卡复用同一个 StepsModel
+
+背景：
+- v0.6 前两小轮已经让 `LongBatteryWatchfacePage` 和 `StepsAppPage` 复用共享 `StepsModel`
+- 主页天气快捷页右下角的步数卡仍然是固定 mock 数字，这会让首页和 Steps 页的数据语义分叉
+
+决定：
+- 只让 `WeatherShortcutPage` 的步数卡接入 `StepsChanged`
+- 页面出现时读取 `DataCenter` 当前步数，运行中继续订阅共享模型更新
+- 本轮不扩展睡眠卡、天气卡、卡路里或活跃分钟
+
+理由：
+- 这是一个影响面很小、可独立回归的小闭环
+- 它能继续强化“平台样本 -> service -> DataCenter -> 多页面共享消费者”的主线
+- 不需要为了首页卡片去新增第二套步数状态或快捷页专属 mock
+# 2026-05-23: 增加“当前可达页面 / 遗留未接入页面”清单
+
+背景：
+- v0.6 做 StepsModel 多页面复用时，出现过“代码里页面类存在，但当前主路径并不走那一页”的混淆
+- 典型例子是 `HomeRingHostPage` 内嵌天气快捷面，与独立注册的 `HomeShortcutWeather`
+- 如果不先分清“当前主路径页面”和“仓库保留资产页面”，后续继续扩模型和 UI 时很容易改错对象
+
+决定：
+- 新增 [page_reachability_audit.md](/D:/MY_Desk/watch/magic_watch/docs/page_reachability_audit.md)
+- 明确记录：
+  - 当前主路径可达页面
+  - `HomeRingHost` 内嵌 surface 与独立 `PageId` 的区别
+  - 已注册但未接入主路径的遗留页面
+
+理由：
+- 这是一个低风险但高收益的认知收口
+- 它能减少后续“改对代码、改错页面”的概率
+- 它也为后续是否保留、重接或收敛遗留页面提供了共同语境
+# 2026-05-23: 第一轮删除非主路径旧工具/能力遗留页
+
+背景：
+- 这些页面大多来自早期围绕 LilyGo 板级能力展开的规划资产
+- 当前既不在主页环，也不在 Launcher / Settings 主路径中
+- 继续保留它们会增加 `PageId`、页面注册和页面地图的认知噪音
+
+决定：
+- 删除以下非主路径遗留页及其注册入口：
+  - `TimingToolsHome / Stopwatch / Timer / Alarm`
+  - `GamesHome / Game2048`
+  - `Gps / Recorder / AudioPlayer / VideoPlayer / Infrared / Lora / Calculator`
+- 同步移除 `ToolPages` 实现、相关 `PageId`、`Application::register_pages()` 注册逻辑，以及文档中的“仍保留”表述
+
+理由：
+- 这批页面与当前自顶而下主线设计关系最弱
+- 先删除它们，能明显收窄页面空间，降低后续误改和误判概率
+- 这轮只清非主路径旧工具/能力页，不碰未开放设置页，回归面更可控

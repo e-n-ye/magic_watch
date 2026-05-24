@@ -76,6 +76,7 @@ set(MAIN_SOURCES
     src/App/Common/DisplayPolicyRules.cpp
     src/App/Input/InputIntentRouter.cpp
     src/App/Services/BatteryPowerService.cpp
+    src/App/Services/StepsActivityService.cpp
     src/App/UI/PageId.cpp
     src/App/UI/PageBase.cpp
     src/App/UI/PageManager.cpp
@@ -85,7 +86,6 @@ set(MAIN_SOURCES
     src/App/UI/Pages/CommonPages.cpp
     src/App/UI/Pages/SettingsPages.cpp
     src/App/UI/Pages/ShellPages.cpp
-    src/App/UI/Pages/ToolPages.cpp
     src/App/State/AppStateMachine.cpp
     src/App/Application.cpp
     src/HAL/HAL.cpp
