@@ -33,6 +33,11 @@ void DataCenter::publish_power_mode(const PowerModeModel& model) {
   event_bus_.publish({EventId::PowerModeChanged, model});
 }
 
+void DataCenter::publish_health_monitoring_settings(const HealthMonitoringSettingsModel& model) {
+  health_monitoring_settings_ = model;
+  event_bus_.publish({EventId::HealthMonitoringSettingsChanged, model});
+}
+
 void DataCenter::publish_navigation(const NavigationCommand& command) {
   event_bus_.publish({EventId::NavigationRequested, command});
 }
@@ -67,6 +72,24 @@ void DataCenter::push_notification(const NotificationItem& item) {
   notification_center_->items.push_back(item);
   notify_notifications_changed();
   event_bus_.publish({EventId::NotificationWakeRequested, item});
+}
+
+bool DataCenter::mark_notification_read(std::string_view id) {
+  if (!notification_center_) {
+    return false;
+  }
+
+  auto& items = notification_center_->items;
+  const auto it = std::find_if(items.begin(),
+                               items.end(),
+                               [id](const NotificationItem& item) { return item.id == id; });
+  if (it == items.end() || it->read) {
+    return false;
+  }
+
+  it->read = true;
+  notify_notifications_changed();
+  return true;
 }
 
 bool DataCenter::dismiss_notification(std::string_view id) {
@@ -276,6 +299,72 @@ void DataCenter::set_long_battery_mode_enabled(bool enabled) {
   event_bus_.publish({EventId::PowerModeChanged, *power_mode_});
 }
 
+void DataCenter::set_sleep_breathing_quality_enabled(bool enabled) {
+  if (!health_monitoring_settings_) {
+    health_monitoring_settings_ = HealthMonitoringSettingsModel {};
+  }
+  if (health_monitoring_settings_->sleep_breathing_quality_enabled == enabled) {
+    return;
+  }
+  health_monitoring_settings_->sleep_breathing_quality_enabled = enabled;
+  event_bus_.publish({EventId::HealthMonitoringSettingsChanged, *health_monitoring_settings_});
+}
+
+void DataCenter::set_heart_health_monitoring_enabled(bool enabled) {
+  if (!health_monitoring_settings_) {
+    health_monitoring_settings_ = HealthMonitoringSettingsModel {};
+  }
+  if (health_monitoring_settings_->heart_health_monitoring_enabled == enabled) {
+    return;
+  }
+  health_monitoring_settings_->heart_health_monitoring_enabled = enabled;
+  event_bus_.publish({EventId::HealthMonitoringSettingsChanged, *health_monitoring_settings_});
+}
+
+void DataCenter::set_all_day_stress_monitoring_enabled(bool enabled) {
+  if (!health_monitoring_settings_) {
+    health_monitoring_settings_ = HealthMonitoringSettingsModel {};
+  }
+  if (health_monitoring_settings_->all_day_stress_monitoring_enabled == enabled) {
+    return;
+  }
+  health_monitoring_settings_->all_day_stress_monitoring_enabled = enabled;
+  event_bus_.publish({EventId::HealthMonitoringSettingsChanged, *health_monitoring_settings_});
+}
+
+void DataCenter::set_high_precision_sleep_enabled(bool enabled) {
+  if (!health_monitoring_settings_) {
+    health_monitoring_settings_ = HealthMonitoringSettingsModel {};
+  }
+  if (health_monitoring_settings_->high_precision_sleep_enabled == enabled) {
+    return;
+  }
+  health_monitoring_settings_->high_precision_sleep_enabled = enabled;
+  event_bus_.publish({EventId::HealthMonitoringSettingsChanged, *health_monitoring_settings_});
+}
+
+void DataCenter::set_all_day_blood_oxygen_enabled(bool enabled) {
+  if (!health_monitoring_settings_) {
+    health_monitoring_settings_ = HealthMonitoringSettingsModel {};
+  }
+  if (health_monitoring_settings_->all_day_blood_oxygen_enabled == enabled) {
+    return;
+  }
+  health_monitoring_settings_->all_day_blood_oxygen_enabled = enabled;
+  event_bus_.publish({EventId::HealthMonitoringSettingsChanged, *health_monitoring_settings_});
+}
+
+void DataCenter::set_low_blood_oxygen_reminder_mode(LowBloodOxygenReminderMode mode) {
+  if (!health_monitoring_settings_) {
+    health_monitoring_settings_ = HealthMonitoringSettingsModel {};
+  }
+  if (health_monitoring_settings_->low_blood_oxygen_reminder_mode == mode) {
+    return;
+  }
+  health_monitoring_settings_->low_blood_oxygen_reminder_mode = mode;
+  event_bus_.publish({EventId::HealthMonitoringSettingsChanged, *health_monitoring_settings_});
+}
+
 void DataCenter::show_toast_for(std::string_view id) {
   const NotificationItem* item = find_notification(id);
   if (item == nullptr) {
@@ -315,6 +404,10 @@ const std::optional<MotionModel>& DataCenter::motion() const {
 
 const std::optional<PowerModeModel>& DataCenter::power_mode() const {
   return power_mode_;
+}
+
+const std::optional<HealthMonitoringSettingsModel>& DataCenter::health_monitoring_settings() const {
+  return health_monitoring_settings_;
 }
 
 const std::optional<NotificationCenterModel>& DataCenter::notifications() const {

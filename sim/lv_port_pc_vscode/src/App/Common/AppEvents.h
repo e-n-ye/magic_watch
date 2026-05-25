@@ -17,6 +17,7 @@ enum class EventId {
   MotionUpdated,
   PowerModeChanged,
   DisplayPolicyChanged,
+  HealthMonitoringSettingsChanged,
   NotificationsChanged,
   NotificationToastRequested,
   NotificationWakeRequested,
@@ -60,6 +61,22 @@ struct PowerModeModel {
   bool long_battery_mode_enabled {false};
 };
 
+enum class LowBloodOxygenReminderMode {
+  Off,
+  Threshold90,
+  Threshold85,
+  Threshold80,
+};
+
+struct HealthMonitoringSettingsModel {
+  bool sleep_breathing_quality_enabled {true};
+  bool heart_health_monitoring_enabled {true};
+  bool all_day_stress_monitoring_enabled {true};
+  bool high_precision_sleep_enabled {true};
+  bool all_day_blood_oxygen_enabled {true};
+  LowBloodOxygenReminderMode low_blood_oxygen_reminder_mode {LowBloodOxygenReminderMode::Off};
+};
+
 enum class NotificationCategory {
   Message,
   BatteryLow,
@@ -68,6 +85,7 @@ enum class NotificationCategory {
 struct NotificationItem {
   std::string id;
   NotificationCategory category {NotificationCategory::Message};
+  bool read {false};
   std::string source_label;
   std::string title;
   std::string body;
@@ -213,6 +231,7 @@ using EventPayload =
                  MotionModel,
                  PowerModeModel,
                  DisplayPolicyModel,
+                 HealthMonitoringSettingsModel,
                  NotificationItem,
                  NotificationCenterModel,
                  ShellPreviewModel,

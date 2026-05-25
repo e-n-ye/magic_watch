@@ -165,6 +165,21 @@
 - `SettingBatteryOptimization`
 - `SettingBatteryInfo`
 
+#### Sleep
+
+- `AppSleep`
+- `AppSleepSettings`
+- `AppSleepSettingHighPrecision`
+- `AppSleepSettingBreathingQuality`
+- `AppSleepInfo`
+
+#### Blood Oxygen
+
+- `AppBloodOxygen`
+- `AppBloodOxygenSettings`
+- `AppBloodOxygenLowOxygenReminder`
+- `AppBloodOxygenInfo`
+
 #### Display
 
 - `SettingDisplay`
@@ -186,10 +201,8 @@
 这些页面当前用户可以走到，但内容仍然是占位页或轻量 mock：
 
 - `AppHeartRate`
-- `AppBloodOxygen`
 - `AppBreathing`
 - `AppStress`
-- `AppSleep`
 - `AppNfc`
 - `AppAlipay`
 - `AppWeChatPay`

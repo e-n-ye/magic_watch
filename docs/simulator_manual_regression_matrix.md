@@ -25,6 +25,7 @@ Primary simulator inputs:
 
 - `Enter` / `Space`: crown press
 - `Q / E`: crown rotate
+- `N`: inject one message notification
 - `S`: simulate +100 daily steps
 - `R`: simulate raise-to-wake
 - `F`: simulate raise-dismiss
@@ -516,6 +517,378 @@ Before testing:
   - steps / kcal / active cards follow the current simulator width instead of relying on legacy fixed sizing
   - vertical scroll, crown scroll, and `数据说明` navigation still work
 
+## K. Notification Service
+
+### K1. Simulator Notification Sample Injection
+
+- Action:
+  - stay on a normal watchface path
+  - press `N`
+  - open `Notifications`
+- Expected:
+  - one new message notification appears in the list
+  - this round still uses simulator-only injection, but the path is now `NotificationSample -> NotificationService -> DataCenter`
+  - the notification list is refreshed from the shared model instead of page-local mock rows
+
+### K2. Existing Notification Surfaces Stay Stable
+
+- Action:
+  - after pressing `N`, observe toast behavior
+  - let the notification wake preview appear if current policy allows it
+  - dismiss or close it through the existing path
+- Expected:
+  - toast still appears
+  - wake preview current behavior is not broken by the service refactor
+  - `Notifications` list, wake preview, and toast all read the same newly injected notification
+
+### K3. Existing Battery And Long-Battery Paths Stay Stable
+
+- Action:
+  - after using `N`, press `B`
+  - enter long-battery mode
+  - return to the notifications surface if needed
+- Expected:
+  - low-battery notification baseline still works
+  - long-battery path is not affected by the notification service refactor
+  - adding the notification service does not break the existing battery / power-mode / steps closures
+## L. Notification Preview And Shell Linkage
+
+### L1. Screen-Off Notification Wake Preview
+
+- Action:
+  - let the watch enter `ScreenOff`
+  - press `N`
+- Expected:
+  - if notification wake is enabled, the app wakes into `NotificationWakePreview`
+  - the preview shows the same newest notification content that later appears in the notifications list
+
+### L2. Preview To Notifications List
+
+- Action:
+  - while `NotificationWakePreview` is visible, tap the preview card
+  - re-enter the preview path and press crown
+- Expected:
+  - both actions enter the full `Notifications` list
+  - entering the list ends the temporary wake-preview-only session and turns into normal notifications browsing
+
+### L3. Notifications List Open During New Arrival
+
+- Action:
+  - open `Notifications`
+  - press `N`
+- Expected:
+  - the list refreshes with the new notification
+  - no extra wake preview is opened
+  - no extra toast is layered on top of the already open notifications list
+
+## M. Notification Read State And Detail Entry
+
+### M1. New Notifications Start Unread
+
+- Action:
+  - stay on a normal watchface path
+  - press `N`
+  - open `Notifications`
+- Expected:
+  - the newest notification appears in the list as unread
+  - entering the list alone does not mark the notification as read
+
+### M2. Wake Preview To List Still Unread
+
+- Action:
+  - let the watch enter `ScreenOff`
+  - press `N`
+  - enter `Notifications` from `NotificationWakePreview`
+- Expected:
+  - the notification is still unread after moving from preview into the notifications list
+  - wake preview is not treated as formal reading
+
+### M3. Tap List Card To Enter Detail And Mark Read
+
+- Action:
+  - in `Notifications`, tap a notification card
+  - confirm detail mode appears
+  - use the top-left back button to return to the list
+- Expected:
+  - tapping the card opens detail content inside `NotificationsPage`
+  - the notification becomes read when detail opens
+  - returning to the list shows a muted read state for that same notification
+
+### M4. Existing Baselines Stay Stable
+
+- Action:
+  - after completing M1-M3, press `B`
+  - optionally re-enter and exit long-battery mode
+- Expected:
+  - low-battery notification baseline still works
+  - notification read/detail changes do not break the long-battery path
+
+## N. Notification Clear Semantics
+
+### N1. Clear Requires Confirmation
+
+- Action:
+  - open `Notifications`
+  - tap `清空`
+- Expected:
+  - a confirmation overlay appears
+  - the list is not cleared immediately
+
+### N2. Cancel Keeps Existing Notifications
+
+- Action:
+  - while the confirmation overlay is visible, tap `取消`
+- Expected:
+  - the overlay closes
+  - the notification list remains unchanged
+
+### N3. Confirm Clears The List
+
+- Action:
+  - tap `清空` again
+  - tap `确认`
+- Expected:
+  - all current notifications are cleared
+  - the page returns to the empty-state view
+
+### N4. Overlay Blocks Underlying List Motion
+
+- Action:
+  - show the clear confirmation overlay
+  - try crown rotation or list drag
+- Expected:
+  - the underlying notifications list does not continue scrolling
+  - the confirmation layer stays visually stable
+
+### N5. Existing Baselines Stay Stable
+
+- Action:
+  - after clearing, press `N`
+  - then press `B`
+- Expected:
+  - new notifications can still be injected normally
+  - low-battery notification baseline still works
+
+## O. Notification Swipe Delete
+
+### O1. Card Follows Right Swipe
+
+- Action:
+  - in `Notifications` list view, press and drag one notification to the right
+- Expected:
+  - the card moves with the finger instead of deleting immediately
+
+### O2. Short Swipe Springs Back
+
+- Action:
+  - drag a notification card to the right, but do not pass the dismiss threshold
+  - release the touch
+- Expected:
+  - the card springs back into place
+  - the notification is not deleted
+
+### O3. Long Swipe Deletes Only That Card
+
+- Action:
+  - drag a notification card to the right past the dismiss threshold
+  - release the touch
+- Expected:
+  - only that one notification is deleted
+  - the rest of the list remains intact
+
+### O4. Tap Detail And Vertical Scroll Still Work
+
+- Action:
+  - tap a notification card without swiping
+  - return from detail
+  - vertically scroll the notifications list
+- Expected:
+  - tapping still enters detail
+  - vertical list scrolling still behaves normally
+  - the new swipe action does not steal ordinary list browsing
+
+### O5. Existing Notification Baselines Stay Stable
+
+- Action:
+  - test `清空`
+  - press `N`
+  - press `B`
+- Expected:
+  - clear-all confirmation still works
+  - new notifications can still be injected
+  - low-battery notification baseline still works
+
+## P. Notification Stage Closure Bundle
+
+### P1. Full Notification Closure Run
+
+- Action:
+  - on a normal watchface path, press `N`
+  - verify toast behavior
+  - open `Notifications`
+  - verify the newest notification starts unread
+  - tap it to enter detail, then return and verify it becomes read
+  - test `清空` cancel / confirm
+  - inject more notifications and test single-card right-swipe delete
+  - from detail view, close the notifications shell with the bottom handle
+  - return to watchface, then open notifications again
+- Expected:
+  - the whole notification chain works as one coherent system closure
+  - reopening notifications after closing detail returns to the list view, not the stale detail view
+
+### P2. Wake Preview And Existing Baselines
+
+- Action:
+  - let the watch enter `ScreenOff`
+  - press `N`
+  - move from wake preview into `Notifications`
+  - press `B`
+  - optionally re-enter and exit long-battery mode
+- Expected:
+  - wake preview path still works
+  - low-battery notification baseline still works
+  - long-battery path is not broken by the notification stage work
+
+### P3. Long-Battery Mode Suppresses Notifications
+
+- Action:
+  - enter long-battery mode
+  - let the watch enter `ScreenOff`
+  - press `N`
+  - try normal notifications pull / open behavior if applicable
+- Expected:
+  - no notification wake preview appears
+  - no notifications shell is opened
+  - the watch remains in the long-battery path
+  - long-battery mode keeps only time / steps / NFC semantics
+
+## Q. Health Monitoring Settings Shared Model
+
+### Q1. Battery Optimization Toggles Still Work
+
+- Action:
+  - open `设置 -> 电池 -> 续航优化`
+  - toggle each of the 5 switches once
+- Expected:
+  - each switch still responds immediately
+  - page visuals behave the same as before this round
+
+### Q2. Toggle State Persists Across Re-entry
+
+- Action:
+  - in `续航优化`, change one or more toggles
+  - navigate back to `电池`
+  - enter `续航优化` again
+- Expected:
+  - the changed toggles keep their latest state
+  - the page no longer behaves like a one-page local state island
+
+### Q3. Existing Battery / Notification Baselines Stay Stable
+
+- Action:
+  - after changing optimization toggles, press `B`
+  - if convenient, also enter and exit long-battery mode once
+- Expected:
+  - low-battery notification baseline still works
+  - long-battery mode path is not broken by this settings-model change
+
+## R. Sleep Home And Settings Shell
+
+### R1. Sleep Is No Longer A Placeholder
+
+- Action:
+  - enter `AppSleep` from Launcher or the home ring card
+- Expected:
+  - the page is no longer a placeholder
+  - the page shows:
+    - 昨晚睡眠记录占位卡
+    - 近 7 天睡眠占位卡
+    - `设置`
+    - `说明`
+
+### R2. Sleep Settings Path Is Reachable
+
+- Action:
+  - from `AppSleep`, open `设置`
+  - enter `睡眠高精度监测`
+  - return
+  - enter `睡眠呼吸质量监测`
+- Expected:
+  - both detail pages are reachable
+  - both pages show a switch and a short explanation body
+
+### R3. Sleep Settings Reuse The Shared Model
+
+- Action:
+  - change one or both sleep settings from `AppSleep`
+  - return to `设置 -> 电池 -> 续航优化`
+- Expected:
+  - corresponding switches remain in sync
+  - `Sleep` settings and `BatteryOptimizationPage` are editing the same shared model
+
+### R4. Sleep Info Page Shell Is Reachable
+
+- Action:
+  - from `AppSleep`, open `说明`
+- Expected:
+  - the info page opens
+  - title shows `睡眠说明`
+  - the page contains real explanatory body text instead of placeholder copy
+  - touch scroll and crown scroll can browse the full body
+
+## S. Blood Oxygen Home And Settings Shell
+
+### S1. Blood Oxygen Is No Longer A Placeholder
+
+- Action:
+  - enter `AppBloodOxygen` from Launcher or the health shortcut surface
+- Expected:
+  - the page is no longer a placeholder
+  - the page shows:
+    - 今日血氧饱和度线图占位
+    - 当前百分比占位
+    - 上次更新时间占位
+    - `开始测量`
+    - `设置`
+    - `说明`
+
+### S2. Blood Oxygen Settings Path Is Reachable
+
+- Action:
+  - from `AppBloodOxygen`, open `设置`
+  - toggle `全天血氧监测`
+  - open `低血氧提醒`
+- Expected:
+  - `血氧设置` is reachable
+  - `全天血氧监测` can be switched
+  - `低血氧提醒` entry is reachable and shows current selection text
+
+### S3. Low Blood Oxygen Reminder Can Be Selected
+
+- Action:
+  - in `低血氧提醒`, select `不提醒 / 90% / 85% / 80%`
+  - return to `血氧设置`
+- Expected:
+  - each option can be selected
+  - returning to `血氧设置` updates the status text immediately
+
+### S4. Blood Oxygen Settings Reuse The Shared Model
+
+- Action:
+  - change `全天血氧监测` from `AppBloodOxygen`
+  - return to `设置 -> 电池 -> 续航优化`
+- Expected:
+  - `全天血氧监测` remains in sync across both pages
+  - `AppBloodOxygen` and `BatteryOptimizationPage` are editing the same shared model
+
+### S5. Blood Oxygen Info Shell Is Reachable
+
+- Action:
+  - from `AppBloodOxygen`, open `说明`
+- Expected:
+  - the info page opens
+  - title shows `血氧说明`
+  - this round still uses a placeholder body and reserves the real explanation text for the next round
 ## Exit Criteria
 
 The current simulator baseline can be considered stable enough for a new round when:

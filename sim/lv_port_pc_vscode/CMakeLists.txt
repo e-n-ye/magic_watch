@@ -76,6 +76,7 @@ set(MAIN_SOURCES
     src/App/Common/DisplayPolicyRules.cpp
     src/App/Input/InputIntentRouter.cpp
     src/App/Services/BatteryPowerService.cpp
+    src/App/Services/NotificationService.cpp
     src/App/Services/StepsActivityService.cpp
     src/App/UI/PageId.cpp
     src/App/UI/PageBase.cpp

@@ -1,4 +1,4 @@
-#include "App/Application.h"
+﻿#include "App/Application.h"
 
 #include <array>
 #include <filesystem>
@@ -13,10 +13,6 @@
 namespace twsim::app {
 
 namespace {
-
-constexpr const char* kTextWeChat = "\xE5\xBE\xAE\xE4\xBF\xA1";
-constexpr const char* kTextSenderChenHongzhi = "\xE9\x99\x88\xE5\xAE\x8F\xE5\xBF\x97";
-constexpr const char* kTextJustNow = "\xE5\x88\x9A\xE5\x88\x9A";
 
 std::string make_lvgl_stdio_path(const std::filesystem::path& absolute_path) {
   if (absolute_path.empty()) {
@@ -263,6 +259,7 @@ NotificationToastOverlay g_notification_toast_overlay;
 Application::Application(std::unique_ptr<hal::Device> device)
     : device_(std::move(device)),
       battery_power_service_(data_center_),
+      notification_service_(data_center_),
       steps_activity_service_(data_center_),
       input_router_(page_manager_),
       state_machine_(data_center_, page_manager_) {}
@@ -340,6 +337,54 @@ void Application::register_pages() {
       PageId::PedometerDataInfo,
       [this]() {
         return std::make_unique<StepsDataInfoPage>(data_center_);
+      });
+  page_manager_.register_page(PageId::AppBloodOxygen,
+                              [this]() { return std::make_unique<BloodOxygenAppPage>(data_center_); });
+  page_manager_.register_page(
+      PageId::AppBloodOxygenSettings,
+      [this]() {
+        return std::make_unique<BloodOxygenSettingsPage>(data_center_);
+      });
+  page_manager_.register_page(
+      PageId::AppBloodOxygenLowOxygenReminder,
+      [this]() {
+        return std::make_unique<BloodOxygenLowOxygenReminderPage>(data_center_);
+      });
+  page_manager_.register_page(
+      PageId::AppBloodOxygenInfo,
+      [this]() {
+        return std::make_unique<BloodOxygenInfoPage>(data_center_);
+      });
+  page_manager_.register_page(PageId::AppSleep, [this]() { return std::make_unique<SleepAppPage>(data_center_); });
+  page_manager_.register_page(
+      PageId::AppSleepSettings,
+      [this]() {
+        return std::make_unique<SleepSettingsPage>(data_center_);
+      });
+  page_manager_.register_page(
+      PageId::AppSleepSettingHighPrecision,
+      [this]() {
+        return std::make_unique<SleepMonitoringDetailPage>(
+            data_center_,
+            PageId::AppSleepSettingHighPrecision,
+            "睡眠高精度监测",
+            "开启后，可以跟踪睡眠的快速眼动期（REM）分布。",
+            SleepMonitoringDetailPage::SettingKind::HighPrecisionSleep);
+      });
+  page_manager_.register_page(
+      PageId::AppSleepSettingBreathingQuality,
+      [this]() {
+        return std::make_unique<SleepMonitoringDetailPage>(
+            data_center_,
+            PageId::AppSleepSettingBreathingQuality,
+            "睡眠呼吸质量监测",
+            "开启后，监测到夜间睡眠入睡会自动监测呼吸质量（请在App端查看睡眠呼吸质量分数）。",
+            SleepMonitoringDetailPage::SettingKind::SleepBreathingQuality);
+      });
+  page_manager_.register_page(
+      PageId::AppSleepInfo,
+      [this]() {
+        return std::make_unique<SleepInfoPage>(data_center_);
       });
 
   page_manager_.register_page(
@@ -500,10 +545,8 @@ void Application::register_pages() {
         return std::make_unique<BatteryInfoPage>(data_center_);
       });
   register_app_placeholder(PageId::AppHeartRate, "Heart Rate", "Heart rate app placeholder page.");
-  register_app_placeholder(PageId::AppBloodOxygen, "Blood Oxygen", "SpO2 app placeholder page.");
   register_app_placeholder(PageId::AppBreathing, "Breathing", "Breathing training placeholder page.");
   register_app_placeholder(PageId::AppStress, "Stress", "Stress app placeholder page.");
-  register_app_placeholder(PageId::AppSleep, "Sleep", "Sleep app placeholder page.");
   page_manager_.register_page(PageId::AppWeather, [this]() { return std::make_unique<WeatherAppPage>(data_center_); });
   register_app_placeholder(PageId::AppNfc, "NFC", "NFC wallet placeholder page.");
   register_app_placeholder(PageId::AppAlipay, "Alipay", "Alipay app placeholder page.");
@@ -533,6 +576,11 @@ void Application::handle_hal_event(const hal::Event& event) {
         steps_activity_service_.handle_sample(*model);
       }
       break;
+    case hal::EventKind::NotificationReceived:
+      if (const auto* model = std::get_if<hal::NotificationSample>(&event.payload)) {
+        notification_service_.handle_sample(*model);
+      }
+      break;
     case hal::EventKind::ButtonChanged:
     case hal::EventKind::CrownUpdated:
     case hal::EventKind::TouchUpdated:
@@ -548,9 +596,6 @@ void Application::handle_hal_event(const hal::Event& event) {
     case hal::EventKind::DebugAction:
       if (const auto* model = std::get_if<hal::DebugSample>(&event.payload)) {
         switch (model->action) {
-          case hal::DebugSample::Action::InjectMessageNotification:
-            data_center_.push_notification(make_mock_message_notification());
-            break;
           case hal::DebugSample::Action::InjectBatteryLowNotification: {
             const auto* battery = data_center_.battery() ? &(*data_center_.battery()) : nullptr;
             battery_power_service_.inject_low_battery_notification(battery ? battery->percent : 20);
@@ -572,32 +617,5 @@ void Application::handle_hal_event(const hal::Event& event) {
       break;
   }
 }
-
-NotificationItem Application::make_mock_message_notification() {
-  NotificationItem item;
-  item.id = "msg-" + std::to_string(next_notification_id_++);
-  item.category = NotificationCategory::Message;
-  item.source_label = kTextWeChat;
-  item.title = kTextSenderChenHongzhi;
-  item.body = std::string("[2\xE6\x9D\xA1]") + kTextSenderChenHongzhi + ": happy";
-  item.time_text = kTextJustNow;
-  item.badge_text = "2\xE6\x9D\xA1";
-  return item;
-}
-
-#if 0
-NotificationItem Application::make_mock_message_notification() {
-  NotificationItem item;
-  item.id = "msg-" + std::to_string(next_notification_id_++);
-  item.category = NotificationCategory::Message;
-  item.source_label = "微信";
-  item.title = "陈宏志";
-  item.body = "[2条]陈宏志: happy";
-  item.time_text = "刚刚";
-  item.badge_text = "2条";
-  return item;
-}
-
-#endif
 
 }  // namespace twsim::app

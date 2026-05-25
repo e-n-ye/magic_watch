@@ -163,7 +163,7 @@ class StepsAppPage : public PageBase {
 };
 
 class StepsDataInfoPage : public PageBase {
- public:
+public:
   explicit StepsDataInfoPage(DataCenter& data_center);
 
   PageId id() const override;
@@ -185,6 +185,283 @@ class StepsDataInfoPage : public PageBase {
   lv_timer_t* crown_release_timer_ {nullptr};
 };
 
+class SleepAppPage : public PageBase {
+ public:
+  explicit SleepAppPage(DataCenter& data_center);
+
+  PageId id() const override;
+  const char* name() const override;
+  void on_will_appear() override;
+  void on_will_disappear() override;
+
+ protected:
+  lv_obj_t* build() override;
+
+ private:
+  static void entry_event_cb(lv_event_t* event);
+  static void crown_release_timer_cb(lv_timer_t* timer);
+  void bind_input();
+  void apply_crown_drag(bool forward, std::int16_t detents);
+  void refresh_header_time();
+  void schedule_crown_release();
+  void stop_crown_release_timer();
+
+  lv_obj_t* scroll_root_ {nullptr};
+  lv_obj_t* time_label_ {nullptr};
+  lv_timer_t* crown_release_timer_ {nullptr};
+};
+
+class SleepSettingsPage : public PageBase {
+ public:
+  explicit SleepSettingsPage(DataCenter& data_center);
+
+  PageId id() const override;
+  const char* name() const override;
+  void on_will_appear() override;
+  void on_will_disappear() override;
+
+ protected:
+  lv_obj_t* build() override;
+
+ private:
+  enum class RowKind {
+    HighPrecisionSleep,
+    SleepBreathingQuality,
+  };
+
+  struct RowState {
+    RowKind kind {RowKind::HighPrecisionSleep};
+    const char* title {nullptr};
+    lv_obj_t* row {nullptr};
+    lv_obj_t* status_label {nullptr};
+  };
+
+  static void back_event_cb(lv_event_t* event);
+  static void row_event_cb(lv_event_t* event);
+  static void crown_release_timer_cb(lv_timer_t* timer);
+  void bind_input();
+  void apply_crown_drag(bool forward, std::int16_t detents);
+  void apply_settings(const HealthMonitoringSettingsModel& model);
+  void refresh_header_time();
+  void refresh_rows();
+  bool row_enabled(RowKind kind) const;
+  void schedule_crown_release();
+  void stop_crown_release_timer();
+
+  HealthMonitoringSettingsModel current_settings_ {};
+  std::array<RowState, 2> rows_;
+  lv_obj_t* scroll_root_ {nullptr};
+  lv_obj_t* time_label_ {nullptr};
+  lv_timer_t* crown_release_timer_ {nullptr};
+};
+
+class SleepMonitoringDetailPage : public PageBase {
+ public:
+  enum class SettingKind {
+    HighPrecisionSleep,
+    SleepBreathingQuality,
+  };
+
+  SleepMonitoringDetailPage(DataCenter& data_center,
+                            PageId page_id,
+                            const char* title,
+                            const char* body,
+                            SettingKind kind);
+
+  PageId id() const override;
+  const char* name() const override;
+  void on_will_appear() override;
+  void on_will_disappear() override;
+
+ protected:
+  lv_obj_t* build() override;
+
+ private:
+  static void back_event_cb(lv_event_t* event);
+  static void switch_event_cb(lv_event_t* event);
+  static void crown_release_timer_cb(lv_timer_t* timer);
+  void bind_input();
+  void apply_crown_drag(bool forward, std::int16_t detents);
+  void apply_enabled(bool enabled);
+  void refresh_header_time();
+  void schedule_crown_release();
+  void stop_crown_release_timer();
+  bool current_enabled() const;
+  void publish_enabled(bool enabled);
+
+  PageId page_id_;
+  const char* title_;
+  const char* body_;
+  SettingKind kind_ {SettingKind::HighPrecisionSleep};
+  bool enabled_ {false};
+  lv_obj_t* scroll_root_ {nullptr};
+  lv_obj_t* time_label_ {nullptr};
+  lv_obj_t* switch_track_ {nullptr};
+  lv_timer_t* crown_release_timer_ {nullptr};
+};
+
+class SleepInfoPage : public PageBase {
+ public:
+  explicit SleepInfoPage(DataCenter& data_center);
+
+  PageId id() const override;
+  const char* name() const override;
+  void on_will_appear() override;
+  void on_will_disappear() override;
+
+ protected:
+  lv_obj_t* build() override;
+
+ private:
+  static void back_event_cb(lv_event_t* event);
+  static void crown_release_timer_cb(lv_timer_t* timer);
+  void bind_input();
+  void apply_crown_drag(bool forward, std::int16_t detents);
+  void refresh_header_time();
+  void schedule_crown_release();
+  void stop_crown_release_timer();
+
+  lv_obj_t* scroll_root_ {nullptr};
+  lv_obj_t* time_label_ {nullptr};
+  lv_timer_t* crown_release_timer_ {nullptr};
+};
+
+class BloodOxygenAppPage : public PageBase {
+ public:
+  explicit BloodOxygenAppPage(DataCenter& data_center);
+
+  PageId id() const override;
+  const char* name() const override;
+  void on_will_appear() override;
+  void on_will_disappear() override;
+
+ protected:
+  lv_obj_t* build() override;
+
+ private:
+  static void entry_event_cb(lv_event_t* event);
+  static void crown_release_timer_cb(lv_timer_t* timer);
+  void bind_input();
+  void apply_crown_drag(bool forward, std::int16_t detents);
+  void refresh_header_time();
+  void schedule_crown_release();
+  void stop_crown_release_timer();
+
+  lv_obj_t* scroll_root_ {nullptr};
+  lv_obj_t* time_label_ {nullptr};
+  lv_timer_t* crown_release_timer_ {nullptr};
+};
+
+class BloodOxygenSettingsPage : public PageBase {
+ public:
+  explicit BloodOxygenSettingsPage(DataCenter& data_center);
+
+  PageId id() const override;
+  const char* name() const override;
+  void on_will_appear() override;
+  void on_will_disappear() override;
+
+ protected:
+  lv_obj_t* build() override;
+
+ private:
+  enum class RowKind {
+    AllDayMonitoring,
+    LowOxygenReminder,
+  };
+
+  struct RowState {
+    RowKind kind {RowKind::AllDayMonitoring};
+    const char* title {nullptr};
+    lv_obj_t* row {nullptr};
+    lv_obj_t* status_label {nullptr};
+    lv_obj_t* switch_track {nullptr};
+  };
+
+  static void back_event_cb(lv_event_t* event);
+  static void row_event_cb(lv_event_t* event);
+  static void switch_event_cb(lv_event_t* event);
+  static void crown_release_timer_cb(lv_timer_t* timer);
+  void bind_input();
+  void apply_crown_drag(bool forward, std::int16_t detents);
+  void apply_settings(const HealthMonitoringSettingsModel& model);
+  void refresh_header_time();
+  void refresh_rows();
+  const char* reminder_status_text() const;
+  void schedule_crown_release();
+  void stop_crown_release_timer();
+
+  HealthMonitoringSettingsModel current_settings_ {};
+  std::array<RowState, 2> rows_;
+  lv_obj_t* scroll_root_ {nullptr};
+  lv_obj_t* time_label_ {nullptr};
+  lv_timer_t* crown_release_timer_ {nullptr};
+};
+
+class BloodOxygenLowOxygenReminderPage : public PageBase {
+ public:
+  explicit BloodOxygenLowOxygenReminderPage(DataCenter& data_center);
+
+  PageId id() const override;
+  const char* name() const override;
+  void on_will_appear() override;
+  void on_will_disappear() override;
+
+ protected:
+  lv_obj_t* build() override;
+
+ private:
+  struct OptionState {
+    LowBloodOxygenReminderMode mode {LowBloodOxygenReminderMode::Off};
+    const char* label {nullptr};
+    lv_obj_t* row {nullptr};
+    lv_obj_t* check_dot {nullptr};
+  };
+
+  static void back_event_cb(lv_event_t* event);
+  static void option_event_cb(lv_event_t* event);
+  static void crown_release_timer_cb(lv_timer_t* timer);
+  void bind_input();
+  void apply_crown_drag(bool forward, std::int16_t detents);
+  void apply_settings(const HealthMonitoringSettingsModel& model);
+  void refresh_header_time();
+  void refresh_options();
+  void schedule_crown_release();
+  void stop_crown_release_timer();
+
+  HealthMonitoringSettingsModel current_settings_ {};
+  std::array<OptionState, 4> options_;
+  lv_obj_t* scroll_root_ {nullptr};
+  lv_obj_t* time_label_ {nullptr};
+  lv_timer_t* crown_release_timer_ {nullptr};
+};
+
+class BloodOxygenInfoPage : public PageBase {
+ public:
+  explicit BloodOxygenInfoPage(DataCenter& data_center);
+
+  PageId id() const override;
+  const char* name() const override;
+  void on_will_appear() override;
+  void on_will_disappear() override;
+
+ protected:
+  lv_obj_t* build() override;
+
+ private:
+  static void back_event_cb(lv_event_t* event);
+  static void crown_release_timer_cb(lv_timer_t* timer);
+  void bind_input();
+  void apply_crown_drag(bool forward, std::int16_t detents);
+  void refresh_header_time();
+  void schedule_crown_release();
+  void stop_crown_release_timer();
+
+  lv_obj_t* scroll_root_ {nullptr};
+  lv_obj_t* time_label_ {nullptr};
+  lv_timer_t* crown_release_timer_ {nullptr};
+};
+
 class NotificationsPage : public PageBase {
  public:
   explicit NotificationsPage(DataCenter& data_center);
@@ -200,10 +477,19 @@ class NotificationsPage : public PageBase {
  private:
   static void close_event_cb(lv_event_t* event);
   static void clear_event_cb(lv_event_t* event);
+  static void clear_confirm_event_cb(lv_event_t* event);
+  static void clear_cancel_event_cb(lv_event_t* event);
+  static void detail_back_event_cb(lv_event_t* event);
+  static void notification_card_event_cb(lv_event_t* event);
+  static void notification_card_swipe_event_cb(lv_event_t* event);
   void bind_input();
   void bind_notifications();
   void bind_backdrop();
   void refresh_content();
+  void refresh_list_content();
+  void refresh_detail_content();
+  void open_detail_for(std::string_view id);
+  void close_detail();
   void refresh_backdrop();
   void apply_backdrop_time(const TimeModel& model);
   void apply_backdrop_battery(const BatteryModel& model);
@@ -214,6 +500,11 @@ class NotificationsPage : public PageBase {
   void finish_drag_close(std::int16_t release_delta, bool flick_close);
   bool is_handle_drag_start_zone(std::int16_t x, std::int16_t y) const;
   bool should_capture_shell_drag(const InputCommand& command) const;
+  void show_clear_confirm_overlay();
+  void hide_clear_confirm_overlay();
+  void set_notification_card_swipe_offset(lv_obj_t* card, lv_coord_t offset);
+  void animate_notification_card_swipe_offset(lv_obj_t* card, lv_coord_t target_offset);
+  void reset_notification_card_swipe_state();
 
   lv_obj_t* backdrop_root_ {nullptr};
   lv_obj_t* backdrop_battery_icon_label_ {nullptr};
@@ -223,11 +514,29 @@ class NotificationsPage : public PageBase {
   lv_obj_t* list_root_ {nullptr};
   lv_obj_t* empty_state_ {nullptr};
   lv_obj_t* clear_button_ {nullptr};
+  lv_obj_t* detail_root_ {nullptr};
+  lv_obj_t* detail_back_button_ {nullptr};
+  lv_obj_t* detail_source_label_ {nullptr};
+  lv_obj_t* detail_title_label_ {nullptr};
+  lv_obj_t* detail_body_label_ {nullptr};
+  lv_obj_t* detail_time_label_ {nullptr};
+  lv_obj_t* clear_confirm_overlay_ {nullptr};
   lv_obj_t* drag_handle_ {nullptr};
   lv_obj_t* sheet_container_ {nullptr};
   lv_coord_t shell_drag_offset_ {0};
   lv_coord_t open_preview_progress_ {0};
+  lv_coord_t active_card_swipe_offset_ {0};
   bool shell_drag_active_ {false};
+  bool detail_active_ {false};
+  bool clear_confirm_active_ {false};
+  bool card_swipe_horizontal_capture_ {false};
+  bool card_swipe_vertical_lock_ {false};
+  std::string detail_notification_id_;
+  std::string active_card_swipe_notification_id_;
+  std::vector<std::string> rendered_notification_ids_;
+  lv_obj_t* active_card_swipe_ {nullptr};
+  lv_obj_t* suppressed_card_click_target_ {nullptr};
+  lv_point_t active_card_swipe_press_point_ {};
   lv_timer_t* preview_close_timer_ {nullptr};
   WatchfaceConfig backdrop_config_ {default_watchface_config()};
   WatchfaceRenderState backdrop_render_state_ {};
@@ -247,14 +556,16 @@ class NotificationWakePage : public PageBase {
   lv_obj_t* build() override;
 
  private:
-  static void dismiss_event_cb(lv_event_t* event);
-  static void timeout_cb(lv_timer_t* timer);
-  void bind_notifications();
-  void refresh_content();
+    static void dismiss_event_cb(lv_event_t* event);
+    static void open_notifications_event_cb(lv_event_t* event);
+    static void timeout_cb(lv_timer_t* timer);
+    void bind_notifications();
+    void refresh_content();
   void start_auto_close_timer();
   void stop_auto_close_timer();
 
-  lv_obj_t* icon_container_ {nullptr};
+    lv_obj_t* preview_card_ {nullptr};
+    lv_obj_t* icon_container_ {nullptr};
   lv_obj_t* icon_image_ {nullptr};
   lv_obj_t* icon_label_ {nullptr};
   lv_obj_t* source_label_ {nullptr};

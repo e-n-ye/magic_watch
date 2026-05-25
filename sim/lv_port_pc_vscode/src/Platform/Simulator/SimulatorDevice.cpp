@@ -34,6 +34,9 @@ constexpr std::int16_t kTopOpenCommitDy = 96;
 constexpr std::int16_t kHorizontalCommitDx = 42;
 constexpr std::int16_t kScrollDragThresholdDy = 8;
 constexpr std::int16_t kScrollFlickThresholdDy = 20;
+constexpr const char* kTextWeChat = "\xE5\xBE\xAE\xE4\xBF\xA1";
+constexpr const char* kTextSenderChenHongzhi = "\xE9\x99\x88\xE5\xAE\x8F\xE5\xBF\x97";
+constexpr const char* kTextJustNow = "\xE5\x88\x9A\xE5\x88\x9A";
 
 bool key_pressed_fallback(int sdl_scancode, int virtual_key) {
   const Uint8* keyboard_state = SDL_GetKeyboardState(nullptr);
@@ -170,6 +173,13 @@ class SimulatorDevice final : public hal::Device {
     callback_({hal::EventKind::ActivityUpdated, activity_});
   }
 
+  void emit_notification(const hal::NotificationSample& sample) const {
+    if (!callback_) {
+      return;
+    }
+    callback_({hal::EventKind::NotificationReceived, sample});
+  }
+
   void emit_button(hal::ButtonSample::Action action) const {
     if (!callback_) {
       return;
@@ -284,7 +294,15 @@ class SimulatorDevice final : public hal::Device {
   void process_debug_hotkeys() {
     const bool message_pressed = key_pressed_fallback(SDL_SCANCODE_N, 'N');
     if (message_pressed && !message_notification_latched_) {
-      emit_debug(hal::DebugSample::Action::InjectMessageNotification);
+      hal::NotificationSample sample;
+      sample.valid = true;
+      sample.category = hal::NotificationSample::Category::Message;
+      sample.source_label = kTextWeChat;
+      sample.title = kTextSenderChenHongzhi;
+      sample.body = std::string("[2\xE6\x9D\xA1]") + kTextSenderChenHongzhi + ": happy";
+      sample.time_text = kTextJustNow;
+      sample.badge_text = "2\xE6\x9D\xA1";
+      emit_notification(sample);
     }
     message_notification_latched_ = message_pressed;
 

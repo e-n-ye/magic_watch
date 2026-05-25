@@ -44,6 +44,7 @@ class AppStateMachine {
   void enter_screen_off();
   void enter_powered_off();
   void open_shell_surface(ShellSurface surface);
+  void open_notifications_from_wake_preview();
   void close_shell_surface();
   void preview_notifications_pull(std::int16_t progress);
   void cancel_notifications_pull_preview();

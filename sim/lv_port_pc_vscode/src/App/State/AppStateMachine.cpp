@@ -242,6 +242,10 @@ void AppStateMachine::handle_navigation(const NavigationCommand& command) {
       launch_app(PageId::Launcher);
       return;
     case NavigationAction::OpenNotifications:
+      if (page_manager_.temporary_page_id() && *page_manager_.temporary_page_id() == PageId::NotificationWakePreview) {
+        open_notifications_from_wake_preview();
+        return;
+      }
       open_shell_surface(ShellSurface::Notifications);
       return;
     case NavigationAction::OpenQuickSettings:
@@ -503,6 +507,10 @@ void AppStateMachine::handle_input(const InputCommand& command) {
         wake_from_screen_off();
         return;
       }
+      if (page_manager_.temporary_page_id() && *page_manager_.temporary_page_id() == PageId::NotificationWakePreview) {
+        open_notifications_from_wake_preview();
+        return;
+      }
       if (is_current_watchface_surface()) {
         launch_app(PageId::Launcher);
         return;
@@ -655,6 +663,10 @@ void AppStateMachine::open_shell_surface(ShellSurface surface) {
   if (power_state_ == PowerState::PoweredOff) {
     return;
   }
+  if (long_battery_mode_enabled() &&
+      (surface == ShellSurface::Notifications || surface == ShellSurface::NotificationWakePreview)) {
+    return;
+  }
   if (power_state_ == PowerState::ScreenOff &&
       surface != ShellSurface::PowerMenu &&
       surface != ShellSurface::NotificationWakePreview) {
@@ -689,6 +701,12 @@ void AppStateMachine::open_shell_surface(ShellSurface surface) {
   if (page_manager_.show_temporary(target, open_transition_for(target))) {
     shell_surface_ = surface;
   }
+}
+
+void AppStateMachine::open_notifications_from_wake_preview() {
+  cancel_notification_screen_off(true);
+  notifications_pull_preview_active_ = false;
+  open_shell_surface(ShellSurface::Notifications);
 }
 
 void AppStateMachine::close_shell_surface() {
@@ -990,6 +1008,9 @@ void AppStateMachine::handle_notification_wake_request(const NotificationItem& i
   if (power_state_ == PowerState::PoweredOff) {
     return;
   }
+  if (long_battery_mode_enabled()) {
+    return;
+  }
 
   const auto display_policy = data_center_.display_policy();
   const bool wake_on_notification = !display_policy || display_policy->notification_wake_enabled;
@@ -1009,6 +1030,10 @@ void AppStateMachine::handle_notification_wake_request(const NotificationItem& i
   }
 
   if (page_manager_.temporary_page_id() && *page_manager_.temporary_page_id() == PageId::NotificationWakePreview) {
+    return;
+  }
+
+  if (page_manager_.temporary_page_id() && *page_manager_.temporary_page_id() == PageId::Notifications) {
     return;
   }
 

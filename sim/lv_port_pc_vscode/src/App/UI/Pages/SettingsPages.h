@@ -132,17 +132,29 @@ class BatteryOptimizationPage : public SettingsPageBase {
   lv_obj_t* build() override;
 
  private:
+  enum class OptionKey {
+    SleepBreathingQuality,
+    HeartHealthMonitoring,
+    AllDayStressMonitoring,
+    HighPrecisionSleep,
+    AllDayBloodOxygen,
+  };
+
   struct OptionState {
+    OptionKey key {OptionKey::SleepBreathingQuality};
     const char* title {nullptr};
     const char* detail {nullptr};
-    bool enabled {true};
     lv_obj_t* button {nullptr};
     lv_obj_t* switch_track {nullptr};
   };
 
   static void option_event_cb(lv_event_t* event);
+  void apply_health_monitoring_settings(const HealthMonitoringSettingsModel& model);
+  bool option_enabled(OptionKey key) const;
+  void set_option_enabled(OptionKey key, bool enabled);
   void refresh_options();
 
+  HealthMonitoringSettingsModel current_settings_ {};
   std::array<OptionState, 5> options_;
 };
 

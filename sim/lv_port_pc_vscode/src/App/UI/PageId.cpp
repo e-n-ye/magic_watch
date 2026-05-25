@@ -82,12 +82,26 @@ const char* page_name(PageId page_id) {
       return "AppHeartRate";
     case PageId::AppBloodOxygen:
       return "AppBloodOxygen";
+    case PageId::AppBloodOxygenSettings:
+      return "AppBloodOxygenSettings";
+    case PageId::AppBloodOxygenLowOxygenReminder:
+      return "AppBloodOxygenLowOxygenReminder";
+    case PageId::AppBloodOxygenInfo:
+      return "AppBloodOxygenInfo";
     case PageId::AppBreathing:
       return "AppBreathing";
     case PageId::AppStress:
       return "AppStress";
     case PageId::AppSleep:
       return "AppSleep";
+    case PageId::AppSleepSettings:
+      return "AppSleepSettings";
+    case PageId::AppSleepSettingHighPrecision:
+      return "AppSleepSettingHighPrecision";
+    case PageId::AppSleepSettingBreathingQuality:
+      return "AppSleepSettingBreathingQuality";
+    case PageId::AppSleepInfo:
+      return "AppSleepInfo";
     case PageId::AppWeather:
       return "AppWeather";
     case PageId::AppNfc:

@@ -1288,14 +1288,25 @@ void BatteryLifeModePage::apply_power_mode(const PowerModeModel& model) {
 BatteryOptimizationPage::BatteryOptimizationPage(DataCenter& data_center)
     : SettingsPageBase(data_center, PageId::SettingBatteryOptimization, kTextBatteryOptimization, true),
       options_ {{
-          {kTextSleepBreathingQuality, kTextExtend57Hours, true, nullptr, nullptr},
-          {kTextHeartHealthMonitoring, kTextExtend98Hours, true, nullptr, nullptr},
-          {kTextAllDayStressMonitoring, kTextExtend14Hours, true, nullptr, nullptr},
-          {kTextHighPrecisionSleep, kTextExtend57Hours, true, nullptr, nullptr},
-          {kTextAllDayBloodOxygen, kTextExtend78Hours, true, nullptr, nullptr},
-      }} {}
+          {OptionKey::SleepBreathingQuality, kTextSleepBreathingQuality, kTextExtend57Hours, nullptr, nullptr},
+          {OptionKey::HeartHealthMonitoring, kTextHeartHealthMonitoring, kTextExtend98Hours, nullptr, nullptr},
+          {OptionKey::AllDayStressMonitoring, kTextAllDayStressMonitoring, kTextExtend14Hours, nullptr, nullptr},
+          {OptionKey::HighPrecisionSleep, kTextHighPrecisionSleep, kTextExtend57Hours, nullptr, nullptr},
+          {OptionKey::AllDayBloodOxygen, kTextAllDayBloodOxygen, kTextExtend78Hours, nullptr, nullptr},
+      }} {
+  track(data_center_.subscribe(EventId::HealthMonitoringSettingsChanged,
+                               [this](const Event& event) {
+                                 if (const auto* model =
+                                         std::get_if<HealthMonitoringSettingsModel>(&event.payload)) {
+                                   apply_health_monitoring_settings(*model);
+                                 }
+                               }));
+}
 
 void BatteryOptimizationPage::on_will_appear() {
+  if (const auto& model = data_center_.health_monitoring_settings(); model) {
+    apply_health_monitoring_settings(*model);
+  }
   refresh_options();
 }
 
@@ -1414,13 +1425,54 @@ void BatteryOptimizationPage::option_event_cb(lv_event_t* event) {
     return;
   }
 
-  self->options_[index].enabled = !self->options_[index].enabled;
-  self->refresh_options();
+  const auto key = self->options_[index].key;
+  self->set_option_enabled(key, !self->option_enabled(key));
+}
+
+void BatteryOptimizationPage::apply_health_monitoring_settings(const HealthMonitoringSettingsModel& model) {
+  current_settings_ = model;
+  refresh_options();
+}
+
+bool BatteryOptimizationPage::option_enabled(OptionKey key) const {
+  switch (key) {
+    case OptionKey::SleepBreathingQuality:
+      return current_settings_.sleep_breathing_quality_enabled;
+    case OptionKey::HeartHealthMonitoring:
+      return current_settings_.heart_health_monitoring_enabled;
+    case OptionKey::AllDayStressMonitoring:
+      return current_settings_.all_day_stress_monitoring_enabled;
+    case OptionKey::HighPrecisionSleep:
+      return current_settings_.high_precision_sleep_enabled;
+    case OptionKey::AllDayBloodOxygen:
+      return current_settings_.all_day_blood_oxygen_enabled;
+  }
+  return true;
+}
+
+void BatteryOptimizationPage::set_option_enabled(OptionKey key, bool enabled) {
+  switch (key) {
+    case OptionKey::SleepBreathingQuality:
+      data_center_.set_sleep_breathing_quality_enabled(enabled);
+      return;
+    case OptionKey::HeartHealthMonitoring:
+      data_center_.set_heart_health_monitoring_enabled(enabled);
+      return;
+    case OptionKey::AllDayStressMonitoring:
+      data_center_.set_all_day_stress_monitoring_enabled(enabled);
+      return;
+    case OptionKey::HighPrecisionSleep:
+      data_center_.set_high_precision_sleep_enabled(enabled);
+      return;
+    case OptionKey::AllDayBloodOxygen:
+      data_center_.set_all_day_blood_oxygen_enabled(enabled);
+      return;
+  }
 }
 
 void BatteryOptimizationPage::refresh_options() {
   for (const auto& option : options_) {
-    apply_switch_visual(option.switch_track, option.enabled);
+    apply_switch_visual(option.switch_track, option_enabled(option.key));
   }
 }
 

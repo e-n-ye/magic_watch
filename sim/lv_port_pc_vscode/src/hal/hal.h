@@ -37,6 +37,20 @@ struct ActivitySample {
   std::uint32_t daily_steps {0};
 };
 
+struct NotificationSample {
+  enum class Category {
+    Message,
+  };
+
+  bool valid {false};
+  Category category {Category::Message};
+  std::string source_label;
+  std::string title;
+  std::string body;
+  std::string time_text;
+  std::string badge_text;
+};
+
 struct ButtonSample {
   enum class Button {
     Main,
@@ -99,20 +113,20 @@ struct MotionSample {
 
 struct DebugSample {
   enum class Action {
-    InjectMessageNotification,
     InjectBatteryLowNotification,
     SimRaiseToWake,
     SimRaiseDismiss,
     SimCoverSleep,
   };
 
-  Action action {Action::InjectMessageNotification};
+  Action action {Action::InjectBatteryLowNotification};
 };
 
 enum class EventKind {
   TimeUpdated,
   BatteryChanged,
   ActivityUpdated,
+  NotificationReceived,
   ButtonChanged,
   CrownUpdated,
   TouchUpdated,
@@ -121,7 +135,15 @@ enum class EventKind {
 };
 
 using EventPayload =
-    std::variant<TimeSample, ActivitySample, BatterySample, ButtonSample, CrownSample, TouchSample, MotionSample, DebugSample>;
+    std::variant<TimeSample,
+                 ActivitySample,
+                 NotificationSample,
+                 BatterySample,
+                 ButtonSample,
+                 CrownSample,
+                 TouchSample,
+                 MotionSample,
+                 DebugSample>;
 
 struct Event {
   EventKind kind;

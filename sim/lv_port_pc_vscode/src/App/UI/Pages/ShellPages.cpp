@@ -24,8 +24,11 @@ namespace twsim::app {
 namespace {
 
 constexpr const char* kTextClear = "\xE6\xB8\x85\xE7\xA9\xBA";
+constexpr const char* kTextConfirm = "\xE7\xA1\xAE\xE8\xAE\xA4";
+constexpr const char* kTextCancel = "\xE5\x8F\x96\xE6\xB6\x88";
 constexpr const char* kTextNoMessages = "\xE6\x9A\x82\xE6\x97\xA0\xE6\xB6\x88\xE6\x81\xAF";
 constexpr const char* kTextDismiss = "\xE5\xBF\xBD\xE7\x95\xA5";
+constexpr const char* kTextNotificationClearConfirmBody = "\xE6\xB8\x85\xE7\xA9\xBA\xE5\x90\x8E\xE5\xB0\x86\xE7\xA7\xBB\xE9\x99\xA4\xE5\xBD\x93\xE5\x89\x8D\xE9\x80\x9A\xE7\x9F\xA5\xE5\x88\x97\xE8\xA1\xA8\xE3\x80\x82\xE7\xA1\xAE\xE5\xAE\x9A\xE6\xB8\x85\xE7\xA9\xBA\xEF\xBC\x9F";
 constexpr const char* kTextLongBatteryConfirmBody =
     "长续航模式开启后仅保留时间、计步、NFC功能。旋转表冠或充电可退出此功能。确定开启？";
 constexpr lv_coord_t kNotificationsCloseDragThreshold = 96;
@@ -35,6 +38,9 @@ constexpr lv_coord_t kNotificationsOpenCommitThreshold = 148;
 constexpr lv_coord_t kNotificationsSheetY = 14;
 constexpr lv_coord_t kNotificationsSheetWidth = 228;
 constexpr lv_coord_t kNotificationsSheetHeight = 268;
+constexpr lv_coord_t kNotificationCardSwipeStartThreshold = 14;
+constexpr lv_coord_t kNotificationCardSwipeDismissThreshold = 112;
+constexpr lv_coord_t kNotificationCardSwipeMaxOffset = 138;
 constexpr lv_coord_t kQuickSettingsCloseDragThreshold = 96;
 constexpr lv_coord_t kQuickSettingsCloseFlickThreshold = 20;
 constexpr lv_coord_t kQuickSettingsMaxDragOffset = 220;
@@ -332,6 +338,18 @@ const lv_font_t* cjk_font_72() {
   static std::string font_path = resolve_windows_cjk_font_path();
   static lv_font_t* font = font_path.empty() ? nullptr : lv_tiny_ttf_create_file(font_path.c_str(), 72);
   return font != nullptr ? font : &lv_font_montserrat_48;
+}
+
+void apply_compact_time_label(lv_obj_t* label, const std::optional<TimeModel>& model) {
+  if (label == nullptr) {
+    return;
+  }
+
+  char buffer[8] = "--:--";
+  if (model.has_value() && model->valid) {
+    std::snprintf(buffer, sizeof(buffer), "%02u:%02u", model->hour, model->minute);
+  }
+  lv_label_set_text(label, buffer);
 }
 
 void set_translate_y_exec(void* obj, int32_t value) {
@@ -897,6 +915,131 @@ lv_obj_t* create_steps_panel(lv_obj_t* parent, lv_coord_t width, lv_coord_t heig
   lv_obj_set_style_radius(panel, clamp_coord(scale_by_ratio(width, 12, 100), 22, 28), 0);
   lv_obj_set_style_shadow_width(panel, 0, 0);
   return panel;
+}
+
+lv_obj_t* create_sleep_scroll_root(lv_obj_t* root,
+                                   lv_coord_t screen_w,
+                                   lv_coord_t screen_h,
+                                   lv_coord_t top,
+                                   lv_coord_t bottom,
+                                   lv_coord_t gap = 10) {
+  lv_obj_t* scroll = lv_obj_create(root);
+  if (scroll == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_box(scroll);
+  lv_obj_add_flag(scroll, LV_OBJ_FLAG_SCROLLABLE);
+  lv_obj_add_flag(scroll, LV_OBJ_FLAG_SCROLL_ELASTIC);
+  lv_obj_add_flag(scroll, LV_OBJ_FLAG_SCROLL_MOMENTUM);
+  lv_obj_set_size(scroll, screen_w - 16, screen_h - top - bottom);
+  lv_obj_align(scroll, LV_ALIGN_TOP_MID, 0, top);
+  lv_obj_set_scroll_dir(scroll, LV_DIR_VER);
+  lv_obj_set_scrollbar_mode(scroll, LV_SCROLLBAR_MODE_OFF);
+  lv_obj_set_style_bg_opa(scroll, LV_OPA_TRANSP, 0);
+  lv_obj_set_style_border_width(scroll, 0, 0);
+  lv_obj_set_style_radius(scroll, 0, 0);
+  ui_set_flex_column(scroll, 0, gap);
+  lv_obj_set_style_pad_top(scroll, 0, 0);
+  lv_obj_set_style_pad_bottom(scroll, 10, 0);
+  lv_obj_set_style_pad_left(scroll, 0, 0);
+  lv_obj_set_style_pad_right(scroll, 0, 0);
+  return scroll;
+}
+
+lv_obj_t* create_sleep_round_icon(lv_obj_t* parent,
+                                  lv_coord_t size,
+                                  std::uint32_t bg,
+                                  std::uint32_t fg,
+                                  const char* asset_path,
+                                  const char* fallback_text,
+                                  const lv_font_t* fallback_font = &lv_font_montserrat_20) {
+  lv_obj_t* icon = lv_obj_create(parent);
+  if (icon == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_box(icon);
+  lv_obj_set_size(icon, size, size);
+  lv_obj_set_style_radius(icon, LV_RADIUS_CIRCLE, 0);
+  lv_obj_set_style_bg_color(icon, lv_color_hex(bg), 0);
+  lv_obj_set_style_bg_opa(icon, LV_OPA_COVER, 0);
+  lv_obj_set_style_border_width(icon, 0, 0);
+  lv_obj_remove_flag(icon, LV_OBJ_FLAG_CLICKABLE);
+
+  if (file_exists(asset_path)) {
+    lv_obj_t* image = lv_image_create(icon);
+    if (image != nullptr) {
+      lv_image_set_src(image, asset_path);
+      lv_obj_set_size(image, static_cast<lv_coord_t>(size * 2 / 3), static_cast<lv_coord_t>(size * 2 / 3));
+      lv_image_set_inner_align(image, LV_IMAGE_ALIGN_CONTAIN);
+      lv_obj_center(image);
+      lv_obj_remove_flag(image, LV_OBJ_FLAG_CLICKABLE);
+      return icon;
+    }
+  }
+
+  lv_obj_t* label = lv_label_create(icon);
+  if (label == nullptr) {
+    return icon;
+  }
+  ui_prepare_label(label);
+  lv_obj_set_style_text_font(label, fallback_font, 0);
+  lv_obj_set_style_text_color(label, lv_color_hex(fg), 0);
+  lv_label_set_text(label, fallback_text);
+  lv_obj_center(label);
+  return icon;
+}
+
+lv_obj_t* create_sleep_switch_track(lv_obj_t* parent) {
+  lv_obj_t* track = lv_obj_create(parent);
+  if (track == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_box(track);
+  lv_obj_remove_flag(track, LV_OBJ_FLAG_CLICKABLE);
+  lv_obj_set_size(track, 64, 34);
+  lv_obj_set_style_radius(track, LV_RADIUS_CIRCLE, 0);
+  lv_obj_set_style_border_width(track, 0, 0);
+
+  lv_obj_t* thumb = lv_obj_create(track);
+  if (thumb == nullptr) {
+    return track;
+  }
+  ui_prepare_box(thumb);
+  lv_obj_set_size(thumb, 28, 28);
+  lv_obj_set_style_radius(thumb, LV_RADIUS_CIRCLE, 0);
+  lv_obj_set_style_border_width(thumb, 0, 0);
+  lv_obj_set_style_bg_color(thumb, lv_color_hex(0xEAF6FF), 0);
+  lv_obj_set_style_bg_opa(thumb, LV_OPA_COVER, 0);
+  lv_obj_remove_flag(thumb, LV_OBJ_FLAG_CLICKABLE);
+  return track;
+}
+
+void apply_sleep_switch_style(lv_obj_t* track, bool enabled) {
+  if (track == nullptr) {
+    return;
+  }
+  lv_obj_set_style_bg_color(track, lv_color_hex(enabled ? 0x14B8FF : 0x3A4F66), 0);
+  lv_obj_set_style_bg_opa(track, LV_OPA_COVER, 0);
+
+  lv_obj_t* thumb = lv_obj_get_child(track, 0);
+  if (thumb == nullptr) {
+    return;
+  }
+  lv_obj_align(thumb, enabled ? LV_ALIGN_RIGHT_MID : LV_ALIGN_LEFT_MID, enabled ? -3 : 3, 0);
+}
+
+const char* low_blood_oxygen_mode_text(LowBloodOxygenReminderMode mode) {
+  switch (mode) {
+    case LowBloodOxygenReminderMode::Threshold90:
+      return "90%";
+    case LowBloodOxygenReminderMode::Threshold85:
+      return "85%";
+    case LowBloodOxygenReminderMode::Threshold80:
+      return "80%";
+    case LowBloodOxygenReminderMode::Off:
+    default:
+      return "不提醒";
+  }
 }
 
 lv_obj_t* create_steps_scroll_root(lv_obj_t* root, lv_coord_t screen_w, lv_coord_t screen_h) {
@@ -3147,6 +3290,1554 @@ void StepsDataInfoPage::bind_input() {
                                }));
 }
 
+SleepAppPage::SleepAppPage(DataCenter& data_center) : PageBase(data_center) {}
+
+PageId SleepAppPage::id() const {
+  return PageId::AppSleep;
+}
+
+const char* SleepAppPage::name() const {
+  return page_name(PageId::AppSleep);
+}
+
+void SleepAppPage::on_will_appear() {
+  refresh_header_time();
+}
+
+void SleepAppPage::on_will_disappear() {
+  stop_crown_release_timer();
+}
+
+lv_obj_t* SleepAppPage::build() {
+  lv_obj_t* root = lv_obj_create(nullptr);
+  if (root == nullptr) {
+    return nullptr;
+  }
+  style_root(root, 0x02070D);
+
+  const lv_coord_t screen_w = static_cast<lv_coord_t>(lv_display_get_horizontal_resolution(nullptr));
+  const lv_coord_t screen_h = static_cast<lv_coord_t>(lv_display_get_vertical_resolution(nullptr));
+  const lv_coord_t card_w = screen_w - 16;
+
+  lv_obj_t* title_label = create_steps_label(root, "睡眠", cjk_font_20(), 0xF8FAFC, 80);
+  time_label_ = create_steps_label(root, "--:--", &lv_font_montserrat_20, 0xE2F0FF, 64);
+  if (title_label == nullptr || time_label_ == nullptr) {
+    return nullptr;
+  }
+  lv_obj_align(title_label, LV_ALIGN_TOP_LEFT, 16, 12);
+  lv_obj_align(time_label_, LV_ALIGN_TOP_RIGHT, -16, 12);
+
+  scroll_root_ = create_sleep_scroll_root(root, screen_w, screen_h, 48, 0, 10);
+  if (scroll_root_ == nullptr) {
+    return nullptr;
+  }
+
+  lv_obj_t* last_night_card = create_steps_panel(scroll_root_, card_w, 168, 0x0A1626);
+  if (last_night_card == nullptr) {
+    return nullptr;
+  }
+  lv_obj_t* last_night_icon =
+      create_sleep_round_icon(last_night_card, 52, 0x0A4F76, 0x7DD3FC, sleep_icon_asset_path(), "Z", cjk_font_20());
+  lv_obj_t* last_night_label = create_steps_label(last_night_card,
+                                                  "无睡眠记录，请佩戴入睡",
+                                                  cjk_font_20(),
+                                                  0xF8FAFC,
+                                                  card_w - 40,
+                                                  LV_LABEL_LONG_WRAP);
+  if (last_night_icon == nullptr || last_night_label == nullptr) {
+    return nullptr;
+  }
+  lv_obj_align(last_night_icon, LV_ALIGN_TOP_MID, 0, 28);
+  lv_obj_align(last_night_label, LV_ALIGN_TOP_MID, 0, 96);
+  lv_obj_set_style_text_align(last_night_label, LV_TEXT_ALIGN_CENTER, 0);
+
+  lv_obj_t* week_card = create_steps_panel(scroll_root_, card_w, 206, 0x0A1626);
+  if (week_card == nullptr) {
+    return nullptr;
+  }
+  lv_obj_t* week_icon =
+      create_sleep_round_icon(week_card, 42, 0x0A4F76, 0x7DD3FC, sleep_icon_asset_path(), "Z", cjk_font_20());
+  lv_obj_t* week_title = create_steps_label(week_card, "近7天睡眠", cjk_font_20(), 0xF8FAFC, card_w - 90);
+  lv_obj_t* divider = lv_obj_create(week_card);
+  lv_obj_t* week_value =
+      create_steps_label(week_card, "--小时--分钟", cjk_font_20(), 0xF8FAFC, card_w - 36);
+  lv_obj_t* week_subtitle = create_steps_label(week_card, "平均时长", cjk_font_16(), 0xAFC4DA, card_w - 36);
+  if (week_icon == nullptr || week_title == nullptr || divider == nullptr || week_value == nullptr ||
+      week_subtitle == nullptr) {
+    return nullptr;
+  }
+  lv_obj_align(week_icon, LV_ALIGN_TOP_LEFT, 18, 16);
+  lv_obj_align(week_title, LV_ALIGN_TOP_LEFT, 68, 22);
+  ui_prepare_box(divider);
+  lv_obj_set_size(divider, card_w - 36, 1);
+  lv_obj_set_style_bg_color(divider, lv_color_hex(0x23354A), 0);
+  lv_obj_set_style_bg_opa(divider, LV_OPA_70, 0);
+  lv_obj_align(divider, LV_ALIGN_TOP_MID, 0, 72);
+  lv_obj_align(week_value, LV_ALIGN_TOP_LEFT, 18, 94);
+  lv_obj_align(week_subtitle, LV_ALIGN_TOP_LEFT, 18, 130);
+
+  const lv_coord_t tick_y = 152;
+  const lv_coord_t tick_label_y = 184;
+  const lv_coord_t chart_left = 28;
+  const lv_coord_t chart_right = card_w - 28;
+  const lv_coord_t chart_width = chart_right - chart_left;
+  for (int i = 0; i < 7; ++i) {
+    lv_obj_t* tick = lv_obj_create(week_card);
+    if (tick == nullptr) {
+      return nullptr;
+    }
+    ui_prepare_box(tick);
+    lv_obj_set_size(tick, 1, 34);
+    lv_obj_set_style_bg_color(tick, lv_color_hex(0x486784), 0);
+    lv_obj_set_style_bg_opa(tick, LV_OPA_50, 0);
+    const lv_coord_t x = static_cast<lv_coord_t>(chart_left + (chart_width * i) / 6);
+    lv_obj_align(tick, LV_ALIGN_TOP_LEFT, x, tick_y);
+    if (i == 0 || i == 6) {
+      lv_obj_t* date_label = create_steps_label(week_card, i == 0 ? "5/18" : "5/24", &lv_font_montserrat_14, 0x8DB9E3, 44);
+      if (date_label == nullptr) {
+        return nullptr;
+      }
+      lv_obj_align(date_label, LV_ALIGN_TOP_LEFT, static_cast<lv_coord_t>(x - 12), tick_label_y);
+    }
+  }
+
+  for (const auto& entry :
+       {std::pair<const char*, PageId> {"设置", PageId::AppSleepSettings},
+        std::pair<const char*, PageId> {"说明", PageId::AppSleepInfo}}) {
+    lv_obj_t* card = create_steps_panel(scroll_root_, card_w, 86, 0x102033);
+    if (card == nullptr) {
+      return nullptr;
+    }
+    const char* fallback = entry.second == PageId::AppSleepSettings ? LV_SYMBOL_SETTINGS : "i";
+    lv_obj_t* icon = create_sleep_round_icon(card,
+                                             44,
+                                             entry.second == PageId::AppSleepSettings ? 0x114C9D : 0x0A4F76,
+                                             0x7DD3FC,
+                                             nullptr,
+                                             fallback,
+                                             entry.second == PageId::AppSleepSettings ? &lv_font_montserrat_18
+                                                                                      : cjk_font_20());
+    lv_obj_t* label = create_steps_label(card, entry.first, cjk_font_20(), 0xF8FAFC, card_w - 100);
+    if (icon == nullptr || label == nullptr) {
+      return nullptr;
+    }
+    lv_obj_align(icon, LV_ALIGN_LEFT_MID, 18, 0);
+    lv_obj_align(label, LV_ALIGN_LEFT_MID, 74, 0);
+    attach_click_guard(card);
+    lv_obj_add_event_cb(card, entry_event_cb, LV_EVENT_CLICKED, this);
+    lv_obj_set_user_data(card, reinterpret_cast<void*>(static_cast<std::uintptr_t>(entry.second)));
+  }
+
+  bind_input();
+  on_will_appear();
+  return root;
+}
+
+void SleepAppPage::entry_event_cb(lv_event_t* event) {
+  auto* self = static_cast<SleepAppPage*>(lv_event_get_user_data(event));
+  if (self == nullptr || self->should_ignore_click()) {
+    return;
+  }
+  lv_obj_t* target = lv_event_get_current_target_obj(event);
+  if (target == nullptr || !click_guard_allows(target)) {
+    return;
+  }
+  const auto raw = reinterpret_cast<std::uintptr_t>(lv_obj_get_user_data(target));
+  self->request_navigation({NavigationAction::Push, static_cast<PageId>(raw)});
+}
+
+void SleepAppPage::crown_release_timer_cb(lv_timer_t* timer) {
+  auto* self = static_cast<SleepAppPage*>(lv_timer_get_user_data(timer));
+  if (self == nullptr) {
+    return;
+  }
+  self->crown_release_timer_ = nullptr;
+  release_stream_crown_drag(self->scroll_root_);
+}
+
+void SleepAppPage::bind_input() {
+  track(data_center_.subscribe(EventId::InputRequested,
+                               [this](const Event& event) {
+                                 if (root_ == nullptr || lv_screen_active() != root_ || scroll_root_ == nullptr) {
+                                   return;
+                                 }
+                                 const auto* command = std::get_if<InputCommand>(&event.payload);
+                                 if (command == nullptr) {
+                                   return;
+                                 }
+                                 switch (command->action) {
+                                   case InputAction::CrownRotateCW:
+                                     apply_crown_drag(true, command->value);
+                                     break;
+                                   case InputAction::CrownRotateCCW:
+                                     apply_crown_drag(false, command->value);
+                                     break;
+                                   default:
+                                     break;
+                                 }
+                               }));
+}
+
+void SleepAppPage::apply_crown_drag(bool forward, std::int16_t detents) {
+  stop_crown_release_timer();
+  apply_stream_crown_drag(scroll_root_, forward, detents);
+  schedule_crown_release();
+}
+
+void SleepAppPage::refresh_header_time() {
+  apply_compact_time_label(time_label_, data_center_.time());
+}
+
+void SleepAppPage::schedule_crown_release() {
+  stop_crown_release_timer();
+  crown_release_timer_ = lv_timer_create(&SleepAppPage::crown_release_timer_cb, kLauncherCrownReleaseDelayMs, this);
+  if (crown_release_timer_ != nullptr) {
+    lv_timer_set_repeat_count(crown_release_timer_, 1);
+  }
+}
+
+void SleepAppPage::stop_crown_release_timer() {
+  if (crown_release_timer_ == nullptr) {
+    return;
+  }
+  lv_timer_delete(crown_release_timer_);
+  crown_release_timer_ = nullptr;
+}
+
+SleepSettingsPage::SleepSettingsPage(DataCenter& data_center) : PageBase(data_center) {
+  rows_[0].kind = RowKind::HighPrecisionSleep;
+  rows_[0].title = "睡眠高精度监测";
+  rows_[1].kind = RowKind::SleepBreathingQuality;
+  rows_[1].title = "睡眠呼吸质量监测";
+}
+
+PageId SleepSettingsPage::id() const {
+  return PageId::AppSleepSettings;
+}
+
+const char* SleepSettingsPage::name() const {
+  return page_name(PageId::AppSleepSettings);
+}
+
+void SleepSettingsPage::on_will_appear() {
+  if (const auto& model = data_center_.health_monitoring_settings(); model.has_value()) {
+    apply_settings(*model);
+  } else {
+    apply_settings(HealthMonitoringSettingsModel {});
+  }
+  refresh_header_time();
+  refresh_rows();
+}
+
+void SleepSettingsPage::on_will_disappear() {
+  stop_crown_release_timer();
+}
+
+lv_obj_t* SleepSettingsPage::build() {
+  lv_obj_t* root = lv_obj_create(nullptr);
+  if (root == nullptr) {
+    return nullptr;
+  }
+  style_root(root, 0x02070D);
+
+  const lv_coord_t screen_w = static_cast<lv_coord_t>(lv_display_get_horizontal_resolution(nullptr));
+  const lv_coord_t screen_h = static_cast<lv_coord_t>(lv_display_get_vertical_resolution(nullptr));
+  const lv_coord_t card_w = screen_w - 16;
+
+  lv_obj_t* back_button = lv_button_create(root);
+  lv_obj_t* back_label = back_button == nullptr ? nullptr : create_steps_label(back_button, "<", &lv_font_montserrat_20, 0xD8E9FF, 18);
+  lv_obj_t* title_label = create_steps_label(root, "设置", cjk_font_20(), 0xF8FAFC, 80);
+  time_label_ = create_steps_label(root, "--:--", &lv_font_montserrat_20, 0xE2F0FF, 64);
+  if (back_button == nullptr || back_label == nullptr || title_label == nullptr || time_label_ == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_box(back_button);
+  lv_obj_set_size(back_button, 38, 38);
+  lv_obj_align(back_button, LV_ALIGN_TOP_LEFT, 10, 8);
+  lv_obj_set_style_bg_opa(back_button, LV_OPA_TRANSP, 0);
+  attach_click_guard(back_button);
+  lv_obj_add_event_cb(back_button, back_event_cb, LV_EVENT_CLICKED, this);
+  ui_set_touch_target(back_button, 18);
+  lv_obj_add_flag(back_label, LV_OBJ_FLAG_EVENT_BUBBLE);
+  lv_obj_remove_flag(back_label, LV_OBJ_FLAG_CLICKABLE);
+  lv_obj_align(back_label, LV_ALIGN_LEFT_MID, 10, 0);
+  lv_obj_align(title_label, LV_ALIGN_TOP_LEFT, 42, 12);
+  lv_obj_align(time_label_, LV_ALIGN_TOP_RIGHT, -16, 12);
+
+  scroll_root_ = create_sleep_scroll_root(root, screen_w, screen_h, 48, 0, 10);
+  if (scroll_root_ == nullptr) {
+    return nullptr;
+  }
+
+  for (std::size_t i = 0; i < rows_.size(); ++i) {
+    lv_obj_t* row = create_steps_panel(scroll_root_, card_w, 92, 0x102033);
+    lv_obj_t* title = row == nullptr ? nullptr
+                                     : create_steps_label(row, rows_[i].title, cjk_font_20(), 0xF8FAFC, card_w - 32, LV_LABEL_LONG_WRAP);
+    lv_obj_t* status = row == nullptr ? nullptr : create_steps_label(row, "关闭", cjk_font_16(), 0xAFC4DA, card_w - 32);
+    if (row == nullptr || title == nullptr || status == nullptr) {
+      return nullptr;
+    }
+    lv_obj_align(title, LV_ALIGN_TOP_LEFT, 18, 16);
+    lv_obj_align(status, LV_ALIGN_TOP_LEFT, 18, 56);
+    attach_click_guard(row);
+    lv_obj_add_event_cb(row, row_event_cb, LV_EVENT_CLICKED, this);
+    const PageId target =
+        rows_[i].kind == RowKind::HighPrecisionSleep ? PageId::AppSleepSettingHighPrecision
+                                                     : PageId::AppSleepSettingBreathingQuality;
+    lv_obj_set_user_data(row, reinterpret_cast<void*>(static_cast<std::uintptr_t>(target)));
+    rows_[i].row = row;
+    rows_[i].status_label = status;
+  }
+
+  bind_input();
+  on_will_appear();
+  return root;
+}
+
+void SleepSettingsPage::back_event_cb(lv_event_t* event) {
+  auto* self = static_cast<SleepSettingsPage*>(lv_event_get_user_data(event));
+  if (self == nullptr || self->should_ignore_click()) {
+    return;
+  }
+  lv_obj_t* target = lv_event_get_current_target_obj(event);
+  if (target == nullptr || !click_guard_allows(target)) {
+    return;
+  }
+  self->request_navigation({NavigationAction::Pop, PageId::Watchface});
+}
+
+void SleepSettingsPage::row_event_cb(lv_event_t* event) {
+  auto* self = static_cast<SleepSettingsPage*>(lv_event_get_user_data(event));
+  if (self == nullptr || self->should_ignore_click()) {
+    return;
+  }
+  lv_obj_t* target = lv_event_get_current_target_obj(event);
+  if (target == nullptr || !click_guard_allows(target)) {
+    return;
+  }
+  const auto raw = reinterpret_cast<std::uintptr_t>(lv_obj_get_user_data(target));
+  self->request_navigation({NavigationAction::Push, static_cast<PageId>(raw)});
+}
+
+void SleepSettingsPage::crown_release_timer_cb(lv_timer_t* timer) {
+  auto* self = static_cast<SleepSettingsPage*>(lv_timer_get_user_data(timer));
+  if (self == nullptr) {
+    return;
+  }
+  self->crown_release_timer_ = nullptr;
+  release_stream_crown_drag(self->scroll_root_);
+}
+
+void SleepSettingsPage::bind_input() {
+  track(data_center_.subscribe(EventId::InputRequested,
+                               [this](const Event& event) {
+                                 if (root_ == nullptr || lv_screen_active() != root_ || scroll_root_ == nullptr) {
+                                   return;
+                                 }
+                                 const auto* command = std::get_if<InputCommand>(&event.payload);
+                                 if (command == nullptr) {
+                                   return;
+                                 }
+                                 switch (command->action) {
+                                   case InputAction::CrownRotateCW:
+                                     apply_crown_drag(true, command->value);
+                                     break;
+                                   case InputAction::CrownRotateCCW:
+                                     apply_crown_drag(false, command->value);
+                                     break;
+                                   default:
+                                     break;
+                                 }
+                               }));
+}
+
+void SleepSettingsPage::apply_crown_drag(bool forward, std::int16_t detents) {
+  stop_crown_release_timer();
+  apply_stream_crown_drag(scroll_root_, forward, detents);
+  schedule_crown_release();
+}
+
+void SleepSettingsPage::apply_settings(const HealthMonitoringSettingsModel& model) {
+  current_settings_ = model;
+}
+
+void SleepSettingsPage::refresh_header_time() {
+  apply_compact_time_label(time_label_, data_center_.time());
+}
+
+void SleepSettingsPage::refresh_rows() {
+  for (const auto& row : rows_) {
+    if (row.status_label == nullptr) {
+      continue;
+    }
+    lv_label_set_text(row.status_label, row_enabled(row.kind) ? "开启" : "关闭");
+  }
+}
+
+bool SleepSettingsPage::row_enabled(RowKind kind) const {
+  switch (kind) {
+    case RowKind::HighPrecisionSleep:
+      return current_settings_.high_precision_sleep_enabled;
+    case RowKind::SleepBreathingQuality:
+      return current_settings_.sleep_breathing_quality_enabled;
+    default:
+      return false;
+  }
+}
+
+void SleepSettingsPage::schedule_crown_release() {
+  stop_crown_release_timer();
+  crown_release_timer_ = lv_timer_create(&SleepSettingsPage::crown_release_timer_cb, kLauncherCrownReleaseDelayMs, this);
+  if (crown_release_timer_ != nullptr) {
+    lv_timer_set_repeat_count(crown_release_timer_, 1);
+  }
+}
+
+void SleepSettingsPage::stop_crown_release_timer() {
+  if (crown_release_timer_ == nullptr) {
+    return;
+  }
+  lv_timer_delete(crown_release_timer_);
+  crown_release_timer_ = nullptr;
+}
+
+SleepMonitoringDetailPage::SleepMonitoringDetailPage(DataCenter& data_center,
+                                                     PageId page_id,
+                                                     const char* title,
+                                                     const char* body,
+                                                     SettingKind kind)
+    : PageBase(data_center), page_id_(page_id), title_(title), body_(body), kind_(kind) {}
+
+PageId SleepMonitoringDetailPage::id() const {
+  return page_id_;
+}
+
+const char* SleepMonitoringDetailPage::name() const {
+  return page_name(page_id_);
+}
+
+void SleepMonitoringDetailPage::on_will_appear() {
+  apply_enabled(current_enabled());
+  refresh_header_time();
+}
+
+void SleepMonitoringDetailPage::on_will_disappear() {
+  stop_crown_release_timer();
+}
+
+lv_obj_t* SleepMonitoringDetailPage::build() {
+  lv_obj_t* root = lv_obj_create(nullptr);
+  if (root == nullptr) {
+    return nullptr;
+  }
+  style_root(root, 0x02070D);
+
+  const lv_coord_t screen_w = static_cast<lv_coord_t>(lv_display_get_horizontal_resolution(nullptr));
+  const lv_coord_t screen_h = static_cast<lv_coord_t>(lv_display_get_vertical_resolution(nullptr));
+  const lv_coord_t card_w = screen_w - 16;
+
+  lv_obj_t* back_button = lv_button_create(root);
+  lv_obj_t* back_label = back_button == nullptr ? nullptr : create_steps_label(back_button, "<", &lv_font_montserrat_20, 0xD8E9FF, 18);
+  lv_obj_t* title_label = create_steps_label(root, title_, cjk_font_20(), 0xF8FAFC, 124);
+  time_label_ = create_steps_label(root, "--:--", &lv_font_montserrat_20, 0xE2F0FF, 64);
+  if (back_button == nullptr || back_label == nullptr || title_label == nullptr || time_label_ == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_box(back_button);
+  lv_obj_set_size(back_button, 38, 38);
+  lv_obj_align(back_button, LV_ALIGN_TOP_LEFT, 10, 8);
+  lv_obj_set_style_bg_opa(back_button, LV_OPA_TRANSP, 0);
+  attach_click_guard(back_button);
+  lv_obj_add_event_cb(back_button, back_event_cb, LV_EVENT_CLICKED, this);
+  ui_set_touch_target(back_button, 18);
+  lv_obj_add_flag(back_label, LV_OBJ_FLAG_EVENT_BUBBLE);
+  lv_obj_remove_flag(back_label, LV_OBJ_FLAG_CLICKABLE);
+  lv_obj_align(back_label, LV_ALIGN_LEFT_MID, 10, 0);
+  lv_obj_align(title_label, LV_ALIGN_TOP_LEFT, 42, 12);
+  lv_obj_align(time_label_, LV_ALIGN_TOP_RIGHT, -16, 12);
+
+  scroll_root_ = create_sleep_scroll_root(root, screen_w, screen_h, 48, 0, 10);
+  if (scroll_root_ == nullptr) {
+    return nullptr;
+  }
+
+  lv_obj_t* switch_card = create_steps_panel(scroll_root_, card_w, 96, 0x102033);
+  lv_obj_t* switch_title = switch_card == nullptr
+                               ? nullptr
+                               : create_steps_label(switch_card, title_, cjk_font_20(), 0xF8FAFC, card_w - 112, LV_LABEL_LONG_WRAP);
+  switch_track_ = switch_card == nullptr ? nullptr : create_sleep_switch_track(switch_card);
+  if (switch_card == nullptr || switch_title == nullptr || switch_track_ == nullptr) {
+    return nullptr;
+  }
+  lv_obj_align(switch_title, LV_ALIGN_TOP_LEFT, 18, 14);
+  lv_obj_align(switch_track_, LV_ALIGN_RIGHT_MID, -18, 0);
+  attach_click_guard(switch_card);
+  lv_obj_add_event_cb(switch_card, switch_event_cb, LV_EVENT_CLICKED, this);
+
+  lv_obj_t* body_card = create_steps_panel(scroll_root_, card_w, 140, 0x07111D);
+  lv_obj_t* body_label = body_card == nullptr ? nullptr : create_steps_label(body_card, body_, cjk_font_16(), 0xD8E9FF, card_w - 32, LV_LABEL_LONG_WRAP);
+  if (body_card == nullptr || body_label == nullptr) {
+    return nullptr;
+  }
+  lv_obj_align(body_label, LV_ALIGN_TOP_LEFT, 16, 18);
+
+  bind_input();
+  on_will_appear();
+  return root;
+}
+
+void SleepMonitoringDetailPage::back_event_cb(lv_event_t* event) {
+  auto* self = static_cast<SleepMonitoringDetailPage*>(lv_event_get_user_data(event));
+  if (self == nullptr || self->should_ignore_click()) {
+    return;
+  }
+  lv_obj_t* target = lv_event_get_current_target_obj(event);
+  if (target == nullptr || !click_guard_allows(target)) {
+    return;
+  }
+  self->request_navigation({NavigationAction::Pop, PageId::Watchface});
+}
+
+void SleepMonitoringDetailPage::switch_event_cb(lv_event_t* event) {
+  auto* self = static_cast<SleepMonitoringDetailPage*>(lv_event_get_user_data(event));
+  if (self == nullptr || self->should_ignore_click()) {
+    return;
+  }
+  lv_obj_t* target = lv_event_get_current_target_obj(event);
+  if (target == nullptr || !click_guard_allows(target)) {
+    return;
+  }
+  const bool next_enabled = !self->enabled_;
+  self->apply_enabled(next_enabled);
+  self->publish_enabled(next_enabled);
+}
+
+void SleepMonitoringDetailPage::crown_release_timer_cb(lv_timer_t* timer) {
+  auto* self = static_cast<SleepMonitoringDetailPage*>(lv_timer_get_user_data(timer));
+  if (self == nullptr) {
+    return;
+  }
+  self->crown_release_timer_ = nullptr;
+  release_stream_crown_drag(self->scroll_root_);
+}
+
+void SleepMonitoringDetailPage::bind_input() {
+  track(data_center_.subscribe(EventId::InputRequested,
+                               [this](const Event& event) {
+                                 if (root_ == nullptr || lv_screen_active() != root_ || scroll_root_ == nullptr) {
+                                   return;
+                                 }
+                                 const auto* command = std::get_if<InputCommand>(&event.payload);
+                                 if (command == nullptr) {
+                                   return;
+                                 }
+                                 switch (command->action) {
+                                   case InputAction::CrownRotateCW:
+                                     apply_crown_drag(true, command->value);
+                                     break;
+                                   case InputAction::CrownRotateCCW:
+                                     apply_crown_drag(false, command->value);
+                                     break;
+                                   default:
+                                     break;
+                                 }
+                               }));
+}
+
+void SleepMonitoringDetailPage::apply_crown_drag(bool forward, std::int16_t detents) {
+  stop_crown_release_timer();
+  apply_stream_crown_drag(scroll_root_, forward, detents);
+  schedule_crown_release();
+}
+
+void SleepMonitoringDetailPage::apply_enabled(bool enabled) {
+  enabled_ = enabled;
+  apply_sleep_switch_style(switch_track_, enabled_);
+}
+
+void SleepMonitoringDetailPage::refresh_header_time() {
+  apply_compact_time_label(time_label_, data_center_.time());
+}
+
+void SleepMonitoringDetailPage::schedule_crown_release() {
+  stop_crown_release_timer();
+  crown_release_timer_ =
+      lv_timer_create(&SleepMonitoringDetailPage::crown_release_timer_cb, kLauncherCrownReleaseDelayMs, this);
+  if (crown_release_timer_ != nullptr) {
+    lv_timer_set_repeat_count(crown_release_timer_, 1);
+  }
+}
+
+void SleepMonitoringDetailPage::stop_crown_release_timer() {
+  if (crown_release_timer_ == nullptr) {
+    return;
+  }
+  lv_timer_delete(crown_release_timer_);
+  crown_release_timer_ = nullptr;
+}
+
+bool SleepMonitoringDetailPage::current_enabled() const {
+  const auto& model = data_center_.health_monitoring_settings();
+  if (!model.has_value()) {
+    return false;
+  }
+  switch (kind_) {
+    case SettingKind::HighPrecisionSleep:
+      return model->high_precision_sleep_enabled;
+    case SettingKind::SleepBreathingQuality:
+      return model->sleep_breathing_quality_enabled;
+    default:
+      return false;
+  }
+}
+
+void SleepMonitoringDetailPage::publish_enabled(bool enabled) {
+  switch (kind_) {
+    case SettingKind::HighPrecisionSleep:
+      data_center_.set_high_precision_sleep_enabled(enabled);
+      break;
+    case SettingKind::SleepBreathingQuality:
+      data_center_.set_sleep_breathing_quality_enabled(enabled);
+      break;
+    default:
+      break;
+  }
+}
+
+SleepInfoPage::SleepInfoPage(DataCenter& data_center) : PageBase(data_center) {}
+
+PageId SleepInfoPage::id() const {
+  return PageId::AppSleepInfo;
+}
+
+const char* SleepInfoPage::name() const {
+  return page_name(PageId::AppSleepInfo);
+}
+
+void SleepInfoPage::on_will_appear() {
+  refresh_header_time();
+}
+
+void SleepInfoPage::on_will_disappear() {
+  stop_crown_release_timer();
+}
+
+lv_obj_t* SleepInfoPage::build() {
+  lv_obj_t* root = lv_obj_create(nullptr);
+  if (root == nullptr) {
+    return nullptr;
+  }
+  style_root(root, 0x02070D);
+
+  const lv_coord_t screen_w = static_cast<lv_coord_t>(lv_display_get_horizontal_resolution(nullptr));
+  const lv_coord_t screen_h = static_cast<lv_coord_t>(lv_display_get_vertical_resolution(nullptr));
+  const lv_coord_t card_w = screen_w - 16;
+
+  lv_obj_t* back_button = lv_button_create(root);
+  lv_obj_t* back_label = back_button == nullptr ? nullptr : create_steps_label(back_button, "<", &lv_font_montserrat_20, 0xD8E9FF, 18);
+  lv_obj_t* title_label = create_steps_label(root, "睡眠说明", cjk_font_20(), 0xF8FAFC, 116);
+  time_label_ = create_steps_label(root, "--:--", &lv_font_montserrat_20, 0xE2F0FF, 64);
+  if (back_button == nullptr || back_label == nullptr || title_label == nullptr || time_label_ == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_box(back_button);
+  lv_obj_set_size(back_button, 38, 38);
+  lv_obj_align(back_button, LV_ALIGN_TOP_LEFT, 10, 8);
+  lv_obj_set_style_bg_opa(back_button, LV_OPA_TRANSP, 0);
+  attach_click_guard(back_button);
+  lv_obj_add_event_cb(back_button, back_event_cb, LV_EVENT_CLICKED, this);
+  ui_set_touch_target(back_button, 18);
+  lv_obj_add_flag(back_label, LV_OBJ_FLAG_EVENT_BUBBLE);
+  lv_obj_remove_flag(back_label, LV_OBJ_FLAG_CLICKABLE);
+  lv_obj_align(back_label, LV_ALIGN_LEFT_MID, 10, 0);
+  lv_obj_align(title_label, LV_ALIGN_TOP_LEFT, 42, 12);
+  lv_obj_align(time_label_, LV_ALIGN_TOP_RIGHT, -16, 12);
+
+  scroll_root_ = create_sleep_scroll_root(root, screen_w, screen_h, 48, 0, 10);
+  if (scroll_root_ == nullptr) {
+    return nullptr;
+  }
+
+  const char* sleep_info_text =
+      "佩戴手表入睡，手表将自动记录睡眠信息。手表端只展示最近3条睡眠片段，更多数据请至App端查看。\n\n"
+      "推荐在设置中开启“睡眠高精度监测”的设置项，可以帮助睡眠算法更准确地评估你的睡眠状态，识别REM快速眼动期睡眠。\n\n"
+      "大于等于3小时的长睡眠，设备会根据可获取的数据展示该片段内的平均心率，小于3小时的零星小睡，只展示入睡醒来时间。小于20分钟的睡眠不会被记录。\n\n"
+      "如果睡眠质量很差，睡眠中手腕动作过多，可能会导致睡眠心率测量和血氧测量失败。";
+
+  lv_obj_t* note_body =
+      create_steps_label(scroll_root_, sleep_info_text, cjk_font_16(), 0xEAF2FF, card_w - 20, LV_LABEL_LONG_WRAP);
+  if (note_body == nullptr) {
+    return nullptr;
+  }
+  lv_obj_set_style_text_line_space(note_body, 8, 0);
+  lv_obj_align(note_body, LV_ALIGN_TOP_LEFT, 10, 8);
+
+  bind_input();
+  on_will_appear();
+  return root;
+}
+
+void SleepInfoPage::back_event_cb(lv_event_t* event) {
+  auto* self = static_cast<SleepInfoPage*>(lv_event_get_user_data(event));
+  if (self == nullptr || self->should_ignore_click()) {
+    return;
+  }
+  lv_obj_t* target = lv_event_get_current_target_obj(event);
+  if (target == nullptr || !click_guard_allows(target)) {
+    return;
+  }
+  self->request_navigation({NavigationAction::Pop, PageId::Watchface});
+}
+
+void SleepInfoPage::crown_release_timer_cb(lv_timer_t* timer) {
+  auto* self = static_cast<SleepInfoPage*>(lv_timer_get_user_data(timer));
+  if (self == nullptr) {
+    return;
+  }
+  self->crown_release_timer_ = nullptr;
+  release_stream_crown_drag(self->scroll_root_);
+}
+
+void SleepInfoPage::bind_input() {
+  track(data_center_.subscribe(EventId::InputRequested,
+                               [this](const Event& event) {
+                                 if (root_ == nullptr || lv_screen_active() != root_ || scroll_root_ == nullptr) {
+                                   return;
+                                 }
+                                 const auto* command = std::get_if<InputCommand>(&event.payload);
+                                 if (command == nullptr) {
+                                   return;
+                                 }
+                                 switch (command->action) {
+                                   case InputAction::CrownRotateCW:
+                                     apply_crown_drag(true, command->value);
+                                     break;
+                                   case InputAction::CrownRotateCCW:
+                                     apply_crown_drag(false, command->value);
+                                     break;
+                                   default:
+                                     break;
+                                 }
+                               }));
+}
+
+void SleepInfoPage::apply_crown_drag(bool forward, std::int16_t detents) {
+  stop_crown_release_timer();
+  apply_stream_crown_drag(scroll_root_, forward, detents);
+  schedule_crown_release();
+}
+
+void SleepInfoPage::refresh_header_time() {
+  apply_compact_time_label(time_label_, data_center_.time());
+}
+
+void SleepInfoPage::schedule_crown_release() {
+  stop_crown_release_timer();
+  crown_release_timer_ = lv_timer_create(&SleepInfoPage::crown_release_timer_cb, kLauncherCrownReleaseDelayMs, this);
+  if (crown_release_timer_ != nullptr) {
+    lv_timer_set_repeat_count(crown_release_timer_, 1);
+  }
+}
+
+void SleepInfoPage::stop_crown_release_timer() {
+  if (crown_release_timer_ == nullptr) {
+    return;
+  }
+  lv_timer_delete(crown_release_timer_);
+  crown_release_timer_ = nullptr;
+}
+
+BloodOxygenAppPage::BloodOxygenAppPage(DataCenter& data_center) : PageBase(data_center) {}
+
+PageId BloodOxygenAppPage::id() const {
+  return PageId::AppBloodOxygen;
+}
+
+const char* BloodOxygenAppPage::name() const {
+  return page_name(PageId::AppBloodOxygen);
+}
+
+void BloodOxygenAppPage::on_will_appear() {
+  refresh_header_time();
+}
+
+void BloodOxygenAppPage::on_will_disappear() {
+  stop_crown_release_timer();
+}
+
+lv_obj_t* BloodOxygenAppPage::build() {
+  lv_obj_t* root = lv_obj_create(nullptr);
+  if (root == nullptr) {
+    return nullptr;
+  }
+  style_root(root, 0x02070D);
+
+  const lv_coord_t screen_w = static_cast<lv_coord_t>(lv_display_get_horizontal_resolution(nullptr));
+  const lv_coord_t screen_h = static_cast<lv_coord_t>(lv_display_get_vertical_resolution(nullptr));
+  const lv_coord_t card_w = screen_w - 16;
+
+  lv_obj_t* title_label = create_steps_label(root, "血氧饱和度", cjk_font_20(), 0xF8FAFC, 120);
+  time_label_ = create_steps_label(root, "--:--", &lv_font_montserrat_20, 0xE2F0FF, 64);
+  if (title_label == nullptr || time_label_ == nullptr) {
+    return nullptr;
+  }
+  lv_obj_align(title_label, LV_ALIGN_TOP_LEFT, 16, 12);
+  lv_obj_align(time_label_, LV_ALIGN_TOP_RIGHT, -16, 12);
+
+  scroll_root_ = create_sleep_scroll_root(root, screen_w, screen_h, 48, 0, 10);
+  if (scroll_root_ == nullptr) {
+    return nullptr;
+  }
+
+  lv_obj_t* chart_card = create_steps_panel(scroll_root_, card_w, 124, 0x0A1626);
+  if (chart_card == nullptr) {
+    return nullptr;
+  }
+
+  const lv_coord_t chart_left = 22;
+  const lv_coord_t chart_top = 16;
+  const lv_coord_t chart_w = card_w - 44;
+  const lv_coord_t chart_h = 82;
+  for (int i = 0; i < 5; ++i) {
+    lv_obj_t* tick = lv_obj_create(chart_card);
+    if (tick == nullptr) {
+      return nullptr;
+    }
+    ui_prepare_box(tick);
+    lv_obj_set_size(tick, 1, chart_h);
+    lv_obj_set_style_bg_color(tick, lv_color_hex(0x5A82B2), 0);
+    lv_obj_set_style_bg_opa(tick, LV_OPA_50, 0);
+    lv_obj_align(tick, LV_ALIGN_TOP_LEFT, static_cast<lv_coord_t>(chart_left + (chart_w * i) / 4), chart_top);
+  }
+
+  lv_obj_t* top_value = create_steps_label(chart_card, "95", &lv_font_montserrat_18, 0x8DB9E3, 28);
+  lv_obj_t* bottom_value = create_steps_label(chart_card, "85", &lv_font_montserrat_18, 0x8DB9E3, 28);
+  lv_obj_t* left_label = create_steps_label(chart_card, "00:00", &lv_font_montserrat_16, 0x8DB9E3, 48);
+  lv_obj_t* mid_label = create_steps_label(chart_card, "12:00", &lv_font_montserrat_16, 0x8DB9E3, 48);
+  lv_obj_t* right_label = create_steps_label(chart_card, "24:00", &lv_font_montserrat_16, 0x8DB9E3, 48);
+  if (top_value == nullptr || bottom_value == nullptr || left_label == nullptr || mid_label == nullptr ||
+      right_label == nullptr) {
+    return nullptr;
+  }
+  lv_obj_align(top_value, LV_ALIGN_TOP_RIGHT, -10, 6);
+  lv_obj_align(bottom_value, LV_ALIGN_BOTTOM_RIGHT, -10, -12);
+  lv_obj_align(left_label, LV_ALIGN_BOTTOM_LEFT, 14, -12);
+  lv_obj_align(mid_label, LV_ALIGN_BOTTOM_MID, 0, -12);
+  lv_obj_align(right_label, LV_ALIGN_BOTTOM_RIGHT, -24, -12);
+
+  lv_obj_t* dot = lv_obj_create(chart_card);
+  if (dot == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_box(dot);
+  lv_obj_set_size(dot, 8, 8);
+  lv_obj_set_style_radius(dot, LV_RADIUS_CIRCLE, 0);
+  lv_obj_set_style_bg_color(dot, lv_color_hex(0xFF4F72), 0);
+  lv_obj_set_style_bg_opa(dot, LV_OPA_COVER, 0);
+  lv_obj_align(dot, LV_ALIGN_TOP_RIGHT, -34, 18);
+
+  lv_obj_t* value_label =
+      create_steps_label(scroll_root_, "95%", &lv_font_montserrat_48, 0xF8FAFC, card_w, LV_LABEL_LONG_CLIP);
+  lv_obj_t* update_label = create_steps_label(scroll_root_, "20:37更新", cjk_font_20(), 0xD8E9FF, card_w, LV_LABEL_LONG_CLIP);
+  if (value_label == nullptr || update_label == nullptr) {
+    return nullptr;
+  }
+  lv_obj_set_style_text_align(value_label, LV_TEXT_ALIGN_CENTER, 0);
+  lv_obj_set_style_text_align(update_label, LV_TEXT_ALIGN_CENTER, 0);
+
+  lv_obj_t* measure_button = create_steps_panel(scroll_root_, card_w, 74, 0x111D2E);
+  lv_obj_t* measure_label = measure_button == nullptr
+                                ? nullptr
+                                : create_steps_label(measure_button, "开始测量", cjk_font_20(), 0xFF4F72, card_w - 24);
+  if (measure_button == nullptr || measure_label == nullptr) {
+    return nullptr;
+  }
+  lv_obj_set_style_radius(measure_button, 26, 0);
+  lv_obj_set_style_bg_color(measure_button, lv_color_hex(0x0D1624), 0);
+  lv_obj_set_style_text_align(measure_label, LV_TEXT_ALIGN_CENTER, 0);
+  lv_obj_center(measure_label);
+
+  for (const auto& entry :
+       {std::pair<const char*, PageId> {"设置", PageId::AppBloodOxygenSettings},
+        std::pair<const char*, PageId> {"说明", PageId::AppBloodOxygenInfo}}) {
+    lv_obj_t* card = create_steps_panel(scroll_root_, card_w, 86, 0x102033);
+    if (card == nullptr) {
+      return nullptr;
+    }
+    const bool is_settings = entry.second == PageId::AppBloodOxygenSettings;
+    lv_obj_t* icon = create_sleep_round_icon(card,
+                                             44,
+                                             0x4C1732,
+                                             0xFF8FB3,
+                                             nullptr,
+                                             is_settings ? LV_SYMBOL_SETTINGS : "i",
+                                             is_settings ? &lv_font_montserrat_18 : cjk_font_20());
+    lv_obj_t* label = create_steps_label(card, entry.first, cjk_font_20(), 0xF8FAFC, card_w - 100);
+    if (icon == nullptr || label == nullptr) {
+      return nullptr;
+    }
+    lv_obj_align(icon, LV_ALIGN_LEFT_MID, 18, 0);
+    lv_obj_align(label, LV_ALIGN_LEFT_MID, 74, 0);
+    attach_click_guard(card);
+    lv_obj_add_event_cb(card, entry_event_cb, LV_EVENT_CLICKED, this);
+    lv_obj_set_user_data(card, reinterpret_cast<void*>(static_cast<std::uintptr_t>(entry.second)));
+  }
+
+  bind_input();
+  on_will_appear();
+  return root;
+}
+
+void BloodOxygenAppPage::entry_event_cb(lv_event_t* event) {
+  auto* self = static_cast<BloodOxygenAppPage*>(lv_event_get_user_data(event));
+  if (self == nullptr || self->should_ignore_click()) {
+    return;
+  }
+  lv_obj_t* target = lv_event_get_current_target_obj(event);
+  if (target == nullptr || !click_guard_allows(target)) {
+    return;
+  }
+  const auto raw = reinterpret_cast<std::uintptr_t>(lv_obj_get_user_data(target));
+  self->request_navigation({NavigationAction::Push, static_cast<PageId>(raw)});
+}
+
+void BloodOxygenAppPage::crown_release_timer_cb(lv_timer_t* timer) {
+  auto* self = static_cast<BloodOxygenAppPage*>(lv_timer_get_user_data(timer));
+  if (self == nullptr) {
+    return;
+  }
+  self->crown_release_timer_ = nullptr;
+  release_stream_crown_drag(self->scroll_root_);
+}
+
+void BloodOxygenAppPage::bind_input() {
+  track(data_center_.subscribe(EventId::InputRequested,
+                               [this](const Event& event) {
+                                 if (root_ == nullptr || lv_screen_active() != root_ || scroll_root_ == nullptr) {
+                                   return;
+                                 }
+                                 const auto* command = std::get_if<InputCommand>(&event.payload);
+                                 if (command == nullptr) {
+                                   return;
+                                 }
+                                 switch (command->action) {
+                                   case InputAction::CrownRotateCW:
+                                     apply_crown_drag(true, command->value);
+                                     break;
+                                   case InputAction::CrownRotateCCW:
+                                     apply_crown_drag(false, command->value);
+                                     break;
+                                   default:
+                                     break;
+                                 }
+                               }));
+}
+
+void BloodOxygenAppPage::apply_crown_drag(bool forward, std::int16_t detents) {
+  stop_crown_release_timer();
+  apply_stream_crown_drag(scroll_root_, forward, detents);
+  schedule_crown_release();
+}
+
+void BloodOxygenAppPage::refresh_header_time() {
+  apply_compact_time_label(time_label_, data_center_.time());
+}
+
+void BloodOxygenAppPage::schedule_crown_release() {
+  stop_crown_release_timer();
+  crown_release_timer_ = lv_timer_create(&BloodOxygenAppPage::crown_release_timer_cb, kLauncherCrownReleaseDelayMs, this);
+  if (crown_release_timer_ != nullptr) {
+    lv_timer_set_repeat_count(crown_release_timer_, 1);
+  }
+}
+
+void BloodOxygenAppPage::stop_crown_release_timer() {
+  if (crown_release_timer_ == nullptr) {
+    return;
+  }
+  lv_timer_delete(crown_release_timer_);
+  crown_release_timer_ = nullptr;
+}
+
+BloodOxygenSettingsPage::BloodOxygenSettingsPage(DataCenter& data_center) : PageBase(data_center) {
+  rows_[0].kind = RowKind::AllDayMonitoring;
+  rows_[0].title = "全天血氧监测";
+  rows_[1].kind = RowKind::LowOxygenReminder;
+  rows_[1].title = "低血氧提醒";
+
+  track(data_center_.subscribe(EventId::HealthMonitoringSettingsChanged,
+                               [this](const Event& event) {
+                                 if (const auto* model =
+                                         std::get_if<HealthMonitoringSettingsModel>(&event.payload)) {
+                                   apply_settings(*model);
+                                   refresh_rows();
+                                 }
+                               }));
+}
+
+PageId BloodOxygenSettingsPage::id() const {
+  return PageId::AppBloodOxygenSettings;
+}
+
+const char* BloodOxygenSettingsPage::name() const {
+  return page_name(PageId::AppBloodOxygenSettings);
+}
+
+void BloodOxygenSettingsPage::on_will_appear() {
+  if (const auto& model = data_center_.health_monitoring_settings(); model.has_value()) {
+    apply_settings(*model);
+  } else {
+    apply_settings(HealthMonitoringSettingsModel {});
+  }
+  refresh_header_time();
+  refresh_rows();
+}
+
+void BloodOxygenSettingsPage::on_will_disappear() {
+  stop_crown_release_timer();
+}
+
+lv_obj_t* BloodOxygenSettingsPage::build() {
+  lv_obj_t* root = lv_obj_create(nullptr);
+  if (root == nullptr) {
+    return nullptr;
+  }
+  style_root(root, 0x02070D);
+
+  const lv_coord_t screen_w = static_cast<lv_coord_t>(lv_display_get_horizontal_resolution(nullptr));
+  const lv_coord_t screen_h = static_cast<lv_coord_t>(lv_display_get_vertical_resolution(nullptr));
+  const lv_coord_t card_w = screen_w - 16;
+
+  lv_obj_t* back_button = lv_button_create(root);
+  lv_obj_t* back_label = back_button == nullptr ? nullptr : create_steps_label(back_button, "<", &lv_font_montserrat_20, 0xD8E9FF, 18);
+  lv_obj_t* title_label = create_steps_label(root, "血氧设置", cjk_font_20(), 0xF8FAFC, 116);
+  time_label_ = create_steps_label(root, "--:--", &lv_font_montserrat_20, 0xE2F0FF, 64);
+  if (back_button == nullptr || back_label == nullptr || title_label == nullptr || time_label_ == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_box(back_button);
+  lv_obj_set_size(back_button, 38, 38);
+  lv_obj_align(back_button, LV_ALIGN_TOP_LEFT, 10, 8);
+  lv_obj_set_style_bg_opa(back_button, LV_OPA_TRANSP, 0);
+  attach_click_guard(back_button);
+  lv_obj_add_event_cb(back_button, back_event_cb, LV_EVENT_CLICKED, this);
+  ui_set_touch_target(back_button, 18);
+  lv_obj_add_flag(back_label, LV_OBJ_FLAG_EVENT_BUBBLE);
+  lv_obj_remove_flag(back_label, LV_OBJ_FLAG_CLICKABLE);
+  lv_obj_align(back_label, LV_ALIGN_LEFT_MID, 10, 0);
+  lv_obj_align(title_label, LV_ALIGN_TOP_LEFT, 42, 12);
+  lv_obj_align(time_label_, LV_ALIGN_TOP_RIGHT, -16, 12);
+
+  scroll_root_ = create_sleep_scroll_root(root, screen_w, screen_h, 48, 0, 10);
+  if (scroll_root_ == nullptr) {
+    return nullptr;
+  }
+
+  lv_obj_t* monitoring_row = create_steps_panel(scroll_root_, card_w, 92, 0x102033);
+  lv_obj_t* monitoring_title = monitoring_row == nullptr
+                                   ? nullptr
+                                   : create_steps_label(monitoring_row, rows_[0].title, cjk_font_20(), 0xF8FAFC, card_w - 112, LV_LABEL_LONG_WRAP);
+  lv_obj_t* monitoring_switch = monitoring_row == nullptr ? nullptr : create_sleep_switch_track(monitoring_row);
+  if (monitoring_row == nullptr || monitoring_title == nullptr || monitoring_switch == nullptr) {
+    return nullptr;
+  }
+  lv_obj_align(monitoring_title, LV_ALIGN_TOP_LEFT, 18, 16);
+  lv_obj_align(monitoring_switch, LV_ALIGN_RIGHT_MID, -18, 0);
+  attach_click_guard(monitoring_row);
+  lv_obj_add_event_cb(monitoring_row, switch_event_cb, LV_EVENT_CLICKED, this);
+  rows_[0].row = monitoring_row;
+  rows_[0].switch_track = monitoring_switch;
+
+  lv_obj_t* reminder_row = create_steps_panel(scroll_root_, card_w, 92, 0x102033);
+  lv_obj_t* reminder_title = reminder_row == nullptr
+                                 ? nullptr
+                                 : create_steps_label(reminder_row, rows_[1].title, cjk_font_20(), 0xF8FAFC, card_w - 32, LV_LABEL_LONG_WRAP);
+  lv_obj_t* reminder_status = reminder_row == nullptr ? nullptr : create_steps_label(reminder_row, "不提醒", cjk_font_16(), 0xAFC4DA, card_w - 32);
+  if (reminder_row == nullptr || reminder_title == nullptr || reminder_status == nullptr) {
+    return nullptr;
+  }
+  lv_obj_align(reminder_title, LV_ALIGN_TOP_LEFT, 18, 16);
+  lv_obj_align(reminder_status, LV_ALIGN_TOP_LEFT, 18, 56);
+  attach_click_guard(reminder_row);
+  lv_obj_add_event_cb(reminder_row, row_event_cb, LV_EVENT_CLICKED, this);
+  rows_[1].row = reminder_row;
+  rows_[1].status_label = reminder_status;
+
+  bind_input();
+  on_will_appear();
+  return root;
+}
+
+void BloodOxygenSettingsPage::back_event_cb(lv_event_t* event) {
+  auto* self = static_cast<BloodOxygenSettingsPage*>(lv_event_get_user_data(event));
+  if (self == nullptr || self->should_ignore_click()) {
+    return;
+  }
+  lv_obj_t* target = lv_event_get_current_target_obj(event);
+  if (target == nullptr || !click_guard_allows(target)) {
+    return;
+  }
+  self->request_navigation({NavigationAction::Pop, PageId::Watchface});
+}
+
+void BloodOxygenSettingsPage::row_event_cb(lv_event_t* event) {
+  auto* self = static_cast<BloodOxygenSettingsPage*>(lv_event_get_user_data(event));
+  if (self == nullptr || self->should_ignore_click()) {
+    return;
+  }
+  lv_obj_t* target = lv_event_get_current_target_obj(event);
+  if (target == nullptr || !click_guard_allows(target)) {
+    return;
+  }
+  self->request_navigation({NavigationAction::Push, PageId::AppBloodOxygenLowOxygenReminder});
+}
+
+void BloodOxygenSettingsPage::switch_event_cb(lv_event_t* event) {
+  auto* self = static_cast<BloodOxygenSettingsPage*>(lv_event_get_user_data(event));
+  if (self == nullptr || self->should_ignore_click()) {
+    return;
+  }
+  lv_obj_t* target = lv_event_get_current_target_obj(event);
+  if (target == nullptr || !click_guard_allows(target)) {
+    return;
+  }
+  self->data_center_.set_all_day_blood_oxygen_enabled(!self->current_settings_.all_day_blood_oxygen_enabled);
+}
+
+void BloodOxygenSettingsPage::crown_release_timer_cb(lv_timer_t* timer) {
+  auto* self = static_cast<BloodOxygenSettingsPage*>(lv_timer_get_user_data(timer));
+  if (self == nullptr) {
+    return;
+  }
+  self->crown_release_timer_ = nullptr;
+  release_stream_crown_drag(self->scroll_root_);
+}
+
+void BloodOxygenSettingsPage::bind_input() {
+  track(data_center_.subscribe(EventId::InputRequested,
+                               [this](const Event& event) {
+                                 if (root_ == nullptr || lv_screen_active() != root_ || scroll_root_ == nullptr) {
+                                   return;
+                                 }
+                                 const auto* command = std::get_if<InputCommand>(&event.payload);
+                                 if (command == nullptr) {
+                                   return;
+                                 }
+                                 switch (command->action) {
+                                   case InputAction::CrownRotateCW:
+                                     apply_crown_drag(true, command->value);
+                                     break;
+                                   case InputAction::CrownRotateCCW:
+                                     apply_crown_drag(false, command->value);
+                                     break;
+                                   default:
+                                     break;
+                                 }
+                               }));
+}
+
+void BloodOxygenSettingsPage::apply_crown_drag(bool forward, std::int16_t detents) {
+  stop_crown_release_timer();
+  apply_stream_crown_drag(scroll_root_, forward, detents);
+  schedule_crown_release();
+}
+
+void BloodOxygenSettingsPage::apply_settings(const HealthMonitoringSettingsModel& model) {
+  current_settings_ = model;
+}
+
+void BloodOxygenSettingsPage::refresh_header_time() {
+  apply_compact_time_label(time_label_, data_center_.time());
+}
+
+void BloodOxygenSettingsPage::refresh_rows() {
+  if (rows_[0].switch_track != nullptr) {
+    apply_sleep_switch_style(rows_[0].switch_track, current_settings_.all_day_blood_oxygen_enabled);
+  }
+  if (rows_[1].status_label != nullptr) {
+    lv_label_set_text(rows_[1].status_label, reminder_status_text());
+  }
+}
+
+const char* BloodOxygenSettingsPage::reminder_status_text() const {
+  return low_blood_oxygen_mode_text(current_settings_.low_blood_oxygen_reminder_mode);
+}
+
+void BloodOxygenSettingsPage::schedule_crown_release() {
+  stop_crown_release_timer();
+  crown_release_timer_ =
+      lv_timer_create(&BloodOxygenSettingsPage::crown_release_timer_cb, kLauncherCrownReleaseDelayMs, this);
+  if (crown_release_timer_ != nullptr) {
+    lv_timer_set_repeat_count(crown_release_timer_, 1);
+  }
+}
+
+void BloodOxygenSettingsPage::stop_crown_release_timer() {
+  if (crown_release_timer_ == nullptr) {
+    return;
+  }
+  lv_timer_delete(crown_release_timer_);
+  crown_release_timer_ = nullptr;
+}
+
+BloodOxygenLowOxygenReminderPage::BloodOxygenLowOxygenReminderPage(DataCenter& data_center) : PageBase(data_center) {
+  options_[0].mode = LowBloodOxygenReminderMode::Off;
+  options_[0].label = "不提醒";
+  options_[1].mode = LowBloodOxygenReminderMode::Threshold90;
+  options_[1].label = "90%";
+  options_[2].mode = LowBloodOxygenReminderMode::Threshold85;
+  options_[2].label = "85%";
+  options_[3].mode = LowBloodOxygenReminderMode::Threshold80;
+  options_[3].label = "80%";
+
+  track(data_center_.subscribe(EventId::HealthMonitoringSettingsChanged,
+                               [this](const Event& event) {
+                                 if (const auto* model =
+                                         std::get_if<HealthMonitoringSettingsModel>(&event.payload)) {
+                                   apply_settings(*model);
+                                   refresh_options();
+                                 }
+                               }));
+}
+
+PageId BloodOxygenLowOxygenReminderPage::id() const {
+  return PageId::AppBloodOxygenLowOxygenReminder;
+}
+
+const char* BloodOxygenLowOxygenReminderPage::name() const {
+  return page_name(PageId::AppBloodOxygenLowOxygenReminder);
+}
+
+void BloodOxygenLowOxygenReminderPage::on_will_appear() {
+  if (const auto& model = data_center_.health_monitoring_settings(); model.has_value()) {
+    apply_settings(*model);
+  } else {
+    apply_settings(HealthMonitoringSettingsModel {});
+  }
+  refresh_header_time();
+  refresh_options();
+}
+
+void BloodOxygenLowOxygenReminderPage::on_will_disappear() {
+  stop_crown_release_timer();
+}
+
+lv_obj_t* BloodOxygenLowOxygenReminderPage::build() {
+  lv_obj_t* root = lv_obj_create(nullptr);
+  if (root == nullptr) {
+    return nullptr;
+  }
+  style_root(root, 0x02070D);
+
+  const lv_coord_t screen_w = static_cast<lv_coord_t>(lv_display_get_horizontal_resolution(nullptr));
+  const lv_coord_t screen_h = static_cast<lv_coord_t>(lv_display_get_vertical_resolution(nullptr));
+  const lv_coord_t card_w = screen_w - 16;
+
+  lv_obj_t* back_button = lv_button_create(root);
+  lv_obj_t* back_label = back_button == nullptr ? nullptr : create_steps_label(back_button, "<", &lv_font_montserrat_20, 0xD8E9FF, 18);
+  lv_obj_t* title_label = create_steps_label(root, "低血氧提醒", cjk_font_20(), 0xF8FAFC, 116);
+  time_label_ = create_steps_label(root, "--:--", &lv_font_montserrat_20, 0xE2F0FF, 64);
+  if (back_button == nullptr || back_label == nullptr || title_label == nullptr || time_label_ == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_box(back_button);
+  lv_obj_set_size(back_button, 38, 38);
+  lv_obj_align(back_button, LV_ALIGN_TOP_LEFT, 10, 8);
+  lv_obj_set_style_bg_opa(back_button, LV_OPA_TRANSP, 0);
+  attach_click_guard(back_button);
+  lv_obj_add_event_cb(back_button, back_event_cb, LV_EVENT_CLICKED, this);
+  ui_set_touch_target(back_button, 18);
+  lv_obj_add_flag(back_label, LV_OBJ_FLAG_EVENT_BUBBLE);
+  lv_obj_remove_flag(back_label, LV_OBJ_FLAG_CLICKABLE);
+  lv_obj_align(back_label, LV_ALIGN_LEFT_MID, 10, 0);
+  lv_obj_align(title_label, LV_ALIGN_TOP_LEFT, 42, 12);
+  lv_obj_align(time_label_, LV_ALIGN_TOP_RIGHT, -16, 12);
+
+  scroll_root_ = create_sleep_scroll_root(root, screen_w, screen_h, 48, 0, 10);
+  if (scroll_root_ == nullptr) {
+    return nullptr;
+  }
+
+  const char* intro_text =
+      "开启后，在非睡眠状态下，检测到血氧饱和度在一定时间内低于设定值时设备上出现提醒通知。";
+  lv_obj_t* intro_label =
+      create_steps_label(scroll_root_, intro_text, cjk_font_16(), 0xEAF2FF, card_w - 8, LV_LABEL_LONG_WRAP);
+  if (intro_label == nullptr) {
+    return nullptr;
+  }
+  lv_obj_set_style_text_line_space(intro_label, 8, 0);
+  lv_obj_align(intro_label, LV_ALIGN_TOP_LEFT, 4, 0);
+
+  for (std::size_t i = 0; i < options_.size(); ++i) {
+    lv_obj_t* row = create_steps_panel(scroll_root_, card_w, 78, 0x102033);
+    lv_obj_t* label = row == nullptr ? nullptr : create_steps_label(row, options_[i].label, cjk_font_20(), 0xF8FAFC, 72);
+    lv_obj_t* dot = row == nullptr ? nullptr : lv_obj_create(row);
+    if (row == nullptr || label == nullptr || dot == nullptr) {
+      return nullptr;
+    }
+    ui_prepare_box(dot);
+    lv_obj_set_size(dot, 24, 24);
+    lv_obj_set_style_radius(dot, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_border_width(dot, 2, 0);
+    lv_obj_set_style_border_color(dot, lv_color_hex(0x5D728E), 0);
+    lv_obj_set_style_bg_color(dot, lv_color_hex(0x1A2D44), 0);
+    lv_obj_set_style_bg_opa(dot, LV_OPA_COVER, 0);
+    lv_obj_remove_flag(dot, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_align(label, LV_ALIGN_LEFT_MID, 18, 0);
+    lv_obj_align(dot, LV_ALIGN_RIGHT_MID, -18, 0);
+    attach_click_guard(row);
+    lv_obj_add_event_cb(row, option_event_cb, LV_EVENT_CLICKED, this);
+    lv_obj_set_user_data(row, reinterpret_cast<void*>(static_cast<std::uintptr_t>(i)));
+    options_[i].row = row;
+    options_[i].check_dot = dot;
+  }
+
+  bind_input();
+  on_will_appear();
+  return root;
+}
+
+void BloodOxygenLowOxygenReminderPage::back_event_cb(lv_event_t* event) {
+  auto* self = static_cast<BloodOxygenLowOxygenReminderPage*>(lv_event_get_user_data(event));
+  if (self == nullptr || self->should_ignore_click()) {
+    return;
+  }
+  lv_obj_t* target = lv_event_get_current_target_obj(event);
+  if (target == nullptr || !click_guard_allows(target)) {
+    return;
+  }
+  self->request_navigation({NavigationAction::Pop, PageId::Watchface});
+}
+
+void BloodOxygenLowOxygenReminderPage::option_event_cb(lv_event_t* event) {
+  auto* self = static_cast<BloodOxygenLowOxygenReminderPage*>(lv_event_get_user_data(event));
+  if (self == nullptr || self->should_ignore_click()) {
+    return;
+  }
+  lv_obj_t* target = lv_event_get_current_target_obj(event);
+  if (target == nullptr || !click_guard_allows(target)) {
+    return;
+  }
+  const auto index = static_cast<std::size_t>(reinterpret_cast<std::uintptr_t>(lv_obj_get_user_data(target)));
+  if (index >= self->options_.size()) {
+    return;
+  }
+  self->data_center_.set_low_blood_oxygen_reminder_mode(self->options_[index].mode);
+}
+
+void BloodOxygenLowOxygenReminderPage::crown_release_timer_cb(lv_timer_t* timer) {
+  auto* self = static_cast<BloodOxygenLowOxygenReminderPage*>(lv_timer_get_user_data(timer));
+  if (self == nullptr) {
+    return;
+  }
+  self->crown_release_timer_ = nullptr;
+  release_stream_crown_drag(self->scroll_root_);
+}
+
+void BloodOxygenLowOxygenReminderPage::bind_input() {
+  track(data_center_.subscribe(EventId::InputRequested,
+                               [this](const Event& event) {
+                                 if (root_ == nullptr || lv_screen_active() != root_ || scroll_root_ == nullptr) {
+                                   return;
+                                 }
+                                 const auto* command = std::get_if<InputCommand>(&event.payload);
+                                 if (command == nullptr) {
+                                   return;
+                                 }
+                                 switch (command->action) {
+                                   case InputAction::CrownRotateCW:
+                                     apply_crown_drag(true, command->value);
+                                     break;
+                                   case InputAction::CrownRotateCCW:
+                                     apply_crown_drag(false, command->value);
+                                     break;
+                                   default:
+                                     break;
+                                 }
+                               }));
+}
+
+void BloodOxygenLowOxygenReminderPage::apply_crown_drag(bool forward, std::int16_t detents) {
+  stop_crown_release_timer();
+  apply_stream_crown_drag(scroll_root_, forward, detents);
+  schedule_crown_release();
+}
+
+void BloodOxygenLowOxygenReminderPage::apply_settings(const HealthMonitoringSettingsModel& model) {
+  current_settings_ = model;
+}
+
+void BloodOxygenLowOxygenReminderPage::refresh_header_time() {
+  apply_compact_time_label(time_label_, data_center_.time());
+}
+
+void BloodOxygenLowOxygenReminderPage::refresh_options() {
+  for (const auto& option : options_) {
+    if (option.check_dot == nullptr) {
+      continue;
+    }
+    const bool selected = option.mode == current_settings_.low_blood_oxygen_reminder_mode;
+    lv_obj_set_style_border_color(option.check_dot, lv_color_hex(selected ? 0x14B8FF : 0x5D728E), 0);
+    lv_obj_set_style_bg_color(option.check_dot, lv_color_hex(selected ? 0xEAF6FF : 0x1A2D44), 0);
+  }
+}
+
+void BloodOxygenLowOxygenReminderPage::schedule_crown_release() {
+  stop_crown_release_timer();
+  crown_release_timer_ =
+      lv_timer_create(&BloodOxygenLowOxygenReminderPage::crown_release_timer_cb, kLauncherCrownReleaseDelayMs, this);
+  if (crown_release_timer_ != nullptr) {
+    lv_timer_set_repeat_count(crown_release_timer_, 1);
+  }
+}
+
+void BloodOxygenLowOxygenReminderPage::stop_crown_release_timer() {
+  if (crown_release_timer_ == nullptr) {
+    return;
+  }
+  lv_timer_delete(crown_release_timer_);
+  crown_release_timer_ = nullptr;
+}
+
+BloodOxygenInfoPage::BloodOxygenInfoPage(DataCenter& data_center) : PageBase(data_center) {}
+
+PageId BloodOxygenInfoPage::id() const {
+  return PageId::AppBloodOxygenInfo;
+}
+
+const char* BloodOxygenInfoPage::name() const {
+  return page_name(PageId::AppBloodOxygenInfo);
+}
+
+void BloodOxygenInfoPage::on_will_appear() {
+  refresh_header_time();
+}
+
+void BloodOxygenInfoPage::on_will_disappear() {
+  stop_crown_release_timer();
+}
+
+lv_obj_t* BloodOxygenInfoPage::build() {
+  lv_obj_t* root = lv_obj_create(nullptr);
+  if (root == nullptr) {
+    return nullptr;
+  }
+  style_root(root, 0x02070D);
+
+  const lv_coord_t screen_w = static_cast<lv_coord_t>(lv_display_get_horizontal_resolution(nullptr));
+  const lv_coord_t screen_h = static_cast<lv_coord_t>(lv_display_get_vertical_resolution(nullptr));
+  const lv_coord_t card_w = screen_w - 16;
+
+  lv_obj_t* back_button = lv_button_create(root);
+  lv_obj_t* back_label = back_button == nullptr ? nullptr : create_steps_label(back_button, "<", &lv_font_montserrat_20, 0xD8E9FF, 18);
+  lv_obj_t* title_label = create_steps_label(root, "血氧说明", cjk_font_20(), 0xF8FAFC, 116);
+  time_label_ = create_steps_label(root, "--:--", &lv_font_montserrat_20, 0xE2F0FF, 64);
+  if (back_button == nullptr || back_label == nullptr || title_label == nullptr || time_label_ == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_box(back_button);
+  lv_obj_set_size(back_button, 38, 38);
+  lv_obj_align(back_button, LV_ALIGN_TOP_LEFT, 10, 8);
+  lv_obj_set_style_bg_opa(back_button, LV_OPA_TRANSP, 0);
+  attach_click_guard(back_button);
+  lv_obj_add_event_cb(back_button, back_event_cb, LV_EVENT_CLICKED, this);
+  ui_set_touch_target(back_button, 18);
+  lv_obj_add_flag(back_label, LV_OBJ_FLAG_EVENT_BUBBLE);
+  lv_obj_remove_flag(back_label, LV_OBJ_FLAG_CLICKABLE);
+  lv_obj_align(back_label, LV_ALIGN_LEFT_MID, 10, 0);
+  lv_obj_align(title_label, LV_ALIGN_TOP_LEFT, 42, 12);
+  lv_obj_align(time_label_, LV_ALIGN_TOP_RIGHT, -16, 12);
+
+  scroll_root_ = create_sleep_scroll_root(root, screen_w, screen_h, 48, 0, 10);
+  if (scroll_root_ == nullptr) {
+    return nullptr;
+  }
+
+  const char* info_text = "本轮先把页面结构与设置边界接起来，说明正文下一轮补充。";
+  lv_obj_t* note_body =
+      create_steps_label(scroll_root_, info_text, cjk_font_16(), 0xEAF2FF, card_w - 20, LV_LABEL_LONG_WRAP);
+  if (note_body == nullptr) {
+    return nullptr;
+  }
+  lv_obj_set_style_text_line_space(note_body, 8, 0);
+  lv_obj_align(note_body, LV_ALIGN_TOP_LEFT, 10, 8);
+
+  bind_input();
+  on_will_appear();
+  return root;
+}
+
+void BloodOxygenInfoPage::back_event_cb(lv_event_t* event) {
+  auto* self = static_cast<BloodOxygenInfoPage*>(lv_event_get_user_data(event));
+  if (self == nullptr || self->should_ignore_click()) {
+    return;
+  }
+  lv_obj_t* target = lv_event_get_current_target_obj(event);
+  if (target == nullptr || !click_guard_allows(target)) {
+    return;
+  }
+  self->request_navigation({NavigationAction::Pop, PageId::Watchface});
+}
+
+void BloodOxygenInfoPage::crown_release_timer_cb(lv_timer_t* timer) {
+  auto* self = static_cast<BloodOxygenInfoPage*>(lv_timer_get_user_data(timer));
+  if (self == nullptr) {
+    return;
+  }
+  self->crown_release_timer_ = nullptr;
+  release_stream_crown_drag(self->scroll_root_);
+}
+
+void BloodOxygenInfoPage::bind_input() {
+  track(data_center_.subscribe(EventId::InputRequested,
+                               [this](const Event& event) {
+                                 if (root_ == nullptr || lv_screen_active() != root_ || scroll_root_ == nullptr) {
+                                   return;
+                                 }
+                                 const auto* command = std::get_if<InputCommand>(&event.payload);
+                                 if (command == nullptr) {
+                                   return;
+                                 }
+                                 switch (command->action) {
+                                   case InputAction::CrownRotateCW:
+                                     apply_crown_drag(true, command->value);
+                                     break;
+                                   case InputAction::CrownRotateCCW:
+                                     apply_crown_drag(false, command->value);
+                                     break;
+                                   default:
+                                     break;
+                                 }
+                               }));
+}
+
+void BloodOxygenInfoPage::apply_crown_drag(bool forward, std::int16_t detents) {
+  stop_crown_release_timer();
+  apply_stream_crown_drag(scroll_root_, forward, detents);
+  schedule_crown_release();
+}
+
+void BloodOxygenInfoPage::refresh_header_time() {
+  apply_compact_time_label(time_label_, data_center_.time());
+}
+
+void BloodOxygenInfoPage::schedule_crown_release() {
+  stop_crown_release_timer();
+  crown_release_timer_ =
+      lv_timer_create(&BloodOxygenInfoPage::crown_release_timer_cb, kLauncherCrownReleaseDelayMs, this);
+  if (crown_release_timer_ != nullptr) {
+    lv_timer_set_repeat_count(crown_release_timer_, 1);
+  }
+}
+
+void BloodOxygenInfoPage::stop_crown_release_timer() {
+  if (crown_release_timer_ == nullptr) {
+    return;
+  }
+  lv_timer_delete(crown_release_timer_);
+  crown_release_timer_ = nullptr;
+}
+
 void LauncherPage::back_event_cb(lv_event_t* event) {
   auto* self = static_cast<LauncherPage*>(lv_event_get_user_data(event));
   if (self == nullptr) {
@@ -3263,6 +4954,18 @@ lv_color_t notification_accent_color(NotificationCategory category) {
   return category == NotificationCategory::BatteryLow ? lv_color_hex(0xFACC15) : lv_color_hex(0x22D3EE);
 }
 
+lv_color_t notification_read_card_color(const NotificationItem& item) {
+  return item.read ? lv_color_hex(0x0E1824) : notification_card_color(item.category);
+}
+
+lv_color_t notification_primary_text_color(const NotificationItem& item) {
+  return item.read ? lv_color_hex(0xD3DCE8) : lv_color_hex(0xF8FAFC);
+}
+
+lv_color_t notification_secondary_text_color(const NotificationItem& item) {
+  return item.read ? lv_color_hex(0x94A3B8) : lv_color_hex(0xE2E8F0);
+}
+
 lv_obj_t* create_notification_icon(lv_obj_t* parent, const NotificationItem& item, bool compact) {
   lv_obj_t* holder = lv_obj_create(parent);
   if (holder == nullptr) {
@@ -3325,6 +5028,8 @@ void NotificationsPage::on_will_appear() {
   shell_drag_offset_ = 0;
   open_preview_progress_ = 0;
   shell_drag_active_ = false;
+  reset_notification_card_swipe_state();
+  hide_clear_confirm_overlay();
   if (sheet_container_ != nullptr) {
     lv_obj_set_y(sheet_container_, kNotificationsSheetY);
   }
@@ -3334,6 +5039,10 @@ void NotificationsPage::on_will_appear() {
 
 void NotificationsPage::on_will_disappear() {
   stop_preview_close_timer();
+  reset_notification_card_swipe_state();
+  detail_active_ = false;
+  detail_notification_id_.clear();
+  hide_clear_confirm_overlay();
 }
 
 lv_obj_t* NotificationsPage::build() {
@@ -3424,8 +5133,12 @@ lv_obj_t* NotificationsPage::build() {
   clear_button_ = lv_button_create(sheet_container_);
   list_root_ = lv_obj_create(sheet_container_);
   empty_state_ = lv_obj_create(sheet_container_);
+  detail_root_ = lv_obj_create(sheet_container_);
   drag_handle_ = lv_obj_create(sheet_container_);
-  if (clear_button_ == nullptr || list_root_ == nullptr || empty_state_ == nullptr || drag_handle_ == nullptr) {
+  clear_confirm_overlay_ = lv_obj_create(root);
+  if (clear_button_ == nullptr || list_root_ == nullptr || empty_state_ == nullptr || detail_root_ == nullptr ||
+      clear_confirm_overlay_ == nullptr ||
+      drag_handle_ == nullptr) {
     return nullptr;
   }
 
@@ -3492,6 +5205,120 @@ lv_obj_t* NotificationsPage::build() {
   lv_label_set_text(empty_text, kTextNoMessages);
   lv_obj_align(empty_text, LV_ALIGN_CENTER, 0, 34);
 
+  lv_obj_remove_flag(detail_root_, LV_OBJ_FLAG_SCROLLABLE);
+  lv_obj_set_size(detail_root_, LV_PCT(100), LV_PCT(100));
+  lv_obj_set_style_bg_opa(detail_root_, LV_OPA_TRANSP, 0);
+  lv_obj_set_style_border_width(detail_root_, 0, 0);
+  lv_obj_set_style_pad_all(detail_root_, 0, 0);
+  lv_obj_add_flag(detail_root_, LV_OBJ_FLAG_HIDDEN);
+
+  detail_back_button_ = lv_button_create(detail_root_);
+  lv_obj_t* detail_card = lv_obj_create(detail_root_);
+  if (detail_back_button_ == nullptr || detail_card == nullptr) {
+    return nullptr;
+  }
+
+  lv_obj_set_size(detail_back_button_, 48, 34);
+  lv_obj_align(detail_back_button_, LV_ALIGN_TOP_LEFT, 14, 16);
+  lv_obj_set_style_bg_color(detail_back_button_, lv_color_hex(0x17304A), 0);
+  lv_obj_set_style_bg_opa(detail_back_button_, LV_OPA_COVER, 0);
+  lv_obj_set_style_border_width(detail_back_button_, 0, 0);
+  lv_obj_set_style_radius(detail_back_button_, 16, 0);
+  lv_obj_add_event_cb(detail_back_button_, &NotificationsPage::detail_back_event_cb, LV_EVENT_CLICKED, this);
+
+  lv_obj_t* detail_back_label = lv_label_create(detail_back_button_);
+  if (detail_back_label == nullptr) {
+    return nullptr;
+  }
+  lv_obj_set_style_text_font(detail_back_label, &lv_font_montserrat_18, 0);
+  lv_obj_set_style_text_color(detail_back_label, lv_color_hex(0xF8FAFC), 0);
+  lv_label_set_text(detail_back_label, LV_SYMBOL_LEFT);
+  lv_obj_center(detail_back_label);
+
+  lv_obj_remove_flag(detail_card, LV_OBJ_FLAG_SCROLLABLE);
+  lv_obj_set_size(detail_card, 208, 206);
+  lv_obj_align(detail_card, LV_ALIGN_TOP_MID, 0, 58);
+  lv_obj_set_style_bg_color(detail_card, lv_color_hex(0x132033), 0);
+  lv_obj_set_style_bg_opa(detail_card, LV_OPA_COVER, 0);
+  lv_obj_set_style_border_width(detail_card, 0, 0);
+  lv_obj_set_style_radius(detail_card, 22, 0);
+  lv_obj_set_style_pad_all(detail_card, 14, 0);
+
+  detail_source_label_ = lv_label_create(detail_card);
+  detail_title_label_ = lv_label_create(detail_card);
+  detail_body_label_ = lv_label_create(detail_card);
+  detail_time_label_ = lv_label_create(detail_card);
+  if (detail_source_label_ == nullptr || detail_title_label_ == nullptr || detail_body_label_ == nullptr ||
+      detail_time_label_ == nullptr) {
+    return nullptr;
+  }
+
+  lv_obj_set_style_text_font(detail_source_label_, cjk_font_14(), 0);
+  lv_obj_set_style_text_color(detail_source_label_, lv_color_hex(0x67E8F9), 0);
+  lv_obj_align(detail_source_label_, LV_ALIGN_TOP_LEFT, 0, 0);
+
+  lv_obj_set_width(detail_title_label_, 178);
+  lv_label_set_long_mode(detail_title_label_, LV_LABEL_LONG_WRAP);
+  lv_obj_set_style_text_font(detail_title_label_, cjk_font_16(), 0);
+  lv_obj_set_style_text_color(detail_title_label_, lv_color_hex(0xF8FAFC), 0);
+  lv_obj_align(detail_title_label_, LV_ALIGN_TOP_LEFT, 0, 26);
+
+  lv_obj_set_width(detail_body_label_, 178);
+  lv_label_set_long_mode(detail_body_label_, LV_LABEL_LONG_WRAP);
+  lv_obj_set_style_text_font(detail_body_label_, cjk_font_14(), 0);
+  lv_obj_set_style_text_color(detail_body_label_, lv_color_hex(0xE2E8F0), 0);
+  lv_obj_align(detail_body_label_, LV_ALIGN_TOP_LEFT, 0, 78);
+
+  lv_obj_set_style_text_font(detail_time_label_, cjk_font_14(), 0);
+  lv_obj_set_style_text_color(detail_time_label_, lv_color_hex(0xCBD5E1), 0);
+  lv_obj_align(detail_time_label_, LV_ALIGN_BOTTOM_LEFT, 0, 0);
+
+  ui_prepare_box(clear_confirm_overlay_);
+  lv_obj_set_size(clear_confirm_overlay_, LV_PCT(100), LV_PCT(100));
+  lv_obj_align(clear_confirm_overlay_, LV_ALIGN_TOP_LEFT, 0, 0);
+  lv_obj_set_style_bg_color(clear_confirm_overlay_, lv_color_hex(0x02060D), 0);
+  lv_obj_set_style_bg_opa(clear_confirm_overlay_, LV_OPA_90, 0);
+  lv_obj_set_style_border_width(clear_confirm_overlay_, 0, 0);
+  lv_obj_set_style_radius(clear_confirm_overlay_, 0, 0);
+  lv_obj_add_flag(clear_confirm_overlay_, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_move_foreground(clear_confirm_overlay_);
+
+  lv_obj_t* confirm_body = lv_label_create(clear_confirm_overlay_);
+  lv_obj_t* cancel_button = lv_button_create(clear_confirm_overlay_);
+  lv_obj_t* confirm_button = lv_button_create(clear_confirm_overlay_);
+  if (confirm_body == nullptr || cancel_button == nullptr || confirm_button == nullptr) {
+    return nullptr;
+  }
+
+  lv_obj_set_width(confirm_body, 176);
+  lv_label_set_long_mode(confirm_body, LV_LABEL_LONG_WRAP);
+  lv_obj_set_style_text_font(confirm_body, cjk_font_16(), 0);
+  lv_obj_set_style_text_color(confirm_body, lv_color_hex(0xF8FAFC), 0);
+  lv_label_set_text(confirm_body, kTextNotificationClearConfirmBody);
+  lv_obj_set_style_text_align(confirm_body, LV_TEXT_ALIGN_CENTER, 0);
+  lv_obj_align(confirm_body, LV_ALIGN_CENTER, 0, -28);
+
+  for (const auto [button, text, accent] : {std::tuple {cancel_button, kTextCancel, lv_color_hex(0x334155)},
+                                            std::tuple {confirm_button, kTextConfirm, lv_color_hex(0x2563EB)}}) {
+    lv_obj_set_size(button, 82, 44);
+    lv_obj_set_style_bg_color(button, accent, 0);
+    lv_obj_set_style_bg_opa(button, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(button, 0, 0);
+    lv_obj_set_style_radius(button, 20, 0);
+    lv_obj_t* label = lv_label_create(button);
+    if (label == nullptr) {
+      return nullptr;
+    }
+    lv_obj_set_style_text_font(label, cjk_font_16(), 0);
+    lv_obj_set_style_text_color(label, lv_color_hex(0xF8FAFC), 0);
+    lv_label_set_text(label, text);
+    lv_obj_center(label);
+  }
+  lv_obj_align(cancel_button, LV_ALIGN_CENTER, -48, 64);
+  lv_obj_align(confirm_button, LV_ALIGN_CENTER, 48, 64);
+  lv_obj_add_event_cb(cancel_button, &NotificationsPage::clear_cancel_event_cb, LV_EVENT_CLICKED, this);
+  lv_obj_add_event_cb(confirm_button, &NotificationsPage::clear_confirm_event_cb, LV_EVENT_CLICKED, this);
+
   lv_obj_remove_flag(drag_handle_, LV_OBJ_FLAG_SCROLLABLE);
   lv_obj_remove_flag(drag_handle_, LV_OBJ_FLAG_CLICKABLE);
   lv_obj_set_size(drag_handle_, 46, 7);
@@ -3525,7 +5352,147 @@ void NotificationsPage::clear_event_cb(lv_event_t* event) {
   if (self == nullptr) {
     return;
   }
+  self->show_clear_confirm_overlay();
+}
+
+void NotificationsPage::clear_confirm_event_cb(lv_event_t* event) {
+  auto* self = static_cast<NotificationsPage*>(lv_event_get_user_data(event));
+  if (self == nullptr) {
+    return;
+  }
+  self->hide_clear_confirm_overlay();
   self->data_center_.clear_notifications();
+}
+
+void NotificationsPage::clear_cancel_event_cb(lv_event_t* event) {
+  auto* self = static_cast<NotificationsPage*>(lv_event_get_user_data(event));
+  if (self == nullptr) {
+    return;
+  }
+  self->hide_clear_confirm_overlay();
+}
+
+void NotificationsPage::detail_back_event_cb(lv_event_t* event) {
+  auto* self = static_cast<NotificationsPage*>(lv_event_get_user_data(event));
+  if (self == nullptr) {
+    return;
+  }
+  self->close_detail();
+}
+
+void NotificationsPage::notification_card_event_cb(lv_event_t* event) {
+  auto* self = static_cast<NotificationsPage*>(lv_event_get_user_data(event));
+  if (self == nullptr) {
+    return;
+  }
+  auto* target = lv_event_get_current_target_obj(event);
+  if (target == nullptr || self->list_root_ == nullptr) {
+    return;
+  }
+  if (self->suppressed_card_click_target_ == target) {
+    self->suppressed_card_click_target_ = nullptr;
+    return;
+  }
+  if (!click_guard_allows(target)) {
+    return;
+  }
+  const std::uint32_t index = static_cast<std::uint32_t>(lv_obj_get_index(target));
+  if (index >= self->rendered_notification_ids_.size()) {
+    return;
+  }
+  self->open_detail_for(self->rendered_notification_ids_[index]);
+}
+
+void NotificationsPage::notification_card_swipe_event_cb(lv_event_t* event) {
+  auto* self = static_cast<NotificationsPage*>(lv_event_get_user_data(event));
+  auto* target = lv_event_get_current_target_obj(event);
+  if (self == nullptr || target == nullptr || self->list_root_ == nullptr || self->detail_active_ ||
+      self->clear_confirm_active_) {
+    return;
+  }
+
+  const auto code = lv_event_get_code(event);
+  if (code == LV_EVENT_PRESSED) {
+    const auto index = static_cast<std::uint32_t>(lv_obj_get_index(target));
+    if (index >= self->rendered_notification_ids_.size()) {
+      self->reset_notification_card_swipe_state();
+      return;
+    }
+    self->reset_notification_card_swipe_state();
+    self->active_card_swipe_ = target;
+    self->active_card_swipe_notification_id_ = self->rendered_notification_ids_[index];
+    if (lv_indev_t* indev = lv_event_get_indev(event)) {
+      lv_indev_get_point(indev, &self->active_card_swipe_press_point_);
+    }
+    return;
+  }
+
+  if (target != self->active_card_swipe_) {
+    return;
+  }
+
+  if (code == LV_EVENT_PRESSING) {
+    lv_point_t point = self->active_card_swipe_press_point_;
+    if (lv_indev_t* indev = lv_event_get_indev(event)) {
+      lv_indev_get_point(indev, &point);
+    }
+    const lv_coord_t dx = point.x - self->active_card_swipe_press_point_.x;
+    const lv_coord_t dy = point.y - self->active_card_swipe_press_point_.y;
+
+    if (!self->card_swipe_horizontal_capture_) {
+      if (LV_ABS(dy) >= kNotificationCardSwipeStartThreshold &&
+          LV_ABS(dy) > LV_ABS(dx) + 6) {
+        self->card_swipe_vertical_lock_ = true;
+        return;
+      }
+      if (self->card_swipe_vertical_lock_ || dx <= 0) {
+        return;
+      }
+      if (dx < kNotificationCardSwipeStartThreshold || dx <= LV_ABS(dy) + 6) {
+        return;
+      }
+
+      self->card_swipe_horizontal_capture_ = true;
+      lv_obj_clear_flag(self->list_root_, LV_OBJ_FLAG_SCROLLABLE);
+    }
+
+    self->set_notification_card_swipe_offset(
+        target, clamp_coord(dx, 0, kNotificationCardSwipeMaxOffset));
+    return;
+  }
+
+  if (code == LV_EVENT_RELEASED || code == LV_EVENT_PRESS_LOST) {
+    const bool should_dismiss =
+        self->card_swipe_horizontal_capture_ &&
+        self->active_card_swipe_offset_ >= kNotificationCardSwipeDismissThreshold &&
+        !self->active_card_swipe_notification_id_.empty();
+    const std::string dismiss_id = self->active_card_swipe_notification_id_;
+    lv_obj_t* card = self->active_card_swipe_;
+    const bool had_horizontal_capture = self->card_swipe_horizontal_capture_;
+    const lv_coord_t release_offset = self->active_card_swipe_offset_;
+
+    if (self->list_root_ != nullptr) {
+      lv_obj_add_flag(self->list_root_, LV_OBJ_FLAG_SCROLLABLE);
+    }
+    self->active_card_swipe_ = nullptr;
+    self->active_card_swipe_press_point_ = {};
+    self->active_card_swipe_offset_ = 0;
+    self->active_card_swipe_notification_id_.clear();
+    self->card_swipe_horizontal_capture_ = false;
+    self->card_swipe_vertical_lock_ = false;
+
+    if (should_dismiss) {
+      self->suppressed_card_click_target_ = card;
+      self->data_center_.dismiss_notification(dismiss_id);
+      return;
+    }
+
+    if (had_horizontal_capture && card != nullptr) {
+      self->suppressed_card_click_target_ = card;
+      lv_obj_set_style_translate_x(card, release_offset, 0);
+      self->animate_notification_card_swipe_offset(card, 0);
+    }
+  }
 }
 
 void NotificationsPage::bind_input() {
@@ -3537,6 +5504,10 @@ void NotificationsPage::bind_input() {
 
                                  const auto* command = std::get_if<InputCommand>(&event.payload);
                                  if (command == nullptr) {
+                                   return;
+                                 }
+
+                                 if (clear_confirm_active_) {
                                    return;
                                  }
 
@@ -3680,6 +5651,9 @@ bool NotificationsPage::is_handle_drag_start_zone(std::int16_t x, std::int16_t y
 }
 
 bool NotificationsPage::should_capture_shell_drag(const InputCommand& command) const {
+  if (clear_confirm_active_) {
+    return false;
+  }
   if (shell_drag_active_) {
     return command.value <= 0 || shell_drag_offset_ > 0;
   }
@@ -3819,11 +5793,31 @@ void NotificationsPage::apply_backdrop_battery(const BatteryModel& model) {
 }
 
 void NotificationsPage::refresh_content() {
-  if (list_root_ == nullptr || empty_state_ == nullptr || clear_button_ == nullptr) {
+  if (list_root_ == nullptr || empty_state_ == nullptr || clear_button_ == nullptr || detail_root_ == nullptr) {
     return;
   }
 
+  if (detail_active_) {
+    if (data_center_.find_notification(detail_notification_id_) == nullptr) {
+      close_detail();
+      return;
+    }
+    refresh_detail_content();
+    return;
+  }
+
+  refresh_list_content();
+}
+
+void NotificationsPage::refresh_list_content() {
+  if (list_root_ == nullptr || empty_state_ == nullptr || clear_button_ == nullptr || detail_root_ == nullptr) {
+    return;
+  }
+
+  reset_notification_card_swipe_state();
+  rendered_notification_ids_.clear();
   lv_obj_clean(list_root_);
+  lv_obj_add_flag(detail_root_, LV_OBJ_FLAG_HIDDEN);
 
   const auto notifications = data_center_.notifications();
   const bool has_items = notifications && !notifications->items.empty();
@@ -3847,45 +5841,177 @@ void NotificationsPage::refresh_content() {
     lv_obj_set_width(card, LV_PCT(100));
     lv_obj_set_height(card, LV_SIZE_CONTENT);
     lv_obj_set_style_pad_all(card, 12, 0);
-    lv_obj_set_style_bg_color(card, notification_card_color(item.category), 0);
+    lv_obj_set_style_bg_color(card, notification_read_card_color(item), 0);
     lv_obj_set_style_bg_opa(card, LV_OPA_COVER, 0);
     lv_obj_set_style_border_width(card, 0, 0);
     lv_obj_set_style_radius(card, 20, 0);
     lv_obj_remove_flag(card, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_add_flag(card, LV_OBJ_FLAG_CLICKABLE);
+    attach_click_guard(card);
+    lv_obj_add_event_cb(card, &NotificationsPage::notification_card_event_cb, LV_EVENT_CLICKED, this);
+    lv_obj_add_event_cb(card, &NotificationsPage::notification_card_swipe_event_cb, LV_EVENT_PRESSED, this);
+    lv_obj_add_event_cb(card, &NotificationsPage::notification_card_swipe_event_cb, LV_EVENT_PRESSING, this);
+    lv_obj_add_event_cb(card, &NotificationsPage::notification_card_swipe_event_cb, LV_EVENT_RELEASED, this);
+    lv_obj_add_event_cb(card, &NotificationsPage::notification_card_swipe_event_cb, LV_EVENT_PRESS_LOST, this);
 
     lv_obj_t* icon = create_notification_icon(card, item, true);
+    lv_obj_t* status_chip = lv_obj_create(card);
+    lv_obj_t* status_label = status_chip == nullptr ? nullptr : lv_label_create(status_chip);
     lv_obj_t* source = lv_label_create(card);
     lv_obj_t* title = lv_label_create(card);
     lv_obj_t* body = lv_label_create(card);
     lv_obj_t* time = lv_label_create(card);
-    if (icon == nullptr || source == nullptr || title == nullptr || body == nullptr || time == nullptr) {
+    if (icon == nullptr || status_chip == nullptr || status_label == nullptr || source == nullptr || title == nullptr ||
+        body == nullptr || time == nullptr) {
       return;
     }
 
     lv_obj_align(icon, LV_ALIGN_TOP_LEFT, 0, 0);
 
+    lv_obj_remove_flag(status_chip, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_size(status_chip, 46, 22);
+    lv_obj_align(status_chip, LV_ALIGN_TOP_RIGHT, 0, 0);
+    lv_obj_set_style_bg_color(status_chip,
+                              item.read ? lv_color_hex(0x223247) : lv_color_hex(0x0F3B5A),
+                              0);
+    lv_obj_set_style_bg_opa(status_chip, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_width(status_chip, 0, 0);
+    lv_obj_set_style_radius(status_chip, 11, 0);
+    lv_obj_set_style_pad_all(status_chip, 0, 0);
+
+    lv_label_set_text(status_label, item.read ? "已读" : "未读");
+    lv_obj_set_style_text_font(status_label, cjk_font_14(), 0);
+    lv_obj_set_style_text_color(status_label,
+                                item.read ? lv_color_hex(0xB7C4D4) : lv_color_hex(0x67E8F9),
+                                0);
+    lv_obj_center(status_label);
+
     lv_label_set_text(source, item.source_label.c_str());
+    lv_obj_set_width(source, 104);
+    lv_label_set_long_mode(source, LV_LABEL_LONG_DOT);
     lv_obj_set_style_text_font(source, cjk_font_14(), 0);
     lv_obj_set_style_text_color(source, notification_accent_color(item.category), 0);
     lv_obj_align(source, LV_ALIGN_TOP_LEFT, 52, 2);
 
     lv_label_set_text(title, item.title.c_str());
     lv_obj_set_style_text_font(title, cjk_font_16(), 0);
-    lv_obj_set_style_text_color(title, lv_color_hex(0xF8FAFC), 0);
+    lv_obj_set_style_text_color(title, notification_primary_text_color(item), 0);
     lv_obj_align(title, LV_ALIGN_TOP_LEFT, 0, 48);
 
     lv_label_set_text(body, item.body.c_str());
     lv_obj_set_width(body, 182);
     lv_label_set_long_mode(body, LV_LABEL_LONG_WRAP);
     lv_obj_set_style_text_font(body, cjk_font_14(), 0);
-    lv_obj_set_style_text_color(body, lv_color_hex(0xE2E8F0), 0);
+    lv_obj_set_style_text_color(body, notification_secondary_text_color(item), 0);
     lv_obj_align(body, LV_ALIGN_TOP_LEFT, 0, 82);
+    lv_obj_update_layout(body);
 
     lv_label_set_text(time, item.time_text.c_str());
     lv_obj_set_style_text_font(time, cjk_font_14(), 0);
     lv_obj_set_style_text_color(time, lv_color_hex(0xCBD5E1), 0);
-    lv_obj_align(time, LV_ALIGN_BOTTOM_LEFT, 0, 0);
+    lv_obj_align_to(time, body, LV_ALIGN_OUT_BOTTOM_LEFT, 0, 12);
+
+    rendered_notification_ids_.push_back(item.id);
   }
+}
+
+void NotificationsPage::refresh_detail_content() {
+  if (detail_root_ == nullptr || list_root_ == nullptr || empty_state_ == nullptr || clear_button_ == nullptr ||
+      detail_source_label_ == nullptr || detail_title_label_ == nullptr || detail_body_label_ == nullptr ||
+      detail_time_label_ == nullptr) {
+    return;
+  }
+
+  const NotificationItem* item = data_center_.find_notification(detail_notification_id_);
+  if (item == nullptr) {
+    close_detail();
+    return;
+  }
+
+  lv_obj_add_flag(list_root_, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_add_flag(empty_state_, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_add_flag(clear_button_, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_clear_flag(detail_root_, LV_OBJ_FLAG_HIDDEN);
+
+  lv_label_set_text(detail_source_label_, item->source_label.c_str());
+  lv_obj_set_style_text_color(detail_source_label_, notification_accent_color(item->category), 0);
+  lv_label_set_text(detail_title_label_, item->title.c_str());
+  lv_label_set_text(detail_body_label_, item->body.c_str());
+  lv_label_set_text(detail_time_label_, item->time_text.c_str());
+}
+
+void NotificationsPage::open_detail_for(std::string_view id) {
+  detail_notification_id_ = std::string(id);
+  detail_active_ = true;
+  data_center_.mark_notification_read(id);
+  refresh_content();
+}
+
+void NotificationsPage::close_detail() {
+  detail_active_ = false;
+  detail_notification_id_.clear();
+  refresh_content();
+}
+
+void NotificationsPage::show_clear_confirm_overlay() {
+  if (clear_confirm_overlay_ == nullptr) {
+    return;
+  }
+  reset_notification_card_swipe_state();
+  clear_confirm_active_ = true;
+  lv_obj_clear_flag(clear_confirm_overlay_, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_move_foreground(clear_confirm_overlay_);
+}
+
+void NotificationsPage::hide_clear_confirm_overlay() {
+  clear_confirm_active_ = false;
+  if (clear_confirm_overlay_ != nullptr) {
+    lv_obj_add_flag(clear_confirm_overlay_, LV_OBJ_FLAG_HIDDEN);
+  }
+}
+
+void NotificationsPage::set_notification_card_swipe_offset(lv_obj_t* card, lv_coord_t offset) {
+  if (card == nullptr) {
+    return;
+  }
+  active_card_swipe_offset_ = clamp_coord(offset, 0, kNotificationCardSwipeMaxOffset);
+  lv_obj_set_style_translate_x(card, active_card_swipe_offset_, 0);
+}
+
+void NotificationsPage::animate_notification_card_swipe_offset(lv_obj_t* card, lv_coord_t target_offset) {
+  if (card == nullptr) {
+    return;
+  }
+
+  lv_anim_t anim;
+  lv_anim_init(&anim);
+  lv_anim_set_var(&anim, card);
+  lv_anim_set_exec_cb(&anim, [](void* obj, int32_t value) {
+    if (obj != nullptr) {
+      lv_obj_set_style_translate_x(static_cast<lv_obj_t*>(obj), static_cast<lv_coord_t>(value), 0);
+    }
+  });
+  lv_anim_set_values(&anim,
+                     lv_obj_get_style_translate_x(card, LV_PART_MAIN),
+                     clamp_coord(target_offset, 0, kNotificationCardSwipeMaxOffset));
+  lv_anim_set_duration(&anim, 180);
+  lv_anim_set_path_cb(&anim, lv_anim_path_ease_out);
+  lv_anim_start(&anim);
+}
+
+void NotificationsPage::reset_notification_card_swipe_state() {
+  if (active_card_swipe_ != nullptr) {
+    lv_obj_set_style_translate_x(active_card_swipe_, 0, 0);
+  }
+  if (list_root_ != nullptr) {
+    lv_obj_add_flag(list_root_, LV_OBJ_FLAG_SCROLLABLE);
+  }
+  active_card_swipe_ = nullptr;
+  active_card_swipe_press_point_ = {};
+  active_card_swipe_offset_ = 0;
+  active_card_swipe_notification_id_.clear();
+  card_swipe_horizontal_capture_ = false;
+  card_swipe_vertical_lock_ = false;
 }
 
 NotificationWakePage::NotificationWakePage(DataCenter& data_center) : PageBase(data_center) {}
@@ -3915,9 +6041,9 @@ lv_obj_t* NotificationWakePage::build() {
   style_root(root, 0x02060D);
 
   icon_container_ = lv_obj_create(root);
-  lv_obj_t* card = lv_obj_create(root);
+  preview_card_ = lv_obj_create(root);
   dismiss_button_ = lv_button_create(root);
-  if (icon_container_ == nullptr || card == nullptr || dismiss_button_ == nullptr) {
+  if (icon_container_ == nullptr || preview_card_ == nullptr || dismiss_button_ == nullptr) {
     return nullptr;
   }
 
@@ -3941,18 +6067,19 @@ lv_obj_t* NotificationWakePage::build() {
   lv_obj_set_style_text_font(icon_label_, &lv_font_montserrat_20, 0);
   lv_obj_set_style_text_color(icon_label_, lv_color_hex(0xFFFFFF), 0);
 
-  lv_obj_set_size(card, 210, 126);
-  lv_obj_align(card, LV_ALIGN_TOP_MID, 0, 82);
-  lv_obj_set_style_bg_color(card, lv_color_hex(0x14263A), 0);
-  lv_obj_set_style_bg_opa(card, LV_OPA_COVER, 0);
-  lv_obj_set_style_border_width(card, 0, 0);
-  lv_obj_set_style_radius(card, 22, 0);
-  lv_obj_set_style_pad_all(card, 14, 0);
+  lv_obj_set_size(preview_card_, 210, 126);
+  lv_obj_align(preview_card_, LV_ALIGN_TOP_MID, 0, 82);
+  lv_obj_set_style_bg_color(preview_card_, lv_color_hex(0x14263A), 0);
+  lv_obj_set_style_bg_opa(preview_card_, LV_OPA_COVER, 0);
+  lv_obj_set_style_border_width(preview_card_, 0, 0);
+  lv_obj_set_style_radius(preview_card_, 22, 0);
+  lv_obj_set_style_pad_all(preview_card_, 14, 0);
+  lv_obj_add_event_cb(preview_card_, &NotificationWakePage::open_notifications_event_cb, LV_EVENT_CLICKED, this);
 
-  source_label_ = lv_label_create(card);
-  title_label_ = lv_label_create(card);
-  body_label_ = lv_label_create(card);
-  time_label_ = lv_label_create(card);
+  source_label_ = lv_label_create(preview_card_);
+  title_label_ = lv_label_create(preview_card_);
+  body_label_ = lv_label_create(preview_card_);
+  time_label_ = lv_label_create(preview_card_);
   if (source_label_ == nullptr || title_label_ == nullptr || body_label_ == nullptr || time_label_ == nullptr) {
     return nullptr;
   }
@@ -4008,6 +6135,14 @@ void NotificationWakePage::dismiss_event_cb(lv_event_t* event) {
   self->request_navigation({NavigationAction::CloseShellSurface, PageId::Watchface});
 }
 
+void NotificationWakePage::open_notifications_event_cb(lv_event_t* event) {
+  auto* self = static_cast<NotificationWakePage*>(lv_event_get_user_data(event));
+  if (self == nullptr) {
+    return;
+  }
+  self->request_navigation({NavigationAction::OpenNotifications, PageId::Notifications});
+}
+
 void NotificationWakePage::timeout_cb(lv_timer_t* timer) {
   auto* self = static_cast<NotificationWakePage*>(lv_timer_get_user_data(timer));
   if (self == nullptr) {
@@ -4024,6 +6159,7 @@ void NotificationWakePage::bind_notifications() {
                                    return;
                                  }
                                  refresh_content();
+                                 start_auto_close_timer();
                                }));
 }
 
