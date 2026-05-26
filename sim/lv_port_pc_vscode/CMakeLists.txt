@@ -86,11 +86,11 @@ set(MAIN_SOURCES
     src/App/UI/Watchface/WatchfaceStyle.cpp
     src/App/UI/UiStyles.cpp
     src/App/UI/Pages/CommonPages.cpp
-    src/App/UI/Pages/SettingsPagePrimitives.cpp
-    src/App/UI/Pages/SettingsBatteryPages.cpp
-    src/App/UI/Pages/SettingsDisplayPages.cpp
-    src/App/UI/Pages/SettingsLayoutPages.cpp
-    src/App/UI/Pages/SettingsPlaceholderPages.cpp
+    src/App/UI/Pages/Settings/SettingsPagePrimitives.cpp
+    src/App/UI/Pages/Settings/SettingsBatteryPages.cpp
+    src/App/UI/Pages/Settings/SettingsDisplayPages.cpp
+    src/App/UI/Pages/Settings/SettingsLayoutPages.cpp
+    src/App/UI/Pages/Settings/SettingsPlaceholderPages.cpp
     src/App/UI/Pages/SettingsPages.cpp
     src/App/UI/Pages/ShellPages.cpp
     src/App/State/AppStateMachine.cpp

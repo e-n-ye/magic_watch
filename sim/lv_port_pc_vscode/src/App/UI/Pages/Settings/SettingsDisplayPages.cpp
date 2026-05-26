@@ -8,7 +8,7 @@
 #include <utility>
 
 #include "App/Common/DisplayPolicyRules.h"
-#include "App/UI/Pages/SettingsPagePrimitives.h"
+#include "App/UI/Pages/Settings/SettingsPagePrimitives.h"
 #include "App/UI/UiStyles.h"
 
 namespace twsim::app {

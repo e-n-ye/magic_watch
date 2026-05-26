@@ -1,4 +1,4 @@
-#include "App/UI/Pages/SettingsPagePrimitives.h"
+#include "App/UI/Pages/Settings/SettingsPagePrimitives.h"
 
 #include <algorithm>
 #include <array>
