@@ -81,6 +81,7 @@ set(MAIN_SOURCES
     src/App/UI/PageId.cpp
     src/App/UI/PageBase.cpp
     src/App/UI/PageManager.cpp
+    src/App/UI/LvglLifecycle.cpp
     src/App/UI/Assets/MonicaAssets.cpp
     src/App/UI/Watchface/WatchfaceStyle.cpp
     src/App/UI/UiStyles.cpp
