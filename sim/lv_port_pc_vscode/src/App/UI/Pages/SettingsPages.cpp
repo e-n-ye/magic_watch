@@ -431,53 +431,6 @@ void SettingsHomePage::item_event_cb(lv_event_t* event) {
   self->request_navigation({NavigationAction::Push, self->entries_[index].target});
 }
 
-SettingsPlaceholderPage::SettingsPlaceholderPage(DataCenter& data_center,
-                                                 PageId page_id,
-                                                 const char* title,
-                                                 const char* detail)
-    : SettingsPageBase(data_center, page_id, title, true), detail_(detail) {}
-
-lv_obj_t* SettingsPlaceholderPage::build() {
-  lv_obj_t* root = create_page_root();
-  if (root == nullptr) {
-    return nullptr;
-  }
-  build_header(root);
-
-  const TileVisual visual = visual_for_page(id());
-  lv_obj_t* scroll = create_scroll_column(root, kListTop, list_height());
-  if (scroll == nullptr) {
-    return nullptr;
-  }
-
-  lv_obj_t* card = create_card_shell(scroll, false);
-  if (card == nullptr) {
-    return nullptr;
-  }
-  if (create_home_tile_icon(card, visual.icon_text, visual.icon_bg) == nullptr) {
-    return nullptr;
-  }
-
-  lv_obj_t* label = lv_label_create(card);
-  if (label == nullptr) {
-    return nullptr;
-  }
-  ui_prepare_label(label);
-  lv_obj_set_style_text_font(label, cjk_font_20(), 0);
-  lv_obj_set_style_text_color(label, lv_color_hex(0xF6FAFF), 0);
-  lv_label_set_text(label, title_text());
-  lv_obj_align(label, LV_ALIGN_LEFT_MID, 62, 0);
-
-  if (create_note_card(scroll, kTextPlaceholderTag, detail_) == nullptr) {
-    return nullptr;
-  }
-  if (create_note_card(scroll, kTextSettings, kTextComingSoon) == nullptr) {
-    return nullptr;
-  }
-
-  return root;
-}
-
 AppLayoutSettingsPage::AppLayoutSettingsPage(DataCenter& data_center)
     : SettingsPageBase(data_center, PageId::SettingAppLayout, kTextAppLayout, true),
       options_ {{
