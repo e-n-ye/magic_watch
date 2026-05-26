@@ -5,8 +5,8 @@
 每次新会话先做三件事：
 
 1. 阅读 `AGENTS.md`。
-2. 先阅读 [document_map.md](/D:/MY_Desk/watch/magic_watch/docs/document_map.md)，确认当前必读与历史参考文档的分层。
-3. 阅读和当前任务相关的 `docs/` 文档。
+2. 先阅读 [document_map.md](/D:/MY_Desk/watch/magic_watch/docs/document_map.md)，按任务路由选择当前文档。
+3. 默认优先读 `docs/00_current/` 下的当前入口文档，再阅读和当前任务相关的专题文档。
 4. 用非破坏性命令观察当前 Git 状态和相关文件。
 
 推荐命令：
@@ -47,6 +47,42 @@ rg --files
 - 不批量删除文件或目录。
 - 现有模拟器代码是预研资产，除非任务明确要求，否则不要重写或清理。
 - 修改后尽量运行验证命令；如果无法验证，要说明原因。
+
+### Scope Lock
+
+每一轮实现前必须写明：
+
+```text
+Allowed files:
+- 本轮允许新增或修改的文件
+
+Forbidden files:
+- 本轮禁止修改的文件
+
+Forbidden changes:
+- 本轮禁止行为
+```
+
+通用禁止项：
+
+- 禁止顺手重构非本轮目标模块。
+- 禁止批量格式化无关文件。
+- 禁止重命名公共 API，除非本轮明确要求。
+- 禁止改变 `InputIntentRouter`、`PageManager`、现有 `Event` 枚举语义。
+- 禁止同时拆多个领域。
+- 禁止删除大文件或目录。
+- 禁止把页面 UI 逻辑塞进 Controller。
+- 禁止 Controller 直接调用 `PageManager`、创建 LVGL 对象或访问页面内部。
+- 禁止在 Action/Event 中引入 `std::string`、`std::vector`、heap allocation 或复杂对象所有权。
+
+执行规则：
+
+1. 本轮开始前确认工作区状态。
+2. 本轮结束后检查 `git status`。
+3. 如果出现 Allowed files 之外的修改，本轮判定失败。
+4. 不在违规 diff 上继续修补；应回滚本轮修改后重新执行。
+5. 每轮报告必须列出实际修改文件。
+6. 每轮报告必须说明是否出现越权修改。
 
 ## Review Rules
 
