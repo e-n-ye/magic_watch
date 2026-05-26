@@ -88,6 +88,7 @@ set(MAIN_SOURCES
     src/App/UI/Pages/SettingsPages.cpp
     src/App/UI/Pages/ShellPages.cpp
     src/App/State/AppStateMachine.cpp
+    src/App/State/PowerController.cpp
     src/App/Application.cpp
     src/HAL/HAL.cpp
     src/Platform/Simulator/SimulatorDevice.cpp

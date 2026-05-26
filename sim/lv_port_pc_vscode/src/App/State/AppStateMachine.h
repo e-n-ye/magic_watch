@@ -3,6 +3,7 @@
 #include <array>
 
 #include "App/Common/DataCenter.h"
+#include "App/State/PowerController.h"
 #include "App/UI/PageManager.h"
 
 namespace twsim::app {
@@ -14,13 +15,6 @@ class AppStateMachine {
   bool start();
 
  private:
-  enum class PowerState {
-    Booting,
-    Running,
-    ScreenOff,
-    PoweredOff,
-  };
-
   enum class ShellSurface {
     None,
     Notifications,
@@ -71,6 +65,9 @@ class AppStateMachine {
   void cancel_keep_screen_on_timer(bool clear_policy);
   static void keep_screen_on_timer_cb(lv_timer_t* timer);
   bool keep_screen_on_active() const;
+  void apply_power_action(const PowerAction& action);
+  void apply_power_timer_requests(const PowerAction& action);
+  void schedule_keep_screen_on_timer(std::uint32_t duration_ms);
   bool long_battery_mode_enabled() const;
   bool is_home_surface_page(PageId page_id) const;
   bool is_long_battery_page(PageId page_id) const;
@@ -90,15 +87,13 @@ class AppStateMachine {
   EventBus::Subscription power_mode_subscription_;
   EventBus::Subscription battery_subscription_;
   EventBus::Subscription display_policy_subscription_;
-  PowerState power_state_ {PowerState::Booting};
+  PowerController power_controller_;
   ShellSurface shell_surface_ {ShellSurface::None};
   bool notification_wake_session_active_ {false};
-  bool raise_to_wake_session_active_ {false};
   bool suppress_display_policy_sync_ {false};
   lv_timer_t* notification_screen_off_timer_ {nullptr};
   lv_timer_t* auto_screen_off_timer_ {nullptr};
   lv_timer_t* keep_screen_on_timer_ {nullptr};
-  std::uint32_t keep_screen_on_timer_duration_ms_ {0};
   std::size_t home_surface_index_ {0};
   std::optional<PageManager::State> screen_off_page_state_;
   std::size_t screen_off_home_surface_index_ {0};
