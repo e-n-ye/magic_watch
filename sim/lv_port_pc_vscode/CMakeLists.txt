@@ -87,6 +87,7 @@ set(MAIN_SOURCES
     src/App/UI/UiStyles.cpp
     src/App/UI/Pages/CommonPages.cpp
     src/App/UI/Pages/Settings/SettingsPagePrimitives.cpp
+    src/App/UI/Pages/Settings/SettingsBasePages.cpp
     src/App/UI/Pages/Settings/SettingsBatteryPages.cpp
     src/App/UI/Pages/Settings/SettingsDisplayPages.cpp
     src/App/UI/Pages/Settings/SettingsLayoutPages.cpp
