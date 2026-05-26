@@ -51,6 +51,9 @@ class DataCenter {
   void set_high_precision_sleep_enabled(bool enabled);
   void set_all_day_blood_oxygen_enabled(bool enabled);
   void set_low_blood_oxygen_reminder_mode(LowBloodOxygenReminderMode mode);
+  void set_all_day_heart_rate_monitoring_mode(HeartRateAllDayMonitoringMode mode);
+  void set_high_heart_rate_reminder_mode(HeartRateHighReminderMode mode);
+  void set_low_heart_rate_reminder_mode(HeartRateLowReminderMode mode);
   void show_toast_for(std::string_view id);
   void clear_toast();
 

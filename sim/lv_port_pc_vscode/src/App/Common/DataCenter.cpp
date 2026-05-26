@@ -365,6 +365,39 @@ void DataCenter::set_low_blood_oxygen_reminder_mode(LowBloodOxygenReminderMode m
   event_bus_.publish({EventId::HealthMonitoringSettingsChanged, *health_monitoring_settings_});
 }
 
+void DataCenter::set_all_day_heart_rate_monitoring_mode(HeartRateAllDayMonitoringMode mode) {
+  if (!health_monitoring_settings_) {
+    health_monitoring_settings_ = HealthMonitoringSettingsModel {};
+  }
+  if (health_monitoring_settings_->all_day_heart_rate_monitoring_mode == mode) {
+    return;
+  }
+  health_monitoring_settings_->all_day_heart_rate_monitoring_mode = mode;
+  event_bus_.publish({EventId::HealthMonitoringSettingsChanged, *health_monitoring_settings_});
+}
+
+void DataCenter::set_high_heart_rate_reminder_mode(HeartRateHighReminderMode mode) {
+  if (!health_monitoring_settings_) {
+    health_monitoring_settings_ = HealthMonitoringSettingsModel {};
+  }
+  if (health_monitoring_settings_->high_heart_rate_reminder_mode == mode) {
+    return;
+  }
+  health_monitoring_settings_->high_heart_rate_reminder_mode = mode;
+  event_bus_.publish({EventId::HealthMonitoringSettingsChanged, *health_monitoring_settings_});
+}
+
+void DataCenter::set_low_heart_rate_reminder_mode(HeartRateLowReminderMode mode) {
+  if (!health_monitoring_settings_) {
+    health_monitoring_settings_ = HealthMonitoringSettingsModel {};
+  }
+  if (health_monitoring_settings_->low_heart_rate_reminder_mode == mode) {
+    return;
+  }
+  health_monitoring_settings_->low_heart_rate_reminder_mode = mode;
+  event_bus_.publish({EventId::HealthMonitoringSettingsChanged, *health_monitoring_settings_});
+}
+
 void DataCenter::show_toast_for(std::string_view id) {
   const NotificationItem* item = find_notification(id);
   if (item == nullptr) {

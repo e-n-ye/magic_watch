@@ -80,6 +80,20 @@ const char* page_name(PageId page_id) {
       return "SettingBatteryInfo";
     case PageId::AppHeartRate:
       return "AppHeartRate";
+    case PageId::AppHeartRateResting30Days:
+      return "AppHeartRateResting30Days";
+    case PageId::AppHeartRateSettings:
+      return "AppHeartRateSettings";
+    case PageId::AppHeartRateAllDayMonitoring:
+      return "AppHeartRateAllDayMonitoring";
+    case PageId::AppHeartRateHeartHealthMonitoring:
+      return "AppHeartRateHeartHealthMonitoring";
+    case PageId::AppHeartRateHighReminder:
+      return "AppHeartRateHighReminder";
+    case PageId::AppHeartRateLowReminder:
+      return "AppHeartRateLowReminder";
+    case PageId::AppHeartRateInfo:
+      return "AppHeartRateInfo";
     case PageId::AppBloodOxygen:
       return "AppBloodOxygen";
     case PageId::AppBloodOxygenSettings:

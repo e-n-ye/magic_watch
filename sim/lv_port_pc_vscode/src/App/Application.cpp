@@ -338,6 +338,43 @@ void Application::register_pages() {
       [this]() {
         return std::make_unique<StepsDataInfoPage>(data_center_);
       });
+  page_manager_.register_page(PageId::AppHeartRate,
+                              [this]() { return std::make_unique<HeartRateAppPage>(data_center_); });
+  page_manager_.register_page(
+      PageId::AppHeartRateResting30Days,
+      [this]() {
+        return std::make_unique<HeartRateResting30DaysPage>(data_center_);
+      });
+  page_manager_.register_page(
+      PageId::AppHeartRateSettings,
+      [this]() {
+        return std::make_unique<HeartRateSettingsPage>(data_center_);
+      });
+  page_manager_.register_page(
+      PageId::AppHeartRateAllDayMonitoring,
+      [this]() {
+        return std::make_unique<HeartRateAllDayMonitoringPage>(data_center_);
+      });
+  page_manager_.register_page(
+      PageId::AppHeartRateHeartHealthMonitoring,
+      [this]() {
+        return std::make_unique<HeartRateHeartHealthMonitoringPage>(data_center_);
+      });
+  page_manager_.register_page(
+      PageId::AppHeartRateHighReminder,
+      [this]() {
+        return std::make_unique<HeartRateHighReminderPage>(data_center_);
+      });
+  page_manager_.register_page(
+      PageId::AppHeartRateLowReminder,
+      [this]() {
+        return std::make_unique<HeartRateLowReminderPage>(data_center_);
+      });
+  page_manager_.register_page(
+      PageId::AppHeartRateInfo,
+      [this]() {
+        return std::make_unique<HeartRateInfoPage>(data_center_);
+      });
   page_manager_.register_page(PageId::AppBloodOxygen,
                               [this]() { return std::make_unique<BloodOxygenAppPage>(data_center_); });
   page_manager_.register_page(
@@ -544,7 +581,6 @@ void Application::register_pages() {
       [this]() {
         return std::make_unique<BatteryInfoPage>(data_center_);
       });
-  register_app_placeholder(PageId::AppHeartRate, "Heart Rate", "Heart rate app placeholder page.");
   register_app_placeholder(PageId::AppBreathing, "Breathing", "Breathing training placeholder page.");
   register_app_placeholder(PageId::AppStress, "Stress", "Stress app placeholder page.");
   page_manager_.register_page(PageId::AppWeather, [this]() { return std::make_unique<WeatherAppPage>(data_center_); });

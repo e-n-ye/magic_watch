@@ -856,21 +856,25 @@ Before testing:
 
 - Action:
   - from `AppBloodOxygen`, open `设置`
-  - toggle `全天血氧监测`
+  - turn `全天血氧监测` off
+  - turn `全天血氧监测` on
   - open `低血氧提醒`
 - Expected:
   - `血氧设置` is reachable
   - `全天血氧监测` can be switched
-  - `低血氧提醒` entry is reachable and shows current selection text
+  - `低血氧提醒` entry is hidden when `全天血氧监测` is off
+  - `低血氧提醒` entry is reachable and shows current selection text when `全天血氧监测` is on
 
 ### S3. Low Blood Oxygen Reminder Can Be Selected
 
 - Action:
   - in `低血氧提醒`, select `不提醒 / 90% / 85% / 80%`
   - return to `血氧设置`
+  - turn `全天血氧监测` off, then on again
 - Expected:
   - each option can be selected
   - returning to `血氧设置` updates the status text immediately
+  - re-enabling `全天血氧监测` restores the `低血氧提醒` row with the previous selection
 
 ### S4. Blood Oxygen Settings Reuse The Shared Model
 
@@ -881,14 +885,135 @@ Before testing:
   - `全天血氧监测` remains in sync across both pages
   - `AppBloodOxygen` and `BatteryOptimizationPage` are editing the same shared model
 
-### S5. Blood Oxygen Info Shell Is Reachable
+### S5. Blood Oxygen Info Body Is Reachable
 
 - Action:
   - from `AppBloodOxygen`, open `说明`
+  - vertically drag / flick through the info page
+  - press `Q / E`
 - Expected:
   - the info page opens
   - title shows `血氧说明`
-  - this round still uses a placeholder body and reserves the real explanation text for the next round
+  - the page contains real explanatory body text instead of placeholder copy
+  - the body includes reference values, accuracy factors, wearing guidance, and the non-medical-device note
+  - touch scroll and crown scroll can browse the full body
+
+## T. Heart Rate Home And Resting 30 Days
+
+### T1. Heart Rate Is No Longer A Placeholder
+
+- Action:
+  - enter `AppHeartRate` from Launcher or the health shortcut surface
+- Expected:
+  - the page is no longer a placeholder
+  - title shows `心率`
+  - the first visible state is `正在测量 / 请保持静止`
+  - this round still uses a fixed mock measurement result, not a real heart-rate algorithm
+
+### T2. Entry Measurement Ends In Result And Wear Prompt
+
+- Action:
+  - stay on `AppHeartRate` until the mock measurement completes
+  - when the wear prompt appears, tap `知道了`
+- Expected:
+  - the prompt shows `1.5cm-2cm` and `请正确佩戴手表后重试`
+  - tapping `知道了` dismisses the prompt
+  - the result area shows `未佩戴`, `76 次/分`, and `76次/分(1分钟前)`
+  - the result and measuring states occupy the same main page position
+
+### T3. Heart Rate Main Entries
+
+- Action:
+  - after dismissing the wear prompt, scroll the Heart Rate page by touch and by `Q / E`
+- Expected:
+  - entries show:
+    - `近30天静息`
+    - `心率设置`
+    - `心率说明`
+  - `近30天静息`, `心率设置`, and `心率说明` open real pages
+
+### T4. Resting 30 Days Page Is Reachable
+
+- Action:
+  - from `AppHeartRate`, open `近30天静息`
+  - vertically drag / flick through the page
+  - press `Q / E`
+  - tap the top-left back button
+- Expected:
+  - the page title shows `近30天静息`
+  - the chart card shows a mock 30-day resting heart-rate line
+  - visible labels include `4/26`, `5/10`, `5/25`, `-- 次/分`, and `今日静息`
+  - touch scroll and crown scroll keep working
+  - the back button returns to `AppHeartRate`
+
+### T5. Heart Rate Settings Page Is Reachable
+
+- Action:
+  - from `AppHeartRate`, open `心率设置`
+  - scroll the page by touch and by `Q / E`
+- Expected:
+  - the page title shows `心率设置`
+  - visible rows include:
+    - `全天心率监测`
+    - `心脏健康监测`
+    - `高心率提醒`
+    - `低心率提醒`
+  - default status includes `智能监测`, `开启`, `关闭`, `关闭`
+
+### T6. All-Day Heart Rate Monitoring Can Be Selected
+
+- Action:
+  - from `心率设置`, open `全天心率监测`
+  - select `关闭 / 智能监测 / 1分钟一次 / 10分钟一次 / 30分钟一次`
+  - return to `心率设置`
+- Expected:
+  - the selected option is highlighted
+  - returning to `心率设置` updates the `全天心率监测` status text immediately
+
+### T7. Heart Health Monitoring Reuses Shared Model
+
+- Action:
+  - from `心率设置`, open `心脏健康监测`
+  - toggle `心脏健康监测`
+  - return to `心率设置`
+  - compare with `设置 -> 电池 -> 续航优化`
+- Expected:
+  - the switch visual updates immediately
+  - `心率设置` and `续航优化` show the same `心脏健康监测` state
+
+### T8. High And Low Heart Rate Reminders Can Be Selected
+
+- Action:
+  - from `心率设置`, open `高心率提醒`
+  - select `关闭 / 100次/分 / 110次/分 / 120次/分 / 130次/分 / 140次/分 / 150次/分`
+  - return to `心率设置`
+  - open `低心率提醒`
+  - select `关闭 / 40次/分 / 45次/分 / 50次/分`
+  - return to `心率设置`
+- Expected:
+  - each selected option is highlighted in its option page
+  - returning to `心率设置` updates `高心率提醒` and `低心率提醒` status text immediately
+  - this round only stores thresholds and does not trigger alert notifications
+
+### T9. Heart Rate Info Body Is Reachable
+
+- Action:
+  - from `AppHeartRate`, open `心率说明`
+  - vertically drag / flick through the page
+  - press `Q / E`
+  - tap the top-left back button
+- Expected:
+  - the page title shows `心率说明`
+  - visible body text includes:
+    - `心率`
+    - `55-80次/分`
+    - `30-240次/分`
+    - `测量说明`
+    - `1.5cm-2cm`
+    - `本品非医疗器械`
+  - touch scroll and crown scroll keep working
+  - the back button returns to `AppHeartRate`
+
 ## Exit Criteria
 
 The current simulator baseline can be considered stable enough for a new round when:

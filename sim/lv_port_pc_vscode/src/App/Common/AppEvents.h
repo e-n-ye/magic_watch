@@ -68,6 +68,31 @@ enum class LowBloodOxygenReminderMode {
   Threshold80,
 };
 
+enum class HeartRateAllDayMonitoringMode {
+  Off,
+  Smart,
+  Every1Min,
+  Every10Min,
+  Every30Min,
+};
+
+enum class HeartRateHighReminderMode {
+  Off,
+  Bpm100,
+  Bpm110,
+  Bpm120,
+  Bpm130,
+  Bpm140,
+  Bpm150,
+};
+
+enum class HeartRateLowReminderMode {
+  Off,
+  Bpm40,
+  Bpm45,
+  Bpm50,
+};
+
 struct HealthMonitoringSettingsModel {
   bool sleep_breathing_quality_enabled {true};
   bool heart_health_monitoring_enabled {true};
@@ -75,6 +100,9 @@ struct HealthMonitoringSettingsModel {
   bool high_precision_sleep_enabled {true};
   bool all_day_blood_oxygen_enabled {true};
   LowBloodOxygenReminderMode low_blood_oxygen_reminder_mode {LowBloodOxygenReminderMode::Off};
+  HeartRateAllDayMonitoringMode all_day_heart_rate_monitoring_mode {HeartRateAllDayMonitoringMode::Smart};
+  HeartRateHighReminderMode high_heart_rate_reminder_mode {HeartRateHighReminderMode::Off};
+  HeartRateLowReminderMode low_heart_rate_reminder_mode {HeartRateLowReminderMode::Off};
 };
 
 enum class NotificationCategory {

@@ -77,6 +77,10 @@
 - [v0_8c1_sleep_home_settings_shell.md](/D:/MY_Desk/watch/magic_watch/docs/v0_8c1_sleep_home_settings_shell.md)
 - [v0_8c2_sleep_info_body.md](/D:/MY_Desk/watch/magic_watch/docs/v0_8c2_sleep_info_body.md)
 - [v0_8d1_blood_oxygen_home_settings_shell.md](/D:/MY_Desk/watch/magic_watch/docs/v0_8d1_blood_oxygen_home_settings_shell.md)
+- [v0_8d2_blood_oxygen_info_body.md](/D:/MY_Desk/watch/magic_watch/docs/v0_8d2_blood_oxygen_info_body.md)
+- [v0_8e1_heart_rate_home_resting30.md](/D:/MY_Desk/watch/magic_watch/docs/v0_8e1_heart_rate_home_resting30.md)
+- [v0_8e2_heart_rate_settings.md](/D:/MY_Desk/watch/magic_watch/docs/v0_8e2_heart_rate_settings.md)
+- [v0_8e3_heart_rate_info_body.md](/D:/MY_Desk/watch/magic_watch/docs/v0_8e3_heart_rate_info_body.md)
 
 ### 2. 如果当前任务是“电池 / 长续航路径”
 
@@ -95,6 +99,10 @@
 - [v0_8c1_sleep_home_settings_shell.md](/D:/MY_Desk/watch/magic_watch/docs/v0_8c1_sleep_home_settings_shell.md)
 - [v0_8c2_sleep_info_body.md](/D:/MY_Desk/watch/magic_watch/docs/v0_8c2_sleep_info_body.md)
 - [v0_8d1_blood_oxygen_home_settings_shell.md](/D:/MY_Desk/watch/magic_watch/docs/v0_8d1_blood_oxygen_home_settings_shell.md)
+- [v0_8d2_blood_oxygen_info_body.md](/D:/MY_Desk/watch/magic_watch/docs/v0_8d2_blood_oxygen_info_body.md)
+- [v0_8e1_heart_rate_home_resting30.md](/D:/MY_Desk/watch/magic_watch/docs/v0_8e1_heart_rate_home_resting30.md)
+- [v0_8e2_heart_rate_settings.md](/D:/MY_Desk/watch/magic_watch/docs/v0_8e2_heart_rate_settings.md)
+- [v0_8e3_heart_rate_info_body.md](/D:/MY_Desk/watch/magic_watch/docs/v0_8e3_heart_rate_info_body.md)
 - [v0_5_power_status_page_entry.md](/D:/MY_Desk/watch/magic_watch/docs/v0_5_power_status_page_entry.md)
 - [page_reachability_audit.md](/D:/MY_Desk/watch/magic_watch/docs/page_reachability_audit.md)
 

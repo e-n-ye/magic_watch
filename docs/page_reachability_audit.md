@@ -180,6 +180,21 @@
 - `AppBloodOxygenLowOxygenReminder`
 - `AppBloodOxygenInfo`
 
+#### Heart Rate
+
+- `AppHeartRate`
+- `AppHeartRateResting30Days`
+- `AppHeartRateSettings`
+- `AppHeartRateAllDayMonitoring`
+- `AppHeartRateHeartHealthMonitoring`
+- `AppHeartRateHighReminder`
+- `AppHeartRateLowReminder`
+- `AppHeartRateInfo`
+
+补充说明：
+
+- `AppHeartRate` 主页面中的 `心率设置` 和 `心率说明` 入口均已接入真实页面
+
 #### Display
 
 - `SettingDisplay`
@@ -200,7 +215,6 @@
 
 这些页面当前用户可以走到，但内容仍然是占位页或轻量 mock：
 
-- `AppHeartRate`
 - `AppBreathing`
 - `AppStress`
 - `AppNfc`
