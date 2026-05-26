@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 
+#include "App/UI/LvglLifecycle.h"
 #include "App/UI/PageBase.h"
 #include "App/UI/Watchface/WatchfaceStyle.h"
 
@@ -182,7 +183,7 @@ public:
   void stop_crown_release_timer();
 
   lv_obj_t* scroll_root_ {nullptr};
-  lv_timer_t* crown_release_timer_ {nullptr};
+  LvglTimerGuard crown_release_timer_;
 };
 
 class SleepAppPage : public PageBase {
