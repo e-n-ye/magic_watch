@@ -6,7 +6,7 @@
 #include <tuple>
 
 #include "App/Common/DisplayPolicyRules.h"
-#include "App/UI/Pages/Settings/SettingsDisplayHelpers.h"
+#include "App/UI/Pages/Settings/Display/SettingsDisplayHelpers.h"
 #include "App/UI/Pages/Settings/SettingsPagePrimitives.h"
 #include "App/UI/UiStyles.h"
 

@@ -1,4 +1,4 @@
-#include "App/UI/Pages/Settings/SettingsDisplayHelpers.h"
+#include "App/UI/Pages/Settings/Display/SettingsDisplayHelpers.h"
 
 #include <cstddef>
 #include <cstdio>

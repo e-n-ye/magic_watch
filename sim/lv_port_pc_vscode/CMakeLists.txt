@@ -90,11 +90,11 @@ set(MAIN_SOURCES
     src/App/UI/Pages/Settings/SettingsBasePages.cpp
     src/App/UI/Pages/Settings/SettingsHomePages.cpp
     src/App/UI/Pages/Settings/SettingsBatteryPages.cpp
-    src/App/UI/Pages/Settings/SettingsDisplayHelpers.cpp
-    src/App/UI/Pages/Settings/SettingsDisplayBasicPages.cpp
-    src/App/UI/Pages/Settings/SettingsDisplayWakePages.cpp
-    src/App/UI/Pages/Settings/SettingsDisplayKeepScreenOnPages.cpp
-    src/App/UI/Pages/Settings/SettingsDisplayScreenOffPages.cpp
+    src/App/UI/Pages/Settings/Display/SettingsDisplayHelpers.cpp
+    src/App/UI/Pages/Settings/Display/SettingsDisplayBasicPages.cpp
+    src/App/UI/Pages/Settings/Display/SettingsDisplayWakePages.cpp
+    src/App/UI/Pages/Settings/Display/SettingsDisplayKeepScreenOnPages.cpp
+    src/App/UI/Pages/Settings/Display/SettingsDisplayScreenOffPages.cpp
     src/App/UI/Pages/Settings/SettingsLayoutPages.cpp
     src/App/UI/Pages/Settings/SettingsPlaceholderPages.cpp
     src/App/UI/Pages/ShellPages.cpp
