@@ -1,6 +1,7 @@
 ﻿#include "App/UI/Pages/ShellPages.h"
 
 #include "App/Common/DisplayPolicyRules.h"
+#include "App/UI/Pages/Shell/ShellPagePrimitives.h"
 #include "App/UI/UiStyles.h"
 #include "lvgl/src/libs/tiny_ttf/lv_tiny_ttf.h"
 #include "lvgl/src/misc/lv_fs.h"
@@ -203,14 +204,6 @@ bool click_guard_allows(lv_obj_t* object) {
   return allows;
 }
 
-void style_root(lv_obj_t* root, std::uint32_t color) {
-  lv_obj_remove_flag(root, LV_OBJ_FLAG_SCROLLABLE);
-  lv_obj_set_style_bg_color(root, lv_color_hex(color), 0);
-  lv_obj_set_style_bg_opa(root, LV_OPA_COVER, 0);
-  lv_obj_set_style_border_width(root, 0, 0);
-  lv_obj_set_style_pad_all(root, 0, 0);
-}
-
 lv_obj_t* create_close_chip(lv_obj_t* root, const char* label_text, lv_event_cb_t callback, void* user_data) {
   lv_obj_t* button = lv_button_create(root);
   if (button == nullptr) {
@@ -242,14 +235,6 @@ void style_overlay_card(lv_obj_t* obj, lv_color_t color, lv_opa_t opa, lv_coord_
   lv_obj_set_style_border_opa(obj, LV_OPA_30, 0);
   lv_obj_set_style_border_width(obj, 1, 0);
   lv_obj_set_style_radius(obj, radius, 0);
-}
-
-lv_coord_t scale_by_ratio(lv_coord_t total, int numerator, int denominator) {
-  return static_cast<lv_coord_t>((static_cast<long long>(total) * numerator) / denominator);
-}
-
-lv_coord_t clamp_coord(lv_coord_t value, lv_coord_t minimum, lv_coord_t maximum) {
-  return std::max(minimum, std::min(maximum, value));
 }
 
 bool has_text(const char* text) {
