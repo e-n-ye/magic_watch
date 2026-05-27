@@ -98,6 +98,7 @@ set(MAIN_SOURCES
     src/App/UI/Pages/Settings/SettingsLayoutPages.cpp
     src/App/UI/Pages/Settings/SettingsPlaceholderPages.cpp
     src/App/UI/Pages/Shell/ShellPagePrimitives.cpp
+    src/App/UI/Pages/Shell/Power/ShellPowerPages.cpp
     src/App/UI/Pages/ShellPages.cpp
     src/App/State/AppStateMachine.cpp
     src/App/State/PowerController.cpp
