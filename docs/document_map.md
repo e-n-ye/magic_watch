@@ -48,10 +48,20 @@
 
 先读：
 
+- [ui_page_ownership.md](/D:/MY_Desk/watch/magic_watch/docs/10_architecture/ui_page_ownership.md)
 - [page_reachability_audit.md](/D:/MY_Desk/watch/magic_watch/docs/page_reachability_audit.md)
 - [current_architecture.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_architecture.md)
 
 只在需要判断当前主路径、旧页面、Launcher 入口、HomeRing surface 时读取。
+
+### 新增 UI 页面 / 页面域扩展
+
+先读：
+
+- [ui_page_ownership.md](/D:/MY_Desk/watch/magic_watch/docs/10_architecture/ui_page_ownership.md)
+- [current_architecture.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_architecture.md)
+
+用于判断新增页面属于 Settings、Shell、Health、Daily、System surface、Wallet-like shortcut、shared primitive 还是 domain helper。不得把它加入默认新会话必读。
 
 ### 新增或调整 Service
 
@@ -75,6 +85,7 @@
 
 - [current_architecture.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_architecture.md)
 - [current_sim_architecture.md](/D:/MY_Desk/watch/magic_watch/docs/current_sim_architecture.md)
+- [ui_page_ownership.md](/D:/MY_Desk/watch/magic_watch/docs/10_architecture/ui_page_ownership.md)
 - [page_reachability_audit.md](/D:/MY_Desk/watch/magic_watch/docs/page_reachability_audit.md)，仅在页面归属需要时。
 
 ### 硬件边界 / 真实硬件接入
