@@ -92,6 +92,7 @@ set(MAIN_SOURCES
     src/App/UI/Pages/Settings/SettingsBatteryPages.cpp
     src/App/UI/Pages/Settings/SettingsDisplayHelpers.cpp
     src/App/UI/Pages/Settings/SettingsDisplayBasicPages.cpp
+    src/App/UI/Pages/Settings/SettingsDisplayWakePages.cpp
     src/App/UI/Pages/Settings/SettingsDisplayPages.cpp
     src/App/UI/Pages/Settings/SettingsLayoutPages.cpp
     src/App/UI/Pages/Settings/SettingsPlaceholderPages.cpp
