@@ -95,7 +95,6 @@ set(MAIN_SOURCES
     src/App/UI/Pages/Settings/SettingsDisplayWakePages.cpp
     src/App/UI/Pages/Settings/SettingsDisplayKeepScreenOnPages.cpp
     src/App/UI/Pages/Settings/SettingsDisplayScreenOffPages.cpp
-    src/App/UI/Pages/Settings/SettingsDisplayPages.cpp
     src/App/UI/Pages/Settings/SettingsLayoutPages.cpp
     src/App/UI/Pages/Settings/SettingsPlaceholderPages.cpp
     src/App/UI/Pages/ShellPages.cpp
