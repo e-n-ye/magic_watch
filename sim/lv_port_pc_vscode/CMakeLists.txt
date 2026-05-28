@@ -97,6 +97,7 @@ set(MAIN_SOURCES
     src/App/UI/Pages/Settings/Display/SettingsDisplayScreenOffPages.cpp
     src/App/UI/Pages/Settings/SettingsLayoutPages.cpp
     src/App/UI/Pages/Settings/SettingsPlaceholderPages.cpp
+    src/App/UI/Pages/Shell/ShellClickGuard.cpp
     src/App/UI/Pages/Shell/ShellFontHelpers.cpp
     src/App/UI/Pages/Shell/ShellPagePrimitives.cpp
     src/App/UI/Pages/Shell/Power/ShellPowerPages.cpp
