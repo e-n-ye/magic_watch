@@ -1,6 +1,7 @@
 #include "App/UI/Pages/ShellPages.h"
 
 #include "App/Common/DisplayPolicyRules.h"
+#include "App/UI/Pages/Shell/ShellClickGuard.h"
 #include "App/UI/Pages/Shell/ShellFontHelpers.h"
 #include "App/UI/Pages/Shell/ShellPagePrimitives.h"
 #include "App/UI/UiStyles.h"
@@ -21,8 +22,60 @@ namespace {
 using shell_font::cjk_font_16;
 using shell_font::cjk_font_20;
 using shell_font::cjk_font_72;
+using shell_click_guard::attach_click_guard;
+using shell_click_guard::click_guard_allows;
 
 constexpr float kPi = 3.14159265358979323846f;
+
+int weekday_index(const TimeModel& time) {
+  if (!time.valid) {
+    return -1;
+  }
+  std::tm calendar {};
+  calendar.tm_year = static_cast<int>(time.year) - 1900;
+  calendar.tm_mon = static_cast<int>(time.month) - 1;
+  calendar.tm_mday = static_cast<int>(time.day);
+  calendar.tm_hour = 12;
+  if (std::mktime(&calendar) == -1) {
+    return -1;
+  }
+  return calendar.tm_wday;
+}
+
+const char* weekday_text(int index) {
+  switch (index) {
+    case 0:
+      return "\xE5\x91\xA8\xE6\x97\xA5";
+    case 1:
+      return "\xE5\x91\xA8\xE4\xB8\x80";
+    case 2:
+      return "\xE5\x91\xA8\xE4\xBA\x8C";
+    case 3:
+      return "\xE5\x91\xA8\xE4\xB8\x89";
+    case 4:
+      return "\xE5\x91\xA8\xE5\x9B\x9B";
+    case 5:
+      return "\xE5\x91\xA8\xE4\xBA\x94";
+    case 6:
+      return "\xE5\x91\xA8\xE5\x85\xAD";
+    default:
+      return "--";
+  }
+}
+
+std::string long_battery_date_text(const TimeModel& time) {
+  if (!time.valid) {
+    return "--/-- --";
+  }
+  char buffer[32] = {};
+  std::snprintf(buffer,
+                sizeof(buffer),
+                "%02u/%02u %s",
+                static_cast<unsigned>(time.month),
+                static_cast<unsigned>(time.day),
+                weekday_text(weekday_index(time)));
+  return buffer;
+}
 
 std::string screen_off_date_text(const TimeModel& time) {
   if (!time.valid) {
@@ -441,6 +494,159 @@ void ScreenOffPage::update_info_preview() {
                 static_cast<int>(battery_model_.percent),
                 battery_model_.charging ? "+" : "");
   lv_label_set_text(info_battery_label_, battery_text);
+}
+
+LongBatteryWatchfacePage::LongBatteryWatchfacePage(DataCenter& data_center) : PageBase(data_center) {}
+
+PageId LongBatteryWatchfacePage::id() const {
+  return PageId::LongBatteryWatchface;
+}
+
+const char* LongBatteryWatchfacePage::name() const {
+  return page_name(PageId::LongBatteryWatchface);
+}
+
+void LongBatteryWatchfacePage::on_will_appear() {
+  if (const auto time = data_center_.time()) {
+    time_model_ = *time;
+  }
+  if (const auto battery = data_center_.battery()) {
+    battery_model_ = *battery;
+  }
+  if (const auto steps = data_center_.steps()) {
+    steps_model_ = *steps;
+  }
+  refresh_view();
+}
+
+lv_obj_t* LongBatteryWatchfacePage::build() {
+  lv_obj_t* root = lv_obj_create(nullptr);
+  if (root == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_box(root);
+  lv_obj_set_size(root, LV_PCT(100), LV_PCT(100));
+  lv_obj_set_style_bg_color(root, lv_color_hex(0x000000), 0);
+  lv_obj_set_style_bg_opa(root, LV_OPA_COVER, 0);
+  lv_obj_add_flag(root, LV_OBJ_FLAG_CLICKABLE);
+  attach_click_guard(root);
+  lv_obj_add_event_cb(root, &LongBatteryWatchfacePage::watchface_click_event_cb, LV_EVENT_CLICKED, this);
+
+  date_label_ = lv_label_create(root);
+  time_label_ = lv_label_create(root);
+  battery_label_ = lv_label_create(root);
+  steps_label_ = lv_label_create(root);
+  if (date_label_ == nullptr || time_label_ == nullptr || battery_label_ == nullptr || steps_label_ == nullptr) {
+    return nullptr;
+  }
+
+  ui_prepare_label(date_label_);
+  lv_obj_set_style_text_font(date_label_, cjk_font_20(), 0);
+  lv_obj_set_style_text_color(date_label_, lv_color_hex(0xE2F6FF), 0);
+  lv_label_set_text(date_label_, "--/-- --");
+  lv_obj_align(date_label_, LV_ALIGN_CENTER, 0, -48);
+
+  ui_prepare_label(time_label_);
+  lv_obj_set_style_text_font(time_label_, cjk_font_72(), 0);
+  lv_obj_set_style_text_color(time_label_, lv_color_hex(0xE2F6FF), 0);
+  lv_label_set_text(time_label_, "--:--");
+  lv_obj_align(time_label_, LV_ALIGN_CENTER, 0, 4);
+
+  ui_prepare_label(battery_label_);
+  lv_obj_set_style_text_font(battery_label_, cjk_font_20(), 0);
+  lv_obj_set_style_text_color(battery_label_, lv_color_hex(0xE2F6FF), 0);
+  lv_label_set_text(battery_label_, "电量 0%");
+  lv_obj_align(battery_label_, LV_ALIGN_CENTER, 0, 58);
+
+  ui_prepare_label(steps_label_);
+  lv_obj_set_style_text_font(steps_label_, cjk_font_20(), 0);
+  lv_obj_set_style_text_color(steps_label_, lv_color_hex(0xE2F6FF), 0);
+  lv_label_set_text(steps_label_, "步数 0");
+  lv_obj_align(steps_label_, LV_ALIGN_BOTTOM_MID, 0, -28);
+
+  track(data_center_.subscribe(EventId::TimeUpdated,
+                               [this](const Event& event) {
+                                 if (const auto* model = std::get_if<TimeModel>(&event.payload)) {
+                                   apply_time(*model);
+                                 }
+                               }));
+  track(data_center_.subscribe(EventId::BatteryChanged,
+                               [this](const Event& event) {
+                                 if (const auto* model = std::get_if<BatteryModel>(&event.payload)) {
+                                   apply_battery(*model);
+                                 }
+                               }));
+  track(data_center_.subscribe(EventId::StepsChanged,
+                               [this](const Event& event) {
+                                 if (const auto* model = std::get_if<StepsModel>(&event.payload)) {
+                                   apply_steps(*model);
+                                 }
+                               }));
+
+  on_will_appear();
+  return root;
+}
+
+void LongBatteryWatchfacePage::watchface_click_event_cb(lv_event_t* event) {
+  auto* self = static_cast<LongBatteryWatchfacePage*>(lv_event_get_user_data(event));
+  if (self == nullptr || self->should_ignore_click()) {
+    return;
+  }
+  lv_obj_t* target = lv_event_get_current_target_obj(event);
+  if (target == nullptr || !click_guard_allows(target)) {
+    return;
+  }
+  self->request_navigation({NavigationAction::Push, PageId::LongBatteryExit});
+}
+
+void LongBatteryWatchfacePage::apply_time(const TimeModel& model) {
+  time_model_ = model;
+  refresh_view();
+}
+
+void LongBatteryWatchfacePage::apply_battery(const BatteryModel& model) {
+  battery_model_ = model;
+  refresh_view();
+}
+
+void LongBatteryWatchfacePage::apply_steps(const StepsModel& model) {
+  steps_model_ = model;
+  refresh_view();
+}
+
+void LongBatteryWatchfacePage::refresh_view() {
+  if (date_label_ == nullptr || time_label_ == nullptr || battery_label_ == nullptr || steps_label_ == nullptr) {
+    return;
+  }
+
+  const std::string date_text = long_battery_date_text(time_model_);
+  lv_label_set_text(date_label_, date_text.c_str());
+
+  char time_text[8] = {};
+  if (time_model_.valid) {
+    std::snprintf(time_text,
+                  sizeof(time_text),
+                  "%02u:%02u",
+                  static_cast<unsigned>(time_model_.hour),
+                  static_cast<unsigned>(time_model_.minute));
+  } else {
+    std::snprintf(time_text, sizeof(time_text), "--:--");
+  }
+  lv_label_set_text(time_label_, time_text);
+
+  char battery_text[24] = {};
+  std::snprintf(battery_text,
+                sizeof(battery_text),
+                "\xE7\x94\xB5\xE9\x87\x8F %d%%",
+                std::clamp<int>(battery_model_.percent, 0, 100));
+  lv_label_set_text(battery_label_, battery_text);
+
+  char steps_text[32] = {};
+  std::snprintf(steps_text,
+                sizeof(steps_text),
+                "\xE6\xAD\xA5\xE6\x95\xB0 %lu",
+                static_cast<unsigned long>(steps_model_.daily_steps));
+  lv_label_set_text(steps_label_, steps_text);
 }
 
 LongBatteryExitPage::LongBatteryExitPage(DataCenter& data_center) : PageBase(data_center) {}
