@@ -179,6 +179,9 @@ void click_guard_event_cb(lv_event_t* event) {
       }
       break;
     }
+    case LV_EVENT_DELETE:
+      states.erase(target);
+      break;
     default:
       break;
   }
@@ -191,6 +194,7 @@ void attach_click_guard(lv_obj_t* object) {
   lv_obj_add_event_cb(object, click_guard_event_cb, LV_EVENT_PRESSED, nullptr);
   lv_obj_add_event_cb(object, click_guard_event_cb, LV_EVENT_PRESSING, nullptr);
   lv_obj_add_event_cb(object, click_guard_event_cb, LV_EVENT_PRESS_LOST, nullptr);
+  lv_obj_add_event_cb(object, click_guard_event_cb, LV_EVENT_DELETE, nullptr);
 }
 
 bool click_guard_allows(lv_obj_t* object) {
