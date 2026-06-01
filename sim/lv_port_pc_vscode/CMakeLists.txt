@@ -97,6 +97,7 @@ set(MAIN_SOURCES
     src/App/UI/Pages/Settings/Display/SettingsDisplayScreenOffPages.cpp
     src/App/UI/Pages/Settings/SettingsLayoutPages.cpp
     src/App/UI/Pages/Settings/SettingsPlaceholderPages.cpp
+    src/App/UI/Pages/Daily/WeatherPages.cpp
     src/App/UI/Pages/Shell/ShellAssetHelpers.cpp
     src/App/UI/Pages/Shell/ShellClickGuard.cpp
     src/App/UI/Pages/Shell/ShellFontHelpers.cpp
