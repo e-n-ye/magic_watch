@@ -98,6 +98,7 @@ set(MAIN_SOURCES
     src/App/UI/Pages/Settings/SettingsLayoutPages.cpp
     src/App/UI/Pages/Settings/SettingsPlaceholderPages.cpp
     src/App/UI/Pages/Daily/StepsPagePrimitives.cpp
+    src/App/UI/Pages/Daily/StepsMainPrimitives.cpp
     src/App/UI/Pages/Daily/StepsPages.cpp
     src/App/UI/Pages/Daily/WeatherPages.cpp
     src/App/UI/Pages/Health/HealthInfoPagePrimitives.cpp
