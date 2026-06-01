@@ -4,6 +4,7 @@
 #include "App/UI/Pages/Health/HealthInfoPagePrimitives.h"
 #include "App/UI/Pages/Shell/ShellAssetHelpers.h"
 #include "App/UI/Pages/Shell/ShellClickGuard.h"
+#include "App/UI/Pages/Shell/ShellCrownScrollHelpers.h"
 #include "App/UI/Pages/Shell/ShellFontHelpers.h"
 #include "App/UI/Pages/Shell/ShellPagePrimitives.h"
 #include "App/UI/UiStyles.h"
@@ -23,6 +24,9 @@
 
 using twsim::app::shell_click_guard::attach_click_guard;
 using twsim::app::shell_click_guard::click_guard_allows;
+using twsim::app::shell_crown::apply_stream_crown_drag;
+using twsim::app::shell_crown::kLauncherCrownReleaseDelayMs;
+using twsim::app::shell_crown::release_stream_crown_drag;
 
 namespace twsim::app {
 
@@ -90,8 +94,6 @@ constexpr lv_coord_t kLauncherRowGap = 10;
 constexpr lv_coord_t kLauncherMultiColumnElasticSpacerHeight = 40;
 constexpr lv_coord_t kLauncherListRowHeight = 62;
 constexpr lv_coord_t kLauncherListIconSize = 38;
-constexpr std::int32_t kLauncherCrownDragStep = 28;
-constexpr std::uint32_t kLauncherCrownReleaseDelayMs = 95U;
 constexpr lv_coord_t kStepsScrollInset = 8;
 constexpr lv_coord_t kStepsScrollTop = 8;
 constexpr lv_coord_t kStepsScrollBottom = 0;
@@ -837,31 +839,6 @@ lv_obj_t* create_steps_distribution_card(lv_obj_t* parent,
   lv_obj_align(dot, LV_ALIGN_TOP_LEFT, dot_x, dot_y);
 
   return card;
-}
-
-void apply_stream_crown_drag(lv_obj_t* scroll_root, bool forward, std::int16_t detents) {
-  if (scroll_root == nullptr) {
-    return;
-  }
-  const std::int32_t step = kLauncherCrownDragStep * std::max<std::int16_t>(1, detents);
-  const std::int32_t elastic_limit = std::max<std::int32_t>(24, lv_obj_get_height(scroll_root) / 5);
-  const std::int32_t current_y = lv_obj_get_scroll_y(scroll_root);
-  const std::int32_t scroll_top = lv_obj_get_scroll_top(scroll_root);
-  const std::int32_t scroll_bottom = lv_obj_get_scroll_bottom(scroll_root);
-  const std::int32_t scroll_max = std::max<std::int32_t>(0, scroll_top + scroll_bottom);
-  std::int32_t target_y = current_y + (forward ? step : -step);
-  target_y = std::clamp(target_y, -elastic_limit, scroll_max + elastic_limit);
-  lv_obj_scroll_to_y(scroll_root, target_y, LV_ANIM_OFF);
-}
-
-void release_stream_crown_drag(lv_obj_t* scroll_root) {
-  if (scroll_root == nullptr) {
-    return;
-  }
-  const std::int32_t current_y = lv_obj_get_scroll_y(scroll_root);
-  const std::int32_t scroll_max =
-      std::max<std::int32_t>(0, lv_obj_get_scroll_top(scroll_root) + lv_obj_get_scroll_bottom(scroll_root));
-  lv_obj_scroll_to_y(scroll_root, std::clamp(current_y, 0, scroll_max), LV_ANIM_ON);
 }
 
 }  // namespace
@@ -6015,17 +5992,7 @@ void LauncherPage::apply_crown_drag(bool forward, std::int16_t detents) {
   }
 
   stop_crown_release_timer();
-  const std::int32_t step = kLauncherCrownDragStep * std::max<std::int16_t>(1, detents);
-  const std::int32_t elastic_limit = std::max<std::int32_t>(24, lv_obj_get_height(list_root_) / 5);
-  const std::int32_t current_y = lv_obj_get_scroll_y(list_root_);
-  const std::int32_t scroll_top = lv_obj_get_scroll_top(list_root_);
-  const std::int32_t scroll_bottom = lv_obj_get_scroll_bottom(list_root_);
-  const std::int32_t scroll_max = std::max<std::int32_t>(0, scroll_top + scroll_bottom);
-
-  std::int32_t target_y = current_y + (forward ? step : -step);
-  target_y = std::clamp(target_y, -elastic_limit, scroll_max + elastic_limit);
-
-  lv_obj_scroll_to_y(list_root_, target_y, LV_ANIM_OFF);
+  apply_stream_crown_drag(list_root_, forward, detents);
   schedule_crown_release();
 }
 

@@ -101,6 +101,7 @@ set(MAIN_SOURCES
     src/App/UI/Pages/Health/HealthInfoPagePrimitives.cpp
     src/App/UI/Pages/Shell/ShellAssetHelpers.cpp
     src/App/UI/Pages/Shell/ShellClickGuard.cpp
+    src/App/UI/Pages/Shell/ShellCrownScrollHelpers.cpp
     src/App/UI/Pages/Shell/ShellFontHelpers.cpp
     src/App/UI/Pages/Shell/ShellPagePrimitives.cpp
     src/App/UI/Pages/Shell/Power/ShellPowerPages.cpp
