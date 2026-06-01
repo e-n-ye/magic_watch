@@ -99,6 +99,7 @@ set(MAIN_SOURCES
     src/App/UI/Pages/Settings/SettingsPlaceholderPages.cpp
     src/App/UI/Pages/Daily/WeatherPages.cpp
     src/App/UI/Pages/Health/HealthInfoPagePrimitives.cpp
+    src/App/UI/Pages/Health/HeartRatePages.cpp
     src/App/UI/Pages/Shell/ShellAssetHelpers.cpp
     src/App/UI/Pages/Shell/ShellClickGuard.cpp
     src/App/UI/Pages/Shell/ShellCrownScrollHelpers.cpp
