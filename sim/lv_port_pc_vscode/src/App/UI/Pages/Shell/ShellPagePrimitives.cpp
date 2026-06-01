@@ -12,6 +12,17 @@ void style_root(lv_obj_t* root, std::uint32_t color) {
   lv_obj_set_style_pad_all(root, 0, 0);
 }
 
+void set_content_width_label(lv_obj_t* label, const char* text, const lv_font_t* font, std::uint32_t color) {
+  if (label == nullptr) {
+    return;
+  }
+  lv_obj_set_width(label, LV_SIZE_CONTENT);
+  lv_label_set_long_mode(label, LV_LABEL_LONG_CLIP);
+  lv_obj_set_style_text_font(label, font, 0);
+  lv_obj_set_style_text_color(label, lv_color_hex(color), 0);
+  lv_label_set_text(label, text);
+}
+
 lv_coord_t scale_by_ratio(lv_coord_t total, int numerator, int denominator) {
   return static_cast<lv_coord_t>((static_cast<long long>(total) * numerator) / denominator);
 }

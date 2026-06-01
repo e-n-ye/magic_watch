@@ -303,17 +303,6 @@ const lv_font_t* home_shortcut_steps_font(std::uint32_t value) {
   return decimal_digits(value) >= 5 ? &lv_font_montserrat_12 : &lv_font_montserrat_14;
 }
 
-void set_content_width_label(lv_obj_t* label, const char* text, const lv_font_t* font, std::uint32_t color) {
-  if (label == nullptr) {
-    return;
-  }
-  lv_obj_set_width(label, LV_SIZE_CONTENT);
-  lv_label_set_long_mode(label, LV_LABEL_LONG_CLIP);
-  lv_obj_set_style_text_font(label, font, 0);
-  lv_obj_set_style_text_color(label, lv_color_hex(color), 0);
-  lv_label_set_text(label, text);
-}
-
 void style_home_surface_stage(lv_obj_t* stage, lv_coord_t width, lv_coord_t height, lv_coord_t radius, lv_color_t bg_color) {
   ui_prepare_box(stage);
   ui_apply_surface(stage, SurfaceStyle::Panel);
