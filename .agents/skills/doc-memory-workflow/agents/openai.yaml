@@ -1,0 +1,4 @@
+interface:
+  display_name: "文档记忆工作流"
+  short_description: "让长期任务文档持续同步，同时避免上下文膨胀。"
+  default_prompt: "使用文档记忆工作流，为当前任务判断范围、拆分闭环、按需读取文档、完成验收并更新必要的项目文档。"
