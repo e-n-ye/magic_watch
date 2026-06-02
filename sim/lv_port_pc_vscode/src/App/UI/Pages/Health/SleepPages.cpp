@@ -2,6 +2,7 @@
 
 #include "App/UI/Pages/Health/HealthIconPrimitives.h"
 #include "App/UI/Pages/Health/HealthInfoPagePrimitives.h"
+#include "App/UI/Pages/Health/HealthSwitchPrimitives.h"
 #include "App/UI/Pages/Shell/ShellAssetHelpers.h"
 #include "App/UI/Pages/Shell/ShellClickGuard.h"
 #include "App/UI/Pages/Shell/ShellCrownScrollHelpers.h"
@@ -434,6 +435,209 @@ void SleepSettingsPage::stop_crown_release_timer() {
   }
   lv_timer_delete(crown_release_timer_);
   crown_release_timer_ = nullptr;
+}
+
+SleepMonitoringDetailPage::SleepMonitoringDetailPage(DataCenter& data_center,
+                                                     PageId page_id,
+                                                     const char* title,
+                                                     const char* body,
+                                                     SettingKind kind)
+    : PageBase(data_center), page_id_(page_id), title_(title), body_(body), kind_(kind) {}
+
+PageId SleepMonitoringDetailPage::id() const {
+  return page_id_;
+}
+
+const char* SleepMonitoringDetailPage::name() const {
+  return page_name(page_id_);
+}
+
+void SleepMonitoringDetailPage::on_will_appear() {
+  apply_enabled(current_enabled());
+  refresh_header_time();
+}
+
+void SleepMonitoringDetailPage::on_will_disappear() {
+  stop_crown_release_timer();
+}
+
+lv_obj_t* SleepMonitoringDetailPage::build() {
+  lv_obj_t* root = lv_obj_create(nullptr);
+  if (root == nullptr) {
+    return nullptr;
+  }
+  style_root(root, 0x02070D);
+
+  const lv_coord_t screen_w = static_cast<lv_coord_t>(lv_display_get_horizontal_resolution(nullptr));
+  const lv_coord_t screen_h = static_cast<lv_coord_t>(lv_display_get_vertical_resolution(nullptr));
+  const lv_coord_t card_w = screen_w - 16;
+
+  lv_obj_t* back_button = lv_button_create(root);
+  lv_obj_t* back_label = back_button == nullptr ? nullptr : create_steps_label(back_button, "<", &lv_font_montserrat_20, 0xD8E9FF, 18);
+  lv_obj_t* title_label = create_steps_label(root, title_, cjk_font_20(), 0xF8FAFC, 124);
+  time_label_ = create_steps_label(root, "--:--", &lv_font_montserrat_20, 0xE2F0FF, 64);
+  if (back_button == nullptr || back_label == nullptr || title_label == nullptr || time_label_ == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_box(back_button);
+  lv_obj_set_size(back_button, 38, 38);
+  lv_obj_align(back_button, LV_ALIGN_TOP_LEFT, 10, 8);
+  lv_obj_set_style_bg_opa(back_button, LV_OPA_TRANSP, 0);
+  attach_click_guard(back_button);
+  lv_obj_add_event_cb(back_button, back_event_cb, LV_EVENT_CLICKED, this);
+  ui_set_touch_target(back_button, 18);
+  lv_obj_add_flag(back_label, LV_OBJ_FLAG_EVENT_BUBBLE);
+  lv_obj_remove_flag(back_label, LV_OBJ_FLAG_CLICKABLE);
+  lv_obj_align(back_label, LV_ALIGN_LEFT_MID, 10, 0);
+  lv_obj_align(title_label, LV_ALIGN_TOP_LEFT, 42, 12);
+  lv_obj_align(time_label_, LV_ALIGN_TOP_RIGHT, -16, 12);
+
+  scroll_root_ = create_sleep_scroll_root(root, screen_w, screen_h, 48, 0, 10);
+  if (scroll_root_ == nullptr) {
+    return nullptr;
+  }
+
+  lv_obj_t* switch_card = create_steps_panel(scroll_root_, card_w, 96, 0x102033);
+  lv_obj_t* switch_title = switch_card == nullptr
+                               ? nullptr
+                               : create_steps_label(switch_card, title_, cjk_font_20(), 0xF8FAFC, card_w - 112, LV_LABEL_LONG_WRAP);
+  switch_track_ = switch_card == nullptr ? nullptr : create_sleep_switch_track(switch_card);
+  if (switch_card == nullptr || switch_title == nullptr || switch_track_ == nullptr) {
+    return nullptr;
+  }
+  lv_obj_align(switch_title, LV_ALIGN_TOP_LEFT, 18, 14);
+  lv_obj_align(switch_track_, LV_ALIGN_RIGHT_MID, -18, 0);
+  attach_click_guard(switch_card);
+  lv_obj_add_event_cb(switch_card, switch_event_cb, LV_EVENT_CLICKED, this);
+
+  lv_obj_t* body_card = create_steps_panel(scroll_root_, card_w, 140, 0x07111D);
+  lv_obj_t* body_label = body_card == nullptr ? nullptr : create_steps_label(body_card, body_, cjk_font_16(), 0xD8E9FF, card_w - 32, LV_LABEL_LONG_WRAP);
+  if (body_card == nullptr || body_label == nullptr) {
+    return nullptr;
+  }
+  lv_obj_align(body_label, LV_ALIGN_TOP_LEFT, 16, 18);
+
+  bind_input();
+  on_will_appear();
+  return root;
+}
+
+void SleepMonitoringDetailPage::back_event_cb(lv_event_t* event) {
+  auto* self = static_cast<SleepMonitoringDetailPage*>(lv_event_get_user_data(event));
+  if (self == nullptr || self->should_ignore_click()) {
+    return;
+  }
+  lv_obj_t* target = lv_event_get_current_target_obj(event);
+  if (target == nullptr || !click_guard_allows(target)) {
+    return;
+  }
+  self->request_navigation({NavigationAction::Pop, PageId::Watchface});
+}
+
+void SleepMonitoringDetailPage::switch_event_cb(lv_event_t* event) {
+  auto* self = static_cast<SleepMonitoringDetailPage*>(lv_event_get_user_data(event));
+  if (self == nullptr || self->should_ignore_click()) {
+    return;
+  }
+  lv_obj_t* target = lv_event_get_current_target_obj(event);
+  if (target == nullptr || !click_guard_allows(target)) {
+    return;
+  }
+  const bool next_enabled = !self->enabled_;
+  self->apply_enabled(next_enabled);
+  self->publish_enabled(next_enabled);
+}
+
+void SleepMonitoringDetailPage::crown_release_timer_cb(lv_timer_t* timer) {
+  auto* self = static_cast<SleepMonitoringDetailPage*>(lv_timer_get_user_data(timer));
+  if (self == nullptr) {
+    return;
+  }
+  self->crown_release_timer_ = nullptr;
+  release_stream_crown_drag(self->scroll_root_);
+}
+
+void SleepMonitoringDetailPage::bind_input() {
+  track(data_center_.subscribe(EventId::InputRequested,
+                               [this](const Event& event) {
+                                 if (root_ == nullptr || lv_screen_active() != root_ || scroll_root_ == nullptr) {
+                                   return;
+                                 }
+                                 const auto* command = std::get_if<InputCommand>(&event.payload);
+                                 if (command == nullptr) {
+                                   return;
+                                 }
+                                 switch (command->action) {
+                                   case InputAction::CrownRotateCW:
+                                     apply_crown_drag(true, command->value);
+                                     break;
+                                   case InputAction::CrownRotateCCW:
+                                     apply_crown_drag(false, command->value);
+                                     break;
+                                   default:
+                                     break;
+                                 }
+                               }));
+}
+
+void SleepMonitoringDetailPage::apply_crown_drag(bool forward, std::int16_t detents) {
+  stop_crown_release_timer();
+  apply_stream_crown_drag(scroll_root_, forward, detents);
+  schedule_crown_release();
+}
+
+void SleepMonitoringDetailPage::apply_enabled(bool enabled) {
+  enabled_ = enabled;
+  apply_sleep_switch_style(switch_track_, enabled_);
+}
+
+void SleepMonitoringDetailPage::refresh_header_time() {
+  apply_compact_time_label(time_label_, data_center_.time());
+}
+
+void SleepMonitoringDetailPage::schedule_crown_release() {
+  stop_crown_release_timer();
+  crown_release_timer_ =
+      lv_timer_create(&SleepMonitoringDetailPage::crown_release_timer_cb, kLauncherCrownReleaseDelayMs, this);
+  if (crown_release_timer_ != nullptr) {
+    lv_timer_set_repeat_count(crown_release_timer_, 1);
+  }
+}
+
+void SleepMonitoringDetailPage::stop_crown_release_timer() {
+  if (crown_release_timer_ == nullptr) {
+    return;
+  }
+  lv_timer_delete(crown_release_timer_);
+  crown_release_timer_ = nullptr;
+}
+
+bool SleepMonitoringDetailPage::current_enabled() const {
+  const auto& model = data_center_.health_monitoring_settings();
+  if (!model.has_value()) {
+    return false;
+  }
+  switch (kind_) {
+    case SettingKind::HighPrecisionSleep:
+      return model->high_precision_sleep_enabled;
+    case SettingKind::SleepBreathingQuality:
+      return model->sleep_breathing_quality_enabled;
+    default:
+      return false;
+  }
+}
+
+void SleepMonitoringDetailPage::publish_enabled(bool enabled) {
+  switch (kind_) {
+    case SettingKind::HighPrecisionSleep:
+      data_center_.set_high_precision_sleep_enabled(enabled);
+      break;
+    case SettingKind::SleepBreathingQuality:
+      data_center_.set_sleep_breathing_quality_enabled(enabled);
+      break;
+    default:
+      break;
+  }
 }
 
 SleepInfoPage::SleepInfoPage(DataCenter& data_center) : PageBase(data_center) {}
