@@ -127,10 +127,14 @@ Forbidden changes:
 - `Shell/ShellCrownScrollHelpers.*`
 - `Shell/ShellAssetHelpers.*`
 - `Shell/ShellImagePrimitives.*`
+- `Shell/ShellAppVisualRegistry.*`
+- `Shell/ShellAppIconPrimitives.*`
 
 当前状态：
 
 - Shell 共享 UI 构件已经形成稳定文件组。
+- `ShellAppVisualRegistry.*` 已形成 Shell app 视觉注册表边界，当前承载 `AppVisualSpec`、app visual specs 表和 `find_app_visual_spec(...)`。
+- `ShellAppIconPrimitives.*` 已形成 Shell app 圆形图标 helper 边界，当前承载 `create_app_round_icon(...)`。
 
 拆分判断：
 
@@ -145,7 +149,33 @@ Forbidden changes:
 
 - 若后续文档仍只描述页面迁移，不描述 shared primitives，会看不清壳层代码为什么还能继续复用旧 helper。
 
-### D. Power 域
+### D. Shell / Launcher
+
+当前实现文件位于：
+
+- `Shell/Launcher/ShellLauncherPages.cpp`
+
+当前状态：
+
+- `LauncherPage` 已从 `ShellPages.cpp` 下沉到独立 Launcher 域实现文件。
+- `ShellPages.h` 仍继续承担 `LauncherPage` 的对外聚合声明。
+- `Application.cpp` 注册入口未改。
+
+拆分判断：
+
+- Launcher 页面实现：已迁出。
+- Launcher 外部暴露：仍依赖 `ShellPages.h`。
+
+风险等级：
+
+- 中。
+
+主要风险：
+
+- 这说明 Shell 拆分已经推进到高交互页面独立下沉，但不代表 `HomeRingHost`、`Notifications`、`QuickSettings` 已完成同级迁移。
+- 如果后续文档把“Launcher 已迁出”误写成“整个主壳层已拆开”，会直接高估当前壳层边界清晰度。
+
+### E. Power 域
 
 当前实现文件位于：
 
@@ -178,7 +208,7 @@ Forbidden changes:
   - 电源页面虽然迁出，但仍与 Coordinator、页面栈恢复、screen-off 状态切换强耦合；
   - 文档若只看文件位置，会低估其交互复杂度。
 
-### E. Daily / Weather
+### F. Daily / Weather
 
 当前实现文件位于：
 
@@ -201,7 +231,7 @@ Forbidden changes:
 
 - 结构风险较低，当前更像是“文档未同步”问题，而不是“代码仍混放”问题。
 
-### F. Daily / Steps
+### G. Daily / Steps
 
 当前实现文件位于：
 
@@ -227,7 +257,7 @@ Forbidden changes:
 
 - 当前风险主要在文档解释层，而不是结构边界本身。
 
-### G. Health / Sleep
+### H. Health / Sleep
 
 当前实现文件位于：
 
@@ -253,7 +283,7 @@ Forbidden changes:
 
 - Sleep 已脱离 placeholder 阶段，但文档若仍把它当“Shell 应用页子块”，会遮蔽它与其它 Health 子域的并列关系。
 
-### H. Health / BloodOxygen
+### I. Health / BloodOxygen
 
 当前实现文件位于：
 
@@ -287,7 +317,7 @@ Forbidden changes:
 
 - 当前风险在于文档若不同时描述“Health shared helper”和“领域页实现”，会误以为 BloodOxygen 只是单文件迁移。
 
-### I. Health / HeartRate
+### J. Health / HeartRate
 
 当前实现文件位于：
 
@@ -330,7 +360,6 @@ Forbidden changes:
 
 - `WatchfacePage`
 - `HomeRingHostPage`
-- `LauncherPage`
 - `NotificationsPage`
 - `NotificationWakePage`
 - `QuickSettingsPage`
@@ -384,6 +413,7 @@ Forbidden changes:
 | --- | --- | --- | --- | --- |
 | Settings 主域 | `Pages/Settings/*` | 是 | 是，`SettingsPages.h` | 聚合头仍厚 |
 | Settings / Display | `Pages/Settings/Display/*` | 是 | 是，`SettingsPages.h` | 文档易滞后 |
+| Launcher | `Shell/Launcher/ShellLauncherPages.cpp` | 是 | 是，`ShellPages.h` | 高交互页已迁出，但主壳层未整体拆开 |
 | Power | `Shell/Power/ShellPowerPages.cpp` | 是 | 是，`ShellPages.h` | 与 screen-off / restore 强耦合 |
 | Daily / Weather | `Daily/WeatherPages.cpp` | 是 | 是，`ShellPages.h` | 主要是文档解释滞后 |
 | Daily / Steps | `Daily/StepsPages.cpp` + primitives | 是 | 是，`ShellPages.h` | 文档解释滞后 |
@@ -433,8 +463,9 @@ Power 仍与：
 
 1. `Display`、`Power`、`Daily`、`Health` 页面实现已显著分域下沉。
 2. `SettingsPages.h` 和 `ShellPages.h` 仍承担对外聚合入口。
-3. `ShellPages.cpp` 当前主要剩余主壳层、主页宿主、通知与快捷设置等高交互区域。
-4. 后续任何关于“ShellPages 拆分是否继续”的讨论，都不应再基于早期“所有页面都还在壳层巨石里”的旧事实。
+3. `LauncherPage` 已独立下沉到 `Shell/Launcher/ShellLauncherPages.cpp`，但 `ShellPages.h` 与 `Application.cpp` 的外部入口结构暂未变化。
+4. `ShellPages.cpp` 当前主要剩余主壳层、主页宿主、通知与快捷设置等高交互区域。
+5. 后续任何关于“ShellPages 拆分是否继续”的讨论，都不应再基于早期“所有页面都还在壳层巨石里”的旧事实。
 
 ## 后续建议
 

@@ -91,11 +91,31 @@ Forbidden changes:
 - `Shell/ShellCrownScrollHelpers.*`
 - `Shell/ShellAssetHelpers.*`
 - `Shell/ShellImagePrimitives.*`
+- `Shell/ShellAppVisualRegistry.*`
+- `Shell/ShellAppIconPrimitives.*`
+
+其中：
+
+- `ShellAppVisualRegistry.*` 当前承载 `AppVisualSpec`、app visual specs 表和 `find_app_visual_spec(...)`。
+- `ShellAppIconPrimitives.*` 当前承载 `create_app_round_icon(...)` 这类 Shell app 圆形图标 helper。
 
 当前判断：
 
 - 这些 helper 已经是多个页面域的真实依赖，而不是未来规划。
 - 它们构成了“页面已拆，但共享 UI 构件开始沉淀”的第二阶段事实。
+
+### Shell / Launcher
+
+- `LauncherPage` 已从 `ShellPages.cpp` 下沉到 `Shell/Launcher/ShellLauncherPages.cpp`。
+- `CMakeLists.txt` 已登记 `Shell/Launcher/ShellLauncherPages.cpp`。
+- `ShellPages.h` 仍继续暴露 `LauncherPage` 声明。
+- `Application.cpp` 注册结构未改，仍通过现有聚合头注册页面。
+
+当前判断：
+
+- 这说明 Shell 已开始从“共享 helper 抽离”继续推进到“单个高交互页面独立下沉”阶段。
+- 这不代表 `HomeRingHost`、`Notifications`、`QuickSettings` 已经迁出。
+- 这也不代表 Wallet / Pay / NFC 已有独立页面实现；它们当前仍是入口卡片或 placeholder 路径。
 
 ### Power
 
@@ -191,7 +211,6 @@ Forbidden changes:
 
 - `WatchfacePage`
 - `HomeRingHostPage`
-- `LauncherPage`
 - `NotificationsPage`
 - `NotificationWakePage`
 - `QuickSettingsPage`
@@ -247,6 +266,9 @@ Forbidden changes:
   - `Health/HeartRatePages.cpp`
   - `Health/BloodOxygenPages.cpp`
   - `Health/SleepPages.cpp`
+  - `Shell/ShellAppVisualRegistry.cpp`
+  - `Shell/ShellAppIconPrimitives.cpp`
+  - `Shell/Launcher/ShellLauncherPages.cpp`
   - `Shell/Power/ShellPowerPages.cpp`
 
 当前判断：
