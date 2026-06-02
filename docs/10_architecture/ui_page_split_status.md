@@ -155,12 +155,14 @@ Forbidden changes:
 
 - `Shell/Home/ShellHomeLayoutPrimitives.*`
 - `Shell/Home/ShellHomePaymentCardPrimitives.*`
+- `Shell/Home/ShellHomeHealthCardPrimitives.*`
 
 当前状态：
 
 - `HomeRingHostPage` 仍留在 `ShellPages.cpp`。
 - 但 HomeRing 的纯 UI layout / stage / pager 构件已经开始形成单域 helper 边界。
 - HomeRing payment / NFC card primitives 也已经开始形成单域 helper 边界。
+- HomeRing health card primitives 也已经开始形成单域 helper 边界。
 - 当前 helper 包括：
   - `SurfaceLayout`
   - `make_surface_layout()`
@@ -170,6 +172,7 @@ Forbidden changes:
   - `create_pager_dot()`
   - `set_single_line_label()`
 - payment / NFC 卡片的纯 UI 构建 helper
+- health 类卡片的纯 UI 构建 helper
 
 拆分判断：
 
@@ -412,7 +415,7 @@ Forbidden changes:
 当前判断：
 
 - 当前剩余未拆区域已经从“所有非 Settings 页面”收缩到“主壳层和高交互壳层”。
-- `HomeRingHostPage` 虽然已出现 layout primitives 和 payment / NFC card primitives，但页面实现本体仍留在 `ShellPages.cpp`。
+- `HomeRingHostPage` 虽然已出现 layout primitives、payment / NFC card primitives 和 health card primitives，但页面实现本体仍留在 `ShellPages.cpp`。
 - `Notifications` 与 `QuickSettings` 仍是当前最需要谨慎处理的高风险剩余区域。
 - 这是后续讨论 `ShellPages.cpp` 时必须写清楚的边界变化。
 

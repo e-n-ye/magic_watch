@@ -13,6 +13,7 @@
 #include "App/UI/Pages/Shell/ShellClickGuard.h"
 #include "App/UI/Pages/Shell/ShellCrownScrollHelpers.h"
 #include "App/UI/Pages/Shell/ShellFontHelpers.h"
+#include "App/UI/Pages/Shell/Home/ShellHomeHealthCardPrimitives.h"
 #include "App/UI/Pages/Shell/Home/ShellHomeLayoutPrimitives.h"
 #include "App/UI/Pages/Shell/Home/ShellHomePaymentCardPrimitives.h"
 #include "App/UI/Pages/Shell/ShellImagePrimitives.h"
@@ -47,10 +48,6 @@ using shell_font::cjk_font_16;
 using shell_font::cjk_font_20;
 using shell_font::cjk_font_72;
 using shell_asset::file_exists;
-using shell_asset::health_breathe_asset_path;
-using shell_asset::health_heart_asset_path;
-using shell_asset::health_spo2_asset_path;
-using shell_asset::health_stress_asset_path;
 using shell_asset::nfc_school_card_asset_path;
 using shell_asset::nfc_school_card_inner_asset_path;
 using shell_asset::payment_alipay_asset_path;
@@ -788,66 +785,18 @@ lv_obj_t* HomeRingHostPage::build() {
       return nullptr;
     }
 
-    struct HealthTile {
-      PageId target;
-      const char* icon_path;
-      const char* value;
-      lv_color_t bg;
-      bool emphasize;
-      lv_coord_t icon_x;
-      lv_coord_t icon_y;
-      lv_coord_t icon_size;
-    };
+    shell_home_health::HealthCardsView health_cards {};
+    if (!shell_home_health::create_health_cards(stage, health_cards)) {
+      return nullptr;
+    }
 
-    const std::array<HealthTile, 4> tiles {{
-        {PageId::AppHeartRate, health_heart_asset_path(), "--", lv_color_hex(0x0D1222), false, 18, 16, 36},
-        {PageId::AppBloodOxygen, health_spo2_asset_path(), "--", lv_color_hex(0xFF4F72), false, 18, 12, 40},
-        {PageId::AppBreathing, health_breathe_asset_path(), "Breathe", lv_color_hex(0x4DBDFF), true, 14, 13, 39},
-        {PageId::AppStress, health_stress_asset_path(), "--", lv_color_hex(0x0D1222), false, 18, 16, 44},
-    }};
-
-    const lv_coord_t tile_w = 106;
-    const lv_coord_t tile_h = 106;
-    const lv_coord_t tile_gap = 8;
-    const lv_coord_t start_y = 15;
-
-    for (std::size_t index = 0; index < tiles.size(); ++index) {
-      const auto& tile = tiles[index];
-      const lv_coord_t x = static_cast<lv_coord_t>((index % 2) * (tile_w + tile_gap));
-      const lv_coord_t y = static_cast<lv_coord_t>(start_y + (index / 2) * (tile_h + tile_gap));
-      lv_obj_t* card = lv_obj_create(stage);
-      if (card == nullptr) {
-        return nullptr;
-      }
-      ui_prepare_box(card);
-      ui_apply_surface(card, SurfaceStyle::PanelSubtle);
-      lv_obj_set_size(card, tile_w, tile_h);
-      lv_obj_align(card, LV_ALIGN_TOP_LEFT, x, y);
-      lv_obj_set_style_radius(card, 24, 0);
-      lv_obj_set_style_pad_all(card, 0, 0);
-      lv_obj_set_style_bg_color(card, tile.bg, 0);
-      lv_obj_set_style_border_width(card, 0, 0);
+    for (auto [card, target] : {std::pair<lv_obj_t*, PageId> {health_cards.heart_card, PageId::AppHeartRate},
+                                std::pair<lv_obj_t*, PageId> {health_cards.blood_oxygen_card, PageId::AppBloodOxygen},
+                                std::pair<lv_obj_t*, PageId> {health_cards.breathing_card, PageId::AppBreathing},
+                                std::pair<lv_obj_t*, PageId> {health_cards.stress_card, PageId::AppStress}}) {
       attach_click_guard(card);
       lv_obj_add_event_cb(card, app_tile_event_cb, LV_EVENT_CLICKED, this);
-      lv_obj_set_user_data(card, reinterpret_cast<void*>(static_cast<std::uintptr_t>(tile.target)));
-
-      if (create_contain_image(card, tile.icon_path, tile.icon_size, tile.icon_size, LV_ALIGN_TOP_LEFT, tile.icon_x, tile.icon_y) ==
-          nullptr) {
-        return nullptr;
-      }
-
-      lv_obj_t* value = lv_label_create(card);
-      if (value == nullptr) {
-        return nullptr;
-      }
-      ui_prepare_label(value);
-      ui_apply_text(value, TextStyle::Title);
-      lv_obj_set_style_text_font(value, &lv_font_montserrat_16, 0);
-      lv_obj_set_style_text_color(value, tile.emphasize ? lv_color_hex(0xD7FBFF) : lv_color_hex(0xF8FAFC), 0);
-      lv_obj_set_width(value, 78);
-      lv_label_set_long_mode(value, LV_LABEL_LONG_DOT);
-      lv_label_set_text(value, tile.value);
-      lv_obj_align(value, LV_ALIGN_BOTTOM_LEFT, 12, -14);
+      lv_obj_set_user_data(card, reinterpret_cast<void*>(static_cast<std::uintptr_t>(target)));
     }
   }
 
