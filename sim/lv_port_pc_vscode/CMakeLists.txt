@@ -109,6 +109,7 @@ set(MAIN_SOURCES
     src/App/UI/Pages/Health/BloodOxygenPages.cpp
     src/App/UI/Pages/Health/SleepPages.cpp
     src/App/UI/Pages/Shell/ShellAssetHelpers.cpp
+    src/App/UI/Pages/Shell/ShellAppIconPrimitives.cpp
     src/App/UI/Pages/Shell/ShellAppVisualRegistry.cpp
     src/App/UI/Pages/Shell/ShellClickGuard.cpp
     src/App/UI/Pages/Shell/ShellCrownScrollHelpers.cpp
