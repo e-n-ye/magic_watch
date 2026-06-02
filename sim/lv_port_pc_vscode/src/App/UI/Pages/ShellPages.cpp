@@ -3,6 +3,7 @@
 #include "App/Common/DisplayPolicyRules.h"
 #include "App/UI/Pages/Daily/StepsMainPrimitives.h"
 #include "App/UI/Pages/Daily/StepsPagePrimitives.h"
+#include "App/UI/Pages/Health/BloodOxygenPageHelpers.h"
 #include "App/UI/Pages/Health/HealthIconPrimitives.h"
 #include "App/UI/Pages/Health/HealthInfoPagePrimitives.h"
 #include "App/UI/Pages/Health/HealthSwitchPrimitives.h"
@@ -496,20 +497,6 @@ lv_obj_t* create_launcher_scroll_root(lv_obj_t* root, lv_coord_t screen_w, lv_co
   lv_obj_set_style_border_width(scroll, 0, 0);
   lv_obj_set_style_radius(scroll, 0, 0);
   return scroll;
-}
-
-const char* low_blood_oxygen_mode_text(LowBloodOxygenReminderMode mode) {
-  switch (mode) {
-    case LowBloodOxygenReminderMode::Threshold90:
-      return "90%";
-    case LowBloodOxygenReminderMode::Threshold85:
-      return "85%";
-    case LowBloodOxygenReminderMode::Threshold80:
-      return "80%";
-    case LowBloodOxygenReminderMode::Off:
-    default:
-      return "不提醒";
-  }
 }
 
 const char* heart_rate_all_day_mode_text(HeartRateAllDayMonitoringMode mode) {
