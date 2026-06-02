@@ -1239,4 +1239,219 @@ void HeartRateHeartHealthMonitoringPage::stop_crown_release_timer() {
   crown_release_timer_ = nullptr;
 }
 
+HeartRateHighReminderPage::HeartRateHighReminderPage(DataCenter& data_center) : PageBase(data_center) {
+  options_[0].mode = HeartRateHighReminderMode::Off;
+  options_[0].label = "关闭";
+  options_[1].mode = HeartRateHighReminderMode::Bpm100;
+  options_[1].label = "100次/分";
+  options_[2].mode = HeartRateHighReminderMode::Bpm110;
+  options_[2].label = "110次/分";
+  options_[3].mode = HeartRateHighReminderMode::Bpm120;
+  options_[3].label = "120次/分";
+  options_[4].mode = HeartRateHighReminderMode::Bpm130;
+  options_[4].label = "130次/分";
+  options_[5].mode = HeartRateHighReminderMode::Bpm140;
+  options_[5].label = "140次/分";
+  options_[6].mode = HeartRateHighReminderMode::Bpm150;
+  options_[6].label = "150次/分";
+
+  track(data_center_.subscribe(EventId::HealthMonitoringSettingsChanged,
+                               [this](const Event& event) {
+                                 if (const auto* model =
+                                         std::get_if<HealthMonitoringSettingsModel>(&event.payload)) {
+                                   apply_settings(*model);
+                                   refresh_options();
+                                 }
+                               }));
+}
+
+PageId HeartRateHighReminderPage::id() const {
+  return PageId::AppHeartRateHighReminder;
+}
+
+const char* HeartRateHighReminderPage::name() const {
+  return page_name(PageId::AppHeartRateHighReminder);
+}
+
+void HeartRateHighReminderPage::on_will_appear() {
+  if (const auto& model = data_center_.health_monitoring_settings(); model.has_value()) {
+    apply_settings(*model);
+  } else {
+    apply_settings(HealthMonitoringSettingsModel {});
+  }
+  refresh_header_time();
+  refresh_options();
+}
+
+void HeartRateHighReminderPage::on_will_disappear() {
+  stop_crown_release_timer();
+}
+
+lv_obj_t* HeartRateHighReminderPage::build() {
+  lv_obj_t* root = lv_obj_create(nullptr);
+  if (root == nullptr) {
+    return nullptr;
+  }
+  style_root(root, 0x02070D);
+
+  const lv_coord_t screen_w = static_cast<lv_coord_t>(lv_display_get_horizontal_resolution(nullptr));
+  const lv_coord_t screen_h = static_cast<lv_coord_t>(lv_display_get_vertical_resolution(nullptr));
+  const lv_coord_t card_w = screen_w - 16;
+
+  lv_obj_t* back_button = lv_button_create(root);
+  lv_obj_t* back_label =
+      back_button == nullptr ? nullptr : create_steps_label(back_button, "<", &lv_font_montserrat_20, 0xD8E9FF, 18);
+  lv_obj_t* title_label = create_steps_label(root, "高心率提醒", cjk_font_20(), 0xF8FAFC, 142);
+  time_label_ = create_steps_label(root, "--:--", &lv_font_montserrat_20, 0xE2F0FF, 64);
+  if (back_button == nullptr || back_label == nullptr || title_label == nullptr || time_label_ == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_box(back_button);
+  lv_obj_set_size(back_button, 38, 38);
+  lv_obj_align(back_button, LV_ALIGN_TOP_LEFT, 10, 8);
+  lv_obj_set_style_bg_opa(back_button, LV_OPA_TRANSP, 0);
+  attach_click_guard(back_button);
+  lv_obj_add_event_cb(back_button, back_event_cb, LV_EVENT_CLICKED, this);
+  ui_set_touch_target(back_button, 18);
+  lv_obj_add_flag(back_label, LV_OBJ_FLAG_EVENT_BUBBLE);
+  lv_obj_remove_flag(back_label, LV_OBJ_FLAG_CLICKABLE);
+  lv_obj_align(back_label, LV_ALIGN_LEFT_MID, 10, 0);
+  lv_obj_align(title_label, LV_ALIGN_TOP_LEFT, 42, 12);
+  lv_obj_align(time_label_, LV_ALIGN_TOP_RIGHT, -16, 12);
+
+  scroll_root_ = create_sleep_scroll_root(root, screen_w, screen_h, 48, 0, 10);
+  if (scroll_root_ == nullptr) {
+    return nullptr;
+  }
+
+  for (std::size_t i = 0; i < options_.size(); ++i) {
+    lv_obj_t* row = create_steps_panel(scroll_root_, card_w, 68, 0x102033);
+    lv_obj_t* label = row == nullptr ? nullptr : create_steps_label(row, options_[i].label, cjk_font_20(), 0xF8FAFC, card_w - 72);
+    lv_obj_t* dot = row == nullptr ? nullptr : lv_obj_create(row);
+    if (row == nullptr || label == nullptr || dot == nullptr) {
+      return nullptr;
+    }
+    lv_obj_set_size(dot, 20, 20);
+    lv_obj_set_style_radius(dot, LV_RADIUS_CIRCLE, 0);
+    lv_obj_set_style_border_width(dot, 2, 0);
+    lv_obj_set_style_border_color(dot, lv_color_hex(0x5D728E), 0);
+    lv_obj_set_style_bg_color(dot, lv_color_hex(0x1A2D44), 0);
+    lv_obj_set_style_bg_opa(dot, LV_OPA_COVER, 0);
+    lv_obj_remove_flag(dot, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_align(label, LV_ALIGN_LEFT_MID, 18, 0);
+    lv_obj_align(dot, LV_ALIGN_RIGHT_MID, -18, 0);
+    attach_click_guard(row);
+    lv_obj_add_event_cb(row, option_event_cb, LV_EVENT_CLICKED, this);
+    lv_obj_set_user_data(row, reinterpret_cast<void*>(static_cast<std::uintptr_t>(i)));
+    options_[i].check_dot = dot;
+  }
+
+  bind_input();
+  on_will_appear();
+  return root;
+}
+
+void HeartRateHighReminderPage::back_event_cb(lv_event_t* event) {
+  auto* self = static_cast<HeartRateHighReminderPage*>(lv_event_get_user_data(event));
+  if (self == nullptr || self->should_ignore_click()) {
+    return;
+  }
+  lv_obj_t* target = lv_event_get_current_target_obj(event);
+  if (target == nullptr || !click_guard_allows(target)) {
+    return;
+  }
+  self->request_navigation({NavigationAction::Pop, PageId::Watchface});
+}
+
+void HeartRateHighReminderPage::option_event_cb(lv_event_t* event) {
+  auto* self = static_cast<HeartRateHighReminderPage*>(lv_event_get_user_data(event));
+  if (self == nullptr || self->should_ignore_click()) {
+    return;
+  }
+  lv_obj_t* target = lv_event_get_current_target_obj(event);
+  if (target == nullptr || !click_guard_allows(target)) {
+    return;
+  }
+  const auto index = static_cast<std::size_t>(reinterpret_cast<std::uintptr_t>(lv_obj_get_user_data(target)));
+  if (index >= self->options_.size()) {
+    return;
+  }
+  self->data_center_.set_high_heart_rate_reminder_mode(self->options_[index].mode);
+}
+
+void HeartRateHighReminderPage::crown_release_timer_cb(lv_timer_t* timer) {
+  auto* self = static_cast<HeartRateHighReminderPage*>(lv_timer_get_user_data(timer));
+  if (self == nullptr) {
+    return;
+  }
+  self->crown_release_timer_ = nullptr;
+  release_stream_crown_drag(self->scroll_root_);
+}
+
+void HeartRateHighReminderPage::bind_input() {
+  track(data_center_.subscribe(EventId::InputRequested,
+                               [this](const Event& event) {
+                                 if (root_ == nullptr || lv_screen_active() != root_ || scroll_root_ == nullptr) {
+                                   return;
+                                 }
+                                 const auto* command = std::get_if<InputCommand>(&event.payload);
+                                 if (command == nullptr) {
+                                   return;
+                                 }
+                                 switch (command->action) {
+                                   case InputAction::CrownRotateCW:
+                                     apply_crown_drag(true, command->value);
+                                     break;
+                                   case InputAction::CrownRotateCCW:
+                                     apply_crown_drag(false, command->value);
+                                     break;
+                                   default:
+                                     break;
+                                 }
+                               }));
+}
+
+void HeartRateHighReminderPage::apply_crown_drag(bool forward, std::int16_t detents) {
+  stop_crown_release_timer();
+  apply_stream_crown_drag(scroll_root_, forward, detents);
+  schedule_crown_release();
+}
+
+void HeartRateHighReminderPage::apply_settings(const HealthMonitoringSettingsModel& model) {
+  current_settings_ = model;
+}
+
+void HeartRateHighReminderPage::refresh_header_time() {
+  apply_compact_time_label(time_label_, data_center_.time());
+}
+
+void HeartRateHighReminderPage::refresh_options() {
+  for (const auto& option : options_) {
+    if (option.check_dot == nullptr) {
+      continue;
+    }
+    const bool selected = option.mode == current_settings_.high_heart_rate_reminder_mode;
+    lv_obj_set_style_border_color(option.check_dot, lv_color_hex(selected ? 0x14B8FF : 0x5D728E), 0);
+    lv_obj_set_style_bg_color(option.check_dot, lv_color_hex(selected ? 0xEAF6FF : 0x1A2D44), 0);
+  }
+}
+
+void HeartRateHighReminderPage::schedule_crown_release() {
+  stop_crown_release_timer();
+  crown_release_timer_ = lv_timer_create(&HeartRateHighReminderPage::crown_release_timer_cb,
+                                         kLauncherCrownReleaseDelayMs,
+                                         this);
+  if (crown_release_timer_ != nullptr) {
+    lv_timer_set_repeat_count(crown_release_timer_, 1);
+  }
+}
+
+void HeartRateHighReminderPage::stop_crown_release_timer() {
+  if (crown_release_timer_ == nullptr) {
+    return;
+  }
+  lv_timer_delete(crown_release_timer_);
+  crown_release_timer_ = nullptr;
+}
+
 }  // namespace twsim::app
