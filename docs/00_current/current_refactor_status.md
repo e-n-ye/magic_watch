@@ -107,6 +107,7 @@ Forbidden changes:
 ### Shell / HomeRing single-domain helpers
 
 - `Shell/Home/ShellHomeLayoutPrimitives.*` 已新增并登记到 `CMakeLists.txt`。
+- `Shell/Home/ShellHomePaymentCardPrimitives.*` 已新增并登记到 `CMakeLists.txt`。
 - 当前承载的边界包括：
   - `SurfaceLayout`
   - `make_surface_layout()`
@@ -115,11 +116,15 @@ Forbidden changes:
   - `style_pager_root()`
   - `create_pager_dot()`
   - `set_single_line_label()`
+- HomeRing payment / NFC 卡片纯 UI 构建 helper
 
 当前判断：
 
 - 这不是页面迁移事实，而是 HomeRing 域内纯 UI layout / stage / pager helper 开始独立的事实。
 - `HomeRingHostPage` 仍留在 `ShellPages.cpp`，但已不再是“所有 HomeRing UI 细节都内嵌在单文件里”的状态。
+- payment / NFC 的点击绑定、`PageId` 选择与导航行为仍留在 `HomeRingHostPage`。
+- 这不代表 Wallet / Pay / NFC 已有独立页面实现。
+- 这也不代表 HomeRing 整页已迁出。
 - 后续文档若继续把 HomeRing 描述成“只有页面未迁出，尚无单域 helper 边界”，会低估当前拆分进度。
 
 ### Shell / Launcher
@@ -243,7 +248,7 @@ Forbidden changes:
 当前判断：
 
 - `ShellPages.cpp` 仍然大，但它现在更接近“剩余壳层实现聚集区”，而不是所有非 Settings 页面的大杂烩。
-- 其中 `HomeRingHostPage` 仍在文件内，但其 layout / stage / pager 纯 UI 构件已开始下沉到 `Shell/Home/ShellHomeLayoutPrimitives.*`。
+- 其中 `HomeRingHostPage` 仍在文件内，但其 layout / stage / pager 纯 UI 构件已开始下沉到 `Shell/Home/ShellHomeLayoutPrimitives.*`，payment / NFC 卡片纯 UI 构件也已下沉到 `Shell/Home/ShellHomePaymentCardPrimitives.*`。
 - 后续任何“ShellPages 拆分”文档，都应明确它的剩余内容已不同于早期版本。
 
 ### ShellPages.h 聚合头状态
@@ -288,6 +293,7 @@ Forbidden changes:
   - `Shell/ShellAppVisualRegistry.cpp`
   - `Shell/ShellAppIconPrimitives.cpp`
   - `Shell/Home/ShellHomeLayoutPrimitives.cpp`
+  - `Shell/Home/ShellHomePaymentCardPrimitives.cpp`
   - `Shell/Launcher/ShellLauncherPages.cpp`
   - `Shell/Power/ShellPowerPages.cpp`
 
