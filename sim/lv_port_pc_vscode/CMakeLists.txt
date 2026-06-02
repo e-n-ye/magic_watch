@@ -101,6 +101,7 @@ set(MAIN_SOURCES
     src/App/UI/Pages/Daily/StepsMainPrimitives.cpp
     src/App/UI/Pages/Daily/StepsPages.cpp
     src/App/UI/Pages/Daily/WeatherPages.cpp
+    src/App/UI/Pages/Health/HealthIconPrimitives.cpp
     src/App/UI/Pages/Health/HealthInfoPagePrimitives.cpp
     src/App/UI/Pages/Health/HeartRatePages.cpp
     src/App/UI/Pages/Health/BloodOxygenPages.cpp
