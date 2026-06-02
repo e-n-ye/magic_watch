@@ -14,6 +14,7 @@
 #include "App/UI/Pages/Shell/ShellCrownScrollHelpers.h"
 #include "App/UI/Pages/Shell/ShellFontHelpers.h"
 #include "App/UI/Pages/Shell/Home/ShellHomeLayoutPrimitives.h"
+#include "App/UI/Pages/Shell/Home/ShellHomePaymentCardPrimitives.h"
 #include "App/UI/Pages/Shell/ShellImagePrimitives.h"
 #include "App/UI/Pages/Shell/ShellPagePrimitives.h"
 #include "App/UI/UiStyles.h"
@@ -185,28 +186,6 @@ std::size_t decimal_digits(std::uint32_t value) {
 
 const lv_font_t* home_shortcut_steps_font(std::uint32_t value) {
   return decimal_digits(value) >= 5 ? &lv_font_montserrat_12 : &lv_font_montserrat_14;
-}
-
-lv_obj_t* create_cover_image(lv_obj_t* parent,
-                             const char* path,
-                             lv_coord_t width,
-                             lv_coord_t height,
-                             lv_align_t align,
-                             lv_coord_t x,
-                             lv_coord_t y) {
-  lv_obj_t* image = lv_image_create(parent);
-  if (image == nullptr) {
-    return nullptr;
-  }
-  lv_obj_set_size(image, width, height);
-  lv_image_set_inner_align(image, LV_IMAGE_ALIGN_COVER);
-  if (file_exists(path)) {
-    lv_image_set_src(image, path);
-  } else {
-    lv_obj_add_flag(image, LV_OBJ_FLAG_HIDDEN);
-  }
-  lv_obj_align(image, align, x, y);
-  return image;
 }
 
 }  // namespace
@@ -737,66 +716,23 @@ lv_obj_t* HomeRingHostPage::build() {
       return nullptr;
     }
 
-    const lv_coord_t small_w = 106;
-    const lv_coord_t small_h = 106;
-    const lv_coord_t top_y = 15;
     const lv_coord_t music_y = 136;
-    const lv_coord_t card_gap = 8;
-    lv_obj_t* alipay_card = lv_obj_create(stage);
-    lv_obj_t* wechat_card = lv_obj_create(stage);
+    shell_home_payment::PaymentCardsView payment_cards {};
     lv_obj_t* music_card = lv_obj_create(stage);
-    if (alipay_card == nullptr || wechat_card == nullptr || music_card == nullptr) {
+    if (music_card == nullptr) {
       return nullptr;
     }
-
-    for (lv_obj_t* card : {alipay_card, wechat_card}) {
-      ui_prepare_box(card);
-      ui_apply_surface(card, SurfaceStyle::PanelSubtle);
-      lv_obj_set_size(card, small_w, small_h);
-      lv_obj_set_style_radius(card, 24, 0);
-      lv_obj_set_style_pad_all(card, 0, 0);
-      lv_obj_set_style_bg_color(card, tile_bg, 0);
-      lv_obj_set_style_border_color(card, tile_border, 0);
-    }
-    lv_obj_align(alipay_card, LV_ALIGN_TOP_LEFT, 0, top_y);
-    lv_obj_align(wechat_card, LV_ALIGN_TOP_LEFT, small_w + card_gap, top_y);
-
-    auto build_payment_tile = [&](lv_obj_t* card,
-                                  const char* icon_path,
-                                  lv_coord_t icon_x,
-                                  lv_coord_t icon_y,
-                                  lv_coord_t icon_size,
-                                  const char* label_text,
-                                  lv_coord_t label_x,
-                                  lv_coord_t label_y,
-                                  lv_coord_t label_w) -> bool {
-      lv_obj_t* icon = create_contain_image(card, icon_path, icon_size, icon_size, LV_ALIGN_TOP_LEFT, icon_x, icon_y);
-      lv_obj_t* label = lv_label_create(card);
-      if (icon == nullptr || label == nullptr) {
-        return false;
-      }
-      ui_prepare_label(label);
-      ui_apply_text(label, TextStyle::Title);
-      lv_obj_set_style_text_font(label, &lv_font_montserrat_14, 0);
-      lv_obj_set_style_text_color(label, lv_color_hex(0xF8FAFC), 0);
-      lv_obj_set_width(label, label_w);
-      lv_label_set_long_mode(label, LV_LABEL_LONG_WRAP);
-      lv_label_set_text(label, label_text);
-      lv_obj_align(label, LV_ALIGN_TOP_LEFT, label_x, label_y);
-      return true;
-    };
 
     const char* wechat_icon_path = payment_wechat_green_asset_path();
     if (!file_exists(wechat_icon_path)) {
       wechat_icon_path = payment_wechat_asset_path();
     }
-    if (!build_payment_tile(alipay_card, payment_alipay_asset_path(), 2, 2, 49, "Alipay", 16, 72, 72) ||
-        !build_payment_tile(wechat_card, wechat_icon_path, 7, 5, 40, "WeChat\nPay", 16, 58, 74)) {
+    if (!shell_home_payment::create_payment_cards(stage, tile_bg, tile_border, wechat_icon_path, payment_cards)) {
       return nullptr;
     }
 
-    for (auto [card, target] : {std::pair<lv_obj_t*, PageId> {alipay_card, PageId::AppAlipay},
-                                std::pair<lv_obj_t*, PageId> {wechat_card, PageId::AppWeChatPay}}) {
+    for (auto [card, target] : {std::pair<lv_obj_t*, PageId> {payment_cards.alipay_card, PageId::AppAlipay},
+                                std::pair<lv_obj_t*, PageId> {payment_cards.wechat_card, PageId::AppWeChatPay}}) {
       attach_click_guard(card);
       lv_obj_add_event_cb(card, app_tile_event_cb, LV_EVENT_CLICKED, this);
       lv_obj_set_user_data(card, reinterpret_cast<void*>(static_cast<std::uintptr_t>(target)));
@@ -924,51 +860,17 @@ lv_obj_t* HomeRingHostPage::build() {
       return nullptr;
     }
 
-    lv_obj_t* title = lv_label_create(stage);
-    lv_obj_t* subtitle = lv_label_create(stage);
-    lv_obj_t* card = lv_obj_create(stage);
-    if (title == nullptr || subtitle == nullptr || card == nullptr) {
-      return nullptr;
-    }
-
-    ui_prepare_label(title);
-    ui_apply_text(title, TextStyle::HeroSoft);
-    lv_obj_set_style_text_font(title, &lv_font_montserrat_22, 0);
-    lv_obj_set_style_text_color(title, lv_color_hex(0xF8FAFC), 0);
-    lv_obj_set_width(title, 93);
-    lv_obj_set_style_text_align(title, LV_TEXT_ALIGN_CENTER, 0);
-    lv_label_set_text(title, "School");
-    lv_obj_align(title, LV_ALIGN_TOP_LEFT, 57, 18);
-
-    ui_prepare_label(subtitle);
-    ui_apply_text(subtitle, TextStyle::Title);
-    lv_obj_set_style_text_font(subtitle, &lv_font_montserrat_12, 0);
-    lv_obj_set_style_text_color(subtitle, lv_color_hex(0x3B82F6), 0);
-    lv_obj_set_width(subtitle, 151);
-    lv_obj_set_style_text_align(subtitle, LV_TEXT_ALIGN_CENTER, 0);
-    lv_label_set_text(subtitle, "Tap card reader");
-    lv_obj_align(subtitle, LV_ALIGN_TOP_LEFT, 30, 47);
-
-    ui_prepare_box(card);
-    ui_apply_surface(card, SurfaceStyle::PanelSubtle);
-    lv_obj_set_size(card, 208, 120);
-    lv_obj_align(card, LV_ALIGN_TOP_LEFT, 6, 75);
-    lv_obj_set_style_radius(card, 28, 0);
-    lv_obj_set_style_pad_all(card, 0, 0);
-    lv_obj_set_style_bg_color(card, card_bg, 0);
-    lv_obj_set_style_border_width(card, 0, 0);
-    lv_obj_set_style_clip_corner(card, true, 0);
-
+    shell_home_payment::NfcCardView nfc_view {};
     const char* nfc_asset_path = nfc_school_card_inner_asset_path();
     if (!file_exists(nfc_asset_path)) {
       nfc_asset_path = nfc_school_card_asset_path();
     }
-    if (create_cover_image(card, nfc_asset_path, 209, 124, LV_ALIGN_TOP_LEFT, -2, -4) == nullptr) {
+    if (!shell_home_payment::create_nfc_card_view(stage, card_bg, nfc_asset_path, nfc_view)) {
       return nullptr;
     }
-    attach_click_guard(card);
-    lv_obj_add_event_cb(card, app_tile_event_cb, LV_EVENT_CLICKED, this);
-    lv_obj_set_user_data(card, reinterpret_cast<void*>(static_cast<std::uintptr_t>(PageId::AppNfc)));
+    attach_click_guard(nfc_view.card);
+    lv_obj_add_event_cb(nfc_view.card, app_tile_event_cb, LV_EVENT_CLICKED, this);
+    lv_obj_set_user_data(nfc_view.card, reinterpret_cast<void*>(static_cast<std::uintptr_t>(PageId::AppNfc)));
   }
 
   {
