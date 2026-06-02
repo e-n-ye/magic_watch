@@ -115,6 +115,7 @@ set(MAIN_SOURCES
     src/App/UI/Pages/Shell/ShellCrownScrollHelpers.cpp
     src/App/UI/Pages/Shell/ShellFontHelpers.cpp
     src/App/UI/Pages/Shell/ShellImagePrimitives.cpp
+    src/App/UI/Pages/Shell/Home/ShellHomeLayoutPrimitives.cpp
     src/App/UI/Pages/Shell/Launcher/ShellLauncherPages.cpp
     src/App/UI/Pages/Shell/ShellPagePrimitives.cpp
     src/App/UI/Pages/Shell/Power/ShellPowerPages.cpp
