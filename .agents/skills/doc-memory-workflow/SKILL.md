@@ -41,6 +41,9 @@ description: Use when a Magic Watch task is large, multi-step, cross-module, a r
 实现过程中：
 
 - 当代码改动和文档记忆描述同一个已成立事实时，把它们放在同一个逻辑闭环里收口。
+- 默认把“本轮代码文件 + 对应状态文档”一起纳入实现类 prompt 的 Allowed files；只有协作判定规则本身发生变化时，才额外允许修改 `.agents/skills/doc-memory-workflow/SKILL.md`。
+- 如果 prompt 没有明确禁止文档修改，就不要把代码收口和文档收口默认拆成两轮。
+- 如果 prompt 明确禁止改文档，则不得越权补文档；应在收尾报告里显式给出 `Doc Impact`、`Suggested docs` 和 `Need docs sync before next code round`。
 - 只有事实已经成立时才更新文档，不把计划中的事情写成已完成。
 - 对不确定、待验证、仅人工检查的内容如实标注。
 - 不把构建通过写成手动 UI 回归通过。
