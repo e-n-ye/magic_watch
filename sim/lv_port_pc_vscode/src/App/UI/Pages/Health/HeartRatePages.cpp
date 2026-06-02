@@ -1675,4 +1675,189 @@ void HeartRateLowReminderPage::stop_crown_release_timer() {
   crown_release_timer_ = nullptr;
 }
 
+HeartRateResting30DaysPage::HeartRateResting30DaysPage(DataCenter& data_center) : PageBase(data_center) {}
+
+PageId HeartRateResting30DaysPage::id() const {
+  return PageId::AppHeartRateResting30Days;
+}
+
+const char* HeartRateResting30DaysPage::name() const {
+  return page_name(PageId::AppHeartRateResting30Days);
+}
+
+void HeartRateResting30DaysPage::on_will_appear() {
+  refresh_header_time();
+}
+
+void HeartRateResting30DaysPage::on_will_disappear() {
+  stop_crown_release_timer();
+}
+
+lv_obj_t* HeartRateResting30DaysPage::build() {
+  static const lv_point_precise_t kRestingLine[] = {
+      {42, 48}, {62, 116}, {88, 92}, {104, 24}, {120, 104}, {150, 84}, {166, 88}, {184, 116},
+  };
+
+  lv_obj_t* root = lv_obj_create(nullptr);
+  if (root == nullptr) {
+    return nullptr;
+  }
+  style_root(root, 0x02070D);
+
+  const lv_coord_t screen_w = static_cast<lv_coord_t>(lv_display_get_horizontal_resolution(nullptr));
+  const lv_coord_t screen_h = static_cast<lv_coord_t>(lv_display_get_vertical_resolution(nullptr));
+  const lv_coord_t card_w = screen_w - 16;
+
+  lv_obj_t* back_button = lv_button_create(root);
+  lv_obj_t* back_label =
+      back_button == nullptr ? nullptr : create_steps_label(back_button, "<", &lv_font_montserrat_20, 0xD8E9FF, 18);
+  lv_obj_t* title_label = create_steps_label(root, "近30天静息", cjk_font_20(), 0xF8FAFC, 136);
+  time_label_ = create_steps_label(root, "--:--", &lv_font_montserrat_20, 0xE2F0FF, 64);
+  if (back_button == nullptr || back_label == nullptr || title_label == nullptr || time_label_ == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_box(back_button);
+  lv_obj_set_size(back_button, 38, 38);
+  lv_obj_align(back_button, LV_ALIGN_TOP_LEFT, 10, 8);
+  lv_obj_set_style_bg_opa(back_button, LV_OPA_TRANSP, 0);
+  lv_obj_set_style_border_width(back_button, 0, 0);
+  lv_obj_center(back_label);
+  attach_click_guard(back_button);
+  lv_obj_add_event_cb(back_button, back_event_cb, LV_EVENT_CLICKED, this);
+  lv_obj_align(title_label, LV_ALIGN_TOP_LEFT, 38, 12);
+  lv_obj_align(time_label_, LV_ALIGN_TOP_RIGHT, -16, 12);
+
+  scroll_root_ = create_sleep_scroll_root(root, screen_w, screen_h, 48, 0, 10);
+  if (scroll_root_ == nullptr) {
+    return nullptr;
+  }
+
+  lv_obj_t* chart_card = create_steps_panel(scroll_root_, card_w, 166, 0x0A1626);
+  if (chart_card == nullptr) {
+    return nullptr;
+  }
+
+  const lv_coord_t chart_left = 22;
+  const lv_coord_t chart_top = 14;
+  const lv_coord_t chart_w = card_w - 44;
+  const lv_coord_t chart_h = 116;
+  for (int i = 0; i < 5; ++i) {
+    lv_obj_t* tick = lv_obj_create(chart_card);
+    if (tick == nullptr) {
+      return nullptr;
+    }
+    ui_prepare_box(tick);
+    lv_obj_set_size(tick, 1, chart_h);
+    lv_obj_set_style_bg_color(tick, lv_color_hex(0x5A82B2), 0);
+    lv_obj_set_style_bg_opa(tick, LV_OPA_50, 0);
+    lv_obj_align(tick, LV_ALIGN_TOP_LEFT, static_cast<lv_coord_t>(chart_left + (chart_w * i) / 4), chart_top);
+  }
+
+  lv_obj_t* line = lv_line_create(chart_card);
+  lv_obj_t* top_value = create_steps_label(chart_card, "74", &lv_font_montserrat_18, 0x8DB9E3, 28);
+  lv_obj_t* bottom_value = create_steps_label(chart_card, "54", &lv_font_montserrat_18, 0x8DB9E3, 28);
+  lv_obj_t* left_label = create_steps_label(chart_card, "4/26", &lv_font_montserrat_16, 0x8DB9E3, 48);
+  lv_obj_t* mid_label = create_steps_label(chart_card, "5/10", &lv_font_montserrat_16, 0x8DB9E3, 48);
+  lv_obj_t* right_label = create_steps_label(chart_card, "5/25", &lv_font_montserrat_16, 0x8DB9E3, 48);
+  if (line == nullptr || top_value == nullptr || bottom_value == nullptr || left_label == nullptr ||
+      mid_label == nullptr || right_label == nullptr) {
+    return nullptr;
+  }
+  lv_line_set_points(line, kRestingLine, 8);
+  lv_obj_set_size(line, LV_PCT(100), LV_PCT(100));
+  lv_obj_set_style_line_width(line, 5, 0);
+  lv_obj_set_style_line_color(line, lv_color_hex(0xFF4F83), 0);
+  lv_obj_set_style_line_rounded(line, true, 0);
+  lv_obj_align(top_value, LV_ALIGN_TOP_RIGHT, -10, 6);
+  lv_obj_align(bottom_value, LV_ALIGN_BOTTOM_RIGHT, -10, -28);
+  lv_obj_align(left_label, LV_ALIGN_BOTTOM_LEFT, 16, -12);
+  lv_obj_align(mid_label, LV_ALIGN_BOTTOM_MID, 0, -12);
+  lv_obj_align(right_label, LV_ALIGN_BOTTOM_RIGHT, -18, -12);
+
+  lv_obj_t* empty_value = create_steps_label(scroll_root_, "--", &lv_font_montserrat_48, 0xEAF7FF, card_w);
+  lv_obj_t* unit_label = create_steps_label(scroll_root_, "次/分", cjk_font_20(), 0xF8FAFC, card_w);
+  lv_obj_t* today_label = create_steps_label(scroll_root_, "今日静息", cjk_font_20(), 0xD8E9FF, card_w);
+  if (empty_value == nullptr || unit_label == nullptr || today_label == nullptr) {
+    return nullptr;
+  }
+  lv_obj_set_style_text_align(empty_value, LV_TEXT_ALIGN_CENTER, 0);
+  lv_obj_set_style_text_align(unit_label, LV_TEXT_ALIGN_CENTER, 0);
+  lv_obj_set_style_text_align(today_label, LV_TEXT_ALIGN_CENTER, 0);
+
+  bind_input();
+  on_will_appear();
+  return root;
+}
+
+void HeartRateResting30DaysPage::back_event_cb(lv_event_t* event) {
+  auto* self = static_cast<HeartRateResting30DaysPage*>(lv_event_get_user_data(event));
+  if (self == nullptr || self->should_ignore_click()) {
+    return;
+  }
+  lv_obj_t* target = lv_event_get_current_target_obj(event);
+  if (target == nullptr || !click_guard_allows(target)) {
+    return;
+  }
+  self->request_navigation({NavigationAction::Pop, PageId::Watchface});
+}
+
+void HeartRateResting30DaysPage::crown_release_timer_cb(lv_timer_t* timer) {
+  auto* self = static_cast<HeartRateResting30DaysPage*>(lv_timer_get_user_data(timer));
+  if (self == nullptr) {
+    return;
+  }
+  self->crown_release_timer_ = nullptr;
+  release_stream_crown_drag(self->scroll_root_);
+}
+
+void HeartRateResting30DaysPage::bind_input() {
+  track(data_center_.subscribe(EventId::InputRequested,
+                               [this](const Event& event) {
+                                 if (root_ == nullptr || lv_screen_active() != root_ || scroll_root_ == nullptr) {
+                                   return;
+                                 }
+                                 const auto* command = std::get_if<InputCommand>(&event.payload);
+                                 if (command == nullptr) {
+                                   return;
+                                 }
+                                 switch (command->action) {
+                                   case InputAction::CrownRotateCW:
+                                     apply_crown_drag(true, command->value);
+                                     break;
+                                   case InputAction::CrownRotateCCW:
+                                     apply_crown_drag(false, command->value);
+                                     break;
+                                   default:
+                                     break;
+                                 }
+                               }));
+}
+
+void HeartRateResting30DaysPage::apply_crown_drag(bool forward, std::int16_t detents) {
+  stop_crown_release_timer();
+  apply_stream_crown_drag(scroll_root_, forward, detents);
+  schedule_crown_release();
+}
+
+void HeartRateResting30DaysPage::refresh_header_time() {
+  apply_compact_time_label(time_label_, data_center_.time());
+}
+
+void HeartRateResting30DaysPage::schedule_crown_release() {
+  stop_crown_release_timer();
+  crown_release_timer_ =
+      lv_timer_create(&HeartRateResting30DaysPage::crown_release_timer_cb, kLauncherCrownReleaseDelayMs, this);
+  if (crown_release_timer_ != nullptr) {
+    lv_timer_set_repeat_count(crown_release_timer_, 1);
+  }
+}
+
+void HeartRateResting30DaysPage::stop_crown_release_timer() {
+  if (crown_release_timer_ == nullptr) {
+    return;
+  }
+  lv_timer_delete(crown_release_timer_);
+  crown_release_timer_ = nullptr;
+}
+
 }  // namespace twsim::app
