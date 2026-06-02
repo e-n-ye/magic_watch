@@ -345,6 +345,20 @@ void HeartRateAppPage::wear_prompt_event_cb(lv_event_t* event) {
   self->hide_wear_prompt();
 }
 
+void HeartRateAppPage::show_wear_prompt() {
+  if (wear_prompt_overlay_ == nullptr) {
+    return;
+  }
+  lv_obj_clear_flag(wear_prompt_overlay_, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_move_foreground(wear_prompt_overlay_);
+}
+
+void HeartRateAppPage::hide_wear_prompt() {
+  if (wear_prompt_overlay_ != nullptr) {
+    lv_obj_add_flag(wear_prompt_overlay_, LV_OBJ_FLAG_HIDDEN);
+  }
+}
+
 void HeartRateAppPage::measurement_timer_cb(lv_timer_t* timer) {
   auto* self = static_cast<HeartRateAppPage*>(lv_timer_get_user_data(timer));
   if (self == nullptr) {
@@ -429,20 +443,6 @@ void HeartRateAppPage::show_result_stage() {
   }
   if (result_stage_ != nullptr) {
     lv_obj_clear_flag(result_stage_, LV_OBJ_FLAG_HIDDEN);
-  }
-}
-
-void HeartRateAppPage::show_wear_prompt() {
-  if (wear_prompt_overlay_ == nullptr) {
-    return;
-  }
-  lv_obj_clear_flag(wear_prompt_overlay_, LV_OBJ_FLAG_HIDDEN);
-  lv_obj_move_foreground(wear_prompt_overlay_);
-}
-
-void HeartRateAppPage::hide_wear_prompt() {
-  if (wear_prompt_overlay_ != nullptr) {
-    lv_obj_add_flag(wear_prompt_overlay_, LV_OBJ_FLAG_HIDDEN);
   }
 }
 
