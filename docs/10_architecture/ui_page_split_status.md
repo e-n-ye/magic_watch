@@ -149,7 +149,41 @@ Forbidden changes:
 
 - 若后续文档仍只描述页面迁移，不描述 shared primitives，会看不清壳层代码为什么还能继续复用旧 helper。
 
-### D. Shell / Launcher
+### D. Shell / HomeRing helper boundary
+
+当前实现文件位于：
+
+- `Shell/Home/ShellHomeLayoutPrimitives.*`
+
+当前状态：
+
+- `HomeRingHostPage` 仍留在 `ShellPages.cpp`。
+- 但 HomeRing 的纯 UI layout / stage / pager 构件已经开始形成单域 helper 边界。
+- 当前 helper 包括：
+  - `SurfaceLayout`
+  - `make_surface_layout()`
+  - `style_surface_stage()`
+  - `create_stage_root()`
+  - `style_pager_root()`
+  - `create_pager_dot()`
+  - `set_single_line_label()`
+
+拆分判断：
+
+- HomeRing 页面实现：未迁出。
+- HomeRing 单域 helper：已开始独立。
+- HomeRing 外部暴露：仍完全依赖 `ShellPages.h`。
+
+风险等级：
+
+- 中。
+
+主要风险：
+
+- 若后续文档只按“页面是否迁出”来描述 HomeRing，会把这轮已经成立的单域 helper 边界忽略掉。
+- 但这也不应被误写成“HomeRing 已与 `ShellPages.cpp` 解耦完成”；当前只是纯 UI 构件先行下沉。
+
+### E. Shell / Launcher
 
 当前实现文件位于：
 
@@ -175,7 +209,7 @@ Forbidden changes:
 - 这说明 Shell 拆分已经推进到高交互页面独立下沉，但不代表 `HomeRingHost`、`Notifications`、`QuickSettings` 已完成同级迁移。
 - 如果后续文档把“Launcher 已迁出”误写成“整个主壳层已拆开”，会直接高估当前壳层边界清晰度。
 
-### E. Power 域
+### F. Power 域
 
 当前实现文件位于：
 
@@ -208,7 +242,7 @@ Forbidden changes:
   - 电源页面虽然迁出，但仍与 Coordinator、页面栈恢复、screen-off 状态切换强耦合；
   - 文档若只看文件位置，会低估其交互复杂度。
 
-### F. Daily / Weather
+### G. Daily / Weather
 
 当前实现文件位于：
 
@@ -231,7 +265,7 @@ Forbidden changes:
 
 - 结构风险较低，当前更像是“文档未同步”问题，而不是“代码仍混放”问题。
 
-### G. Daily / Steps
+### H. Daily / Steps
 
 当前实现文件位于：
 

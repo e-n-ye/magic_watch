@@ -59,6 +59,14 @@ description: Use when a Magic Watch task is large, multi-step, cross-module, a r
 - 对本轮改动过的中文文件做一次乱码哨兵检查。
 - 报告改了什么、验证了什么、什么没验证、是否需要后续闭环。
 
+收尾时始终显式给出 `Doc Impact` 判断，并按“是否新增持久结构事实”而不只按“是否改了行为/归属”来判：
+
+- `none`：只改实现细节，没有新增会影响后续理解代码结构的稳定事实。
+- `small`：新增了模块、子域、helper 分类、构建登记或同层级结构边界，但没有改变页面归属、注册入口或行为主线。
+- `required`：如果本轮不补文档，下一轮会明显误判页面归属、结构落点、文档路由、验收边界或实施顺序。
+
+如果代码轮新增了新的单域 helper 文件、二级目录、域内 primitives / helpers 分类，即使页面未迁、行为未变，通常也至少是 `small`。
+
 如果没有执行人工验证，直接说明未执行。
 
 ## New-Session Routing
