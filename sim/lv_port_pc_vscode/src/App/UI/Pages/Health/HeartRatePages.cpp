@@ -2,6 +2,7 @@
 
 #include "App/UI/Pages/Health/HealthIconPrimitives.h"
 #include "App/UI/Pages/Health/HealthInfoPagePrimitives.h"
+#include "App/UI/Pages/Health/HealthSwitchPrimitives.h"
 #include "App/UI/Pages/Shell/ShellAssetHelpers.h"
 #include "App/UI/Pages/Shell/ShellClickGuard.h"
 #include "App/UI/Pages/Shell/ShellCrownScrollHelpers.h"
@@ -1043,6 +1044,194 @@ void HeartRateAllDayMonitoringPage::schedule_crown_release() {
 }
 
 void HeartRateAllDayMonitoringPage::stop_crown_release_timer() {
+  if (crown_release_timer_ == nullptr) {
+    return;
+  }
+  lv_timer_delete(crown_release_timer_);
+  crown_release_timer_ = nullptr;
+}
+
+HeartRateHeartHealthMonitoringPage::HeartRateHeartHealthMonitoringPage(DataCenter& data_center) : PageBase(data_center) {
+  track(data_center_.subscribe(EventId::HealthMonitoringSettingsChanged,
+                               [this](const Event& event) {
+                                 if (const auto* model =
+                                         std::get_if<HealthMonitoringSettingsModel>(&event.payload)) {
+                                   apply_settings(*model);
+                                   refresh_switch();
+                                 }
+                               }));
+}
+
+PageId HeartRateHeartHealthMonitoringPage::id() const {
+  return PageId::AppHeartRateHeartHealthMonitoring;
+}
+
+const char* HeartRateHeartHealthMonitoringPage::name() const {
+  return page_name(PageId::AppHeartRateHeartHealthMonitoring);
+}
+
+void HeartRateHeartHealthMonitoringPage::on_will_appear() {
+  if (const auto& model = data_center_.health_monitoring_settings(); model.has_value()) {
+    apply_settings(*model);
+  } else {
+    apply_settings(HealthMonitoringSettingsModel {});
+  }
+  refresh_header_time();
+  refresh_switch();
+}
+
+void HeartRateHeartHealthMonitoringPage::on_will_disappear() {
+  stop_crown_release_timer();
+}
+
+lv_obj_t* HeartRateHeartHealthMonitoringPage::build() {
+  lv_obj_t* root = lv_obj_create(nullptr);
+  if (root == nullptr) {
+    return nullptr;
+  }
+  style_root(root, 0x02070D);
+
+  const lv_coord_t screen_w = static_cast<lv_coord_t>(lv_display_get_horizontal_resolution(nullptr));
+  const lv_coord_t screen_h = static_cast<lv_coord_t>(lv_display_get_vertical_resolution(nullptr));
+  const lv_coord_t card_w = screen_w - 16;
+
+  lv_obj_t* back_button = lv_button_create(root);
+  lv_obj_t* back_label =
+      back_button == nullptr ? nullptr : create_steps_label(back_button, "<", &lv_font_montserrat_20, 0xD8E9FF, 18);
+  lv_obj_t* title_label = create_steps_label(root, "心脏健康监测", cjk_font_20(), 0xF8FAFC, 142);
+  time_label_ = create_steps_label(root, "--:--", &lv_font_montserrat_20, 0xE2F0FF, 64);
+  if (back_button == nullptr || back_label == nullptr || title_label == nullptr || time_label_ == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_box(back_button);
+  lv_obj_set_size(back_button, 38, 38);
+  lv_obj_align(back_button, LV_ALIGN_TOP_LEFT, 10, 8);
+  lv_obj_set_style_bg_opa(back_button, LV_OPA_TRANSP, 0);
+  attach_click_guard(back_button);
+  lv_obj_add_event_cb(back_button, back_event_cb, LV_EVENT_CLICKED, this);
+  ui_set_touch_target(back_button, 18);
+  lv_obj_add_flag(back_label, LV_OBJ_FLAG_EVENT_BUBBLE);
+  lv_obj_remove_flag(back_label, LV_OBJ_FLAG_CLICKABLE);
+  lv_obj_align(back_label, LV_ALIGN_LEFT_MID, 10, 0);
+  lv_obj_align(title_label, LV_ALIGN_TOP_LEFT, 42, 12);
+  lv_obj_align(time_label_, LV_ALIGN_TOP_RIGHT, -16, 12);
+
+  scroll_root_ = create_sleep_scroll_root(root, screen_w, screen_h, 48, 0, 10);
+  if (scroll_root_ == nullptr) {
+    return nullptr;
+  }
+
+  lv_obj_t* switch_card = create_steps_panel(scroll_root_, card_w, 92, 0x102033);
+  lv_obj_t* switch_title =
+      switch_card == nullptr
+          ? nullptr
+          : create_steps_label(switch_card, "心脏健康监测", cjk_font_20(), 0xF8FAFC, card_w - 112, LV_LABEL_LONG_WRAP);
+  switch_track_ = switch_card == nullptr ? nullptr : create_sleep_switch_track(switch_card);
+  lv_obj_t* info_label = create_steps_label(scroll_root_,
+                                            "设备在非活跃状态持续监测脉搏节律，评估心脏健康，若产生异常心搏记录，请留意健康状况，但若感觉不适请及时向医疗机构咨询。",
+                                            cjk_font_16(),
+                                            0xD8E9FF,
+                                            card_w - 8,
+                                            LV_LABEL_LONG_WRAP);
+  if (switch_card == nullptr || switch_title == nullptr || switch_track_ == nullptr || info_label == nullptr) {
+    return nullptr;
+  }
+  lv_obj_align(switch_title, LV_ALIGN_LEFT_MID, 18, 0);
+  lv_obj_align(switch_track_, LV_ALIGN_RIGHT_MID, -18, 0);
+  attach_click_guard(switch_card);
+  lv_obj_add_event_cb(switch_card, switch_event_cb, LV_EVENT_CLICKED, this);
+  lv_obj_set_style_text_line_space(info_label, 8, 0);
+
+  bind_input();
+  on_will_appear();
+  return root;
+}
+
+void HeartRateHeartHealthMonitoringPage::back_event_cb(lv_event_t* event) {
+  auto* self = static_cast<HeartRateHeartHealthMonitoringPage*>(lv_event_get_user_data(event));
+  if (self == nullptr || self->should_ignore_click()) {
+    return;
+  }
+  lv_obj_t* target = lv_event_get_current_target_obj(event);
+  if (target == nullptr || !click_guard_allows(target)) {
+    return;
+  }
+  self->request_navigation({NavigationAction::Pop, PageId::Watchface});
+}
+
+void HeartRateHeartHealthMonitoringPage::switch_event_cb(lv_event_t* event) {
+  auto* self = static_cast<HeartRateHeartHealthMonitoringPage*>(lv_event_get_user_data(event));
+  if (self == nullptr || self->should_ignore_click()) {
+    return;
+  }
+  lv_obj_t* target = lv_event_get_current_target_obj(event);
+  if (target == nullptr || !click_guard_allows(target)) {
+    return;
+  }
+  self->data_center_.set_heart_health_monitoring_enabled(!self->current_settings_.heart_health_monitoring_enabled);
+}
+
+void HeartRateHeartHealthMonitoringPage::crown_release_timer_cb(lv_timer_t* timer) {
+  auto* self = static_cast<HeartRateHeartHealthMonitoringPage*>(lv_timer_get_user_data(timer));
+  if (self == nullptr) {
+    return;
+  }
+  self->crown_release_timer_ = nullptr;
+  release_stream_crown_drag(self->scroll_root_);
+}
+
+void HeartRateHeartHealthMonitoringPage::bind_input() {
+  track(data_center_.subscribe(EventId::InputRequested,
+                               [this](const Event& event) {
+                                 if (root_ == nullptr || lv_screen_active() != root_ || scroll_root_ == nullptr) {
+                                   return;
+                                 }
+                                 const auto* command = std::get_if<InputCommand>(&event.payload);
+                                 if (command == nullptr) {
+                                   return;
+                                 }
+                                 switch (command->action) {
+                                   case InputAction::CrownRotateCW:
+                                     apply_crown_drag(true, command->value);
+                                     break;
+                                   case InputAction::CrownRotateCCW:
+                                     apply_crown_drag(false, command->value);
+                                     break;
+                                   default:
+                                     break;
+                                 }
+                               }));
+}
+
+void HeartRateHeartHealthMonitoringPage::apply_crown_drag(bool forward, std::int16_t detents) {
+  stop_crown_release_timer();
+  apply_stream_crown_drag(scroll_root_, forward, detents);
+  schedule_crown_release();
+}
+
+void HeartRateHeartHealthMonitoringPage::apply_settings(const HealthMonitoringSettingsModel& model) {
+  current_settings_ = model;
+}
+
+void HeartRateHeartHealthMonitoringPage::refresh_header_time() {
+  apply_compact_time_label(time_label_, data_center_.time());
+}
+
+void HeartRateHeartHealthMonitoringPage::refresh_switch() {
+  apply_sleep_switch_style(switch_track_, current_settings_.heart_health_monitoring_enabled);
+}
+
+void HeartRateHeartHealthMonitoringPage::schedule_crown_release() {
+  stop_crown_release_timer();
+  crown_release_timer_ = lv_timer_create(&HeartRateHeartHealthMonitoringPage::crown_release_timer_cb,
+                                         kLauncherCrownReleaseDelayMs,
+                                         this);
+  if (crown_release_timer_ != nullptr) {
+    lv_timer_set_repeat_count(crown_release_timer_, 1);
+  }
+}
+
+void HeartRateHeartHealthMonitoringPage::stop_crown_release_timer() {
   if (crown_release_timer_ == nullptr) {
     return;
   }
