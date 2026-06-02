@@ -1,7 +1,9 @@
 #include "App/UI/Pages/ShellPages.h"
 
+#include "App/UI/Pages/Health/BloodOxygenPageHelpers.h"
 #include "App/UI/Pages/Health/HealthIconPrimitives.h"
 #include "App/UI/Pages/Health/HealthInfoPagePrimitives.h"
+#include "App/UI/Pages/Health/HealthSwitchPrimitives.h"
 #include "App/UI/Pages/Shell/ShellAssetHelpers.h"
 #include "App/UI/Pages/Shell/ShellClickGuard.h"
 #include "App/UI/Pages/Shell/ShellCrownScrollHelpers.h"
@@ -230,6 +232,234 @@ void BloodOxygenAppPage::schedule_crown_release() {
 }
 
 void BloodOxygenAppPage::stop_crown_release_timer() {
+  if (crown_release_timer_ == nullptr) {
+    return;
+  }
+  lv_timer_delete(crown_release_timer_);
+  crown_release_timer_ = nullptr;
+}
+
+BloodOxygenSettingsPage::BloodOxygenSettingsPage(DataCenter& data_center) : PageBase(data_center) {
+  rows_[0].kind = RowKind::AllDayMonitoring;
+  rows_[0].title = "全天血氧监测";
+  rows_[1].kind = RowKind::LowOxygenReminder;
+  rows_[1].title = "低血氧提醒";
+
+  track(data_center_.subscribe(EventId::HealthMonitoringSettingsChanged,
+                               [this](const Event& event) {
+                                 if (const auto* model =
+                                         std::get_if<HealthMonitoringSettingsModel>(&event.payload)) {
+                                   apply_settings(*model);
+                                   refresh_rows();
+                                 }
+                               }));
+}
+
+PageId BloodOxygenSettingsPage::id() const {
+  return PageId::AppBloodOxygenSettings;
+}
+
+const char* BloodOxygenSettingsPage::name() const {
+  return page_name(PageId::AppBloodOxygenSettings);
+}
+
+void BloodOxygenSettingsPage::on_will_appear() {
+  if (const auto& model = data_center_.health_monitoring_settings(); model.has_value()) {
+    apply_settings(*model);
+  } else {
+    apply_settings(HealthMonitoringSettingsModel {});
+  }
+  refresh_header_time();
+  refresh_rows();
+}
+
+void BloodOxygenSettingsPage::on_will_disappear() {
+  stop_crown_release_timer();
+}
+
+lv_obj_t* BloodOxygenSettingsPage::build() {
+  lv_obj_t* root = lv_obj_create(nullptr);
+  if (root == nullptr) {
+    return nullptr;
+  }
+  style_root(root, 0x02070D);
+
+  const lv_coord_t screen_w = static_cast<lv_coord_t>(lv_display_get_horizontal_resolution(nullptr));
+  const lv_coord_t screen_h = static_cast<lv_coord_t>(lv_display_get_vertical_resolution(nullptr));
+  const lv_coord_t card_w = screen_w - 16;
+
+  lv_obj_t* back_button = lv_button_create(root);
+  lv_obj_t* back_label = back_button == nullptr ? nullptr : create_steps_label(back_button, "<", &lv_font_montserrat_20, 0xD8E9FF, 18);
+  lv_obj_t* title_label = create_steps_label(root, "血氧设置", cjk_font_20(), 0xF8FAFC, 116);
+  time_label_ = create_steps_label(root, "--:--", &lv_font_montserrat_20, 0xE2F0FF, 64);
+  if (back_button == nullptr || back_label == nullptr || title_label == nullptr || time_label_ == nullptr) {
+    return nullptr;
+  }
+  ui_prepare_box(back_button);
+  lv_obj_set_size(back_button, 38, 38);
+  lv_obj_align(back_button, LV_ALIGN_TOP_LEFT, 10, 8);
+  lv_obj_set_style_bg_opa(back_button, LV_OPA_TRANSP, 0);
+  attach_click_guard(back_button);
+  lv_obj_add_event_cb(back_button, back_event_cb, LV_EVENT_CLICKED, this);
+  ui_set_touch_target(back_button, 18);
+  lv_obj_add_flag(back_label, LV_OBJ_FLAG_EVENT_BUBBLE);
+  lv_obj_remove_flag(back_label, LV_OBJ_FLAG_CLICKABLE);
+  lv_obj_align(back_label, LV_ALIGN_LEFT_MID, 10, 0);
+  lv_obj_align(title_label, LV_ALIGN_TOP_LEFT, 42, 12);
+  lv_obj_align(time_label_, LV_ALIGN_TOP_RIGHT, -16, 12);
+
+  scroll_root_ = create_sleep_scroll_root(root, screen_w, screen_h, 48, 0, 10);
+  if (scroll_root_ == nullptr) {
+    return nullptr;
+  }
+
+  lv_obj_t* monitoring_row = create_steps_panel(scroll_root_, card_w, 92, 0x102033);
+  lv_obj_t* monitoring_title = monitoring_row == nullptr
+                                   ? nullptr
+                                   : create_steps_label(monitoring_row, rows_[0].title, cjk_font_20(), 0xF8FAFC, card_w - 112, LV_LABEL_LONG_WRAP);
+  lv_obj_t* monitoring_switch = monitoring_row == nullptr ? nullptr : create_sleep_switch_track(monitoring_row);
+  if (monitoring_row == nullptr || monitoring_title == nullptr || monitoring_switch == nullptr) {
+    return nullptr;
+  }
+  lv_obj_align(monitoring_title, LV_ALIGN_TOP_LEFT, 18, 16);
+  lv_obj_align(monitoring_switch, LV_ALIGN_RIGHT_MID, -18, 0);
+  attach_click_guard(monitoring_row);
+  lv_obj_add_event_cb(monitoring_row, switch_event_cb, LV_EVENT_CLICKED, this);
+  rows_[0].row = monitoring_row;
+  rows_[0].switch_track = monitoring_switch;
+
+  lv_obj_t* reminder_row = create_steps_panel(scroll_root_, card_w, 92, 0x102033);
+  lv_obj_t* reminder_title = reminder_row == nullptr
+                                 ? nullptr
+                                 : create_steps_label(reminder_row, rows_[1].title, cjk_font_20(), 0xF8FAFC, card_w - 32, LV_LABEL_LONG_WRAP);
+  lv_obj_t* reminder_status = reminder_row == nullptr ? nullptr : create_steps_label(reminder_row, "不提醒", cjk_font_16(), 0xAFC4DA, card_w - 32);
+  if (reminder_row == nullptr || reminder_title == nullptr || reminder_status == nullptr) {
+    return nullptr;
+  }
+  lv_obj_align(reminder_title, LV_ALIGN_TOP_LEFT, 18, 16);
+  lv_obj_align(reminder_status, LV_ALIGN_TOP_LEFT, 18, 56);
+  attach_click_guard(reminder_row);
+  lv_obj_add_event_cb(reminder_row, row_event_cb, LV_EVENT_CLICKED, this);
+  rows_[1].row = reminder_row;
+  rows_[1].status_label = reminder_status;
+
+  bind_input();
+  on_will_appear();
+  return root;
+}
+
+void BloodOxygenSettingsPage::back_event_cb(lv_event_t* event) {
+  auto* self = static_cast<BloodOxygenSettingsPage*>(lv_event_get_user_data(event));
+  if (self == nullptr || self->should_ignore_click()) {
+    return;
+  }
+  lv_obj_t* target = lv_event_get_current_target_obj(event);
+  if (target == nullptr || !click_guard_allows(target)) {
+    return;
+  }
+  self->request_navigation({NavigationAction::Pop, PageId::Watchface});
+}
+
+void BloodOxygenSettingsPage::row_event_cb(lv_event_t* event) {
+  auto* self = static_cast<BloodOxygenSettingsPage*>(lv_event_get_user_data(event));
+  if (self == nullptr || self->should_ignore_click()) {
+    return;
+  }
+  lv_obj_t* target = lv_event_get_current_target_obj(event);
+  if (target == nullptr || !click_guard_allows(target)) {
+    return;
+  }
+  self->request_navigation({NavigationAction::Push, PageId::AppBloodOxygenLowOxygenReminder});
+}
+
+void BloodOxygenSettingsPage::switch_event_cb(lv_event_t* event) {
+  auto* self = static_cast<BloodOxygenSettingsPage*>(lv_event_get_user_data(event));
+  if (self == nullptr || self->should_ignore_click()) {
+    return;
+  }
+  lv_obj_t* target = lv_event_get_current_target_obj(event);
+  if (target == nullptr || !click_guard_allows(target)) {
+    return;
+  }
+  self->data_center_.set_all_day_blood_oxygen_enabled(!self->current_settings_.all_day_blood_oxygen_enabled);
+}
+
+void BloodOxygenSettingsPage::crown_release_timer_cb(lv_timer_t* timer) {
+  auto* self = static_cast<BloodOxygenSettingsPage*>(lv_timer_get_user_data(timer));
+  if (self == nullptr) {
+    return;
+  }
+  self->crown_release_timer_ = nullptr;
+  release_stream_crown_drag(self->scroll_root_);
+}
+
+void BloodOxygenSettingsPage::bind_input() {
+  track(data_center_.subscribe(EventId::InputRequested,
+                               [this](const Event& event) {
+                                 if (root_ == nullptr || lv_screen_active() != root_ || scroll_root_ == nullptr) {
+                                   return;
+                                 }
+                                 const auto* command = std::get_if<InputCommand>(&event.payload);
+                                 if (command == nullptr) {
+                                   return;
+                                 }
+                                 switch (command->action) {
+                                   case InputAction::CrownRotateCW:
+                                     apply_crown_drag(true, command->value);
+                                     break;
+                                   case InputAction::CrownRotateCCW:
+                                     apply_crown_drag(false, command->value);
+                                     break;
+                                   default:
+                                     break;
+                                 }
+                               }));
+}
+
+void BloodOxygenSettingsPage::apply_crown_drag(bool forward, std::int16_t detents) {
+  stop_crown_release_timer();
+  apply_stream_crown_drag(scroll_root_, forward, detents);
+  schedule_crown_release();
+}
+
+void BloodOxygenSettingsPage::apply_settings(const HealthMonitoringSettingsModel& model) {
+  current_settings_ = model;
+}
+
+void BloodOxygenSettingsPage::refresh_header_time() {
+  apply_compact_time_label(time_label_, data_center_.time());
+}
+
+void BloodOxygenSettingsPage::refresh_rows() {
+  if (rows_[0].switch_track != nullptr) {
+    apply_sleep_switch_style(rows_[0].switch_track, current_settings_.all_day_blood_oxygen_enabled);
+  }
+  if (rows_[1].row != nullptr) {
+    if (current_settings_.all_day_blood_oxygen_enabled) {
+      lv_obj_remove_flag(rows_[1].row, LV_OBJ_FLAG_HIDDEN);
+    } else {
+      lv_obj_add_flag(rows_[1].row, LV_OBJ_FLAG_HIDDEN);
+    }
+  }
+  if (rows_[1].status_label != nullptr) {
+    lv_label_set_text(rows_[1].status_label, reminder_status_text());
+  }
+}
+
+const char* BloodOxygenSettingsPage::reminder_status_text() const {
+  return low_blood_oxygen_mode_text(current_settings_.low_blood_oxygen_reminder_mode);
+}
+
+void BloodOxygenSettingsPage::schedule_crown_release() {
+  stop_crown_release_timer();
+  crown_release_timer_ =
+      lv_timer_create(&BloodOxygenSettingsPage::crown_release_timer_cb, kLauncherCrownReleaseDelayMs, this);
+  if (crown_release_timer_ != nullptr) {
+    lv_timer_set_repeat_count(crown_release_timer_, 1);
+  }
+}
+
+void BloodOxygenSettingsPage::stop_crown_release_timer() {
   if (crown_release_timer_ == nullptr) {
     return;
   }
