@@ -71,3 +71,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：只做根目录盘点与分类建议，不移动文档、不改 `document_map.md`、不修复链接；高风险冲突项已单列
 - 阻塞与待决：
 - 下一步：等待用户验收批次 2；不自动开始批次 3
+
+### 会话 2026-06-03 队列准备
+
+- 本轮范围：批次 2 验收后收尾与 DOCROOT 后续队列准备
+- 完成：已根据用户确认，将已执行的 `DOCROOT-B2-C01` 从内联计划入口清理；已把 `DOCROOT-B3-C01`、`DOCROOT-B4-C01`、`DOCROOT-B5-C01` 转入 `cards/docroot-reorg-wave1.md`，并把 `DOCROOT-B6-C01` 转入 `cards/docroot-reorg-review.md`
+- 修改文件：`docs/40_workflow/agent_batch/agent-plan.md`、`docs/40_workflow/agent_batch/agent-inbox.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/cards/docroot-reorg-wave1.md`、`docs/40_workflow/agent_batch/cards/docroot-reorg-review.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：提交前执行
+- 风险回应：只整理卡片入口和执行队列，不移动 docs 根目录文档；`DOCROOT-B6-C01` 保持在 wave1 后的单独队列项
+- 阻塞与待决：
+- 下一步：提交队列准备后，执行窗口可按 `agent-queue.md` 先执行 `DOCROOT-Q3-WAVE1`

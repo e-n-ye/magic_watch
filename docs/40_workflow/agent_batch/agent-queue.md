@@ -6,7 +6,21 @@
 
 ## 当前队列
 
-空。
+### DOCROOT-Q3-WAVE1 docs 根目录降噪第一轮迁移
+
+- 状态：TODO
+- 卡片来源：cards/docroot-reorg-wave1.md
+- 执行范围：全文件
+- 停止策略：队列项完成后停止
+- 验收后处理：从队列移除；用户确认后可删除卡片文件
+
+### DOCROOT-Q6-REVIEW docs 根目录残余二次评审
+
+- 状态：TODO
+- 卡片来源：cards/docroot-reorg-review.md
+- 执行范围：全文件
+- 停止策略：队列项完成后停止
+- 验收后处理：从队列移除；用户确认后可删除卡片文件
 
 ## 队列项格式
 
