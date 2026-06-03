@@ -158,8 +158,9 @@ Forbidden changes:
 - `ShellNotificationPrimitives.*` 仍是通知视觉共享 helper 边界。
 - `Application.cpp` 内的 `NotificationToastOverlay::hide_timer_` 已迁入 `LvglTimerGuard`。
 - `NotificationWakePage::auto_close_timer_` 已迁入 `LvglTimerGuard`。
+- `NotificationsPage::preview_close_timer_` 已迁入 `LvglTimerGuard`。
 - `ShellPages.h` 仍是过渡聚合 include 头，`Application.cpp` 注册未变。
-- 这不代表通知复杂行为已经低风险；swipe / sheet / clear confirm / preview close timer 仍需手动回归。
+- 这不代表通知复杂行为已经低风险；swipe / sheet / clear confirm 仍需手动回归。
 
 ### Shell / QuickSettings single-domain UI primitives
 

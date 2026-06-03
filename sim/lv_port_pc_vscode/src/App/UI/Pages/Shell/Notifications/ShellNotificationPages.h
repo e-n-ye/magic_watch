@@ -87,7 +87,7 @@ class NotificationsPage : public PageBase {
   lv_obj_t* active_card_swipe_ {nullptr};
   lv_obj_t* suppressed_card_click_target_ {nullptr};
   lv_point_t active_card_swipe_press_point_ {};
-  lv_timer_t* preview_close_timer_ {nullptr};
+  LvglTimerGuard preview_close_timer_;
   WatchfaceConfig backdrop_config_ {default_watchface_config()};
   WatchfaceRenderState backdrop_render_state_ {};
   std::unique_ptr<IWatchfaceStyleRenderer> backdrop_renderer_;
