@@ -231,6 +231,7 @@ Forbidden changes:
 
 - Sleep 页面已下沉到 `Health/SleepPages.cpp`。
 - Sleep 页面声明已下沉到 `Health/SleepPages.h`，`ShellPages.h` 仅通过过渡 include 兼容 Sleep 声明。
+- `SleepAppPage` 的 crown release timer 已迁入 `LvglTimerGuard`；`SleepSettingsPage` 与 `SleepMonitoringDetailPage` 的同类 timer 仍待后续逐页迁移。
 - 当前页面包括：
   - `SleepAppPage`
   - `SleepSettingsPage`
@@ -240,6 +241,7 @@ Forbidden changes:
 当前判断：
 
 - Sleep 已从“主路径 placeholder”推进为独立 Health 实现域。
+- 这说明 `LvglTimerGuard` 已开始进入 Sleep 域，但当前仍只是单页试点，不应误写成整个 Sleep 文件生命周期风险已消失。
 
 ### Health / BloodOxygen
 
