@@ -1,4 +1,4 @@
-#include "App/UI/Pages/ShellPages.h"
+#include "App/UI/Pages/Health/HeartRatePages.h"
 
 #include "App/UI/Pages/Health/HealthIconPrimitives.h"
 #include "App/UI/Pages/Health/HealthInfoPagePrimitives.h"

@@ -381,6 +381,7 @@ Forbidden changes:
 当前实现文件位于：
 
 - `Health/SleepPages.cpp`
+- `Health/SleepPages.h`
 
 当前页面包括：
 
@@ -392,6 +393,7 @@ Forbidden changes:
 拆分判断：
 
 - 页面实现：已迁出。
+- 页面声明：已下沉到 `Health/SleepPages.h`，`ShellPages.h` 仅通过过渡 include 兼容旧入口。
 - 子域继续细分：暂未需要。
 
 风险等级：
@@ -407,6 +409,7 @@ Forbidden changes:
 当前实现文件位于：
 
 - `Health/BloodOxygenPages.cpp`
+- `Health/BloodOxygenPages.h`
 
 共享/辅助文件包括：
 
@@ -425,6 +428,7 @@ Forbidden changes:
 拆分判断：
 
 - 页面实现：已迁出。
+- 页面声明：已下沉到 `Health/BloodOxygenPages.h`，`ShellPages.h` 仅通过过渡 include 兼容旧入口。
 - Health shared helper：已出现。
 - domain helper：已出现。
 
@@ -441,6 +445,7 @@ Forbidden changes:
 当前实现文件位于：
 
 - `Health/HeartRatePages.cpp`
+- `Health/HeartRatePages.h`
 
 当前页面包括：
 
@@ -456,6 +461,7 @@ Forbidden changes:
 拆分判断：
 
 - HeartRate 非测量域页面：已迁出。
+- 页面声明：已下沉到 `Health/HeartRatePages.h`，`ShellPages.h` 仅通过过渡 include 兼容旧入口。
 - 旧 `ShellPages.cpp` 对 HeartRate 的实现承载：已基本清空。
 
 风险等级：
@@ -513,7 +519,7 @@ Forbidden changes:
 
 当前状态：
 
-- 仍承担跨 Shell、Power、Daily、Health 的大型聚合头职责。
+- 已转为跨 Shell、Power、Daily、Health 的过渡聚合 include 头，不再直接承载页面类声明。
 
 优点：
 
@@ -521,8 +527,8 @@ Forbidden changes:
 
 风险：
 
-- 容易让读者误以为相关页面仍集中在 `ShellPages.cpp`。
-- 会延迟“实现边界”和“声明边界”的一致化。
+- 仍可能让读者误以为相关页面需要从兼容聚合头进入。
+- 真正剩余风险已转向 `Application.cpp` 注册结构重组与手动 UI 回归。
 
 ## 拆分状态矩阵
 
@@ -534,10 +540,10 @@ Forbidden changes:
 | Power | `Shell/Power/ShellPowerPages.cpp` | 是 | 是，`ShellPages.h` | 与 screen-off / restore 强耦合 |
 | Daily / Weather | `Daily/WeatherPages.cpp` | 是 | 是，`ShellPages.h` | 主要是文档解释滞后 |
 | Daily / Steps | `Daily/StepsPages.cpp` + primitives | 是 | 是，`ShellPages.h` | 文档解释滞后 |
-| Health / Sleep | `Health/SleepPages.cpp` | 是 | 是，`ShellPages.h` | 容易仍被误写成 Shell 子块 |
-| Health / BloodOxygen | `Health/BloodOxygenPages.cpp` + helpers | 是 | 是，`ShellPages.h` | shared helper 与页面关系不易看清 |
-| Health / HeartRate | `Health/HeartRatePages.cpp` | 是 | 是，`ShellPages.h` | 生命周期风险高 |
-| 剩余 Shell 收口层 | `ShellPages.h` + `Application.cpp` | 是 | 是，`ShellPages.h` | 聚合头滞后、注册结构未收口 |
+| Health / Sleep | `Health/SleepPages.cpp/.h` | 是 | 过渡 include 兼容 | 容易仍被误写成 Shell 子块 |
+| Health / BloodOxygen | `Health/BloodOxygenPages.cpp/.h` + helpers | 是 | 过渡 include 兼容 | shared helper 与页面关系不易看清 |
+| Health / HeartRate | `Health/HeartRatePages.cpp/.h` | 是 | 过渡 include 兼容 | 生命周期风险高 |
+| 剩余 Shell 收口层 | `ShellPages.h` + `Application.cpp` | 是 | `ShellPages.h` 仅过渡 include | 注册结构未收口 |
 
 ## 当前最需要避免的误判
 
@@ -579,8 +585,8 @@ Power 仍与：
 当前 UI 页面拆分已经形成一个比较清晰的中间态：
 
 1. `Display`、`Power`、`Daily`、`Health` 页面实现已显著分域下沉。
-2. `SettingsPages.h` 和 `ShellPages.h` 仍承担对外聚合入口。
-3. `LauncherPage` 已独立下沉到 `Shell/Launcher/ShellLauncherPages.cpp`，但 `ShellPages.h` 与 `Application.cpp` 的外部入口结构暂未变化。
+2. `SettingsPages.h` 仍承担 Settings 对外聚合入口，`ShellPages.h` 已收口为兼容 include 头。
+3. `Application.cpp` 的注册结构暂未变化，后续仍需要按领域分流。
 4. `ShellPages.cpp` 当前已从构建退场；后续更像澄清聚合边界与注册结构，而不是继续迁页面。
 5. 后续任何关于“ShellPages 拆分是否继续”的讨论，都不应再基于早期“所有页面都还在壳层巨石里”的旧事实。
 

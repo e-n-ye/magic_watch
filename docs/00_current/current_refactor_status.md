@@ -156,7 +156,7 @@ Forbidden changes:
 - `NotificationsPage` 已迁入 `Shell/Notifications/ShellNotificationPages.cpp`。
 - `NotificationWakePage` 与 `NotificationsPage` 声明已下沉到 `Shell/Notifications/ShellNotificationPages.h`，`ShellPages.h` 仅通过过渡 include 兼容通知声明。
 - `ShellNotificationPrimitives.*` 仍是通知视觉共享 helper 边界。
-- `ShellPages.h` 仍是聚合声明头，`Application.cpp` 注册未变。
+- `ShellPages.h` 仍是过渡聚合 include 头，`Application.cpp` 注册未变。
 - 这不代表通知复杂行为已经低风险；swipe / sheet / clear confirm / preview close timer 仍需手动回归。
 
 ### Shell / QuickSettings single-domain UI primitives
@@ -167,7 +167,7 @@ Forbidden changes:
 - `QuickSettingsPage` 声明已下沉到 `Shell/QuickSettings/ShellQuickSettingsPages.h`，`ShellPages.h` 仅通过过渡 include 兼容快捷设置声明。
 - `ShellPages.cpp` 中不再保留 `QuickSettingsPage::` 实现。
 - DataCenter 读写、EventBus 订阅、toggle / slider 行为、NavigationCommand、timer 与 shell surface 行为仍留在 `QuickSettingsPage`。
-- `ShellPages.h` 仍是聚合声明头，`Application.cpp` 注册未变。
+- `ShellPages.h` 仍是过渡聚合 include 头，`Application.cpp` 注册未变。
 
 ### Shell / Launcher
 
@@ -228,6 +228,7 @@ Forbidden changes:
 ### Health / Sleep
 
 - Sleep 页面已下沉到 `Health/SleepPages.cpp`。
+- Sleep 页面声明已下沉到 `Health/SleepPages.h`，`ShellPages.h` 仅通过过渡 include 兼容 Sleep 声明。
 - 当前页面包括：
   - `SleepAppPage`
   - `SleepSettingsPage`
@@ -241,6 +242,7 @@ Forbidden changes:
 ### Health / BloodOxygen
 
 - Blood Oxygen 页面已下沉到 `Health/BloodOxygenPages.cpp`。
+- Blood Oxygen 页面声明已下沉到 `Health/BloodOxygenPages.h`，`ShellPages.h` 仅通过过渡 include 兼容 Blood Oxygen 声明。
 - 共享 helper 已出现：
   - `Health/HealthInfoPagePrimitives.*`
   - `Health/HealthIconPrimitives.*`
@@ -259,6 +261,7 @@ Forbidden changes:
 ### Health / HeartRate
 
 - Heart Rate 页面已下沉到 `Health/HeartRatePages.cpp`。
+- Heart Rate 页面声明已下沉到 `Health/HeartRatePages.h`，`ShellPages.h` 仅通过过渡 include 兼容 Heart Rate 声明。
 - 当前非测量域页面包括：
   - `HeartRateInfoPage`
   - `HeartRateAppPage`
@@ -296,15 +299,16 @@ Forbidden changes:
 - `Shell/Notifications/ShellNotificationPagePrimitives.*` 已承载 `NotificationsPage` 单域纯 UI 构建 helper。
 - `Shell/QuickSettings/ShellQuickSettingsPrimitives.*` 继续承载 `QuickSettingsPage` 单域纯 UI 构建 helper；`QuickSettingsPage` 页面实现已迁入 `Shell/QuickSettings/ShellQuickSettingsPages.cpp`。
 - `HomeRingHostPage` 已迁入 `Shell/Home/ShellHomePages.cpp`；其 layout / stage / pager 纯 UI 构件已下沉到 `Shell/Home/ShellHomeLayoutPrimitives.*`，payment / NFC 卡片纯 UI 构件已下沉到 `Shell/Home/ShellHomePaymentCardPrimitives.*`，health 类卡片纯 UI 构件已下沉到 `Shell/Home/ShellHomeHealthCardPrimitives.*`，daily 类卡片纯 UI 构件已下沉到 `Shell/Home/ShellHomeDailyCardPrimitives.*`。
-- `ShellPages.h` 仍是聚合声明头，`Application.cpp` 注册未变。
+- `ShellPages.h` 已转为过渡聚合 include 头，不再直接承载页面类声明；`Application.cpp` 注册语义未变。
 - 下一步代码收口更可能转向聚合头拆分或注册结构重组，而不是继续迁页面。
 
 ### ShellPages.h 聚合头状态
 
-- `ShellPages.h` 仍声明了 Shell、Daily、Health、Power 等多个域的页面类，但 Home 的 `WatchfacePage` / `HomeRingHostPage` 声明已下沉到 `Shell/Home/ShellHomePages.h`。
+- `ShellPages.h` 已转为过渡聚合 include 头，页面类声明已按 Shell、Daily、Health、Power 等领域下沉到对应目录头文件。
 - 这意味着：
   - 实现文件已明显分域；
-  - 头文件边界仍滞后于实现边界。
+  - 头文件边界已跟上实现边界；
+  - 后续风险转向注册结构分域化与手动 UI 回归。
 
 当前判断：
 
@@ -317,14 +321,14 @@ Forbidden changes:
 - 顶部 include 仍以：
   - `CommonPages.h`
   - `SettingsPages.h`
-  - `ShellPages.h`
+  - 各 Shell / Daily / Health / Power 域页面头
   为主。
-- 这说明当前注册层仍依赖聚合头，而非按域分别 include。
+- 这说明当前注册层已不再依赖 `ShellPages.h` 的声明主体，但 `register_pages()` 仍是长列表组合根。
 
 当前判断：
 
 - 这是刻意保守的注册策略，不等于页面实现还在原地。
-- `ShellPages.h` 仍是聚合声明头，`Application.cpp` 注册未变；这不妨碍 `WatchfacePage` 与 `HomeRingHostPage` 实现已迁入 `Shell/Home/`，`NotificationWakePage` 与 `NotificationsPage` 已迁入 `Shell/Notifications/`。
+- `ShellPages.h` 仍作为过渡兼容 include 头存在，`Application.cpp` 注册语义未变；这不妨碍各页面声明与实现已迁入对应领域目录。
 
 ### CMake 登记状态
 
@@ -372,8 +376,8 @@ Forbidden changes:
 
 当前最容易误判的是：
 
-- 因为 `Application.cpp` 还 include `ShellPages.h` / `SettingsPages.h`
-- 就误以为 Daily / Health / Power / Display 仍在老文件里实现
+- 因为 `ShellPages.h` 仍作为兼容 include 头存在，或 `Application.cpp` 仍集中注册页面
+- 就误以为 Daily / Health / Power / Display 仍在老文件里声明或实现
 
 这会直接影响文档准确性与后续拆分判断。
 
