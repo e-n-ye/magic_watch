@@ -36,7 +36,7 @@ class StepsAppPage : public PageBase {
   lv_obj_t* steps_metric_target_label_ {nullptr};
   lv_obj_t* steps_card_value_label_ {nullptr};
   lv_obj_t* steps_card_unit_label_ {nullptr};
-  lv_timer_t* crown_release_timer_ {nullptr};
+  LvglTimerGuard crown_release_timer_;
 };
 
 class StepsDataInfoPage : public PageBase {

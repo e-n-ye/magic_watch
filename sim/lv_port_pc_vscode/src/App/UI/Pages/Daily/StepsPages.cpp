@@ -256,18 +256,17 @@ void StepsAppPage::refresh_steps_view() {
 
 void StepsAppPage::schedule_crown_release() {
   stop_crown_release_timer();
-  crown_release_timer_ = lv_timer_create(&StepsAppPage::crown_release_timer_cb, kLauncherCrownReleaseDelayMs, this);
-  if (crown_release_timer_ != nullptr) {
-    lv_timer_set_repeat_count(crown_release_timer_, 1);
+  crown_release_timer_.reset(lv_timer_create(&StepsAppPage::crown_release_timer_cb, kLauncherCrownReleaseDelayMs, this));
+  if (crown_release_timer_.get() != nullptr) {
+    lv_timer_set_repeat_count(crown_release_timer_.get(), 1);
   }
 }
 
 void StepsAppPage::stop_crown_release_timer() {
-  if (crown_release_timer_ == nullptr) {
+  if (!crown_release_timer_) {
     return;
   }
-  lv_timer_delete(crown_release_timer_);
-  crown_release_timer_ = nullptr;
+  crown_release_timer_.reset();
 }
 
 void StepsAppPage::crown_release_timer_cb(lv_timer_t* timer) {
@@ -275,7 +274,7 @@ void StepsAppPage::crown_release_timer_cb(lv_timer_t* timer) {
   if (self == nullptr) {
     return;
   }
-  self->crown_release_timer_ = nullptr;
+  self->crown_release_timer_.release();
   release_stream_crown_drag(self->scroll_root_);
 }
 

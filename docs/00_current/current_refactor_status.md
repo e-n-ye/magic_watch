@@ -219,11 +219,13 @@ Forbidden changes:
   - `Daily/StepsMainPrimitives.*`
 - `StepsAppPage` 与 `StepsDataInfoPage` 声明已下沉到 `Daily/StepsPages.h`，`ShellPages.h` 仅通过过渡 include 兼容 Steps 声明。
 - `StepsAppPage` 与 `StepsDataInfoPage` 已形成独立 Daily 域实现。
+- `StepsAppPage` 的 crown release timer 已迁入 `LvglTimerGuard`，与 `StepsDataInfoPage` 采用同一低风险生命周期模式。
 
 当前判断：
 
 - Steps 不应再被描述为 `ShellPages.cpp` 内部应用页面。
 - 它已经是带本域 primitive 的独立 Daily 样本。
+- 这也说明 `LvglTimerGuard` 已开始从单页样本推进到同域复用，而不是只停留在 helper 存在但未落地的状态。
 
 ### Health / Sleep
 
