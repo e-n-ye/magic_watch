@@ -6,7 +6,7 @@
 
 ## 当前批次
 
-2
+3
 
 当前批次的所有卡片 DONE 后，由 Agent 按批次推进协议将此值加 1，并停止等待用户确认。
 
@@ -61,3 +61,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：只清理已验收 DONE 卡片，未触碰 TODO / BLOCKED / inbox 草稿
 - 阻塞与待决：`agent-progress.md` 当前批次为 2，但 `agent-plan.md` 尚无批次 2 卡片；`agent-inbox.md` 仅存在草稿 `DOCROOT-B2-C01`
 - 下一步：单独提交收尾清理，然后等待用户确认是否把 inbox 草稿转入 `agent-plan.md`
+
+### 会话 2026-06-03 批次 2 执行
+
+- 本轮范围：批次 2，卡片 DOCROOT-B2-C01
+- 完成：已将 `DOCROOT-B2-C01` 作为当前批次卡片转入 `agent-plan.md` 并执行完成；已按协议将当前批次从 2 推进到 3
+- 修改文件：`docs/40_workflow/agent_batch/agent-plan.md`、`docs/40_workflow/agent_batch/agent-progress.md`、`docs/40_workflow/docs_root_reorg_inventory.md`
+- 自检：`git diff --check` 通过；本轮实际改动中文文档乱码哨兵检查通过；`docs/*.md` 根目录清单已与盘点表逐项核对
+- 风险回应：只做根目录盘点与分类建议，不移动文档、不改 `document_map.md`、不修复链接；高风险冲突项已单列
+- 阻塞与待决：
+- 下一步：等待用户验收批次 2；不自动开始批次 3
