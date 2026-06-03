@@ -52,6 +52,7 @@ Use when the user wants to inspect a completed batch.
 1. Summarize DONE and BLOCKED cards.
 2. Report changed files, commits, self-checks, manual checks not executed, Doc Impact, and risks.
 3. Do not start the next batch until the user explicitly asks.
+4. After explicit user approval, clean accepted DONE cards from `agent-plan.md` and accepted stale drafts from `agent-inbox.md`, record the cleanup in `agent-progress.md`, and commit the cleanup separately.
 
 ## Hard Rules
 

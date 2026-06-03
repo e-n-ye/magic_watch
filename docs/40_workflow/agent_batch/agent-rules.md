@@ -40,6 +40,18 @@
 
 如果「每批最多自动完成卡片数」已达到，即使当前批次仍有 TODO，也必须停止等待用户验收。
 
+## 验收后收尾协议
+
+当用户明确确认某个批次已经验收通过后，Agent 可以执行一次收尾清理：
+
+1. 从 `agent-plan.md` 中移除已验收批次的 DONE 卡片。
+2. 从 `agent-inbox.md` 中移除已确认作废或已转入 `agent-plan.md` 的草稿。
+3. 在 `agent-progress.md` 当前会话或新会话块中记录清理了哪些批次、卡片 ID、对应提交号，以及是否仍有 BLOCKED 或待决卡片。
+4. 保留 `agent-rules.md`、`agent-plan.md`、`agent-progress.md`、`agent-inbox.md` 文件本身。
+5. 清理完成后单独提交一次。
+
+不得在批次尚未验收时清理该批次卡片。不得清理仍为 TODO、IN_PROGRESS、BLOCKED 或用户尚未确认作废的卡片。
+
 ## 卡片状态
 
 每张卡片只能使用以下状态之一：
