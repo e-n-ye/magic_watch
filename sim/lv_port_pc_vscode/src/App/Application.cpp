@@ -115,6 +115,34 @@ void register_shell_quick_settings_pages(PageManager& page_manager, DataCenter& 
                              });
 }
 
+void register_shell_power_pages(PageManager& page_manager, DataCenter& data_center) {
+  page_manager.register_page(PageId::PowerMenu,
+                             [&data_center]() {
+                               return std::make_unique<PowerMenuPage>(data_center);
+                             });
+  page_manager.register_page(
+      PageId::ScreenOff,
+      [&data_center]() {
+        return std::make_unique<ScreenOffPage>(data_center);
+      });
+  page_manager.register_page(
+      PageId::LongBatteryWatchface,
+      [&data_center]() {
+        return std::make_unique<LongBatteryWatchfacePage>(data_center);
+      });
+  page_manager.register_page(
+      PageId::LongBatteryExit,
+      [&data_center]() {
+        return std::make_unique<LongBatteryExitPage>(data_center);
+      });
+  page_manager.register_page(
+      PageId::PoweredOff,
+      [&data_center]() {
+        return std::make_unique<PassiveShellPage>(
+            data_center, PageId::PoweredOff, "Powered Off", "Long press P to boot\nLegacy alias: key 5");
+      });
+}
+
 class NotificationToastOverlay {
  public:
   void attach(DataCenter& data_center) {
@@ -337,29 +365,8 @@ void Application::register_pages() {
   register_shell_home_pages(page_manager_, data_center_);
   register_shell_notification_pages(page_manager_, data_center_);
   register_shell_quick_settings_pages(page_manager_, data_center_);
+  register_shell_power_pages(page_manager_, data_center_);
   page_manager_.register_page(PageId::Launcher, [this]() { return std::make_unique<LauncherPage>(data_center_); });
-  page_manager_.register_page(PageId::PowerMenu, [this]() { return std::make_unique<PowerMenuPage>(data_center_); });
-  page_manager_.register_page(
-      PageId::ScreenOff,
-      [this]() {
-        return std::make_unique<ScreenOffPage>(data_center_);
-      });
-  page_manager_.register_page(
-      PageId::LongBatteryWatchface,
-      [this]() {
-        return std::make_unique<LongBatteryWatchfacePage>(data_center_);
-      });
-  page_manager_.register_page(
-      PageId::LongBatteryExit,
-      [this]() {
-        return std::make_unique<LongBatteryExitPage>(data_center_);
-      });
-  page_manager_.register_page(
-      PageId::PoweredOff,
-      [this]() {
-        return std::make_unique<PassiveShellPage>(
-            data_center_, PageId::PoweredOff, "Powered Off", "Long press P to boot\nLegacy alias: key 5");
-      });
 
   page_manager_.register_page(PageId::SettingsHome,
                               [this]() {
