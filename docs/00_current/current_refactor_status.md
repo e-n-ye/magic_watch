@@ -106,6 +106,7 @@ Forbidden changes:
 
 ### Shell / HomeRing single-domain helpers
 
+- `WatchfacePage` 已迁入 `Shell/Home/ShellHomePages.cpp`。
 - `HomeRingHostPage` 已迁入 `Shell/Home/ShellHomePages.cpp`。
 - `Shell/Home/ShellHomeLayoutPrimitives.*` 已新增并登记到 `CMakeLists.txt`。
 - `Shell/Home/ShellHomePaymentCardPrimitives.*` 已新增并登记到 `CMakeLists.txt`。
@@ -125,6 +126,7 @@ Forbidden changes:
 
 当前判断：
 
+- `ShellPages.cpp` 中不再保留 `WatchfacePage::` 实现。
 - 这不只是 helper 下沉事实；`HomeRingHostPage` 页面实现本体也已经迁入 `Shell/Home/`。
 - `ShellPages.cpp` 中不再保留 `HomeRingHostPage::` 实现。
 - payment / NFC 的点击绑定、`PageId` 选择与导航行为仍留在 `HomeRingHostPage`。
@@ -239,7 +241,6 @@ Forbidden changes:
 
 当前 `ShellPages.cpp` 仍主要承载：
 
-- `WatchfacePage`
 - `NotificationsPage`
 - `NotificationWakePage`
 - `QuickSettingsPage`
@@ -253,7 +254,8 @@ Forbidden changes:
 
 当前判断：
 
-- `ShellPages.cpp` 仍然大，但它现在更接近“剩余壳层实现聚集区”，而不是所有非 Settings 页面的大杂烩。
+- `ShellPages.cpp` 仍然大，但它现在更接近“通知与快捷设置等剩余壳层实现聚集区”，而不是所有非 Settings 页面的大杂烩。
+- `WatchfacePage` 与 `HomeRingHostPage` 已共同迁入 `Shell/Home/ShellHomePages.cpp`。
 - `HomeRingHostPage` 已迁入 `Shell/Home/ShellHomePages.cpp`；其 layout / stage / pager 纯 UI 构件已下沉到 `Shell/Home/ShellHomeLayoutPrimitives.*`，payment / NFC 卡片纯 UI 构件已下沉到 `Shell/Home/ShellHomePaymentCardPrimitives.*`，health 类卡片纯 UI 构件已下沉到 `Shell/Home/ShellHomeHealthCardPrimitives.*`，daily 类卡片纯 UI 构件已下沉到 `Shell/Home/ShellHomeDailyCardPrimitives.*`。
 - 后续任何“ShellPages 拆分”文档，都应明确它的剩余内容已不同于早期版本。
 
@@ -282,7 +284,7 @@ Forbidden changes:
 当前判断：
 
 - 这是刻意保守的注册策略，不等于页面实现还在原地。
-- `ShellPages.h` 仍是聚合声明头，`Application.cpp` 注册未变；这不妨碍 `HomeRingHostPage` 实现已迁入 `Shell/Home/`。
+- `ShellPages.h` 仍是聚合声明头，`Application.cpp` 注册未变；这不妨碍 `WatchfacePage` 与 `HomeRingHostPage` 实现已迁入 `Shell/Home/`。
 
 ### CMake 登记状态
 

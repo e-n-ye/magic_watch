@@ -161,6 +161,7 @@ Forbidden changes:
 
 当前状态：
 
+- `WatchfacePage` 已从 `ShellPages.cpp` 下沉到 `Shell/Home/ShellHomePages.cpp`。
 - `HomeRingHostPage` 已从 `ShellPages.cpp` 下沉到 `Shell/Home/ShellHomePages.cpp`。
 - 但 HomeRing 的纯 UI layout / stage / pager 构件已经开始形成单域 helper 边界。
 - HomeRing payment / NFC card primitives 也已经开始形成单域 helper 边界。
@@ -217,7 +218,7 @@ Forbidden changes:
 
 主要风险：
 
-- 这说明 Shell 拆分已经推进到高交互页面独立下沉，但不代表 `HomeRingHost`、`Notifications`、`QuickSettings` 已完成同级迁移。
+- 这说明 Shell/Home 当前已经承载 `WatchfacePage` 与 `HomeRingHostPage`，但不代表 `Notifications`、`QuickSettings` 已完成同级迁移。
 - 如果后续文档把“Launcher 已迁出”误写成“整个主壳层已拆开”，会直接高估当前壳层边界清晰度。
 
 ### F. Power 域
@@ -403,7 +404,6 @@ Forbidden changes:
 
 截至当前，`ShellPages.cpp` 仍主要承载以下高交互页面：
 
-- `WatchfacePage`
 - `NotificationsPage`
 - `NotificationWakePage`
 - `QuickSettingsPage`
@@ -418,7 +418,7 @@ Forbidden changes:
 当前判断：
 
 - 当前剩余未拆区域已经从“所有非 Settings 页面”收缩到“主壳层和高交互壳层”。
-- `HomeRingHostPage` 已迁入 `Shell/Home/ShellHomePages.cpp`，但其 EventBus、preview、crown、卡片跳转和 daily 动态数据边界仍需谨慎处理。
+- `WatchfacePage` 与 `HomeRingHostPage` 已迁入 `Shell/Home/ShellHomePages.cpp`，但 Watchface 的时间、电量、输入路径，以及 HomeRing 的 EventBus、preview、crown、卡片跳转和 daily 动态数据边界仍需谨慎手动回归。
 - `Notifications` 与 `QuickSettings` 仍是当前最需要谨慎处理的高风险剩余区域。
 - 这是后续讨论 `ShellPages.cpp` 时必须写清楚的边界变化。
 
