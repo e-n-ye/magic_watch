@@ -95,9 +95,9 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 ### 会话 2026-06-03 23:35
 
 - 本轮范围：已验收队列项 `DOCROOT-Q3-WAVE1` 收尾清理；队列项 `DOCROOT-Q6-REVIEW`
-- 完成：已根据用户验收，将 `DOCROOT-Q3-WAVE1` 从 `agent-queue.md` 当前队列移除
-- 修改文件：`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
-- 自检：待提交前执行
-- 风险回应：只清理已验收 DONE 队列项，保留卡片文件 `cards/docroot-reorg-wave1.md`，未触碰仍需执行的 `DOCROOT-Q6-REVIEW`
+- 完成：已根据用户验收，将 `DOCROOT-Q3-WAVE1` 从 `agent-queue.md` 当前队列移除；`DOCROOT-B6-C01` 已完成；队列项 `DOCROOT-Q6-REVIEW` 已完成
+- 修改文件：`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`、`docs/40_workflow/agent_batch/cards/docroot-reorg-review.md`、`docs/40_workflow/docs_root_reorg_inventory.md`、`docs/document_map.md`
+- 自检：清理提交前已通过 `git diff --check`；`DOCROOT-B6-C01` 已通过 `git diff --check`；本轮中文文档乱码哨兵检查通过
+- 风险回应：只清理已验收 DONE 队列项，保留卡片文件 `cards/docroot-reorg-wave1.md`；`DOCROOT-B6-C01` 只形成第二轮候选结论，不直接搬运剩余根目录文档
 - 阻塞与待决：
-- 下一步：单独提交本次清理后，执行 `DOCROOT-B6-C01`
+- 下一步：队列项 `DOCROOT-Q6-REVIEW` 已完成，按停止策略停止，等待用户验收

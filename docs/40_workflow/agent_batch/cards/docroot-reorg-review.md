@@ -7,7 +7,7 @@
 ### DOCROOT-B6-C01 残余根目录文档二次评审
 
 - 批次：6
-- 状态：TODO
+- 状态：DONE
 - 依赖：DOCROOT-B3-C01, DOCROOT-B4-C01, DOCROOT-B5-C01
 - 自检：`git diff --check`；对本卡改动的中文文档执行 `AGENTS.md` 中规定的乱码哨兵检查
 - 建议提交信息：`docs: review remaining root docs after reorg wave 1`
@@ -58,4 +58,7 @@ Forbidden changes:
 
 #### 执行记录
 
-（Agent 填写：完成时间 / 实际改动文件 / 自检结果 / 风险回应）
+- 完成时间：2026-06-03 23:50
+- 实际改动文件：`docs/40_workflow/docs_root_reorg_inventory.md`、`docs/document_map.md`、批处理运行文件
+- 自检结果：`git diff --check` 通过；本轮中文文档乱码哨兵检查通过
+- 风险回应：只形成“明确保留根目录 / 第二轮候选 / 待单独决策”结论，不直接执行第二轮迁移；未改动任何根目录正文文档

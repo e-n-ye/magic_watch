@@ -8,7 +8,7 @@
 
 ### DOCROOT-Q6-REVIEW docs 根目录残余二次评审
 
-- 状态：TODO
+- 状态：DONE
 - 卡片来源：cards/docroot-reorg-review.md
 - 执行范围：全文件
 - 停止策略：队列项完成后停止

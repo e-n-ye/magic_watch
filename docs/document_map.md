@@ -212,6 +212,17 @@
 - 它是历史检索材料，不应回到默认入口。
 - 读取时只检索相关日期或关键词，不默认通读全文。
 
+### 我想看 docs 根目录剩余文档的二次评审
+
+先读：
+
+- [docs_root_reorg_inventory.md](/D:/MY_Desk/watch/magic_watch/docs/40_workflow/docs_root_reorg_inventory.md)
+
+说明：
+
+- `DOCROOT-B6-C01` 已把 Wave 1 迁移后的剩余根目录文档分成三类：明确保留根目录、第二轮候选迁移、仍需单独决策。
+- `cpp_minimal_glossary.md`、`learning_plan.md`、`simulator_reading_guide.md` 只是后续 `20_guides` 候选；`project_charter.md`、`prototype_progress.md` 等只是后续 `80_history` 候选，本轮没有继续搬运。
+
 ## 文档维护规则
 
 - 新增文档必须说明它属于当前入口、架构专题、开发指南、审计资料还是历史检索。
