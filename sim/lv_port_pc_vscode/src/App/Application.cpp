@@ -288,7 +288,7 @@ class NotificationToastOverlay {
     if (self == nullptr) {
       return;
     }
-    self->hide_timer_ = nullptr;
+    self->hide_timer_.release();
     if (self->data_center_ != nullptr) {
       self->data_center_->clear_toast();
     } else {
@@ -396,20 +396,18 @@ class NotificationToastOverlay {
     lv_obj_clear_flag(root_, LV_OBJ_FLAG_HIDDEN);
     lv_obj_move_foreground(root_);
 
-    if (hide_timer_ != nullptr) {
-      lv_timer_del(hide_timer_);
-      hide_timer_ = nullptr;
+    if (hide_timer_) {
+      hide_timer_.reset();
     }
-    hide_timer_ = lv_timer_create(&NotificationToastOverlay::hide_timer_cb, 2200U, this);
-    if (hide_timer_ != nullptr) {
-      lv_timer_set_repeat_count(hide_timer_, 1);
+    hide_timer_.reset(lv_timer_create(&NotificationToastOverlay::hide_timer_cb, 2200U, this));
+    if (hide_timer_.get() != nullptr) {
+      lv_timer_set_repeat_count(hide_timer_.get(), 1);
     }
   }
 
   void hide() {
-    if (hide_timer_ != nullptr) {
-      lv_timer_del(hide_timer_);
-      hide_timer_ = nullptr;
+    if (hide_timer_) {
+      hide_timer_.reset();
     }
     if (root_ != nullptr) {
       lv_obj_add_flag(root_, LV_OBJ_FLAG_HIDDEN);
@@ -426,7 +424,7 @@ class NotificationToastOverlay {
   lv_obj_t* icon_label_ {nullptr};
   lv_obj_t* title_label_ {nullptr};
   lv_obj_t* body_label_ {nullptr};
-  lv_timer_t* hide_timer_ {nullptr};
+  LvglTimerGuard hide_timer_;
 };
 
 NotificationToastOverlay g_notification_toast_overlay;
