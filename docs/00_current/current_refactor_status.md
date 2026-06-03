@@ -106,6 +106,7 @@ Forbidden changes:
 
 ### Shell / HomeRing single-domain helpers
 
+- `HomeRingHostPage` 已迁入 `Shell/Home/ShellHomePages.cpp`。
 - `Shell/Home/ShellHomeLayoutPrimitives.*` 已新增并登记到 `CMakeLists.txt`。
 - `Shell/Home/ShellHomePaymentCardPrimitives.*` 已新增并登记到 `CMakeLists.txt`。
 - `Shell/Home/ShellHomeHealthCardPrimitives.*` 已新增并登记到 `CMakeLists.txt`。
@@ -124,8 +125,8 @@ Forbidden changes:
 
 当前判断：
 
-- 这不是页面迁移事实，而是 HomeRing 域内纯 UI layout / stage / pager helper 开始独立的事实。
-- `HomeRingHostPage` 仍留在 `ShellPages.cpp`，但已不再是“所有 HomeRing UI 细节都内嵌在单文件里”的状态。
+- 这不只是 helper 下沉事实；`HomeRingHostPage` 页面实现本体也已经迁入 `Shell/Home/`。
+- `ShellPages.cpp` 中不再保留 `HomeRingHostPage::` 实现。
 - payment / NFC 的点击绑定、`PageId` 选择与导航行为仍留在 `HomeRingHostPage`。
 - health 卡片的点击绑定、`PageId` 选择与导航行为仍留在 `HomeRingHostPage`。
 - daily 卡片的动态数据、点击绑定、`PageId` 选择与导航行为仍留在 `HomeRingHostPage`。
@@ -239,7 +240,6 @@ Forbidden changes:
 当前 `ShellPages.cpp` 仍主要承载：
 
 - `WatchfacePage`
-- `HomeRingHostPage`
 - `NotificationsPage`
 - `NotificationWakePage`
 - `QuickSettingsPage`
@@ -254,7 +254,7 @@ Forbidden changes:
 当前判断：
 
 - `ShellPages.cpp` 仍然大，但它现在更接近“剩余壳层实现聚集区”，而不是所有非 Settings 页面的大杂烩。
-- 其中 `HomeRingHostPage` 仍在文件内，但其 layout / stage / pager 纯 UI 构件已开始下沉到 `Shell/Home/ShellHomeLayoutPrimitives.*`，payment / NFC 卡片纯 UI 构件已下沉到 `Shell/Home/ShellHomePaymentCardPrimitives.*`，health 类卡片纯 UI 构件已下沉到 `Shell/Home/ShellHomeHealthCardPrimitives.*`，daily 类卡片纯 UI 构件已下沉到 `Shell/Home/ShellHomeDailyCardPrimitives.*`。
+- `HomeRingHostPage` 已迁入 `Shell/Home/ShellHomePages.cpp`；其 layout / stage / pager 纯 UI 构件已下沉到 `Shell/Home/ShellHomeLayoutPrimitives.*`，payment / NFC 卡片纯 UI 构件已下沉到 `Shell/Home/ShellHomePaymentCardPrimitives.*`，health 类卡片纯 UI 构件已下沉到 `Shell/Home/ShellHomeHealthCardPrimitives.*`，daily 类卡片纯 UI 构件已下沉到 `Shell/Home/ShellHomeDailyCardPrimitives.*`。
 - 后续任何“ShellPages 拆分”文档，都应明确它的剩余内容已不同于早期版本。
 
 ### ShellPages.h 聚合头状态
@@ -282,7 +282,7 @@ Forbidden changes:
 当前判断：
 
 - 这是刻意保守的注册策略，不等于页面实现还在原地。
-- 文档在描述注册结构时，应避免把“聚合头仍在”误写成“实现仍未迁移”。
+- `ShellPages.h` 仍是聚合声明头，`Application.cpp` 注册未变；这不妨碍 `HomeRingHostPage` 实现已迁入 `Shell/Home/`。
 
 ### CMake 登记状态
 
@@ -299,6 +299,7 @@ Forbidden changes:
   - `Shell/ShellAppVisualRegistry.cpp`
   - `Shell/ShellAppIconPrimitives.cpp`
   - `Shell/Home/ShellHomeDailyCardPrimitives.cpp`
+  - `Shell/Home/ShellHomePages.cpp`
   - `Shell/Home/ShellHomeLayoutPrimitives.cpp`
   - `Shell/Home/ShellHomeHealthCardPrimitives.cpp`
   - `Shell/Home/ShellHomePaymentCardPrimitives.cpp`
