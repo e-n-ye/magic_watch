@@ -164,6 +164,7 @@ Forbidden changes:
 - `Shell/QuickSettings/ShellQuickSettingsPrimitives.*` 已新增并登记到 `CMakeLists.txt`。
 - 它只承载 `QuickSettingsPage` 单域纯 UI 构建 helper，包括 backdrop shell、sheet shell、toast、long-battery confirm overlay、toggle grid 与 drag handle。
 - `QuickSettingsPage` 已迁入 `Shell/QuickSettings/ShellQuickSettingsPages.cpp`。
+- `QuickSettingsPage` 声明已下沉到 `Shell/QuickSettings/ShellQuickSettingsPages.h`，`ShellPages.h` 仅通过过渡 include 兼容快捷设置声明。
 - `ShellPages.cpp` 中不再保留 `QuickSettingsPage::` 实现。
 - DataCenter 读写、EventBus 订阅、toggle / slider 行为、NavigationCommand、timer 与 shell surface 行为仍留在 `QuickSettingsPage`。
 - `ShellPages.h` 仍是聚合声明头，`Application.cpp` 注册未变。

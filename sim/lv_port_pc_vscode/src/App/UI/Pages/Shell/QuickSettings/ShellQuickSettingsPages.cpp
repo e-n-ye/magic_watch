@@ -1,4 +1,4 @@
-#include "App/UI/Pages/ShellPages.h"
+#include "App/UI/Pages/Shell/QuickSettings/ShellQuickSettingsPages.h"
 
 #include "App/UI/Pages/Shell/ShellClickGuard.h"
 #include "App/UI/Pages/Shell/ShellPagePrimitives.h"

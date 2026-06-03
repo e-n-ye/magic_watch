@@ -267,12 +267,14 @@ Forbidden changes:
 
 - `Shell/QuickSettings/ShellQuickSettingsPrimitives.*`
 - `Shell/QuickSettings/ShellQuickSettingsPages.cpp`
+- `Shell/QuickSettings/ShellQuickSettingsPages.h`
 
 当前状态：
 
 - Shell/QuickSettings 已开始形成单域 UI primitives 边界。
 - `ShellQuickSettingsPrimitives.*` 只承载 `QuickSettingsPage` 的 backdrop shell、sheet shell、toast、long-battery confirm overlay、toggle grid 与 drag handle 等纯 UI 构建。
 - `QuickSettingsPage` 已从 `ShellPages.cpp` 下沉到 `Shell/QuickSettings/ShellQuickSettingsPages.cpp`。
+- `QuickSettingsPage` 声明已下沉到 `Shell/QuickSettings/ShellQuickSettingsPages.h`，`ShellPages.h` 仅通过过渡 include 兼容快捷设置入口。
 - `ShellPages.h` 仍是聚合声明头，`Application.cpp` 注册未变。
 
 拆分判断：
