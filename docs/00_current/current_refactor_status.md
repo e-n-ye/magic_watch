@@ -323,13 +323,13 @@ Forbidden changes:
   - `SettingsPages.h`
   - 各 Shell / Daily / Health / Power 域页面头
   为主。
-- `register_pages()` 已开始按领域组合；当前 Home 域已通过 `register_shell_home_pages(PageManager&, DataCenter&)` 从长列表中分流。
+- `register_pages()` 已开始按领域组合；当前 Home 域已通过 `register_shell_home_pages(PageManager&, DataCenter&)` 分流，Notifications 域已通过 `register_shell_notification_pages(PageManager&, DataCenter&)` 分流。
 - 这说明当前注册层已不再依赖 `ShellPages.h` 的声明主体，但注册结构仍处于“组合根逐域收口”的过渡阶段。
 
 当前判断：
 
 - 这是刻意保守的注册策略，不等于页面实现还在原地。
-- 当前只完成了 Home 领域注册分流；Notifications、QuickSettings、Power、Daily、Health 仍留在 `register_pages()` 组合根长列表内。
+- 当前已完成 Home 与 Notifications 领域注册分流；QuickSettings、Power、Daily、Health 仍留在 `register_pages()` 组合根长列表内。
 - `ShellPages.h` 仍作为过渡兼容 include 头存在，`Application.cpp` 注册语义未变；这不妨碍各页面声明与实现已迁入对应领域目录。
 
 ### CMake 登记状态
