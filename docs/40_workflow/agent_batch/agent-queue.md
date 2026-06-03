@@ -6,6 +6,38 @@
 
 ## 当前队列
 
+### DOCROOT-Q8-GUIDES docs 根目录第二轮开发指南迁移
+
+- 状态：TODO
+- 卡片来源：cards/docroot-reorg-wave2-guides.md
+- 执行范围：全文件
+- 停止策略：队列项完成后停止
+- 验收后处理：从队列移除；用户确认后可删除卡片文件
+
+### DOCROOT-Q9-HISTORY docs 根目录第二轮历史归档迁移
+
+- 状态：TODO
+- 卡片来源：cards/docroot-reorg-wave2-history.md
+- 执行范围：全文件
+- 停止策略：队列项完成后停止
+- 验收后处理：从队列移除；用户确认后可删除卡片文件
+
+### DOCROOT-Q8-GUIDES docs 根目录第二轮开发指南迁移
+
+- 状态：TODO
+- 卡片来源：cards/docroot-reorg-wave2-guides.md
+- 执行范围：全文件
+- 停止策略：队列项完成后停止
+- 验收后处理：从队列移除；用户确认后可删除卡片文件
+
+### DOCROOT-Q9-HISTORY docs 根目录第二轮历史资料迁移
+
+- 状态：TODO
+- 卡片来源：cards/docroot-reorg-wave2-history.md
+- 执行范围：全文件
+- 停止策略：队列项完成后停止
+- 验收后处理：从队列移除；用户确认后可删除卡片文件
+
 ## 队列项格式
 
 ```text

@@ -105,9 +105,19 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 ### 会话 2026-06-04 00:20
 
 - 本轮范围：清理已验收 `DOCROOT-Q6-REVIEW`；准备 docs 根目录第二轮整理卡片
-- 完成：`DOCROOT-B7-C01`；已从 `agent-queue.md` 移除已验收队列项 `DOCROOT-Q6-REVIEW`；已删除卡片文件 `docroot-reorg-wave1.md`、`docroot-reorg-review.md`
-- 修改文件：`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`、`docs/40_workflow/agent_batch/cards/docroot-reorg-cleanup-after-q6.md`
-- 自检：`git diff --check` 通过
-- 风险回应：只清理已验收队列项与旧卡片文件；对应已验收提交号为 `e2fb047`、`7efb3cd`、`e45c984`、`0c56445`
-- 阻塞与待决：第二轮 `20_guides` / `80_history` 卡片尚未创建
-- 下一步：单独提交清理后，新增第二轮卡片与队列项
+- 完成：`DOCROOT-B7-C01`；已从 `agent-queue.md` 移除已验收队列项 `DOCROOT-Q6-REVIEW`；已删除卡片文件 `docroot-reorg-wave1.md`、`docroot-reorg-review.md`；已新增 `DOCROOT-B8-C01` / `DOCROOT-B9-C01` 卡片文件与 `DOCROOT-Q8-GUIDES` / `DOCROOT-Q9-HISTORY` 队列项
+- 修改文件：`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`、`docs/40_workflow/agent_batch/cards/docroot-reorg-cleanup-after-q6.md`、`docs/40_workflow/agent_batch/cards/docroot-reorg-wave2-guides.md`、`docs/40_workflow/agent_batch/cards/docroot-reorg-wave2-history.md`
+- 自检：清理提交前已通过 `git diff --check`；第二轮卡片与队列准备提交前再次通过 `git diff --check`
+- 风险回应：只清理已验收队列项与旧卡片文件；第二轮仍拆成 `20_guides` 与 `80_history` 两个独立低风险波次，未把 `decision_log.md`、`current_sim_architecture.md`、`simulator_manual_regression_matrix.md` 混入本轮
+- 阻塞与待决：`DOCROOT-Q8-GUIDES`、`DOCROOT-Q9-HISTORY` 尚未执行
+- 下一步：等待用户确认后，从 `agent-queue.md` 按顺序先执行 `DOCROOT-Q8-GUIDES`
+
+### 会话 2026-06-04 00:35
+
+- 本轮范围：docs 根目录第二轮整理队列准备，卡片 `DOCROOT-B8-C01` / `DOCROOT-B9-C01`
+- 完成：已新增 `DOCROOT-B8-C01` 与 `DOCROOT-B9-C01` 卡片文件；已将 `DOCROOT-Q8-GUIDES`、`DOCROOT-Q9-HISTORY` 按顺序加入 `agent-queue.md`
+- 修改文件：`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`、`docs/40_workflow/agent_batch/cards/docroot-reorg-wave2-guides.md`、`docs/40_workflow/agent_batch/cards/docroot-reorg-wave2-history.md`
+- 自检：待提交前执行
+- 风险回应：本提交只创建第二轮执行卡与队列入口，不提前迁移 docs 根目录正文文档；`decision_log.md`、`current_sim_architecture.md`、`simulator_manual_regression_matrix.md` 继续留在后续独立评审范围
+- 阻塞与待决：
+- 下一步：执行窗口可按 `agent-queue.md` 先执行 `DOCROOT-Q8-GUIDES`
