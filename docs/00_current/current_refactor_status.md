@@ -273,7 +273,7 @@ Forbidden changes:
 
 - Heart Rate 页面已下沉到 `Health/HeartRatePages.cpp`。
 - Heart Rate 页面声明已下沉到 `Health/HeartRatePages.h`，`ShellPages.h` 仅通过过渡 include 兼容 Heart Rate 声明。
-- `HeartRateAppPage` 的 entry measurement timer 与 crown release timer 已迁入 `LvglTimerGuard`；回页时已显式恢复 result stage，离页时会隐藏 wear prompt overlay，但同页的更细粒度 wear prompt 显示策略仍待后续单独审计。
+- `HeartRateAppPage` 的 entry measurement timer 与 crown release timer、`HeartRateInfoPage` 的 crown release timer 已迁入 `LvglTimerGuard`；回页时已显式恢复 result stage，离页时会隐藏 wear prompt overlay，但同页的更细粒度 wear prompt 显示策略仍待后续单独审计。
 - 当前非测量域页面包括：
   - `HeartRateInfoPage`
   - `HeartRateAppPage`
