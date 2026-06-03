@@ -149,8 +149,10 @@ Forbidden changes:
 
 当前判断：
 
-- `NotificationsPage` 与 `NotificationWakePage` 仍留在 `ShellPages.cpp`。
-- 本轮只是解除后续 `NotificationWakePage` 迁移的 helper 可见性阻塞，不代表通知页面已迁出。
+- `NotificationWakePage` 已迁入 `Shell/Notifications/ShellNotificationPages.cpp`。
+- `NotificationsPage` 仍留在 `ShellPages.cpp`。
+- `ShellNotificationPrimitives.*` 仍是通知视觉共享 helper 边界。
+- 这不代表完整通知页面都已迁出；当前只是先迁出通知唤醒预览页。
 
 ### Shell / Launcher
 
@@ -258,7 +260,6 @@ Forbidden changes:
 当前 `ShellPages.cpp` 仍主要承载：
 
 - `NotificationsPage`
-- `NotificationWakePage`
 - `QuickSettingsPage`
 
 这些页面大多仍属于：
@@ -272,7 +273,7 @@ Forbidden changes:
 
 - `ShellPages.cpp` 仍然大，但它现在更接近“通知与快捷设置等剩余壳层实现聚集区”，而不是所有非 Settings 页面的大杂烩。
 - `WatchfacePage` 与 `HomeRingHostPage` 已共同迁入 `Shell/Home/ShellHomePages.cpp`。
-- `Shell/Notifications/ShellNotificationPrimitives.*` 已承载通知域共享视觉 helper，但 `NotificationsPage` 与 `NotificationWakePage` 实现本体仍留在 `ShellPages.cpp`。
+- `NotificationWakePage` 已迁入 `Shell/Notifications/ShellNotificationPages.cpp`；`Shell/Notifications/ShellNotificationPrimitives.*` 继续承载通知域共享视觉 helper。
 - `HomeRingHostPage` 已迁入 `Shell/Home/ShellHomePages.cpp`；其 layout / stage / pager 纯 UI 构件已下沉到 `Shell/Home/ShellHomeLayoutPrimitives.*`，payment / NFC 卡片纯 UI 构件已下沉到 `Shell/Home/ShellHomePaymentCardPrimitives.*`，health 类卡片纯 UI 构件已下沉到 `Shell/Home/ShellHomeHealthCardPrimitives.*`，daily 类卡片纯 UI 构件已下沉到 `Shell/Home/ShellHomeDailyCardPrimitives.*`。
 - 后续任何“ShellPages 拆分”文档，都应明确它的剩余内容已不同于早期版本。
 
@@ -301,7 +302,7 @@ Forbidden changes:
 当前判断：
 
 - 这是刻意保守的注册策略，不等于页面实现还在原地。
-- `ShellPages.h` 仍是聚合声明头，`Application.cpp` 注册未变；这不妨碍 `WatchfacePage` 与 `HomeRingHostPage` 实现已迁入 `Shell/Home/`。
+- `ShellPages.h` 仍是聚合声明头，`Application.cpp` 注册未变；这不妨碍 `WatchfacePage` 与 `HomeRingHostPage` 实现已迁入 `Shell/Home/`，`NotificationWakePage` 已迁入 `Shell/Notifications/`。
 
 ### CMake 登记状态
 
@@ -323,6 +324,7 @@ Forbidden changes:
   - `Shell/Home/ShellHomeHealthCardPrimitives.cpp`
   - `Shell/Home/ShellHomePaymentCardPrimitives.cpp`
   - `Shell/Notifications/ShellNotificationPrimitives.cpp`
+  - `Shell/Notifications/ShellNotificationPages.cpp`
   - `Shell/Launcher/ShellLauncherPages.cpp`
   - `Shell/Power/ShellPowerPages.cpp`
 

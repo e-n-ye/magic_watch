@@ -226,6 +226,7 @@ Forbidden changes:
 当前实现文件位于：
 
 - `Shell/Notifications/ShellNotificationPrimitives.*`
+- `Shell/Notifications/ShellNotificationPages.cpp`
 
 当前状态：
 
@@ -237,12 +238,13 @@ Forbidden changes:
   - `notification_secondary_text_color(...)`
   - `notification_accent_color(...)`
   - `create_notification_icon(...)`
-- `NotificationsPage` 与 `NotificationWakePage` 仍留在 `ShellPages.cpp`。
+- `NotificationWakePage` 已从 `ShellPages.cpp` 下沉到 `Shell/Notifications/ShellNotificationPages.cpp`。
+- `NotificationsPage` 仍留在 `ShellPages.cpp`。
 
 拆分判断：
 
-- 这一步只是在通知域内先抽 shared visual primitives，不代表通知页面本体已迁出。
-- 它降低了后续 `NotificationWakePage` 单页迁移时的 helper 可见性阻塞。
+- 现在 Shell/Notifications 已同时承载通知视觉 shared primitives 和 `NotificationWakePage`。
+- 这不代表完整通知页面本体都已迁出；`NotificationsPage` 仍是后续高风险主块。
 
 风险等级：
 
@@ -437,7 +439,6 @@ Forbidden changes:
 截至当前，`ShellPages.cpp` 仍主要承载以下高交互页面：
 
 - `NotificationsPage`
-- `NotificationWakePage`
 - `QuickSettingsPage`
 
 这些页面共同特征是：
