@@ -273,21 +273,24 @@ Forbidden changes:
 
 当前剩余内容更接近：
 
-- 零引用 `using`
-- 零引用文本常量
-- 零引用 QuickSettings 日志 helper
-- 零引用 generic helper / residue
+- 已清理前的零引用 `using`
+- 已清理前的零引用文本常量
+- 已清理前的零引用 QuickSettings 日志 helper
+- 已清理前的零引用 generic helper / residue
 
 当前判断：
 
 - `ShellPages.cpp` 当前已无任何 `ClassName::` 页面实现。
-- 它现在更接近 dead helper / residue 文件，而不是仍在承载页面本体的实现文件。
+- `ShellPages.cpp` 中的零引用 dead residue 已清理，文件当前仅保留聚合头 include。
+- 它现在更接近空壳收口文件，而不是仍在承载页面本体的实现文件。
 - `WatchfacePage` 与 `HomeRingHostPage` 已共同迁入 `Shell/Home/ShellHomePages.cpp`。
 - `NotificationWakePage` 与 `NotificationsPage` 已迁入 `Shell/Notifications/ShellNotificationPages.cpp`；`Shell/Notifications/ShellNotificationPrimitives.*` 继续承载通知域共享视觉 helper。
 - `Shell/Notifications/ShellNotificationPagePrimitives.*` 已承载 `NotificationsPage` 单域纯 UI 构建 helper。
 - `Shell/QuickSettings/ShellQuickSettingsPrimitives.*` 继续承载 `QuickSettingsPage` 单域纯 UI 构建 helper；`QuickSettingsPage` 页面实现已迁入 `Shell/QuickSettings/ShellQuickSettingsPages.cpp`。
 - `HomeRingHostPage` 已迁入 `Shell/Home/ShellHomePages.cpp`；其 layout / stage / pager 纯 UI 构件已下沉到 `Shell/Home/ShellHomeLayoutPrimitives.*`，payment / NFC 卡片纯 UI 构件已下沉到 `Shell/Home/ShellHomePaymentCardPrimitives.*`，health 类卡片纯 UI 构件已下沉到 `Shell/Home/ShellHomeHealthCardPrimitives.*`，daily 类卡片纯 UI 构件已下沉到 `Shell/Home/ShellHomeDailyCardPrimitives.*`。
-- 下一步代码收口更可能是删除零引用 dead helper，而不是继续迁页面。
+- `ShellPages.h` 仍是聚合声明头，`Application.cpp` 注册未变。
+- `ShellPages.cpp` 文件本身仍保留，`CMakeLists.txt` 登记未变。
+- 下一步代码收口更可能转向聚合头拆分或注册结构重组，而不是继续迁页面。
 
 ### ShellPages.h 聚合头状态
 
