@@ -121,6 +121,7 @@
 先读：
 
 - [agent-rules.md](/D:/MY_Desk/watch/magic_watch/docs/40_workflow/agent_batch/agent-rules.md)
+- [agent-queue.md](/D:/MY_Desk/watch/magic_watch/docs/40_workflow/agent_batch/agent-queue.md)
 - [agent-plan.md](/D:/MY_Desk/watch/magic_watch/docs/40_workflow/agent_batch/agent-plan.md)
 - [agent-progress.md](/D:/MY_Desk/watch/magic_watch/docs/40_workflow/agent_batch/agent-progress.md)
 - [agent-inbox.md](/D:/MY_Desk/watch/magic_watch/docs/40_workflow/agent_batch/agent-inbox.md)，仅在需要并行规划或追加新需求卡片时读取。
@@ -128,7 +129,8 @@
 说明：
 
 - 这是按需执行流程，不是默认新会话入口。
-- `agent-plan.md` 是卡片状态权威源，`agent-progress.md` 只记录当前批次、自动提交策略、不要重复做和会话历史。
+- `agent-queue.md` 是目标模式执行入口；为空时回退到 `agent-progress.md` 当前批次和 `agent-plan.md`。
+- `agent-plan.md` 是内联卡片状态权威源；卡片文件中的卡片以对应文件为权威源；`agent-progress.md` 只记录当前批次、自动提交策略、不要重复做和会话历史。
 - 执行窗口只跑当前批次；并行规划窗口只能追加未来批次或写入 `agent-inbox.md`。
 
 ### 我想写简历项目描述
