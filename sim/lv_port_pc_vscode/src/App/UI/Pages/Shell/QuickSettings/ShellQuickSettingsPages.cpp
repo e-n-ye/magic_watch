@@ -491,10 +491,10 @@ void QuickSettingsPage::bind_backdrop() {
                                      open_preview_progress_ = 0;
                                      set_open_preview_progress(0, true);
                                      stop_preview_close_timer();
-                                     preview_close_timer_ =
-                                         lv_timer_create(&QuickSettingsPage::preview_close_timer_cb, 240U, this);
-                                     if (preview_close_timer_ != nullptr) {
-                                       lv_timer_set_repeat_count(preview_close_timer_, 1);
+                                     preview_close_timer_.reset(
+                                         lv_timer_create(&QuickSettingsPage::preview_close_timer_cb, 240U, this));
+                                     if (preview_close_timer_.get() != nullptr) {
+                                       lv_timer_set_repeat_count(preview_close_timer_.get(), 1);
                                      }
                                    }
                                    return;
@@ -705,9 +705,8 @@ void QuickSettingsPage::set_close_drag_offset(lv_coord_t offset, bool animated) 
 }
 
 void QuickSettingsPage::stop_preview_close_timer() {
-  if (preview_close_timer_ != nullptr) {
-    lv_timer_del(preview_close_timer_);
-    preview_close_timer_ = nullptr;
+  if (preview_close_timer_) {
+    preview_close_timer_.reset();
   }
 }
 
@@ -716,7 +715,7 @@ void QuickSettingsPage::preview_close_timer_cb(lv_timer_t* timer) {
   if (self == nullptr) {
     return;
   }
-  self->preview_close_timer_ = nullptr;
+  self->preview_close_timer_.release();
   self->request_navigation({NavigationAction::CloseShellSurface, PageId::Watchface});
 }
 

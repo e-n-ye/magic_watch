@@ -93,7 +93,7 @@ class QuickSettingsPage : public PageBase {
   bool suppress_next_click_ {false};
   std::chrono::steady_clock::time_point suppress_click_deadline_ {};
   lv_obj_t* long_press_source_button_ {nullptr};
-  lv_timer_t* preview_close_timer_ {nullptr};
+  LvglTimerGuard preview_close_timer_;
   LvglTimerGuard toast_timer_;
   WatchfaceConfig backdrop_config_ {default_watchface_config()};
   WatchfaceRenderState backdrop_render_state_ {};
