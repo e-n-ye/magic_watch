@@ -258,7 +258,7 @@
   - stopped generic pages from reserving visual space for empty subtitle text
   - simplified the Weather bottom cards to label + value + progress only
 - Added a dedicated workflow doc:
-  - `docs/web_visual_sandbox_workflow.md`
+  - `docs/60_visual_exploration/web_visual_sandbox_workflow.md`
 
 ### Why This Step Matters
 
@@ -345,7 +345,7 @@ Historical note:
 - Locked the first visual exploration target to `Weather / Steps / Sleep`.
 - Used the Xiaomi reference set to extract a concrete layout direction instead of writing a generic image prompt.
 - Added:
-  - `docs/weather_shortcut_visual_direction.md`
+  - `docs/60_visual_exploration/weather_shortcut_visual_direction.md`
   - a tighter Weather-page prompt
   - a dedicated screenshot-analysis prompt
 - Ran the first actual `gpt-image-2` generation round for the Weather shortcut surface.

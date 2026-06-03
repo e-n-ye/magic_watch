@@ -60,7 +60,7 @@ Forbidden changes:
 #### 执行记录
 
 - 完成时间：2026-06-03 22:30
-- 实际改动文件：`docs/50_stage_records/*.md`、`docs/document_map.md`、`docs/40_workflow/docs_root_reorg_inventory.md`、`docs/decision_log.md`、`docs/prototype_progress.md`、`docs/settings_visual_reference.md`、批处理运行文件
+- 实际改动文件：`docs/50_stage_records/*.md`、`docs/document_map.md`、`docs/40_workflow/docs_root_reorg_inventory.md`、`docs/decision_log.md`、`docs/prototype_progress.md`、`docs/60_visual_exploration/settings_visual_reference.md`、批处理运行文件
 - 自检结果：`git diff --check` 通过；旧的 `docs/v0_*.md` / `docs/v0_scope.md` / `docs/v0_shell_baseline.md` 路径已在允许修改范围内完成替换；本轮中文文档乱码哨兵检查通过，`decision_log.md` 中命中的疑似乱码字符串是规则说明原文，不是新写入乱码
 - 风险回应：保留 `docs/00_current/v0_scope.md` 原位不动；`document_map.md` 新增按需路由，明确 `50_stage_records` 只作为历史阶段记录入口，不回到默认新会话
 
@@ -69,7 +69,7 @@ Forbidden changes:
 ### DOCROOT-B4-C01 迁移视觉探索与视觉流程到 60_visual_exploration
 
 - 批次：4
-- 状态：TODO
+- 状态：DONE
 - 依赖：DOCROOT-B2-C01
 - 自检：`git diff --check`；对本卡改动的中文文档执行 `AGENTS.md` 中规定的乱码哨兵检查
 - 建议提交信息：`docs: move visual exploration docs under 60_visual_exploration`
@@ -120,7 +120,10 @@ Forbidden changes:
 
 #### 执行记录
 
-（Agent 填写：完成时间 / 实际改动文件 / 自检结果 / 风险回应）
+- 完成时间：2026-06-03 23:05
+- 实际改动文件：`docs/60_visual_exploration/*.md`、`docs/document_map.md`、`docs/prototype_progress.md`、批处理运行文件
+- 自检结果：`git diff --check` 通过；视觉文档旧路径扫描在允许范围内无残留；中文文档乱码哨兵检查通过
+- 风险回应：`watchface_style_architecture.md` 保持在根目录未迁移；`document_map.md` 已明确 `60_visual_exploration` 为按需视觉资料入口，不回到默认新会话
 
 ---
 

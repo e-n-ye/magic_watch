@@ -116,6 +116,18 @@
 - 构建通过不等于手动 UI 通过。
 - 未执行的手动 UI 不能写成通过。
 
+### 我想查视觉探索资料
+
+先读：
+
+- [60_visual_exploration/](/D:/MY_Desk/watch/magic_watch/docs/60_visual_exploration)
+- [settings_visual_reference.md](/D:/MY_Desk/watch/magic_watch/docs/60_visual_exploration/settings_visual_reference.md)
+
+说明：
+
+- 视觉方向稿、视觉参考和视觉流程文档已迁入 `docs/60_visual_exploration/`，属于按需视觉资料，不回到默认新会话入口。
+- `watchface_style_architecture.md` 仍按架构专题保留在根目录，不并入视觉探索目录。
+
 ### 我想使用卡片批次 / 目标模式执行
 
 先读：
