@@ -257,6 +257,33 @@ Forbidden changes:
 - `NotificationsPage` 已迁出，但仍承载 swipe / sheet / clear confirm / preview close timer 等复杂行为。
 - `QuickSettings` 仍是独立的高风险剩余区域，不能因为通知 visual helper 下沉就误判主壳层已接近拆完。
 
+### F. Shell / QuickSettings UI primitive boundary
+
+当前实现文件位于：
+
+- `Shell/QuickSettings/ShellQuickSettingsPrimitives.*`
+- `ShellPages.cpp`
+
+当前状态：
+
+- Shell/QuickSettings 已开始形成单域 UI primitives 边界。
+- `ShellQuickSettingsPrimitives.*` 只承载 `QuickSettingsPage` 的 backdrop shell、sheet shell、toast、long-battery confirm overlay、toggle grid 与 drag handle 等纯 UI 构建。
+- `QuickSettingsPage` 仍留在 `ShellPages.cpp`。
+
+拆分判断：
+
+- 这一步只是在不触碰 DataCenter、EventBus、timer、NavigationCommand、toggle 状态刷新和 shell surface 行为的前提下，下沉最独立的 UI 壳层。
+- 这不代表完整 `QuickSettingsPage` 已迁出。
+
+风险等级：
+
+- 高。
+
+主要风险：
+
+- 完整 `QuickSettingsPage` 仍承载 toggle / long press / toast / preview close timer / shell drag 等复杂行为。
+- 当前 Home 与 Notifications 页面实现虽已下沉，但 QuickSettings 仍是 `ShellPages.cpp` 的剩余主要高风险区域。
+
 ### F. Power 域
 
 当前实现文件位于：

@@ -17,6 +17,7 @@
 #include "App/UI/Pages/Shell/Home/ShellHomeDailyCardPrimitives.h"
 #include "App/UI/Pages/Shell/Home/ShellHomeLayoutPrimitives.h"
 #include "App/UI/Pages/Shell/Home/ShellHomePaymentCardPrimitives.h"
+#include "App/UI/Pages/Shell/QuickSettings/ShellQuickSettingsPrimitives.h"
 #include "App/UI/Pages/Shell/ShellImagePrimitives.h"
 #include "App/UI/Pages/Shell/ShellPagePrimitives.h"
 #include "App/UI/UiStyles.h"
@@ -209,251 +210,58 @@ lv_obj_t* QuickSettingsPage::build() {
   style_root(root, 0x050913);
   lv_obj_set_style_bg_opa(root, LV_OPA_TRANSP, 0);
 
-  backdrop_root_ = lv_obj_create(root);
-  sheet_container_ = lv_obj_create(root);
-  toast_container_ = lv_obj_create(root);
-  long_battery_confirm_overlay_ = lv_obj_create(root);
-  if (backdrop_root_ == nullptr || sheet_container_ == nullptr || toast_container_ == nullptr ||
-      long_battery_confirm_overlay_ == nullptr) {
+  shell_quick_settings::QuickSettingsPrimitivesView primitives {};
+  if (!shell_quick_settings::create_quick_settings_primitives(root, primitives)) {
     return nullptr;
   }
-
-  lv_obj_set_size(backdrop_root_, 240, 296);
-  lv_obj_align(backdrop_root_, LV_ALIGN_TOP_LEFT, 0, 0);
-  lv_obj_set_style_bg_color(backdrop_root_, lv_color_hex(0x02060D), 0);
-  lv_obj_set_style_bg_opa(backdrop_root_, LV_OPA_COVER, 0);
-  lv_obj_set_style_border_width(backdrop_root_, 0, 0);
-  lv_obj_set_style_pad_all(backdrop_root_, 0, 0);
-  lv_obj_remove_flag(backdrop_root_, LV_OBJ_FLAG_SCROLLABLE);
-  lv_obj_remove_flag(backdrop_root_, LV_OBJ_FLAG_CLICKABLE);
-
-  lv_obj_t* backdrop_overlay = lv_obj_create(backdrop_root_);
-  lv_obj_t* battery_row = lv_obj_create(backdrop_root_);
-  backdrop_battery_icon_label_ = lv_label_create(battery_row);
-  backdrop_battery_label_ = lv_label_create(battery_row);
-  backdrop_style_stage_ = lv_obj_create(backdrop_root_);
-  backdrop_minute_label_ = lv_label_create(backdrop_root_);
-  if (backdrop_overlay == nullptr || battery_row == nullptr || backdrop_battery_icon_label_ == nullptr ||
-      backdrop_battery_label_ == nullptr || backdrop_style_stage_ == nullptr || backdrop_minute_label_ == nullptr) {
+  backdrop_root_ = primitives.backdrop_root;
+  backdrop_battery_icon_label_ = primitives.backdrop_battery_icon_label;
+  backdrop_battery_label_ = primitives.backdrop_battery_label;
+  backdrop_style_stage_ = primitives.backdrop_style_stage;
+  backdrop_minute_label_ = primitives.backdrop_minute_label;
+  sheet_container_ = primitives.sheet_container;
+  toast_container_ = primitives.toast_container;
+  toast_label_ = primitives.toast_label;
+  long_battery_confirm_overlay_ = primitives.long_battery_confirm_overlay;
+  drag_handle_ = primitives.drag_handle;
+  if (backdrop_root_ == nullptr || backdrop_battery_icon_label_ == nullptr || backdrop_battery_label_ == nullptr ||
+      backdrop_style_stage_ == nullptr || backdrop_minute_label_ == nullptr || sheet_container_ == nullptr ||
+      toast_container_ == nullptr || toast_label_ == nullptr || long_battery_confirm_overlay_ == nullptr ||
+      primitives.long_battery_confirm_body == nullptr || primitives.long_battery_confirm_cancel_button == nullptr ||
+      primitives.long_battery_confirm_confirm_button == nullptr || drag_handle_ == nullptr ||
+      primitives.toggle_grid == nullptr) {
     return nullptr;
   }
-
-  ui_prepare_box(backdrop_overlay);
-  lv_obj_set_size(backdrop_overlay, LV_PCT(100), LV_PCT(100));
-  lv_obj_set_style_bg_color(backdrop_overlay, lv_color_hex(0x01040A), 0);
-  lv_obj_set_style_bg_opa(backdrop_overlay, LV_OPA_20, 0);
-  lv_obj_set_style_border_width(backdrop_overlay, 0, 0);
-  lv_obj_set_style_pad_all(backdrop_overlay, 0, 0);
-  lv_obj_align(backdrop_overlay, LV_ALIGN_TOP_LEFT, 0, 0);
-
-  ui_prepare_box(battery_row);
-  ui_set_flex_row(battery_row, 0, 4, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-  lv_obj_set_size(battery_row, 53, 18);
-  lv_obj_set_style_bg_opa(battery_row, LV_OPA_TRANSP, 0);
-  lv_obj_set_style_border_width(battery_row, 0, 0);
-  lv_obj_align(battery_row, LV_ALIGN_TOP_MID, 0, 10);
-
-  ui_prepare_label(backdrop_battery_icon_label_);
-  ui_apply_text(backdrop_battery_icon_label_, TextStyle::Tiny);
-  lv_obj_set_style_text_font(backdrop_battery_icon_label_, &lv_font_montserrat_14, 0);
-  lv_obj_set_style_text_color(backdrop_battery_icon_label_, lv_color_hex(0xF5F7FB), 0);
-  lv_label_set_text(backdrop_battery_icon_label_, LV_SYMBOL_CHARGE);
-
-  ui_prepare_label(backdrop_battery_label_);
-  ui_apply_text(backdrop_battery_label_, TextStyle::Tiny);
-  lv_obj_set_style_text_font(backdrop_battery_label_, &lv_font_montserrat_14, 0);
-  lv_obj_set_style_text_color(backdrop_battery_label_, lv_color_hex(0xF5F7FB), 0);
-  lv_label_set_text(backdrop_battery_label_, "--%");
-
-  ui_prepare_box(backdrop_style_stage_);
-  lv_obj_set_size(backdrop_style_stage_, 240, 296);
-  lv_obj_align(backdrop_style_stage_, LV_ALIGN_TOP_LEFT, 0, 0);
-  lv_obj_set_style_bg_opa(backdrop_style_stage_, LV_OPA_TRANSP, 0);
-  lv_obj_set_style_border_width(backdrop_style_stage_, 0, 0);
-  lv_obj_set_style_pad_all(backdrop_style_stage_, 0, 0);
 
   backdrop_renderer_ = create_watchface_style_renderer(backdrop_config_);
   if (!backdrop_renderer_ || backdrop_renderer_->build(backdrop_style_stage_) == nullptr) {
     return nullptr;
   }
 
-  ui_prepare_label(backdrop_minute_label_);
-  ui_apply_text(backdrop_minute_label_, TextStyle::HeroSoft);
-  lv_obj_set_style_text_font(backdrop_minute_label_, &lv_font_montserrat_42, 0);
-  lv_obj_set_style_text_color(backdrop_minute_label_, lv_color_hex(0xD7E3F4), 0);
-  lv_obj_set_width(backdrop_minute_label_, 96);
-  lv_obj_set_style_text_align(backdrop_minute_label_, LV_TEXT_ALIGN_CENTER, 0);
-  lv_obj_set_pos(backdrop_minute_label_, 76, 234);
-  lv_label_set_text(backdrop_minute_label_, "--");
-
-  lv_obj_set_size(sheet_container_, kQuickSettingsSheetWidth, kQuickSettingsSheetHeight);
-  lv_obj_set_style_bg_color(sheet_container_, lv_color_hex(0x09131F), 0);
-  lv_obj_set_style_bg_opa(sheet_container_, LV_OPA_COVER, 0);
-  lv_obj_set_style_border_width(sheet_container_, 0, 0);
-  lv_obj_set_style_radius(sheet_container_, 32, 0);
-  lv_obj_set_style_pad_top(sheet_container_, 18, 0);
-  lv_obj_set_style_pad_bottom(sheet_container_, 18, 0);
-  lv_obj_set_style_pad_left(sheet_container_, 16, 0);
-  lv_obj_set_style_pad_right(sheet_container_, 16, 0);
-  lv_obj_set_style_shadow_width(sheet_container_, 34, 0);
-  lv_obj_set_style_shadow_color(sheet_container_, lv_color_hex(0x02060D), 0);
-  lv_obj_set_style_shadow_opa(sheet_container_, LV_OPA_50, 0);
-  lv_obj_set_style_border_color(sheet_container_, lv_color_hex(0x15263A), 0);
-  lv_obj_set_style_border_opa(sheet_container_, LV_OPA_50, 0);
-  lv_obj_set_style_border_width(sheet_container_, 1, 0);
-  lv_obj_remove_flag(sheet_container_, LV_OBJ_FLAG_SCROLLABLE);
-  lv_obj_align(sheet_container_, LV_ALIGN_TOP_MID, 0, 0);
-
-  toast_label_ = lv_label_create(toast_container_);
-  if (toast_label_ == nullptr) {
-    return nullptr;
-  }
-  ui_prepare_box(toast_container_);
-  lv_obj_set_style_bg_color(toast_container_, lv_color_hex(0x6A7D97), 0);
-  lv_obj_set_style_bg_opa(toast_container_, LV_OPA_80, 0);
-  lv_obj_set_style_border_width(toast_container_, 0, 0);
-  lv_obj_set_style_radius(toast_container_, 22, 0);
-  lv_obj_set_style_pad_left(toast_container_, 18, 0);
-  lv_obj_set_style_pad_right(toast_container_, 18, 0);
-  lv_obj_set_style_pad_top(toast_container_, 8, 0);
-  lv_obj_set_style_pad_bottom(toast_container_, 8, 0);
-  lv_obj_remove_flag(toast_container_, LV_OBJ_FLAG_SCROLLABLE);
-  lv_obj_remove_flag(toast_container_, LV_OBJ_FLAG_CLICKABLE);
-  lv_obj_add_flag(toast_container_, LV_OBJ_FLAG_HIDDEN);
-  lv_obj_align(toast_container_, LV_ALIGN_TOP_MID, 0, 28);
-  lv_obj_set_size(toast_container_, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-  lv_obj_move_foreground(toast_container_);
-
-  ui_prepare_label(toast_label_);
-  ui_apply_text(toast_label_, TextStyle::Body);
-  lv_obj_set_style_text_font(toast_label_, cjk_font_16(), 0);
-  lv_obj_set_style_text_color(toast_label_, lv_color_hex(0xF8FBFF), 0);
-  lv_label_set_long_mode(toast_label_, LV_LABEL_LONG_MODE_CLIP);
-  lv_obj_set_size(toast_label_, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
-  lv_obj_set_style_text_align(toast_label_, LV_TEXT_ALIGN_CENTER, 0);
-  lv_label_set_text(toast_label_, "");
-  lv_obj_center(toast_label_);
-
-  ui_prepare_box(long_battery_confirm_overlay_);
-  lv_obj_set_size(long_battery_confirm_overlay_, LV_PCT(100), LV_PCT(100));
-  lv_obj_align(long_battery_confirm_overlay_, LV_ALIGN_TOP_LEFT, 0, 0);
-  lv_obj_set_style_bg_color(long_battery_confirm_overlay_, lv_color_hex(0x02060D), 0);
-  lv_obj_set_style_bg_opa(long_battery_confirm_overlay_, LV_OPA_COVER, 0);
-  lv_obj_set_style_border_width(long_battery_confirm_overlay_, 0, 0);
-  lv_obj_set_style_radius(long_battery_confirm_overlay_, 0, 0);
-  lv_obj_add_flag(long_battery_confirm_overlay_, LV_OBJ_FLAG_HIDDEN);
-
-  lv_obj_t* confirm_body = lv_label_create(long_battery_confirm_overlay_);
-  lv_obj_t* cancel_button = lv_button_create(long_battery_confirm_overlay_);
-  lv_obj_t* confirm_button = lv_button_create(long_battery_confirm_overlay_);
-  if (confirm_body == nullptr || cancel_button == nullptr || confirm_button == nullptr) {
-    return nullptr;
-  }
-
-  ui_prepare_label(confirm_body);
-  lv_obj_set_width(confirm_body, 196);
-  lv_obj_set_style_text_font(confirm_body, cjk_font_20(), 0);
-  lv_obj_set_style_text_color(confirm_body, lv_color_hex(0xF7FBFF), 0);
-  lv_obj_set_style_text_align(confirm_body, LV_TEXT_ALIGN_CENTER, 0);
-  lv_label_set_long_mode(confirm_body, LV_LABEL_LONG_WRAP);
-  lv_label_set_text(confirm_body, kTextLongBatteryConfirmBody);
-  lv_obj_align(confirm_body, LV_ALIGN_TOP_MID, 0, 34);
-
-  for (lv_obj_t* button : {cancel_button, confirm_button}) {
+  for (lv_obj_t* button : {primitives.long_battery_confirm_cancel_button, primitives.long_battery_confirm_confirm_button}) {
     attach_click_guard(button);
-    ui_prepare_box(button);
-    lv_obj_set_size(button, 92, 50);
-    lv_obj_set_style_radius(button, 18, 0);
-    lv_obj_set_style_border_width(button, 0, 0);
     lv_obj_add_event_cb(button, &QuickSettingsPage::long_battery_confirm_event_cb, LV_EVENT_CLICKED, this);
   }
-  lv_obj_align(cancel_button, LV_ALIGN_BOTTOM_LEFT, 24, -34);
-  lv_obj_align(confirm_button, LV_ALIGN_BOTTOM_RIGHT, -24, -34);
-  lv_obj_set_style_bg_color(cancel_button, lv_color_hex(0x17314C), 0);
-  lv_obj_set_style_bg_opa(cancel_button, LV_OPA_COVER, 0);
-  lv_obj_set_style_bg_color(confirm_button, lv_color_hex(0x11B8FF), 0);
-  lv_obj_set_style_bg_opa(confirm_button, LV_OPA_COVER, 0);
-  lv_obj_set_user_data(cancel_button, reinterpret_cast<void*>(0U));
-  lv_obj_set_user_data(confirm_button, reinterpret_cast<void*>(1U));
-
-  for (const auto [button, text] : {std::pair {cancel_button, LV_SYMBOL_CLOSE}, std::pair {confirm_button, LV_SYMBOL_OK}}) {
-    lv_obj_t* label = lv_label_create(button);
-    if (label == nullptr) {
-      return nullptr;
-    }
-    ui_prepare_label(label);
-    lv_obj_set_style_text_font(label, &lv_font_montserrat_24, 0);
-    lv_obj_set_style_text_color(label, lv_color_hex(0xE8FBFF), 0);
-    lv_label_set_text(label, text);
-    lv_obj_center(label);
-  }
-  lv_obj_move_foreground(long_battery_confirm_overlay_);
-
-  drag_handle_ = lv_obj_create(sheet_container_);
-  if (drag_handle_ == nullptr) {
-    return nullptr;
-  }
-
-  lv_obj_t* grid = lv_obj_create(sheet_container_);
-  if (grid == nullptr) {
-    return nullptr;
-  }
-  lv_obj_set_size(grid, 196, 196);
-  lv_obj_align(grid, LV_ALIGN_CENTER, 0, 6);
-  lv_obj_set_layout(grid, LV_LAYOUT_GRID);
-  static lv_coord_t columns[] = {60, 60, 60, LV_GRID_TEMPLATE_LAST};
-  static lv_coord_t rows[] = {60, 60, 60, LV_GRID_TEMPLATE_LAST};
-  lv_obj_set_grid_dsc_array(grid, columns, rows);
-  lv_obj_set_style_pad_all(grid, 0, 0);
-  lv_obj_set_style_pad_row(grid, 8, 0);
-  lv_obj_set_style_pad_column(grid, 8, 0);
-  lv_obj_set_style_bg_opa(grid, LV_OPA_TRANSP, 0);
-  lv_obj_set_style_border_width(grid, 0, 0);
-  lv_obj_set_style_radius(grid, 0, 0);
-  lv_obj_remove_flag(grid, LV_OBJ_FLAG_SCROLLABLE);
+  lv_obj_set_user_data(primitives.long_battery_confirm_cancel_button, reinterpret_cast<void*>(0U));
+  lv_obj_set_user_data(primitives.long_battery_confirm_confirm_button, reinterpret_cast<void*>(1U));
 
   for (std::size_t index = 0; index < toggles_.size(); ++index) {
-    const auto row = static_cast<lv_coord_t>(index / 3);
-    const auto col = static_cast<lv_coord_t>(index % 3);
-    lv_obj_t* button = lv_button_create(grid);
-    if (button == nullptr) {
+    lv_obj_t* button = primitives.toggle_buttons[index];
+    lv_obj_t* icon = primitives.toggle_icon_labels[index];
+    if (button == nullptr || icon == nullptr) {
       return nullptr;
     }
     toggles_[index].button = button;
-    lv_obj_set_grid_cell(button, LV_GRID_ALIGN_CENTER, col, 1, LV_GRID_ALIGN_CENTER, row, 1);
-    lv_obj_set_size(button, 58, 58);
-    lv_obj_set_style_radius(button, LV_RADIUS_CIRCLE, 0);
-    lv_obj_set_style_bg_color(button, lv_color_hex(0x15294A), 0);
-    lv_obj_set_style_bg_opa(button, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(button, 0, 0);
-    lv_obj_set_style_shadow_width(button, 0, 0);
     attach_click_guard(button);
     lv_obj_add_event_cb(button, &QuickSettingsPage::toggle_event_cb, LV_EVENT_CLICKED, this);
     lv_obj_add_event_cb(button, &QuickSettingsPage::toggle_long_press_event_cb, LV_EVENT_LONG_PRESSED, this);
     lv_obj_add_event_cb(button, &QuickSettingsPage::toggle_release_event_cb, LV_EVENT_RELEASED, this);
     lv_obj_add_event_cb(button, &QuickSettingsPage::toggle_press_lost_event_cb, LV_EVENT_PRESS_LOST, this);
     lv_obj_set_user_data(button, reinterpret_cast<void*>(static_cast<std::uintptr_t>(index)));
-
-    lv_obj_t* icon = lv_label_create(button);
-    if (icon == nullptr) {
-      return nullptr;
-    }
     toggles_[index].icon_label = icon;
-    lv_obj_set_style_text_font(icon, &lv_font_montserrat_24, 0);
     lv_label_set_text(icon, toggles_[index].icon_text);
-    lv_obj_center(icon);
     apply_toggle_visual(index);
   }
-
-  lv_obj_set_size(drag_handle_, 52, 7);
-  lv_obj_align(drag_handle_, LV_ALIGN_TOP_MID, 0, 4);
-  lv_obj_set_style_bg_color(drag_handle_, lv_color_hex(0x4B5E7A), 0);
-  lv_obj_set_style_bg_opa(drag_handle_, LV_OPA_COVER, 0);
-  lv_obj_set_style_border_width(drag_handle_, 0, 0);
-  lv_obj_set_style_radius(drag_handle_, LV_RADIUS_CIRCLE, 0);
-  lv_obj_remove_flag(drag_handle_, LV_OBJ_FLAG_SCROLLABLE);
-  lv_obj_remove_flag(drag_handle_, LV_OBJ_FLAG_CLICKABLE);
-  lv_obj_move_foreground(drag_handle_);
 
   bind_input();
   bind_display_policy();
