@@ -86,6 +86,17 @@ const lv_font_t* cjk_font_14() {
   return font != nullptr ? font : &lv_font_montserrat_14;
 }
 
+void register_shell_home_pages(PageManager& page_manager, DataCenter& data_center) {
+  page_manager.register_page(PageId::HomeRingHost,
+                             [&data_center]() {
+                               return std::make_unique<HomeRingHostPage>(data_center);
+                             });
+  page_manager.register_page(PageId::Watchface,
+                             [&data_center]() {
+                               return std::make_unique<WatchfacePage>(data_center);
+                             });
+}
+
 class NotificationToastOverlay {
  public:
   void attach(DataCenter& data_center) {
@@ -305,8 +316,7 @@ void Application::register_pages() {
                                 });
   };
 
-  page_manager_.register_page(PageId::HomeRingHost, [this]() { return std::make_unique<HomeRingHostPage>(data_center_); });
-  page_manager_.register_page(PageId::Watchface, [this]() { return std::make_unique<WatchfacePage>(data_center_); });
+  register_shell_home_pages(page_manager_, data_center_);
   page_manager_.register_page(PageId::Launcher, [this]() { return std::make_unique<LauncherPage>(data_center_); });
   page_manager_.register_page(PageId::Notifications,
                               [this]() { return std::make_unique<NotificationsPage>(data_center_); });
