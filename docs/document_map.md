@@ -9,15 +9,15 @@
 默认只读：
 
 1. `AGENTS.md`
-2. [document_map.md](/D:/MY_Desk/watch/magic_watch_docs_sync/docs/document_map.md)
-3. [project_brief.md](/D:/MY_Desk/watch/magic_watch_docs_sync/docs/00_current/project_brief.md)
-4. [current_decisions.md](/D:/MY_Desk/watch/magic_watch_docs_sync/docs/00_current/current_decisions.md)
+2. [document_map.md](/D:/MY_Desk/watch/magic_watch/docs/document_map.md)
+3. [project_brief.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/project_brief.md)
+4. [current_decisions.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_decisions.md)
 
 如果时间很紧，最少读：
 
-- [document_map.md](/D:/MY_Desk/watch/magic_watch_docs_sync/docs/document_map.md)
-- [project_brief.md](/D:/MY_Desk/watch/magic_watch_docs_sync/docs/00_current/project_brief.md)
-- [current_decisions.md](/D:/MY_Desk/watch/magic_watch_docs_sync/docs/00_current/current_decisions.md)
+- [document_map.md](/D:/MY_Desk/watch/magic_watch/docs/document_map.md)
+- [project_brief.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/project_brief.md)
+- [current_decisions.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_decisions.md)
 
 默认入口只回答三件事：
 
@@ -31,16 +31,16 @@
 
 以下文档不再作为默认入口：
 
-- [project_charter.md](/D:/MY_Desk/watch/magic_watch_docs_sync/docs/project_charter.md): 旧阶段项目宪章，已由 `00_current/project_brief.md` 接管当前定位。
-- [current_refactor_status.md](/D:/MY_Desk/watch/magic_watch_docs_sync/docs/00_current/current_refactor_status.md): 当前代码事实基线，内容较长，只在需要确认“代码实际拆到哪”时补读。
-- [current_architecture.md](/D:/MY_Desk/watch/magic_watch_docs_sync/docs/00_current/current_architecture.md): 架构主线入口，不是每次新会话都必须先读。
-- [v0_scope.md](/D:/MY_Desk/watch/magic_watch_docs_sync/docs/00_current/v0_scope.md): 当前范围摘要，在需要确认阶段边界时补读。
-- [decision_log.md](/D:/MY_Desk/watch/magic_watch_docs_sync/docs/decision_log.md): 历史决策流水账，只作历史检索。
-- [page_reachability_audit.md](/D:/MY_Desk/watch/magic_watch_docs_sync/docs/page_reachability_audit.md): 历史页面可达性审计，只在查旧入口、旧页面或历史判断时选读。
+- [project_charter.md](/D:/MY_Desk/watch/magic_watch/docs/project_charter.md): 旧阶段项目宪章，已由 `00_current/project_brief.md` 接管当前定位。
+- [current_refactor_status.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_refactor_status.md): 当前代码事实基线，内容较长，只在需要确认“代码实际拆到哪”时补读。
+- [current_architecture.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_architecture.md): 架构主线入口，不是每次新会话都必须先读。
+- [v0_scope.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/v0_scope.md): 当前范围摘要，在需要确认阶段边界时补读。
+- [decision_log.md](/D:/MY_Desk/watch/magic_watch/docs/decision_log.md): 历史决策流水账，只作历史检索。
+- [page_reachability_audit.md](/D:/MY_Desk/watch/magic_watch/docs/page_reachability_audit.md): 历史页面可达性审计，只在查旧入口、旧页面或历史判断时选读。
 
 ## 当前代码事实补读
 
-- [current_refactor_status.md](/D:/MY_Desk/watch/magic_watch_docs_sync/docs/00_current/current_refactor_status.md): 当前代码重构落点总览。
+- [current_refactor_status.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_refactor_status.md): 当前代码重构落点总览。
 
 读取时机：
 
@@ -60,44 +60,44 @@
 
 先读：
 
-- [project_brief.md](/D:/MY_Desk/watch/magic_watch_docs_sync/docs/00_current/project_brief.md)
-- [current_decisions.md](/D:/MY_Desk/watch/magic_watch_docs_sync/docs/00_current/current_decisions.md)
-- [v0_scope.md](/D:/MY_Desk/watch/magic_watch_docs_sync/docs/00_current/v0_scope.md)，仅在需要确认当前阶段边界时补读。
+- [project_brief.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/project_brief.md)
+- [current_decisions.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_decisions.md)
+- [v0_scope.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/v0_scope.md)，仅在需要确认当前阶段边界时补读。
 
 ### 我想知道当前重构到哪了
 
 先读：
 
-- [current_refactor_status.md](/D:/MY_Desk/watch/magic_watch_docs_sync/docs/00_current/current_refactor_status.md)
-- [ui_page_split_status.md](/D:/MY_Desk/watch/magic_watch_docs_sync/docs/10_architecture/ui_page_split_status.md)
+- [current_refactor_status.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_refactor_status.md)
+- [ui_page_split_status.md](/D:/MY_Desk/watch/magic_watch/docs/10_architecture/ui_page_split_status.md)
 
-### 我想继续拆 `ShellPages.cpp`
+### 我想继续收口 Shell 聚合头 / 注册结构
 
-- [current_architecture.md](/D:/MY_Desk/watch/magic_watch_docs_sync/docs/00_current/current_architecture.md)
-- [current_refactor_status.md](/D:/MY_Desk/watch/magic_watch_docs_sync/docs/00_current/current_refactor_status.md)
-- [ui_page_split_status.md](/D:/MY_Desk/watch/magic_watch_docs_sync/docs/10_architecture/ui_page_split_status.md)
+- [current_architecture.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_architecture.md)
+- [current_refactor_status.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_refactor_status.md)
+- [ui_page_split_status.md](/D:/MY_Desk/watch/magic_watch/docs/10_architecture/ui_page_split_status.md)
 
 ### 我想新增 UI 页面
 
 先读：
 
-- [ui_page_ownership.md](/D:/MY_Desk/watch/magic_watch_docs_sync/docs/10_architecture/ui_page_ownership.md)
-- [current_architecture.md](/D:/MY_Desk/watch/magic_watch_docs_sync/docs/00_current/current_architecture.md)
-- [current_refactor_status.md](/D:/MY_Desk/watch/magic_watch_docs_sync/docs/00_current/current_refactor_status.md)，仅在需要确认当前实现文件归属时补读。
+- [ui_page_ownership.md](/D:/MY_Desk/watch/magic_watch/docs/10_architecture/ui_page_ownership.md)
+- [current_architecture.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_architecture.md)
+- [current_refactor_status.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_refactor_status.md)，仅在需要确认当前实现文件归属时补读。
 
 ### 我想判断页面归属
 
 先读：
 
-- [ui_page_ownership.md](/D:/MY_Desk/watch/magic_watch_docs_sync/docs/10_architecture/ui_page_ownership.md)
-- [ui_page_split_status.md](/D:/MY_Desk/watch/magic_watch_docs_sync/docs/10_architecture/ui_page_split_status.md)
+- [ui_page_ownership.md](/D:/MY_Desk/watch/magic_watch/docs/10_architecture/ui_page_ownership.md)
+- [ui_page_split_status.md](/D:/MY_Desk/watch/magic_watch/docs/10_architecture/ui_page_split_status.md)
 
 ### 我想继续 HeartRate 测量流
 
 先读：
 
-- [current_refactor_status.md](/D:/MY_Desk/watch/magic_watch_docs_sync/docs/00_current/current_refactor_status.md)
-- [ui_page_split_status.md](/D:/MY_Desk/watch/magic_watch_docs_sync/docs/10_architecture/ui_page_split_status.md)
+- [current_refactor_status.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_refactor_status.md)
+- [ui_page_split_status.md](/D:/MY_Desk/watch/magic_watch/docs/10_architecture/ui_page_split_status.md)
 
 说明：
 
@@ -108,8 +108,8 @@
 
 先读：
 
-- [manual_ui_regression_checklist.md](/D:/MY_Desk/watch/magic_watch_docs_sync/docs/30_testing/manual_ui_regression_checklist.md)
-- [current_refactor_status.md](/D:/MY_Desk/watch/magic_watch_docs_sync/docs/00_current/current_refactor_status.md)，仅在需要把回归包映射到当前结构风险时补读。
+- [manual_ui_regression_checklist.md](/D:/MY_Desk/watch/magic_watch/docs/30_testing/manual_ui_regression_checklist.md)
+- [current_refactor_status.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_refactor_status.md)，仅在需要把回归包映射到当前结构风险时补读。
 
 说明：
 
@@ -120,7 +120,7 @@
 
 先读：
 
-- [project_story_notes.md](/D:/MY_Desk/watch/magic_watch_docs_sync/docs/90_resume/project_story_notes.md)
+- [project_story_notes.md](/D:/MY_Desk/watch/magic_watch/docs/90_resume/project_story_notes.md)
 
 说明：
 
@@ -132,14 +132,14 @@
 
 先读：
 
-- [current_architecture.md](/D:/MY_Desk/watch/magic_watch_docs_sync/docs/00_current/current_architecture.md)
-- [current_decisions.md](/D:/MY_Desk/watch/magic_watch_docs_sync/docs/00_current/current_decisions.md)
+- [current_architecture.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_architecture.md)
+- [current_decisions.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_decisions.md)
 
 ### 我想查历史决策
 
 先读：
 
-- [decision_log.md](/D:/MY_Desk/watch/magic_watch_docs_sync/docs/decision_log.md)
+- [decision_log.md](/D:/MY_Desk/watch/magic_watch/docs/decision_log.md)
 
 说明：
 

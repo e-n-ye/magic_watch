@@ -34,7 +34,7 @@ Forbidden changes:
 
 ## 为什么不能再只用旧叙事
 
-当前很多入口文档仍把 `SettingsPages.cpp` 和 `ShellPages.cpp` 作为“未来待拆巨石”的主要事实背景。
+此前很多入口文档曾把 `SettingsPages.cpp` 和 `ShellPages.cpp` 作为“未来待拆巨石”的主要事实背景。
 
 这个判断并不完全错，但已经不够准确：
 
@@ -44,7 +44,7 @@ Forbidden changes:
 - `Health` 的 `Sleep`、`BloodOxygen`、`HeartRate` 已经形成独立实现文件。
 - 一批 Shell shared helpers 和 Health shared helpers 已经出现。
 
-如果文档继续只写“不要机械拆 `ShellPages.cpp` / `SettingsPages.cpp`”，团队能知道大方向，却看不清当前代码真实落点，也很难判断下一轮文档应更新哪里。
+如果文档只写“不要机械拆 `ShellPages.cpp` / `SettingsPages.cpp`”，团队能知道大方向，却看不清当前代码真实落点，也很难判断下一轮文档应更新哪里。
 
 ## 当前代码真实结构总览
 
@@ -267,11 +267,11 @@ Forbidden changes:
 - `ShellPages.cpp` 已无 HeartRate 非测量页面实现残留。
 - 当前更集中的风险在 `HeartRatePages.cpp` 内部，尤其是 `HeartRateAppPage` 的 measurement timer、stage 切换与 wear prompt 生命周期边界。
 
-### ShellPages.cpp 剩余区域
+### ShellPages.cpp 退场状态
 
 当前 `ShellPages.cpp` 已不再承载任何页面实现。
 
-当前剩余内容更接近：
+退场前的剩余内容曾主要是：
 
 - 已清理前的零引用 `using`
 - 已清理前的零引用文本常量
@@ -385,18 +385,18 @@ Forbidden changes:
 
 ## 当前文档同步建议
 
-这份文档创建后，后续同步应按以下顺序推进：
+后续同步应按以下顺序推进：
 
-1. 先更新 `docs/document_map.md`，把本文件纳入默认入口或当前入口说明。
-2. 再补 UI 页面归属与拆分状态文档，明确哪些域已迁出、哪些仍留在 `ShellPages.cpp`。
+1. 保持 `docs/document_map.md` 指向当前工作树，并把长历史文档留作按需检索。
+2. 继续维护 UI 页面归属与拆分状态文档，明确哪些域已下沉、哪些仍受聚合头和注册结构影响。
 3. 再整理手动回归清单与当前结构之间的映射，避免“行为回归文档知道页面，但结构文档不知道页面在哪”。
 
 ## 本轮结论
 
-截至 2026-06-02，项目代码现状已经从“SettingsPages / ShellPages 双巨石”前进到“实现文件显著分域下沉、聚合头与注册层仍保守维持”的过渡阶段。
+截至 2026-06-03，项目代码现状已经从“SettingsPages / ShellPages 双巨石”前进到“ShellPages.cpp 已退场、实现文件显著分域下沉、聚合头与注册层仍保守维持”的过渡阶段。
 
 因此当前更准确的描述应是：
 
-- `SettingsPages.cpp` / `ShellPages.cpp` 的风险依然存在；
+- `SettingsPages.cpp`、聚合头和注册结构的风险依然存在；
 - 但它们已经不再代表全部页面实现现状；
 - 文档必须先承认 `Display`、`Power`、`Daily`、`Health` 的真实下沉事实，后续拆分与风险讨论才不会失真。

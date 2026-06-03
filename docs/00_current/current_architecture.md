@@ -1,20 +1,21 @@
 # Magic Watch Current Architecture
 
-日期：2026-05-26
+日期：2026-06-03
 
 ## 当前主线
 
 ```mermaid
 flowchart LR
-    HAL["HAL / SimulatorDevice"]
+    HAL["HAL / SimulatorDevice\nfuture Driver/BSP boundary"]
     App["Application\ncomposition root"]
     Router["InputIntentRouter"]
     Services["Services\nBattery / Notification / Steps"]
     DataCenter["DataCenter"]
     EventBus["EventBus"]
-    StateMachine["AppStateMachine\ncurrent coordinator target"]
+    StateMachine["AppStateMachine\nCoordinator"]
+    PowerController["PowerController\nfirst extracted Controller"]
     PageManager["PageManager"]
-    Pages["LVGL Pages"]
+    Pages["LVGL Pages\nsplit by domain"]
 
     HAL --> App
     App --> Router
@@ -25,6 +26,7 @@ flowchart LR
     DataCenter --> EventBus
     EventBus --> StateMachine
     EventBus --> Pages
+    StateMachine --> PowerController
     StateMachine --> PageManager
     PageManager --> Pages
 ```
@@ -35,27 +37,40 @@ flowchart LR
 - `Service`: 平台样本到应用模型。
 - `DataCenter + EventBus`: v0 共享模型入口和事件分发。
 - `AppStateMachine`: 系统级协调者，未来应逐步退回 Coordinator。
+- `PowerController`: 第一个已落地子 Controller，只返回固定大小 Action，不直接操作 UI 或 `PageManager`。
 - `PageManager`: 页面显示、页面栈、临时壳层。
-- `Pages`: LVGL UI、页面局部状态和控件生命周期。
+- `Pages`: LVGL UI、页面局部状态和控件生命周期；页面实现已经按领域显著下沉。
 
 ## 当前风险
 
 - `AppStateMachine` 同时处理输入、电源、主页环、壳层、通知唤醒和计时器，存在 God Class 风险。
-- `ShellPages.cpp` 与 `SettingsPages.cpp` 文件过大，但不能先机械拆分，否则容易复制生命周期问题。
+- `ShellPages.cpp` 已从构建退场；当前风险转向 `ShellPages.h` 聚合声明头和 `Application.cpp` 注册组合根。
+- `SettingsPages.cpp` / `SettingsPages.h` 仍需后续单独审计，不能和 Shell 收口混在一轮处理。
 - `DataCenter` 继续增加字段会形成超级对象风险。
 - `EventBus` 当前是同步分发，未来接 RTOS 或真实硬件时需要重新定义队列、快照或同步边界。
+- UI 生命周期契约已建立，`LvglTimerGuard` 已存在；裸 `lv_timer_t*` 仍需逐页小步迁移。
 
-## 架构收口路线
+## 阶段 8 验收地图
+
+| 最初目标 | 当前判断 | 证据 / 现状 | 下一步收口 |
+| --- | --- | --- | --- |
+| 新会话快速理解项目 | 部分达成 | `document_map.md` 已作为任务路由器，`00_current/` 承担当前入口；长历史文档不再默认读 | 修正入口链接和旧事实残影，保持默认入口短 |
+| 页面实现不再回流巨石 | 已达成主要目标 | `ShellPages.cpp` 已退场，Shell/Home/Notifications/QuickSettings/Launcher/Power/Daily/Health 实现已分域下沉 | 拆 `ShellPages.h` 聚合声明头 |
+| 新增功能最小化修改 | 部分达成 | 页面实现文件已分域，但 `Application.cpp::register_pages()` 仍集中注册大量页面 | 注册按领域分流 |
+| Controller 可复用且不操作 UI | 部分达成 | `PowerController` 已落地；其它 Controller 仍未提取 | 继续按状态归属逐个提取，不盲目新增 |
+| UI 生命周期清楚 | 部分达成 | `ui_lifecycle.md` 已定义契约，`LvglTimerGuard` 已存在 | 逐页迁移裸 timer，先从低风险页面开始 |
+| 未来硬件接入不重写上层 | 未完成 | 当前硬件选型未定，仍主要依赖模拟器路径 | 先补硬件边界文档契约，不写芯片绑定代码 |
+| 构建通过不等于行为通过 | 部分达成 | 文档已多次标注手动 UI 未执行 | 重新整理并执行手动 UI 回归 |
+
+## 阶段 8 架构收口路线
 
 ```text
-第 0 轮：文档止血
-第 1A 轮：AppStateMachine 状态与事件盘点
-第 1B 轮：提取 PowerController
-第 1C 轮：继续逐个提取 Controller
-第 2A 轮：UI 生命周期契约 / 最小生命周期基座
-第 2B 轮：拆 SettingsPages.cpp
-第 3 轮：拆 ShellPages.cpp
-第 4 轮：硬件边界设计
+8A：文档入口与当前架构验收地图
+8B：ShellPages.h 聚合头按领域拆分
+8C：Application.cpp 页面注册按领域分流
+8D：UI 生命周期落地到已有 LvglTimerGuard
+8E：硬件接入边界文档契约
+8F：手动 UI 回归闭环
 ```
 
 ## Scope Lock 模板
@@ -144,7 +159,7 @@ struct PowerAction {
 
 ## UI 生命周期约束
 
-拆 `SettingsPages.cpp` 和 `ShellPages.cpp` 前，必须先完成 UI 生命周期契约：
+拆分页面实现、聚合头或注册结构前，必须遵守 UI 生命周期契约：
 
 - LVGL root object 谁创建、谁销毁。
 - 页面 destroy 是否调用 `lv_obj_del`。
@@ -155,7 +170,7 @@ struct PowerAction {
 
 LVGL 对象树拥有最终释放权。C++ wrapper 不得盲目在析构函数中对所有 `lv_obj_t*` 调用 `lv_obj_del`，避免 C++ RAII 与 LVGL 对象树双重释放。保存 `lv_obj_t*` 默认视为弱引用或受控引用，应通过 `LV_EVENT_DELETE` 将已删除指针置空或标记 invalid。
 
-优先轻量 helper，例如 `LvglDeleteAwarePtr`、`LvglTimerGuard`、`EventSubscriptionGuard`、`PageLifecycle helper`。不急着重写整个 UI 框架。
+`LvglTimerGuard` 已存在，后续应优先把低风险裸 `lv_timer_t*` 逐页迁到 guard。`LvglDeleteAwarePtr`、`EventSubscriptionGuard`、`PageLifecycle helper` 仍是候选，不急着重写整个 UI 框架。
 
 ## 并发与硬件预留
 

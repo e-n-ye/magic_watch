@@ -7,7 +7,7 @@
 - UI 页面拆分现在已经走到哪里
 
 它不是页面归属规则文档，也不是逐轮实施日志。
-它的职责是把“哪些页面域已经迁出旧巨石、哪些仍通过聚合头暴露、哪些风险区域还留在壳层文件里”固定下来，作为后续文档同步和 UI 拆分讨论的结构基线。
+它的职责是把“哪些页面域已经迁出旧巨石、哪些仍通过聚合头暴露、哪些风险已经转向生命周期 / 注册 / 回归”固定下来，作为后续文档同步和 UI 拆分讨论的结构基线。
 
 ## Scope Lock
 
@@ -192,8 +192,8 @@ Forbidden changes:
 主要风险：
 
 - 若后续文档只按“页面是否迁出”来描述 HomeRing，会把这轮已经成立的单域 helper 边界忽略掉。
-- 但这也不应被误写成“HomeRing 已与 `ShellPages.cpp` 解耦完成”；当前只是纯 UI 构件先行下沉。
-- 后续仍需谨慎处理 HomeRing 的 EventBus、preview、crown、卡片跳转等行为边界；这些行为当前还留在 `ShellPages.cpp`。
+- 但这也不应被误写成“HomeRing 行为已经低风险”；当前只是实现落点和纯 UI 构件边界完成下沉。
+- 后续仍需谨慎处理 HomeRing 的 EventBus、preview、crown、卡片跳转等行为边界；这些行为当前仍留在 `Shell/Home/ShellHomePages.cpp` 的页面实现内。
 
 ### E. Shell / Launcher
 
@@ -463,16 +463,16 @@ Forbidden changes:
 
 这意味着后续若写“HeartRate 仍未拆完”，必须明确是“生命周期风险未收口”，不是“页面仍未迁出”。
 
-## `ShellPages.cpp` 当前剩余内容
+## `ShellPages.cpp` 退场状态
 
 截至当前，`ShellPages.cpp` 已不再承载任何页面实现。
 
-当前剩余内容主要是：
+退场前的剩余内容曾主要是：
 
-- 已清理前的零引用 `using`
-- 已清理前的零引用文本常量
-- 已清理前的零引用 QuickSettings 日志 helper
-- 已清理前的零引用 generic helper / dead residue
+- 零引用 `using`
+- 零引用文本常量
+- 零引用 QuickSettings 日志 helper
+- 零引用 generic helper / dead residue
 
 当前判断：
 
