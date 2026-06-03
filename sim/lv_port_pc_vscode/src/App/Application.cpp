@@ -7,6 +7,7 @@
 #include "App/UI/Pages/CommonPages.h"
 #include "App/UI/Pages/SettingsPages.h"
 #include "App/UI/Pages/Shell/Home/ShellHomePages.h"
+#include "App/UI/Pages/Shell/Launcher/ShellLauncherPages.h"
 #include "App/UI/Pages/Shell/Notifications/ShellNotificationPages.h"
 #include "App/UI/Pages/Shell/QuickSettings/ShellQuickSettingsPages.h"
 #include "App/UI/Pages/ShellPages.h"

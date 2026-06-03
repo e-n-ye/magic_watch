@@ -1,4 +1,4 @@
-#include "App/UI/Pages/ShellPages.h"
+#include "App/UI/Pages/Shell/Launcher/ShellLauncherPages.h"
 
 #include "App/UI/Pages/Shell/ShellAppIconPrimitives.h"
 #include "App/UI/Pages/Shell/ShellAppVisualRegistry.h"

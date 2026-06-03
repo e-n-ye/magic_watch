@@ -172,8 +172,9 @@ Forbidden changes:
 ### Shell / Launcher
 
 - `LauncherPage` 已从 `ShellPages.cpp` 下沉到 `Shell/Launcher/ShellLauncherPages.cpp`。
+- `LauncherPage` 声明已下沉到 `Shell/Launcher/ShellLauncherPages.h`，`ShellPages.h` 仅通过过渡 include 兼容 Launcher 声明。
 - `CMakeLists.txt` 已登记 `Shell/Launcher/ShellLauncherPages.cpp`。
-- `ShellPages.h` 仍继续暴露 `LauncherPage` 声明。
+- `Application.cpp` 注册结构未改，仍显式注册 `LauncherPage`。
 - `Application.cpp` 注册结构未改，仍通过现有聚合头注册页面。
 
 当前判断：

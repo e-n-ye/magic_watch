@@ -202,17 +202,18 @@ Forbidden changes:
 当前实现文件位于：
 
 - `Shell/Launcher/ShellLauncherPages.cpp`
+- `Shell/Launcher/ShellLauncherPages.h`
 
 当前状态：
 
 - `LauncherPage` 已从 `ShellPages.cpp` 下沉到独立 Launcher 域实现文件。
-- `ShellPages.h` 仍继续承担 `LauncherPage` 的对外聚合声明。
+- `LauncherPage` 声明已下沉到 `Shell/Launcher/ShellLauncherPages.h`，`ShellPages.h` 仅通过过渡 include 兼容 Launcher 入口。
 - `Application.cpp` 注册入口未改。
 
 拆分判断：
 
 - Launcher 页面实现：已迁出。
-- Launcher 外部暴露：仍依赖 `ShellPages.h`。
+- Launcher 外部暴露：已具备 Launcher 域声明头，`ShellPages.h` 仍通过过渡 include 兼容旧入口。
 
 风险等级：
 
