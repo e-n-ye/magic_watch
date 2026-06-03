@@ -3,6 +3,7 @@
 #include <array>
 #include <cstdint>
 
+#include "App/UI/LvglLifecycle.h"
 #include "App/UI/PageBase.h"
 
 namespace twsim::app {
@@ -50,7 +51,7 @@ class HeartRateAppPage : public PageBase {
   lv_obj_t* measuring_stage_ {nullptr};
   lv_obj_t* result_stage_ {nullptr};
   lv_obj_t* wear_prompt_overlay_ {nullptr};
-  lv_timer_t* measurement_timer_ {nullptr};
+  LvglTimerGuard measurement_timer_;
   lv_timer_t* crown_release_timer_ {nullptr};
 };
 

@@ -364,7 +364,7 @@ void HeartRateAppPage::measurement_timer_cb(lv_timer_t* timer) {
   if (self == nullptr) {
     return;
   }
-  self->measurement_timer_ = nullptr;
+  self->measurement_timer_.release();
   self->complete_entry_measurement();
 }
 
@@ -413,9 +413,9 @@ void HeartRateAppPage::refresh_header_time() {
 void HeartRateAppPage::start_entry_measurement() {
   show_measurement_stage();
   stop_measurement_timer();
-  measurement_timer_ = lv_timer_create(&HeartRateAppPage::measurement_timer_cb, 1200U, this);
-  if (measurement_timer_ != nullptr) {
-    lv_timer_set_repeat_count(measurement_timer_, 1);
+  measurement_timer_.reset(lv_timer_create(&HeartRateAppPage::measurement_timer_cb, 1200U, this));
+  if (measurement_timer_.get() != nullptr) {
+    lv_timer_set_repeat_count(measurement_timer_.get(), 1);
   }
 }
 
@@ -447,11 +447,10 @@ void HeartRateAppPage::show_result_stage() {
 }
 
 void HeartRateAppPage::stop_measurement_timer() {
-  if (measurement_timer_ == nullptr) {
+  if (!measurement_timer_) {
     return;
   }
-  lv_timer_delete(measurement_timer_);
-  measurement_timer_ = nullptr;
+  measurement_timer_.reset();
 }
 
 void HeartRateAppPage::schedule_crown_release() {
