@@ -128,7 +128,6 @@ set(MAIN_SOURCES
     src/App/UI/Pages/Shell/Launcher/ShellLauncherPages.cpp
     src/App/UI/Pages/Shell/ShellPagePrimitives.cpp
     src/App/UI/Pages/Shell/Power/ShellPowerPages.cpp
-    src/App/UI/Pages/ShellPages.cpp
     src/App/State/AppStateMachine.cpp
     src/App/State/PowerController.cpp
     src/App/Application.cpp

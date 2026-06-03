@@ -51,7 +51,7 @@ Forbidden changes:
 
 1. 页面实现文件已经显著分域下沉。
 2. 聚合头和注册入口仍保守维持。
-3. `ShellPages.cpp` 仍承载主壳层与高交互页面，因此依旧是高风险区域。
+3. `ShellPages.cpp` 已从构建退场，剩余高风险主要转向聚合头、注册结构与手动回归。
 4. 后续文档和讨论必须区分：
    - 页面实现是否已经迁出
    - 对外头文件是否仍聚合暴露
@@ -477,7 +477,7 @@ Forbidden changes:
 当前判断：
 
 - `ShellPages.cpp` 当前 0 页面实现。
-- `ShellPages.cpp` 中的零引用 dead residue 已清理，文件仍保留，`CMakeLists.txt` 登记未变。
+- `ShellPages.cpp` 中的零引用 dead residue 已清理，空壳文件也已删除，`CMakeLists.txt` 已移除其编译登记。
 - `WatchfacePage` 与 `HomeRingHostPage` 已迁入 `Shell/Home/ShellHomePages.cpp`，但 Watchface 的时间、电量、输入路径，以及 HomeRing 的 EventBus、preview、crown、卡片跳转和 daily 动态数据边界仍需谨慎手动回归。
 - `NotificationWakePage` 与 `NotificationsPage` 已迁入 `Shell/Notifications/ShellNotificationPages.cpp`，QuickSettings 页面实现也已迁入 `Shell/QuickSettings/ShellQuickSettingsPages.cpp`。
 - 剩余风险已从“页面迁移”转为“聚合头拆分、注册结构重组、手动 UI 回归”。
@@ -527,7 +527,7 @@ Forbidden changes:
 | Health / Sleep | `Health/SleepPages.cpp` | 是 | 是，`ShellPages.h` | 容易仍被误写成 Shell 子块 |
 | Health / BloodOxygen | `Health/BloodOxygenPages.cpp` + helpers | 是 | 是，`ShellPages.h` | shared helper 与页面关系不易看清 |
 | Health / HeartRate | `Health/HeartRatePages.cpp` | 是 | 是，`ShellPages.h` | 生命周期风险高 |
-| 剩余 Shell 收口层 | `ShellPages.cpp` | 是 | 是，`ShellPages.h` | 聚合头滞后、注册结构未收口 |
+| 剩余 Shell 收口层 | `ShellPages.h` + `Application.cpp` | 是 | 是，`ShellPages.h` | 聚合头滞后、注册结构未收口 |
 
 ## 当前最需要避免的误判
 
@@ -571,7 +571,7 @@ Power 仍与：
 1. `Display`、`Power`、`Daily`、`Health` 页面实现已显著分域下沉。
 2. `SettingsPages.h` 和 `ShellPages.h` 仍承担对外聚合入口。
 3. `LauncherPage` 已独立下沉到 `Shell/Launcher/ShellLauncherPages.cpp`，但 `ShellPages.h` 与 `Application.cpp` 的外部入口结构暂未变化。
-4. `ShellPages.cpp` 当前已无页面实现，dead residue 也已清理；后续更像澄清聚合边界与注册结构，而不是继续迁页面。
+4. `ShellPages.cpp` 当前已从构建退场；后续更像澄清聚合边界与注册结构，而不是继续迁页面。
 5. 后续任何关于“ShellPages 拆分是否继续”的讨论，都不应再基于早期“所有页面都还在壳层巨石里”的旧事实。
 
 ## 后续建议
