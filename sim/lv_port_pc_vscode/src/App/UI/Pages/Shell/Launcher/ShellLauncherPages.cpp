@@ -445,18 +445,17 @@ void LauncherPage::apply_crown_drag(bool forward, std::int16_t detents) {
 
 void LauncherPage::schedule_crown_release() {
   stop_crown_release_timer();
-  crown_release_timer_ = lv_timer_create(&LauncherPage::crown_release_timer_cb, kLauncherCrownReleaseDelayMs, this);
-  if (crown_release_timer_ != nullptr) {
-    lv_timer_set_repeat_count(crown_release_timer_, 1);
+  crown_release_timer_.reset(lv_timer_create(&LauncherPage::crown_release_timer_cb, kLauncherCrownReleaseDelayMs, this));
+  if (crown_release_timer_.get() != nullptr) {
+    lv_timer_set_repeat_count(crown_release_timer_.get(), 1);
   }
 }
 
 void LauncherPage::stop_crown_release_timer() {
-  if (crown_release_timer_ == nullptr) {
+  if (!crown_release_timer_) {
     return;
   }
-  lv_timer_delete(crown_release_timer_);
-  crown_release_timer_ = nullptr;
+  crown_release_timer_.reset();
 }
 
 void LauncherPage::crown_release_timer_cb(lv_timer_t* timer) {
@@ -465,7 +464,7 @@ void LauncherPage::crown_release_timer_cb(lv_timer_t* timer) {
     return;
   }
 
-  self->crown_release_timer_ = nullptr;
+  self->crown_release_timer_.release();
   const std::int32_t current_y = lv_obj_get_scroll_y(self->list_root_);
   const std::int32_t scroll_max =
       std::max<std::int32_t>(0, lv_obj_get_scroll_top(self->list_root_) + lv_obj_get_scroll_bottom(self->list_root_));

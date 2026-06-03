@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <vector>
 
+#include "App/UI/LvglLifecycle.h"
 #include "App/UI/PageBase.h"
 
 namespace twsim::app {
@@ -43,7 +44,7 @@ class LauncherPage : public PageBase {
   lv_obj_t* list_root_ {nullptr};
   std::vector<Item> items_;
   LauncherLayoutMode current_layout_mode_ {LauncherLayoutMode::Categorized};
-  lv_timer_t* crown_release_timer_ {nullptr};
+  LvglTimerGuard crown_release_timer_;
 };
 
 }  // namespace twsim::app

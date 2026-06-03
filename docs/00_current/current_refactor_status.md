@@ -178,6 +178,7 @@ Forbidden changes:
 - `LauncherPage` 已从 `ShellPages.cpp` 下沉到 `Shell/Launcher/ShellLauncherPages.cpp`。
 - `LauncherPage` 声明已下沉到 `Shell/Launcher/ShellLauncherPages.h`，`ShellPages.h` 仅通过过渡 include 兼容 Launcher 声明。
 - `CMakeLists.txt` 已登记 `Shell/Launcher/ShellLauncherPages.cpp`。
+- `LauncherPage::crown_release_timer_` 已迁入 `LvglTimerGuard`。
 - `Application.cpp` 注册结构未改，仍显式注册 `LauncherPage`。
 - `Application.cpp` 注册结构未改，仍通过现有聚合头注册页面。
 
