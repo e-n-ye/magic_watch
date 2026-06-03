@@ -171,7 +171,7 @@ void NotificationWakePage::timeout_cb(lv_timer_t* timer) {
   if (self == nullptr) {
     return;
   }
-  self->auto_close_timer_ = nullptr;
+  self->auto_close_timer_.release();
   self->request_navigation({NavigationAction::CloseShellSurface, PageId::Watchface});
 }
 
@@ -222,16 +222,15 @@ void NotificationWakePage::refresh_content() {
 
 void NotificationWakePage::start_auto_close_timer() {
   stop_auto_close_timer();
-  auto_close_timer_ = lv_timer_create(&NotificationWakePage::timeout_cb, 5000U, this);
-  if (auto_close_timer_ != nullptr) {
-    lv_timer_set_repeat_count(auto_close_timer_, 1);
+  auto_close_timer_.reset(lv_timer_create(&NotificationWakePage::timeout_cb, 5000U, this));
+  if (auto_close_timer_.get() != nullptr) {
+    lv_timer_set_repeat_count(auto_close_timer_.get(), 1);
   }
 }
 
 void NotificationWakePage::stop_auto_close_timer() {
-  if (auto_close_timer_ != nullptr) {
-    lv_timer_del(auto_close_timer_);
-    auto_close_timer_ = nullptr;
+  if (auto_close_timer_) {
+    auto_close_timer_.reset();
   }
 }
 

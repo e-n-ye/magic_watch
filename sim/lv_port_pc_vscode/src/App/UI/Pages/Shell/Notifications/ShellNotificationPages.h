@@ -6,6 +6,7 @@
 #include <string_view>
 #include <vector>
 
+#include "App/UI/LvglLifecycle.h"
 #include "App/UI/PageBase.h"
 #include "App/UI/Watchface/WatchfaceStyle.h"
 
@@ -123,7 +124,7 @@ class NotificationWakePage : public PageBase {
   lv_obj_t* time_label_ {nullptr};
   lv_obj_t* dismiss_button_ {nullptr};
   std::string current_notification_id_;
-  lv_timer_t* auto_close_timer_ {nullptr};
+  LvglTimerGuard auto_close_timer_;
 };
 
 }  // namespace twsim::app
