@@ -154,6 +154,7 @@ Forbidden changes:
 当前实现文件位于：
 
 - `Shell/Home/ShellHomePages.cpp`
+- `Shell/Home/ShellHomePages.h`
 - `Shell/Home/ShellHomeLayoutPrimitives.*`
 - `Shell/Home/ShellHomePaymentCardPrimitives.*`
 - `Shell/Home/ShellHomeHealthCardPrimitives.*`
@@ -163,6 +164,7 @@ Forbidden changes:
 
 - `WatchfacePage` 已从 `ShellPages.cpp` 下沉到 `Shell/Home/ShellHomePages.cpp`。
 - `HomeRingHostPage` 已从 `ShellPages.cpp` 下沉到 `Shell/Home/ShellHomePages.cpp`。
+- Home 的 `WatchfacePage` / `HomeRingHostPage` 声明已下沉到 `Shell/Home/ShellHomePages.h`，`ShellPages.h` 仅通过过渡 include 继续兼容旧入口。
 - 但 HomeRing 的纯 UI layout / stage / pager 构件已经开始形成单域 helper 边界。
 - HomeRing payment / NFC card primitives 也已经开始形成单域 helper 边界。
 - HomeRing health card primitives 也已经开始形成单域 helper 边界。
@@ -183,7 +185,7 @@ Forbidden changes:
 
 - HomeRing 页面实现：已迁入 `Shell/Home/`。
 - HomeRing 单域 helper：已开始独立。
-- HomeRing 外部暴露：仍完全依赖 `ShellPages.h`。
+- HomeRing 外部暴露：已具备 Home 域声明头，`ShellPages.h` 仍通过过渡 include 兼容旧入口。
 
 风险等级：
 

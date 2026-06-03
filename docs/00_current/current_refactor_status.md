@@ -108,6 +108,7 @@ Forbidden changes:
 
 - `WatchfacePage` 已迁入 `Shell/Home/ShellHomePages.cpp`。
 - `HomeRingHostPage` 已迁入 `Shell/Home/ShellHomePages.cpp`。
+- `WatchfacePage` 与 `HomeRingHostPage` 声明已下沉到 `Shell/Home/ShellHomePages.h`，`ShellPages.h` 仅通过过渡 include 暴露 Home 声明。
 - `Shell/Home/ShellHomeLayoutPrimitives.*` 已新增并登记到 `CMakeLists.txt`。
 - `Shell/Home/ShellHomePaymentCardPrimitives.*` 已新增并登记到 `CMakeLists.txt`。
 - `Shell/Home/ShellHomeHealthCardPrimitives.*` 已新增并登记到 `CMakeLists.txt`。
@@ -294,7 +295,7 @@ Forbidden changes:
 
 ### ShellPages.h 聚合头状态
 
-- `ShellPages.h` 仍声明了 Shell、Daily、Health、Power 等多个域的页面类。
+- `ShellPages.h` 仍声明了 Shell、Daily、Health、Power 等多个域的页面类，但 Home 的 `WatchfacePage` / `HomeRingHostPage` 声明已下沉到 `Shell/Home/ShellHomePages.h`。
 - 这意味着：
   - 实现文件已明显分域；
   - 头文件边界仍滞后于实现边界。
