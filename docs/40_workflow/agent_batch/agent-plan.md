@@ -11,7 +11,7 @@
 ## 8E-B1-C01 硬件接入边界文档契约
 
 - 批次：1
-- 状态：TODO
+- 状态：DONE
 - 依赖：无
 - 自检：`git diff --check`；对本卡改动中文文档执行 `AGENTS.md` 中规定的乱码哨兵检查
 - 建议提交信息：`docs: define hardware boundary contract`
@@ -67,7 +67,19 @@ Forbidden changes:
 
 ### 执行记录
 
-（Agent 填写：完成时间 / 实际改动文件 / 自检结果 / 风险回应）
+- 完成时间：2026-06-03（本轮会话）
+- 实际改动文件：
+  - `docs/00_current/current_architecture.md`
+  - `docs/00_current/v0_scope.md`
+  - `docs/10_architecture/state_machine.md`
+  - `docs/10_architecture/hardware_boundary.md`
+  - `docs/document_map.md`
+- 自检结果：
+  - `git diff --check` 通过
+  - 中文文档乱码哨兵检查通过：`rg -n "锛|鏃|褰|闈|€|�"` 未命中本轮改动文件
+- 风险回应：
+  - 文档只定义职责边界与同步约束，未绑定芯片、板卡、RTOS 或硬件代码骨架
+  - 明确 UI 不访问 `Driver/BSP/HAL`，并补充同步 `EventBus` 在真实硬件化前必须先定义队列、线程归属与 snapshot 边界
 
 ---
 

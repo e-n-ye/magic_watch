@@ -41,3 +41,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：
 - 阻塞与待决：
 - 下一步：
+
+### 会话 2026-06-03 任务执行中
+
+- 本轮范围：批次 1，卡片 8E-B1-C01 / 8F-B1-C02
+- 完成：8E-B1-C01
+- 修改文件：`docs/00_current/current_architecture.md`、`docs/00_current/v0_scope.md`、`docs/10_architecture/state_machine.md`、`docs/10_architecture/hardware_boundary.md`、`docs/document_map.md`、批次执行运行文件
+- 自检：`git diff --check` 通过；本轮中文文档乱码哨兵检查通过
+- 风险回应：硬件边界仅收口职责契约，未绑定芯片、板卡、RTOS，也未新增硬件代码骨架
+- 阻塞与待决：
+- 下一步：先执行 8E-B1-C01；若完成并满足依赖，再执行 8F-B1-C02

@@ -15,6 +15,7 @@ v0 的目标不是做完整智能手表产品，而是在 PC LVGL 模拟器中�
 - 输入路径保留 `HAL -> InputIntentRouter -> DataCenter/EventBus -> AppStateMachine`。
 - 平台样本保留 `HAL sample -> Service -> DataCenter -> Pages`。
 - 页面导航仍由 `AppStateMachine` 决策，`PageManager` 执行显示。
+- 未来真实硬件输入仍需遵守 `ISR -> Service -> DataCenter/EventBus -> Coordinator/UI` 的边界，不允许 UI 直接访问 Driver/BSP/HAL。
 
 ## 当前暂停扩张的内容
 
@@ -30,3 +31,4 @@ v0 的目标不是做完整智能手表产品，而是在 PC LVGL 模拟器中�
 - Controller 不直接操作 UI 或 `PageManager`。
 - UI 页面生命周期规则清楚。
 - 硬件接入边界逐步明确。
+- ISR 不直接改 UI；硬件采样先进入 Service 聚合，再写模型或发布事件。

@@ -54,6 +54,8 @@ Forbidden changes:
 
 ## Event Flow Overview
 
+未来真实硬件接入时，`AppStateMachine` 与 `DataCenter/EventBus`、UI、Driver/BSP/HAL 的职责边界，统一以 `docs/10_architecture/hardware_boundary.md` 为准；本文件只盘点当前状态与事件路径，不替代硬件接入契约。
+
 ```mermaid
 sequenceDiagram
     participant HAL as HAL/Simulator
@@ -301,6 +303,8 @@ struct PowerAction {
 - 高频数据不直接触发大量同步 UI 更新。
 - Controller 读取快照或消费事件，不共享可变状态。
 - `Driver/BSP/HAL` 与 `UI/StateMachine` 之间必须有事件队列、快照或同步边界。
+
+这些原则已在 `docs/10_architecture/hardware_boundary.md` 中进一步收口为后续硬件接入契约。
 
 ## Code Contract For Later Rounds
 

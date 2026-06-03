@@ -49,6 +49,7 @@ flowchart LR
 - `DataCenter` 继续增加字段会形成超级对象风险。
 - `EventBus` 当前是同步分发，未来接 RTOS 或真实硬件时需要重新定义队列、快照或同步边界。
 - UI 生命周期契约已建立，`LvglTimerGuard` 已存在；裸 `lv_timer_t*` 仍需逐页小步迁移。
+- 未来真实硬件接入的职责边界已单独收口到 `docs/10_architecture/hardware_boundary.md`，后续硬件化应以该契约约束上层不回流到 HAL。
 
 ## 阶段 8 验收地图
 
@@ -61,6 +62,11 @@ flowchart LR
 | UI 生命周期清楚 | 部分达成 | `ui_lifecycle.md` 已定义契约，`LvglTimerGuard` 已存在 | 逐页迁移裸 timer，先从低风险页面开始 |
 | 未来硬件接入不重写上层 | 未完成 | 当前硬件选型未定，仍主要依赖模拟器路径 | 先补硬件边界文档契约，不写芯片绑定代码 |
 | 构建通过不等于行为通过 | 部分达成 | 文档已多次标注手动 UI 未执行 | 重新整理并执行手动 UI 回归 |
+
+补充说明：
+
+- 真实硬件接入的上层职责边界已定义在 `docs/10_architecture/hardware_boundary.md`。
+- 当前仍未绑定芯片、板卡或 RTOS；后续实现只能在该契约内补充具体同步机制。
 
 ## 阶段 8 架构收口路线
 

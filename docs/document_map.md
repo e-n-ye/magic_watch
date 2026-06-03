@@ -150,6 +150,19 @@
 - [current_architecture.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_architecture.md)
 - [current_decisions.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_decisions.md)
 
+### 我想规划未来真实硬件接入，但不想提前绑定芯片或 RTOS
+
+先读：
+
+- [hardware_boundary.md](/D:/MY_Desk/watch/magic_watch/docs/10_architecture/hardware_boundary.md)
+- [current_architecture.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_architecture.md)，仅在需要确认当前协调层与页面边界时补读。
+
+说明：
+
+- 这是按需专题文档，不加入默认新会话必读。
+- 它只定义 ISR、Service、DataCenter、EventBus、Coordinator、UI 与 Driver/BSP/HAL 的职责边界。
+- 它不绑定芯片、板卡、RTOS 或硬件代码骨架。
+
 ### 我想查历史决策
 
 先读：
