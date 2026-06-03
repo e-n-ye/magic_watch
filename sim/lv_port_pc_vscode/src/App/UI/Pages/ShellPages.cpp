@@ -14,6 +14,7 @@
 #include "App/UI/Pages/Shell/ShellCrownScrollHelpers.h"
 #include "App/UI/Pages/Shell/ShellFontHelpers.h"
 #include "App/UI/Pages/Shell/Home/ShellHomeHealthCardPrimitives.h"
+#include "App/UI/Pages/Shell/Home/ShellHomeDailyCardPrimitives.h"
 #include "App/UI/Pages/Shell/Home/ShellHomeLayoutPrimitives.h"
 #include "App/UI/Pages/Shell/Home/ShellHomePaymentCardPrimitives.h"
 #include "App/UI/Pages/Shell/ShellImagePrimitives.h"
@@ -53,9 +54,6 @@ using shell_asset::nfc_school_card_inner_asset_path;
 using shell_asset::payment_alipay_asset_path;
 using shell_asset::payment_wechat_asset_path;
 using shell_asset::payment_wechat_green_asset_path;
-using shell_asset::sleep_icon_asset_path;
-using shell_asset::steps_icon_asset_path;
-using shell_asset::weather_icon_asset_path;
 
 constexpr const char* kTextClear = "\xE6\xB8\x85\xE7\xA9\xBA";
 constexpr const char* kTextConfirm = "\xE7\xA1\xAE\xE8\xAE\xA4";
@@ -824,134 +822,22 @@ lv_obj_t* HomeRingHostPage::build() {
 
   {
     lv_obj_t* surface = surfaces_[4];
-    const lv_color_t stage_bg = lv_color_hex(0x040812);
-    const lv_color_t weather_bg = lv_color_hex(0x0E2B56);
-    const lv_color_t weather_accent = lv_color_hex(0x7EC8FF);
-    const lv_color_t sleep_bg = lv_color_hex(0x3A1B69);
-    const lv_color_t sleep_accent = lv_color_hex(0xC06CFF);
-    const lv_color_t steps_bg = lv_color_hex(0x054A42);
-    const lv_color_t steps_accent = lv_color_hex(0x19F57A);
-
-    lv_obj_t* stage = lv_obj_create(surface);
-    lv_obj_t* hero_card = lv_obj_create(stage);
-    lv_obj_t* sleep_card = lv_obj_create(stage);
-    lv_obj_t* steps_card = lv_obj_create(stage);
-    if (stage == nullptr || hero_card == nullptr || sleep_card == nullptr || steps_card == nullptr) {
+    shell_home_daily::DailyCardsView daily_cards {};
+    if (!shell_home_daily::create_daily_cards(surface, layout, daily_cards)) {
       return nullptr;
     }
+    lv_label_set_text(daily_cards.weather_temp_label, "23C");
+    lv_label_set_text(daily_cards.weather_range_label, "30C / 18C");
+    lv_label_set_text(daily_cards.sleep_value_label, "7h 36m");
+    lv_label_set_text(daily_cards.steps_value_label, "--");
+    weather_steps_value_label_ = daily_cards.steps_value_label;
 
-    shell_home::style_surface_stage(stage, layout.stage_w, layout.stage_h, layout.stage_radius, stage_bg);
-    lv_obj_align(stage, LV_ALIGN_TOP_MID, 0, layout.stage_top);
-
-    ui_prepare_box(hero_card);
-    ui_apply_surface(hero_card, SurfaceStyle::Panel);
-    lv_obj_set_size(hero_card, layout.stage_w, 110);
-    lv_obj_align(hero_card, LV_ALIGN_TOP_LEFT, 0, 15);
-    lv_obj_set_style_bg_color(hero_card, weather_bg, 0);
-    lv_obj_set_style_border_color(hero_card, lv_color_mix(weather_accent, lv_color_hex(0xFFFFFF), LV_OPA_20), 0);
-    lv_obj_set_style_radius(hero_card, 28, 0);
-    lv_obj_set_style_pad_all(hero_card, 0, 0);
-
-    lv_obj_t* temp_label = lv_label_create(hero_card);
-    lv_obj_t* range_label = lv_label_create(hero_card);
-    lv_obj_t* weather_icon_image = lv_image_create(hero_card);
-    if (temp_label == nullptr || range_label == nullptr || weather_icon_image == nullptr) {
-      return nullptr;
-    }
-    ui_prepare_label(temp_label);
-    ui_apply_text(temp_label, TextStyle::Hero);
-    lv_obj_set_style_text_font(temp_label, &lv_font_montserrat_34, 0);
-    lv_obj_set_style_text_color(temp_label, lv_color_hex(0xFFFFFF), 0);
-    shell_home::set_single_line_label(temp_label, 90);
-    lv_label_set_text(temp_label, "23C");
-    lv_obj_align(temp_label, LV_ALIGN_TOP_LEFT, 15, 23);
-
-    ui_prepare_label(range_label);
-    ui_apply_text(range_label, TextStyle::Title);
-    lv_obj_set_style_text_font(range_label, &lv_font_montserrat_12, 0);
-    lv_obj_set_style_text_color(range_label, lv_color_hex(0xC8D7EE), 0);
-    shell_home::set_single_line_label(range_label, 76);
-    lv_label_set_text(range_label, "30C / 18C");
-    lv_obj_align(range_label, LV_ALIGN_TOP_LEFT, 28, 68);
-
-    const char* weather_icon_path = weather_icon_asset_path();
-    if (file_exists(weather_icon_path)) {
-      lv_image_set_src(weather_icon_image, weather_icon_path);
-      lv_obj_set_size(weather_icon_image, 73, 73);
-      lv_image_set_inner_align(weather_icon_image, LV_IMAGE_ALIGN_CONTAIN);
-      lv_obj_align(weather_icon_image, LV_ALIGN_TOP_LEFT, 140, 18);
-    } else {
-      lv_obj_add_flag(weather_icon_image, LV_OBJ_FLAG_HIDDEN);
-    }
-    attach_click_guard(hero_card);
-    lv_obj_add_event_cb(hero_card, app_tile_event_cb, LV_EVENT_CLICKED, this);
-    lv_obj_set_user_data(hero_card, reinterpret_cast<void*>(static_cast<std::uintptr_t>(PageId::AppWeather)));
-
-    for (auto [card, bg, border, x, target] :
-         {std::tuple<lv_obj_t*, lv_color_t, lv_color_t, lv_coord_t, PageId> {sleep_card,
-                                                                              sleep_bg,
-                                                                              lv_color_mix(sleep_accent, lv_color_hex(0xFFFFFF), LV_OPA_20),
-                                                                              1,
-                                                                              PageId::AppSleep},
-          std::tuple<lv_obj_t*, lv_color_t, lv_color_t, lv_coord_t, PageId> {steps_card,
-                                                                              steps_bg,
-                                                                              lv_color_mix(steps_accent, lv_color_hex(0xFFFFFF), LV_OPA_20),
-                                                                              114,
-                                                                              PageId::Pedometer}}) {
-      ui_prepare_box(card);
-      ui_apply_surface(card, SurfaceStyle::PanelSubtle);
-      lv_obj_set_size(card, 106, 106);
-      lv_obj_align(card, LV_ALIGN_TOP_LEFT, x, 136);
-      lv_obj_set_style_radius(card, 24, 0);
-      lv_obj_set_style_pad_all(card, 0, 0);
-      lv_obj_set_style_bg_color(card, bg, 0);
-      lv_obj_set_style_border_color(card, border, 0);
+    for (auto [card, target] : {std::pair<lv_obj_t*, PageId> {daily_cards.weather_card, PageId::AppWeather},
+                                std::pair<lv_obj_t*, PageId> {daily_cards.sleep_card, PageId::AppSleep},
+                                std::pair<lv_obj_t*, PageId> {daily_cards.steps_card, PageId::Pedometer}}) {
       attach_click_guard(card);
       lv_obj_add_event_cb(card, app_tile_event_cb, LV_EVENT_CLICKED, this);
       lv_obj_set_user_data(card, reinterpret_cast<void*>(static_cast<std::uintptr_t>(target)));
-    }
-
-    auto build_metric_card = [&](lv_obj_t* card,
-                                 const char* value,
-                                 bool sleep_icon,
-                                 bool emphasize,
-                                 lv_obj_t** out_value_label = nullptr) -> bool {
-      lv_obj_t* icon_root = lv_obj_create(card);
-      lv_obj_t* icon_image = lv_image_create(icon_root);
-      lv_obj_t* value_label = lv_label_create(card);
-      if (icon_root == nullptr || icon_image == nullptr || value_label == nullptr) {
-        return false;
-      }
-      ui_prepare_box(icon_root);
-      lv_obj_set_size(icon_root, 58, 58);
-      lv_obj_set_style_bg_opa(icon_root, LV_OPA_TRANSP, 0);
-      lv_obj_set_style_border_width(icon_root, 0, 0);
-      lv_obj_align(icon_root, LV_ALIGN_TOP_LEFT, 0, 2);
-      lv_obj_remove_flag(icon_root, LV_OBJ_FLAG_CLICKABLE);
-
-      const char* icon_path = sleep_icon ? sleep_icon_asset_path() : steps_icon_asset_path();
-      lv_obj_set_size(icon_image, 58, 58);
-      lv_image_set_inner_align(icon_image, LV_IMAGE_ALIGN_CONTAIN);
-      lv_image_set_src(icon_image, icon_path);
-      lv_obj_center(icon_image);
-      lv_obj_remove_flag(icon_image, LV_OBJ_FLAG_CLICKABLE);
-
-      ui_prepare_label(value_label);
-      ui_apply_text(value_label, TextStyle::HeroSoft);
-      lv_obj_set_style_text_font(value_label, emphasize ? &lv_font_montserrat_16 : &lv_font_montserrat_14, 0);
-      lv_obj_set_style_text_color(value_label, lv_color_hex(0xFFFFFF), 0);
-      shell_home::set_single_line_label(value_label, 72);
-      lv_label_set_text(value_label, value);
-      lv_obj_align(value_label, LV_ALIGN_TOP_LEFT, sleep_icon ? 6 : 2, 70);
-      if (out_value_label != nullptr) {
-        *out_value_label = value_label;
-      }
-      return true;
-    };
-
-    if (!build_metric_card(sleep_card, "7h 36m", true, false) ||
-        !build_metric_card(steps_card, "--", false, true, &weather_steps_value_label_)) {
-      return nullptr;
     }
 
     if (const auto steps = data_center_.steps()) {

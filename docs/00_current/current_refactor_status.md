@@ -109,6 +109,7 @@ Forbidden changes:
 - `Shell/Home/ShellHomeLayoutPrimitives.*` 已新增并登记到 `CMakeLists.txt`。
 - `Shell/Home/ShellHomePaymentCardPrimitives.*` 已新增并登记到 `CMakeLists.txt`。
 - `Shell/Home/ShellHomeHealthCardPrimitives.*` 已新增并登记到 `CMakeLists.txt`。
+- `Shell/Home/ShellHomeDailyCardPrimitives.*` 已新增并登记到 `CMakeLists.txt`。
 - 当前承载的边界包括：
   - `SurfaceLayout`
   - `make_surface_layout()`
@@ -119,6 +120,7 @@ Forbidden changes:
   - `set_single_line_label()`
 - HomeRing payment / NFC 卡片纯 UI 构建 helper
 - HomeRing health 类卡片纯 UI 构建 helper
+- HomeRing daily 类卡片纯 UI 构建 helper
 
 当前判断：
 
@@ -126,6 +128,7 @@ Forbidden changes:
 - `HomeRingHostPage` 仍留在 `ShellPages.cpp`，但已不再是“所有 HomeRing UI 细节都内嵌在单文件里”的状态。
 - payment / NFC 的点击绑定、`PageId` 选择与导航行为仍留在 `HomeRingHostPage`。
 - health 卡片的点击绑定、`PageId` 选择与导航行为仍留在 `HomeRingHostPage`。
+- daily 卡片的动态数据、点击绑定、`PageId` 选择与导航行为仍留在 `HomeRingHostPage`。
 - 这不代表 Wallet / Pay / NFC 已有独立页面实现。
 - 这也不代表 HomeRing 整页已迁出。
 - 后续文档若继续把 HomeRing 描述成“只有页面未迁出，尚无单域 helper 边界”，会低估当前拆分进度。
@@ -251,7 +254,7 @@ Forbidden changes:
 当前判断：
 
 - `ShellPages.cpp` 仍然大，但它现在更接近“剩余壳层实现聚集区”，而不是所有非 Settings 页面的大杂烩。
-- 其中 `HomeRingHostPage` 仍在文件内，但其 layout / stage / pager 纯 UI 构件已开始下沉到 `Shell/Home/ShellHomeLayoutPrimitives.*`，payment / NFC 卡片纯 UI 构件已下沉到 `Shell/Home/ShellHomePaymentCardPrimitives.*`，health 类卡片纯 UI 构件已下沉到 `Shell/Home/ShellHomeHealthCardPrimitives.*`。
+- 其中 `HomeRingHostPage` 仍在文件内，但其 layout / stage / pager 纯 UI 构件已开始下沉到 `Shell/Home/ShellHomeLayoutPrimitives.*`，payment / NFC 卡片纯 UI 构件已下沉到 `Shell/Home/ShellHomePaymentCardPrimitives.*`，health 类卡片纯 UI 构件已下沉到 `Shell/Home/ShellHomeHealthCardPrimitives.*`，daily 类卡片纯 UI 构件已下沉到 `Shell/Home/ShellHomeDailyCardPrimitives.*`。
 - 后续任何“ShellPages 拆分”文档，都应明确它的剩余内容已不同于早期版本。
 
 ### ShellPages.h 聚合头状态
@@ -295,6 +298,7 @@ Forbidden changes:
   - `Health/SleepPages.cpp`
   - `Shell/ShellAppVisualRegistry.cpp`
   - `Shell/ShellAppIconPrimitives.cpp`
+  - `Shell/Home/ShellHomeDailyCardPrimitives.cpp`
   - `Shell/Home/ShellHomeLayoutPrimitives.cpp`
   - `Shell/Home/ShellHomeHealthCardPrimitives.cpp`
   - `Shell/Home/ShellHomePaymentCardPrimitives.cpp`
