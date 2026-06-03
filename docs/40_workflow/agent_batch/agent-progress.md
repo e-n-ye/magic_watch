@@ -101,3 +101,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：只清理已验收 DONE 队列项，保留卡片文件 `cards/docroot-reorg-wave1.md`；`DOCROOT-B6-C01` 只形成第二轮候选结论，不直接搬运剩余根目录文档
 - 阻塞与待决：
 - 下一步：队列项 `DOCROOT-Q6-REVIEW` 已完成，按停止策略停止，等待用户验收
+
+### 会话 2026-06-04 00:20
+
+- 本轮范围：清理已验收 `DOCROOT-Q6-REVIEW`；准备 docs 根目录第二轮整理卡片
+- 完成：`DOCROOT-B7-C01`；已从 `agent-queue.md` 移除已验收队列项 `DOCROOT-Q6-REVIEW`；已删除卡片文件 `docroot-reorg-wave1.md`、`docroot-reorg-review.md`
+- 修改文件：`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`、`docs/40_workflow/agent_batch/cards/docroot-reorg-cleanup-after-q6.md`
+- 自检：`git diff --check` 通过
+- 风险回应：只清理已验收队列项与旧卡片文件；对应已验收提交号为 `e2fb047`、`7efb3cd`、`e45c984`、`0c56445`
+- 阻塞与待决：第二轮 `20_guides` / `80_history` 卡片尚未创建
+- 下一步：单独提交清理后，新增第二轮卡片与队列项
