@@ -91,12 +91,15 @@ void HeartRateAppPage::on_will_appear() {
   refresh_header_time();
   if (!measurement_completed_) {
     start_entry_measurement();
+    return;
   }
+  show_result_stage();
 }
 
 void HeartRateAppPage::on_will_disappear() {
   stop_measurement_timer();
   stop_crown_release_timer();
+  hide_wear_prompt();
 }
 
 lv_obj_t* HeartRateAppPage::build() {

@@ -268,7 +268,7 @@ Forbidden changes:
 
 - Heart Rate 页面已下沉到 `Health/HeartRatePages.cpp`。
 - Heart Rate 页面声明已下沉到 `Health/HeartRatePages.h`，`ShellPages.h` 仅通过过渡 include 兼容 Heart Rate 声明。
-- `HeartRateAppPage` 的 entry measurement timer 与 crown release timer 已迁入 `LvglTimerGuard`；同页的 wear prompt 显示边界与 stage 切换仍待后续单独审计。
+- `HeartRateAppPage` 的 entry measurement timer 与 crown release timer 已迁入 `LvglTimerGuard`；回页时已显式恢复 result stage，离页时会隐藏 wear prompt overlay，但同页的更细粒度 wear prompt 显示策略仍待后续单独审计。
 - 当前非测量域页面包括：
   - `HeartRateInfoPage`
   - `HeartRateAppPage`
@@ -282,7 +282,7 @@ Forbidden changes:
 当前判断：
 
 - `ShellPages.cpp` 已无 HeartRate 非测量页面实现残留。
-- 当前更集中的风险仍在 `HeartRatePages.cpp` 内部，但已经从“measurement timer + stage + wear prompt 全部混在一起”收窄到“stage 切换与 wear prompt 生命周期边界”。
+- 当前更集中的风险仍在 `HeartRatePages.cpp` 内部，但已经从“measurement timer + stage + wear prompt 全部混在一起”进一步收窄到“wear prompt 显示策略与少量 stage 生命周期边界”。
 
 ### ShellPages.cpp 退场状态
 
