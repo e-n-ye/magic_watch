@@ -75,7 +75,7 @@ class SleepSettingsPage : public PageBase {
   std::array<RowState, 2> rows_;
   lv_obj_t* scroll_root_ {nullptr};
   lv_obj_t* time_label_ {nullptr};
-  lv_timer_t* crown_release_timer_ {nullptr};
+  LvglTimerGuard crown_release_timer_;
 };
 
 class SleepMonitoringDetailPage : public PageBase {
