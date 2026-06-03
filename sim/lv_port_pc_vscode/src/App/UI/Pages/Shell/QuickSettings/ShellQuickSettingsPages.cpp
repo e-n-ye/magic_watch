@@ -357,7 +357,7 @@ void QuickSettingsPage::toast_timeout_cb(lv_timer_t* timer) {
   if (self == nullptr) {
     return;
   }
-  self->toast_timer_ = nullptr;
+  self->toast_timer_.release();
   self->hide_toggle_toast();
 }
 
@@ -631,9 +631,9 @@ void QuickSettingsPage::show_toggle_toast(const char* text) {
   lv_obj_clear_flag(toast_container_, LV_OBJ_FLAG_HIDDEN);
   lv_obj_move_foreground(toast_container_);
   stop_toast_timer();
-  toast_timer_ = lv_timer_create(&QuickSettingsPage::toast_timeout_cb, 3000U, this);
-  if (toast_timer_ != nullptr) {
-    lv_timer_set_repeat_count(toast_timer_, 1);
+  toast_timer_.reset(lv_timer_create(&QuickSettingsPage::toast_timeout_cb, 3000U, this));
+  if (toast_timer_.get() != nullptr) {
+    lv_timer_set_repeat_count(toast_timer_.get(), 1);
   }
 }
 
@@ -645,9 +645,8 @@ void QuickSettingsPage::hide_toggle_toast() {
 }
 
 void QuickSettingsPage::stop_toast_timer() {
-  if (toast_timer_ != nullptr) {
-    lv_timer_del(toast_timer_);
-    toast_timer_ = nullptr;
+  if (toast_timer_) {
+    toast_timer_.reset();
   }
 }
 

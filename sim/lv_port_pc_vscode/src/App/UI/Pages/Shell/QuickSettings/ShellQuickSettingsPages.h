@@ -6,6 +6,7 @@
 #include <memory>
 #include <optional>
 
+#include "App/UI/LvglLifecycle.h"
 #include "App/UI/PageBase.h"
 #include "App/UI/Watchface/WatchfaceStyle.h"
 
@@ -93,7 +94,7 @@ class QuickSettingsPage : public PageBase {
   std::chrono::steady_clock::time_point suppress_click_deadline_ {};
   lv_obj_t* long_press_source_button_ {nullptr};
   lv_timer_t* preview_close_timer_ {nullptr};
-  lv_timer_t* toast_timer_ {nullptr};
+  LvglTimerGuard toast_timer_;
   WatchfaceConfig backdrop_config_ {default_watchface_config()};
   WatchfaceRenderState backdrop_render_state_ {};
   std::unique_ptr<IWatchfaceStyleRenderer> backdrop_renderer_;

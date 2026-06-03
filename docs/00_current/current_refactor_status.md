@@ -168,6 +168,7 @@ Forbidden changes:
 - `QuickSettingsPage` 已迁入 `Shell/QuickSettings/ShellQuickSettingsPages.cpp`。
 - `QuickSettingsPage` 声明已下沉到 `Shell/QuickSettings/ShellQuickSettingsPages.h`，`ShellPages.h` 仅通过过渡 include 兼容快捷设置声明。
 - `ShellPages.cpp` 中不再保留 `QuickSettingsPage::` 实现。
+- `QuickSettingsPage::toast_timer_` 已迁入 `LvglTimerGuard`。
 - DataCenter 读写、EventBus 订阅、toggle / slider 行为、NavigationCommand、timer 与 shell surface 行为仍留在 `QuickSettingsPage`。
 - `ShellPages.h` 仍是过渡聚合 include 头，`Application.cpp` 注册未变。
 
