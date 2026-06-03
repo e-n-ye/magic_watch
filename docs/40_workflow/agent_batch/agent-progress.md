@@ -6,7 +6,7 @@
 
 ## 当前批次
 
-1
+2
 
 当前批次的所有卡片 DONE 后，由 Agent 按批次推进协议将此值加 1，并停止等待用户确认。
 
@@ -45,9 +45,19 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 ### 会话 2026-06-03 任务执行中
 
 - 本轮范围：批次 1，卡片 8E-B1-C01 / 8F-B1-C02
-- 完成：8E-B1-C01
-- 修改文件：`docs/00_current/current_architecture.md`、`docs/00_current/v0_scope.md`、`docs/10_architecture/state_machine.md`、`docs/10_architecture/hardware_boundary.md`、`docs/document_map.md`、批次执行运行文件
-- 自检：`git diff --check` 通过；本轮中文文档乱码哨兵检查通过
-- 风险回应：硬件边界仅收口职责契约，未绑定芯片、板卡、RTOS，也未新增硬件代码骨架
+- 完成：8E-B1-C01；8F-B1-C02；已按协议将当前批次从 1 推进到 2
+- 修改文件：`docs/00_current/current_architecture.md`、`docs/00_current/v0_scope.md`、`docs/10_architecture/state_machine.md`、`docs/10_architecture/hardware_boundary.md`、`docs/document_map.md`、`docs/30_testing/manual_ui_regression_checklist.md`、`docs/00_current/current_refactor_status.md`、批次执行运行文件
+- 自检：两张卡均已通过 `git diff --check`；本轮实际改动中文文档乱码哨兵检查通过
+- 风险回应：硬件边界只收口职责契约，不绑定硬件实现；手动 UI 清单仅重排与标记高风险路径，未宣称已执行或已通过
 - 阻塞与待决：
-- 下一步：执行 8F-B1-C02；若当前批次全部 DONE，则按批次推进协议推进并停止
+- 下一步：等待用户验收批次 1；不自动开始批次 2
+
+### 会话 2026-06-03 批次 1 收尾
+
+- 本轮范围：批次 1 收尾清理
+- 完成：已根据用户验收，从 `agent-plan.md` 清理批次 1 的 DONE 卡片 `8E-B1-C01`、`8F-B1-C02`
+- 修改文件：`docs/40_workflow/agent_batch/agent-plan.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：待提交前执行
+- 风险回应：只清理已验收 DONE 卡片，未触碰 TODO / BLOCKED / inbox 草稿
+- 阻塞与待决：`agent-progress.md` 当前批次为 2，但 `agent-plan.md` 尚无批次 2 卡片；`agent-inbox.md` 仅存在草稿 `DOCROOT-B2-C01`
+- 下一步：单独提交收尾清理，然后等待用户确认是否把 inbox 草稿转入 `agent-plan.md`
