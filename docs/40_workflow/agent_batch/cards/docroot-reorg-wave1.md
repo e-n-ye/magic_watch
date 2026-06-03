@@ -7,7 +7,7 @@
 ### DOCROOT-B3-C01 迁移阶段记录到 50_stage_records
 
 - 批次：3
-- 状态：TODO
+- 状态：DONE
 - 依赖：DOCROOT-B2-C01
 - 自检：`git diff --check`；对本卡改动的中文文档执行 `AGENTS.md` 中规定的乱码哨兵检查
 - 建议提交信息：`docs: move stage records under 50_stage_records`
@@ -22,7 +22,7 @@
 1. 仅迁移盘点文档中标记为阶段记录的 `v0_*` 文件到 `docs/50_stage_records/`，文件名保持不变。
 2. 更新 `docs/document_map.md` 中涉及这些文件的入口说明，明确它们属于历史阶段记录，不回到默认入口。
 3. 修复仓库内直接引用这些旧路径的必要 Markdown 链接。
-4. 保持 `docs/00_current/v0_scope.md` 原位不动，仅迁移根目录历史版 `docs/v0_scope.md`。
+4. 保持 `docs/00_current/v0_scope.md` 原位不动，仅迁移根目录历史版 `docs/50_stage_records/v0_scope.md`。
 
 #### 涉及位置
 
@@ -59,7 +59,10 @@ Forbidden changes:
 
 #### 执行记录
 
-（Agent 填写：完成时间 / 实际改动文件 / 自检结果 / 风险回应）
+- 完成时间：2026-06-03 22:30
+- 实际改动文件：`docs/50_stage_records/*.md`、`docs/document_map.md`、`docs/40_workflow/docs_root_reorg_inventory.md`、`docs/decision_log.md`、`docs/prototype_progress.md`、`docs/settings_visual_reference.md`、批处理运行文件
+- 自检结果：`git diff --check` 通过；旧的 `docs/v0_*.md` / `docs/v0_scope.md` / `docs/v0_shell_baseline.md` 路径已在允许修改范围内完成替换；本轮中文文档乱码哨兵检查通过，`decision_log.md` 中命中的疑似乱码字符串是规则说明原文，不是新写入乱码
+- 风险回应：保留 `docs/00_current/v0_scope.md` 原位不动；`document_map.md` 新增按需路由，明确 `50_stage_records` 只作为历史阶段记录入口，不回到默认新会话
 
 ---
 

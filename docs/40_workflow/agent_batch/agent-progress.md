@@ -81,3 +81,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：只整理卡片入口和执行队列，不移动 docs 根目录文档；`DOCROOT-B6-C01` 保持在 wave1 后的单独队列项
 - 阻塞与待决：
 - 下一步：提交队列准备后，执行窗口可按 `agent-queue.md` 先执行 `DOCROOT-Q3-WAVE1`
+
+### 会话 2026-06-03 22:30
+
+- 本轮范围：队列项 `DOCROOT-Q3-WAVE1`，卡片 `DOCROOT-B3-C01` / `DOCROOT-B4-C01` / `DOCROOT-B5-C01`
+- 完成：`DOCROOT-B3-C01` 已完成
+- 修改文件：`docs/50_stage_records/*.md`、`docs/document_map.md`、`docs/40_workflow/docs_root_reorg_inventory.md`、`docs/decision_log.md`、`docs/prototype_progress.md`、`docs/settings_visual_reference.md`、`docs/40_workflow/agent_batch/cards/docroot-reorg-wave1.md`、`docs/40_workflow/agent_batch/agent-progress.md`、`docs/40_workflow/agent_batch/agent-queue.md`
+- 自检：`git diff --check` 通过；旧阶段记录路径已在允许范围内完成替换；本轮中文文档乱码哨兵检查通过，`decision_log.md` 命中的疑似乱码字符串是规则说明原文
+- 风险回应：已撤回对只读文件 `docs/00_current/v0_scope.md` 的越界改动；历史版 `v0_scope.md` 已迁入 `docs/50_stage_records/`，当前版仍保持原位
+- 阻塞与待决：
+- 下一步：继续执行 `DOCROOT-B4-C01`

@@ -5,7 +5,7 @@
 As of 2026-05-14, the project has a first coherent simulator shell baseline.
 The clean summary of that baseline lives in:
 
-- `docs/v0_shell_baseline.md`
+- `docs/50_stage_records/v0_shell_baseline.md`
 
 本文件定义 Magic Watch 第一条可实现闭环的范围。这里的 `v0` 不是“最终产品第一版”，而是“第一版可讲清楚、可验证、可继续演化的交互与架构样机”。
 

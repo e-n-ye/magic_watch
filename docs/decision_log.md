@@ -1,4 +1,4 @@
-﻿# Magic Watch Decision Log
+# Magic Watch Decision Log
 ## 2026-05-25: v0.8e-3 补齐心率说明正文，不扩真实测量和提醒链路
 
 背景：
@@ -218,7 +218,7 @@
 - 继续优先扩通知功能，开始进入“收益下降、回归风险上升”的区间。
 
 决定：
-- 新增 `docs/v0_7d_notification_stage_closure.md`，把通知线阶段性封箱。
+- 新增 `docs/50_stage_records/v0_7d_notification_stage_closure.md`，把通知线阶段性封箱。
 - 明确通知当前已具备的能力、故意未做的内容，以及切换到下一阶段的理由。
 - 下一步不继续优先做通知功能，而是准备进入健康监测设置模型闭环。
 
@@ -278,7 +278,7 @@
 - 但这条卡片现在同时承载点按详情、纵向列表滚动和横向删除，如果一轮做太多视觉和策略细节，交互很容易互相打架。
 
 决定：
-- 新增 `docs/v0_7c2b1_notification_swipe_delete.md`，把本轮范围限制为通知列表态的单条右滑删除。
+- 新增 `docs/50_stage_records/v0_7c2b1_notification_swipe_delete.md`，把本轮范围限制为通知列表态的单条右滑删除。
 - 本轮只支持：
   - 向右跟手拖动
   - 不足阈值回弹
@@ -302,7 +302,7 @@
 - 相比独立详情页或更复杂的通知规则，这个风险更接近真实使用路径，也更适合作为下一小轮收口。
 
 决定：
-- 新增 `docs/v0_7c2a_notification_clear_semantics.md`，把本轮范围限制为通知列表清空确认。
+- 新增 `docs/50_stage_records/v0_7c2a_notification_clear_semantics.md`，把本轮范围限制为通知列表清空确认。
 - `清空` 的当前语义仍然保持“清空全部通知”，但必须先经过一次确认。
 - 确认层只在通知列表态出现，详情态不扩展额外删除动作。
 - 确认层激活期间，拦住底层滚动和壳层拖拽。
@@ -324,7 +324,7 @@
 - 当前通知还缺一层核心语义：哪条通知已读、哪条未读，以及“用户真正打开一条通知”时系统里是否有明确状态变化。
 
 决定：
-- 新增 `docs/v0_7c1_notification_read_state_and_detail_entry.md`，把本轮范围限制为：
+- 新增 `docs/50_stage_records/v0_7c1_notification_read_state_and_detail_entry.md`，把本轮范围限制为：
   - 通知 `read` 状态
   - `NotificationsPage` 内部列表态 / 详情态
   - 点击通知卡片进入详情时标记已读
@@ -350,7 +350,7 @@
   - 用户从 `NotificationWakePreview` 如何进入完整 `Notifications` 列表
 
 决定：
-- 新增 `docs/v0_7b_notification_preview_shell_linkage.md`，把本轮收窄为通知预览与通知壳层的联动规则。
+- 新增 `docs/50_stage_records/v0_7b_notification_preview_shell_linkage.md`，把本轮收窄为通知预览与通知壳层的联动规则。
 - 明确三种分流：
   - `ScreenOff` + 允许通知亮屏 -> `NotificationWakePreview`
   - `Running` + 不在通知列表 -> toast
@@ -375,7 +375,7 @@
 - 这意味着通知虽然已经有共享模型消费者，但“平台样本 -> service -> model”这条链仍没有像电池和步数那样收口。
 
 决定：
-- 新增 `docs/v0_7_notification_service_entry.md`，把本轮范围限制为消息通知的最小 service 化。
+- 新增 `docs/50_stage_records/v0_7_notification_service_entry.md`，把本轮范围限制为消息通知的最小 service 化。
 - 新增 `hal::NotificationSample` 与 `NotificationService`。
 - 模拟器 `N` 热键不再触发 `InjectMessageNotification` debug action，而是直接发出 `NotificationSample`。
 - `Application` 不再直接构造 mock 消息通知，只负责把 `NotificationReceived` 分发给 `NotificationService`。
@@ -462,7 +462,7 @@
 - 当前最重要的不是继续扩展页面，而是把第二条真实数据边界做出来。
 
 决定：
-- 新增 [v0_6_steps_activity_service_entry.md](/D:/MY_Desk/watch/magic_watch/docs/v0_6_steps_activity_service_entry.md)，将下一轮收窄为“平台样本 -> service -> DataCenter -> 长续航表盘”的最小闭环。
+- 新增 [v0_6_steps_activity_service_entry.md](/D:/MY_Desk/watch/magic_watch/docs/50_stage_records/v0_6_steps_activity_service_entry.md)，将下一轮收窄为“平台样本 -> service -> DataCenter -> 长续航表盘”的最小闭环。
 - 引入最小 `hal::ActivitySample`、`StepsModel` 与 `StepsActivityService`。
 - 模拟器暂时通过 `S` 热键每次增加 `100` 步，用来驱动这条链。
 - 当前只让长续航表盘消费 `StepsModel`；Steps app、主页快捷卡和健康页面暂不接入。
@@ -488,7 +488,7 @@
 - 在继续推进下一阶段前，需要先确认这条主链路不再存在明显回归。
 
 决定：
-- 新增 [v0_5_long_battery_regression_closure.md](/D:/MY_Desk/watch/magic_watch/docs/v0_5_long_battery_regression_closure.md) 记录 v0.5 长续航主链路的手工回归收口结果。
+- 新增 [v0_5_long_battery_regression_closure.md](/D:/MY_Desk/watch/magic_watch/docs/50_stage_records/v0_5_long_battery_regression_closure.md) 记录 v0.5 长续航主链路的手工回归收口结果。
 - 将 v0.5 当前状态视为“可构建、可手工回归、长续航主链路稳定”。
 - 下一步不继续扩展长续航页面族，而是优先转向 `Steps / Activity` 的真实 service 边界。
 
@@ -510,8 +510,8 @@
 - 当前 `PageId::SettingBattery` 仍是 placeholder，且 `SettingsHomePage` 没有电池入口，尚没有一个明确、可从设置进入的页面作为 `BatteryPowerService -> DataCenter -> UI` 的真实消费者。
 
 决定：
-- 新增 `docs/v0_4_stage_closure.md`，将 v0.4 阶段收口。
-- 新增 `docs/v0_5_power_status_page_entry.md`，将 v0.5 第一小闭环定为只读 `Power Status` 页面。
+- 新增 `docs/50_stage_records/v0_4_stage_closure.md`，将 v0.4 阶段收口。
+- 新增 `docs/50_stage_records/v0_5_power_status_page_entry.md`，将 v0.5 第一小闭环定为只读 `Power Status` 页面。
 - v0.5 第一轮优先在设置首页新增电池入口，并把 `PageId::SettingBattery` 从 placeholder 改成只读电池 / 电源状态页。
 - 暂不继续抽第二个 service，不新增 `PowerStatusModel`，不扩展 `HAL.h`，不接回 T-Watch 真机。
 
@@ -578,7 +578,7 @@
 - InfiniTime 的经验表明，复杂手表固件不是靠完整模拟器先行落成，而是靠真实运行骨架、清晰任务 / 控制器边界、资源约束和可回归工具共同推进。
 
 决定：
-- 新增 `docs/v0_4_system_skeleton_entry.md` 作为当前阶段入口文档。
+- 新增 `docs/50_stage_records/v0_4_system_skeleton_entry.md` 作为当前阶段入口文档。
 - 暂停 T-Watch S3 Plus 随机硬件实验；T-Watch 继续作为参考验证板和后续对照组，不作为最终平台。
 - 模拟器继续作为主线工具，但任务从“继续堆 UI 页面”调整为“验证输入、状态、导航、显示策略、平台契约和 service 边界是否能持续长大”。
 - 不立刻迁移旧 F411 手表项目，不采购或切换 STM32H7、STM32F407、ESP32-S3 最小系统板。
@@ -596,7 +596,7 @@
 - 抽象只在出现明确重复、状态归属冲突，或至少存在“模拟器 + 参考硬件”两个映射点时推进。
 
 复盘点：
-- 下一轮检查 `docs/v0_4_system_skeleton_entry.md` 是否能让新会话明确“不堆页面、不随机硬件实验、先看系统边界”。
+- 下一轮检查 `docs/50_stage_records/v0_4_system_skeleton_entry.md` 是否能让新会话明确“不堆页面、不随机硬件实验、先看系统边界”。
 - 完成系统边界审计后，再决定是否进入 Platform / HAL 事件契约收口。
 - 第一批真实 service 边界默认优先考虑 `Battery / PowerStatus service`，除非审计发现更高风险边界。
 

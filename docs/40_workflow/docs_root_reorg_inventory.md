@@ -84,9 +84,9 @@
 
 ## 高风险冲突项
 
-### 1. `docs/v0_scope.md` 与 `docs/00_current/v0_scope.md`
+### 1. `docs/50_stage_records/v0_scope.md` 与 `docs/00_current/v0_scope.md`
 
-- 根目录版 `docs/v0_scope.md` 是历史阶段范围文档，仍保存完整 `v0` 起始边界。
+- 根目录版 `docs/50_stage_records/v0_scope.md` 是历史阶段范围文档，仍保存完整 `v0` 起始边界。
 - `docs/00_current/v0_scope.md` 是当前阶段摘要入口，已经接管“当前范围”职责。
 - 这两个文件不能合并成一个，也不能把根目录版当作当前入口继续暴露。
 

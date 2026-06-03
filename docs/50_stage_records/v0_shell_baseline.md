@@ -90,7 +90,7 @@ This document freezes the first coherent shell baseline from 2026-05-14.
 The project has since moved forward.
 For the current late-shell-stage closure focused on display policy, settings, quick settings, and screen-off behavior, read:
 
-- `docs/v0_2_shell_closure.md`
+- `docs/50_stage_records/v0_2_shell_closure.md`
 - `docs/simulator_manual_regression_matrix.md`
 
 ## Git Meaning Of This Baseline

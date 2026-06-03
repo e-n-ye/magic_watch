@@ -124,7 +124,7 @@
   - `Health`
   - `Wallet`
 - Updated the regression matrix so launcher-shell structure becomes part of future shell checks.
-- Updated `docs/v0_2_shell_closure.md` so its "next step" note matches the current real roadmap.
+- Updated `docs/50_stage_records/v0_2_shell_closure.md` so its "next step" note matches the current real roadmap.
 
 ### Why This Step Matters
 
@@ -206,7 +206,7 @@
   - manual brightness slider accidental value changes during edge-back
   - raise-to-wake scheduled-card selection-dot layout inconsistency
 - Added:
-  - `docs/v0_2_shell_closure.md`
+  - `docs/50_stage_records/v0_2_shell_closure.md`
   - `docs/simulator_manual_regression_matrix.md`
   - `docs/simulator_manual_regression_run_2026_05_19.md`
 
@@ -235,7 +235,7 @@
 - Connected the default 5-second auto screen-off timeout to the state machine and made `ScreenOff` render as a near-black simulator state.
 - Re-aligned the product model around screen + pressable crown: crown press wakes from screen-off, opens Launcher on the watchface, and returns home from other pages.
 - Added the architecture re-entry note:
-  - `docs/v0_1_architecture_closure.md`
+  - `docs/50_stage_records/v0_1_architecture_closure.md`
 
 ### Current Boundary
 
@@ -379,7 +379,7 @@ Verified in manual testing:
 
 For the clean current-state summary, read:
 
-- `docs/v0_shell_baseline.md`
+- `docs/50_stage_records/v0_shell_baseline.md`
 
 ## 2026-05-13: Settings Scroll Prototype v0
 

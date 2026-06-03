@@ -165,6 +165,18 @@
 - 它只定义 ISR、Service、DataCenter、EventBus、Coordinator、UI 与 Driver/BSP/HAL 的职责边界。
 - 它不绑定芯片、板卡、RTOS 或硬件代码骨架。
 
+### 我想查 v0 历史阶段记录
+
+先读：
+
+- [v0_scope.md](/D:/MY_Desk/watch/magic_watch/docs/50_stage_records/v0_scope.md)
+- [50_stage_records/](/D:/MY_Desk/watch/magic_watch/docs/50_stage_records)
+
+说明：
+
+- 这批 `v0_*` 文档已迁入 `docs/50_stage_records/`，属于历史阶段记录，不回到默认新会话入口。
+- 需要看当前范围时，优先读 [v0_scope.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/v0_scope.md)。
+
 ### 我想查历史决策
 
 先读：

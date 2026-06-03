@@ -99,7 +99,7 @@ v0.4 不做以下事情：
 
 输出：
 
-- `docs/v0_4_simulator_system_boundary_audit.md`
+- `docs/50_stage_records/v0_4_simulator_system_boundary_audit.md`
 
 ### 第三轮：Platform / HAL 事件契约收口
 
@@ -115,7 +115,7 @@ v0.4 不做以下事情：
 
 输出：
 
-- `docs/v0_4_platform_hal_event_contract.md`
+- `docs/50_stage_records/v0_4_platform_hal_event_contract.md`
 
 ### 第四轮：选择第一个真实 service 边界
 
@@ -133,7 +133,7 @@ v0.4 不做以下事情：
 
 输出：
 
-- `docs/v0_4_battery_power_service_boundary.md`
+- `docs/50_stage_records/v0_4_battery_power_service_boundary.md`
 
 ## 验证方式
 
@@ -152,8 +152,8 @@ v0.4 已完成当前目标并收口。
 
 收口文档：
 
-- `docs/v0_4_stage_closure.md`
+- `docs/50_stage_records/v0_4_stage_closure.md`
 
 下一阶段入口：
 
-- `docs/v0_5_power_status_page_entry.md`
+- `docs/50_stage_records/v0_5_power_status_page_entry.md`

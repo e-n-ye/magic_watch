@@ -22,10 +22,10 @@ Platform / HAL sample
 
 | 轮次 | 输出 | 结果 |
 | --- | --- | --- |
-| 第一轮 | `docs/v0_4_system_skeleton_entry.md` | 明确暂停随机硬件实验，不继续优先堆 mock 页面。 |
-| 第二轮 | `docs/v0_4_simulator_system_boundary_audit.md` | 审计 `Application`、`InputIntentRouter`、`AppStateMachine`、`PageManager`、`DataCenter`、`DisplayPolicyRules`、`SimulatorDevice` 的职责。 |
-| 第三轮 | `docs/v0_4_platform_hal_event_contract.md` | 明确 HAL 事件与 T-Watch 已验证能力的映射边界。 |
-| 第四轮 | `docs/v0_4_battery_power_service_boundary.md` | 落地第一个真实 service 边界：`BatteryPowerService`。 |
+| 第一轮 | `docs/50_stage_records/v0_4_system_skeleton_entry.md` | 明确暂停随机硬件实验，不继续优先堆 mock 页面。 |
+| 第二轮 | `docs/50_stage_records/v0_4_simulator_system_boundary_audit.md` | 审计 `Application`、`InputIntentRouter`、`AppStateMachine`、`PageManager`、`DataCenter`、`DisplayPolicyRules`、`SimulatorDevice` 的职责。 |
+| 第三轮 | `docs/50_stage_records/v0_4_platform_hal_event_contract.md` | 明确 HAL 事件与 T-Watch 已验证能力的映射边界。 |
+| 第四轮 | `docs/50_stage_records/v0_4_battery_power_service_boundary.md` | 落地第一个真实 service 边界：`BatteryPowerService`。 |
 
 ## 当前架构状态
 
@@ -82,4 +82,4 @@ v0.4 到这里收口，不继续追加以下内容：
 
 入口文档：
 
-- `docs/v0_5_power_status_page_entry.md`
+- `docs/50_stage_records/v0_5_power_status_page_entry.md`
