@@ -4,7 +4,7 @@
 
 ## 目的
 
-本文是硬件前哨阶段的第三个小闭环：在 `docs/hardware_candidate_constraints.md` 的约束表基础上，收集第一批具体候选方向。
+本文是硬件前哨阶段的第三个小闭环：在 `docs/70_hardware_reference/hardware_candidate_constraints.md` 的约束表基础上，收集第一批具体候选方向。
 
 本轮仍然不是购买决定，也不是最终硬件选型。短名单只回答：
 
@@ -161,7 +161,7 @@
 - 第一块参考验证板优先用已有硬件。
 - 目标限制为：屏幕、触摸、BMA423、AXP2101、电池、screen off / wake 观察。
 - 不把它宣布为最终平台，也不把 ESP32-S3、240 x 240 屏、FT6336U、BMA423、AXP2101 宣布为最终器件选型。
-- 分立主控、屏幕、触摸、IMU、PMIC 的正式选型，应进入 `docs/hardware_component_selection_strategy.md` 描述的第二层验证。
+- 分立主控、屏幕、触摸、IMU、PMIC 的正式选型，应进入 `docs/70_hardware_reference/hardware_component_selection_strategy.md` 描述的第二层验证。
 
 如果当前没有现成手表硬件：
 
@@ -185,7 +185,7 @@ PineTime 暂不建议作为第一验证板，除非已经确认能获得开发�
 
 这一层路线记录在：
 
-- `docs/hardware_component_selection_strategy.md`
+- `docs/70_hardware_reference/hardware_component_selection_strategy.md`
 
 ## 下一轮建议
 

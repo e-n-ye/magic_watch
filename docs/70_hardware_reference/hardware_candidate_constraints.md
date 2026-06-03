@@ -169,6 +169,6 @@
 
 本轮建议已落地为：
 
-- `docs/hardware_candidate_shortlist.md`
+- `docs/70_hardware_reference/hardware_candidate_shortlist.md`
 
 下一轮应只核验短名单中的关键未知项，不再扩大候选范围。

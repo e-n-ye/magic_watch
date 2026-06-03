@@ -610,7 +610,7 @@
 
 决定：
 - 进入“硬件前哨验证 / 选型约束收敛”阶段。
-- 新增 `docs/hardware_frontier_entry.md` 作为本阶段入口文档。
+- 新增 `docs/70_hardware_reference/hardware_frontier_entry.md` 作为本阶段入口文档。
 - 第一轮采用约束优先，不列具体候选硬件短名单。
 - TTGO_TWatch 只作为已有参考硬件或验证板，不作为默认最终目标。
 

@@ -130,7 +130,7 @@ Forbidden changes:
 ### DOCROOT-B5-C01 迁移硬件参考到 70_hardware_reference
 
 - 批次：5
-- 状态：TODO
+- 状态：DONE
 - 依赖：DOCROOT-B2-C01
 - 自检：`git diff --check`；对本卡改动的中文文档执行 `AGENTS.md` 中规定的乱码哨兵检查
 - 建议提交信息：`docs: move hardware references under 70_hardware_reference`
@@ -181,4 +181,7 @@ Forbidden changes:
 
 #### 执行记录
 
-（Agent 填写：完成时间 / 实际改动文件 / 自检结果 / 风险回应）
+- 完成时间：2026-06-03 23:20
+- 实际改动文件：`docs/70_hardware_reference/*.md`、`docs/document_map.md`、`docs/decision_log.md`、批处理运行文件
+- 自检结果：`git diff --check` 通过；硬件参考旧路径扫描在允许范围内无残留；中文文档乱码哨兵检查仅命中 `decision_log.md` 中的示例说明文本
+- 风险回应：未新增硬件选型结论，也未触碰 `sim/**` 或实现代码；`document_map.md` 已把这批文档标记为未来硬件接入前的按需参考材料

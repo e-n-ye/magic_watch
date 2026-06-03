@@ -177,6 +177,18 @@
 - 它只定义 ISR、Service、DataCenter、EventBus、Coordinator、UI 与 Driver/BSP/HAL 的职责边界。
 - 它不绑定芯片、板卡、RTOS 或硬件代码骨架。
 
+### 我想查历史硬件参考
+
+先读：
+
+- [70_hardware_reference/](/D:/MY_Desk/watch/magic_watch/docs/70_hardware_reference)
+- [hardware_frontier_entry.md](/D:/MY_Desk/watch/magic_watch/docs/70_hardware_reference/hardware_frontier_entry.md)
+
+说明：
+
+- 硬件候选、选型策略和 TWatch 参考验证资料已迁入 `docs/70_hardware_reference/`，属于未来硬件接入前的按需参考材料。
+- 当前硬件边界与系统职责约束仍以 [hardware_boundary.md](/D:/MY_Desk/watch/magic_watch/docs/10_architecture/hardware_boundary.md) 为准。
+
 ### 我想查 v0 历史阶段记录
 
 先读：

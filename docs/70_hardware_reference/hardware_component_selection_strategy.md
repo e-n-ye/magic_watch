@@ -229,7 +229,7 @@ T-Watch S3 Plus 的错误用法：
 
 本轮建议已落地为：
 
-- `docs/twatch_s3_plus_reference_validation_plan.md`
+- `docs/70_hardware_reference/twatch_s3_plus_reference_validation_plan.md`
 
 该计划已纳入一个重要板级风险：用户当前这块 T-Watch 的 BMA423 计步中断疑似存在硬件问题，因此 T-Watch 核验不以计步中断或真实计步为验收项。
 

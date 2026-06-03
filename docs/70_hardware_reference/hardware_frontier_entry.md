@@ -135,6 +135,6 @@ TTGO_TWatch 可以作为已有参考硬件或验证板，但它不是默认最�
 
 本轮建议已落地为：
 
-- `docs/hardware_candidate_constraints.md`
+- `docs/70_hardware_reference/hardware_candidate_constraints.md`
 
 下一轮可以在该约束表基础上收集 2-3 个具体候选方向，并核验公开资料、当前可获得性、关键规格和 bring-up 风险。

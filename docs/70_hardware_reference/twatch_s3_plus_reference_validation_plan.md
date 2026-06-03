@@ -192,7 +192,7 @@
 
 本轮完成后应产出：
 
-- `docs/twatch_s3_plus_reference_validation_run.md`
+- `docs/70_hardware_reference/twatch_s3_plus_reference_validation_run.md`
 - 记录每组实验的状态：未开始 / 通过 / 失败 / 部分通过 / 暂停。
 - 记录 BMA423 计步中断异常的复现情况和影响范围。
 - 明确哪些问题属于 T-Watch 板级限制，哪些问题会影响后续分立器件选型。

@@ -85,9 +85,9 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 ### 会话 2026-06-03 22:30
 
 - 本轮范围：队列项 `DOCROOT-Q3-WAVE1`，卡片 `DOCROOT-B3-C01` / `DOCROOT-B4-C01` / `DOCROOT-B5-C01`
-- 完成：`DOCROOT-B3-C01`；`DOCROOT-B4-C01`
-- 修改文件：`docs/50_stage_records/*.md`、`docs/60_visual_exploration/*.md`、`docs/document_map.md`、`docs/40_workflow/docs_root_reorg_inventory.md`、`docs/decision_log.md`、`docs/prototype_progress.md`、`docs/40_workflow/agent_batch/cards/docroot-reorg-wave1.md`、`docs/40_workflow/agent_batch/agent-progress.md`、`docs/40_workflow/agent_batch/agent-queue.md`
-- 自检：两张卡均已通过 `git diff --check`；阶段记录与视觉文档旧路径扫描均已清空；本轮中文文档乱码哨兵检查通过，`decision_log.md` 命中的疑似乱码字符串是规则说明原文
-- 风险回应：已撤回对只读文件 `docs/00_current/v0_scope.md` 的越界改动；`watchface_style_architecture.md` 保持根目录架构专题位置未迁移
+- 完成：`DOCROOT-B3-C01`；`DOCROOT-B4-C01`；`DOCROOT-B5-C01`；队列项 `DOCROOT-Q3-WAVE1`
+- 修改文件：`docs/50_stage_records/*.md`、`docs/60_visual_exploration/*.md`、`docs/70_hardware_reference/*.md`、`docs/document_map.md`、`docs/40_workflow/docs_root_reorg_inventory.md`、`docs/decision_log.md`、`docs/prototype_progress.md`、`docs/40_workflow/agent_batch/cards/docroot-reorg-wave1.md`、`docs/40_workflow/agent_batch/agent-progress.md`、`docs/40_workflow/agent_batch/agent-queue.md`
+- 自检：三张卡均已通过 `git diff --check`；阶段记录、视觉资料、硬件参考旧路径扫描均已清空；本轮中文文档乱码哨兵检查仅命中 `decision_log.md` 中的示例说明文本
+- 风险回应：已撤回对只读文件 `docs/00_current/v0_scope.md` 的越界改动；`watchface_style_architecture.md` 保持根目录架构专题位置未迁移；未新增任何硬件实现或选型结论
 - 阻塞与待决：
-- 下一步：提交 `DOCROOT-B4-C01` 后继续执行 `DOCROOT-B5-C01`
+- 下一步：队列项 `DOCROOT-Q3-WAVE1` 已完成，按停止策略停止，等待用户验收；不执行 `DOCROOT-Q6-REVIEW`
