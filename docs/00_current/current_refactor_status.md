@@ -155,7 +155,6 @@ Forbidden changes:
 - `NotificationsPage` 已迁入 `Shell/Notifications/ShellNotificationPages.cpp`。
 - `ShellNotificationPrimitives.*` 仍是通知视觉共享 helper 边界。
 - `ShellPages.h` 仍是聚合声明头，`Application.cpp` 注册未变。
-- `QuickSettingsPage` 仍留在 `ShellPages.cpp`。
 - 这不代表通知复杂行为已经低风险；swipe / sheet / clear confirm / preview close timer 仍需手动回归。
 
 ### Shell / QuickSettings single-domain UI primitives
@@ -270,26 +269,25 @@ Forbidden changes:
 
 ### ShellPages.cpp 剩余区域
 
-当前 `ShellPages.cpp` 仍主要承载：
+当前 `ShellPages.cpp` 已不再承载任何页面实现。
 
-- `QuickSettingsPage`
+当前剩余内容更接近：
 
-这些页面大多仍属于：
-
-- 主壳层 surface
-- 临时壳层
-- 主页宿主
-- 通知与快捷设置壳层
+- 零引用 `using`
+- 零引用文本常量
+- 零引用 QuickSettings 日志 helper
+- 零引用 generic helper / residue
 
 当前判断：
 
-- `ShellPages.cpp` 仍然大，但它现在更接近“通知与快捷设置等剩余壳层实现聚集区”，而不是所有非 Settings 页面的大杂烩。
+- `ShellPages.cpp` 当前已无任何 `ClassName::` 页面实现。
+- 它现在更接近 dead helper / residue 文件，而不是仍在承载页面本体的实现文件。
 - `WatchfacePage` 与 `HomeRingHostPage` 已共同迁入 `Shell/Home/ShellHomePages.cpp`。
 - `NotificationWakePage` 与 `NotificationsPage` 已迁入 `Shell/Notifications/ShellNotificationPages.cpp`；`Shell/Notifications/ShellNotificationPrimitives.*` 继续承载通知域共享视觉 helper。
 - `Shell/Notifications/ShellNotificationPagePrimitives.*` 已承载 `NotificationsPage` 单域纯 UI 构建 helper。
 - `Shell/QuickSettings/ShellQuickSettingsPrimitives.*` 继续承载 `QuickSettingsPage` 单域纯 UI 构建 helper；`QuickSettingsPage` 页面实现已迁入 `Shell/QuickSettings/ShellQuickSettingsPages.cpp`。
 - `HomeRingHostPage` 已迁入 `Shell/Home/ShellHomePages.cpp`；其 layout / stage / pager 纯 UI 构件已下沉到 `Shell/Home/ShellHomeLayoutPrimitives.*`，payment / NFC 卡片纯 UI 构件已下沉到 `Shell/Home/ShellHomePaymentCardPrimitives.*`，health 类卡片纯 UI 构件已下沉到 `Shell/Home/ShellHomeHealthCardPrimitives.*`，daily 类卡片纯 UI 构件已下沉到 `Shell/Home/ShellHomeDailyCardPrimitives.*`。
-- 后续任何“ShellPages 拆分”文档，都应明确它的剩余内容已不同于早期版本。
+- 下一步代码收口更可能是删除零引用 dead helper，而不是继续迁页面。
 
 ### ShellPages.h 聚合头状态
 

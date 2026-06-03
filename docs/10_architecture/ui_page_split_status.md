@@ -282,7 +282,7 @@ Forbidden changes:
 主要风险：
 
 - 完整 `QuickSettingsPage` 仍承载 toggle / long press / toast / preview close timer / shell drag 等复杂行为。
-- 当前 Home 与 Notifications 页面实现虽已下沉，但 QuickSettings 仍是 `ShellPages.cpp` 的剩余主要高风险区域。
+- 当前风险已经不再是“QuickSettings 仍留在 `ShellPages.cpp`”，而是 QuickSettings 本页复杂行为仍需手动回归。
 
 ### F. Power 域
 
@@ -463,26 +463,24 @@ Forbidden changes:
 
 这意味着后续若写“HeartRate 仍未拆完”，必须明确是“生命周期风险未收口”，不是“页面仍未迁出”。
 
-## 当前仍留在 `ShellPages.cpp` 的主要区域
+## `ShellPages.cpp` 当前剩余内容
 
-截至当前，`ShellPages.cpp` 仍主要承载以下高交互页面：
+截至当前，`ShellPages.cpp` 已不再承载任何页面实现。
 
-- `QuickSettingsPage`
+当前剩余内容主要是：
 
-这些页面共同特征是：
-
-- 仍属于主壳层或主页宿主。
-- 交互强度高。
-- 较容易持有 timer、拖拽状态、预览状态或 backdrop 状态。
-- 与 `PageManager`、EventBus、临时壳层开关关系更近。
+- 零引用 `using`
+- 零引用文本常量
+- 零引用 QuickSettings 日志 helper
+- 零引用 generic helper / dead residue
 
 当前判断：
 
-- 当前剩余未拆区域已经从“所有非 Settings 页面”收缩到“主壳层和高交互壳层”。
+- `ShellPages.cpp` 当前 0 页面实现。
 - `WatchfacePage` 与 `HomeRingHostPage` 已迁入 `Shell/Home/ShellHomePages.cpp`，但 Watchface 的时间、电量、输入路径，以及 HomeRing 的 EventBus、preview、crown、卡片跳转和 daily 动态数据边界仍需谨慎手动回归。
-- `QuickSettings` 仍是当前最需要谨慎处理的高风险剩余区域；Notifications 域则转入“实现已下沉，但复杂行为仍需谨慎回归”的阶段。
-- 这是后续讨论 `ShellPages.cpp` 时必须写清楚的边界变化。
-- `QuickSettingsPage` 已迁出后，`ShellPages.cpp` 的剩余内容应重新做一次区域盘点，而不是继续沿用旧的“QuickSettings 仍在其中”的描述。
+- `NotificationWakePage` 与 `NotificationsPage` 已迁入 `Shell/Notifications/ShellNotificationPages.cpp`，QuickSettings 页面实现也已迁入 `Shell/QuickSettings/ShellQuickSettingsPages.cpp`。
+- 剩余风险已从“页面迁移”转为“dead residue 清理、聚合头拆分、注册结构重组、手动 UI 回归”。
+- 手动 UI 回归仍未执行，不应写成已通过。
 
 ## 聚合头状态
 
@@ -528,7 +526,7 @@ Forbidden changes:
 | Health / Sleep | `Health/SleepPages.cpp` | 是 | 是，`ShellPages.h` | 容易仍被误写成 Shell 子块 |
 | Health / BloodOxygen | `Health/BloodOxygenPages.cpp` + helpers | 是 | 是，`ShellPages.h` | shared helper 与页面关系不易看清 |
 | Health / HeartRate | `Health/HeartRatePages.cpp` | 是 | 是，`ShellPages.h` | 生命周期风险高 |
-| 剩余 Shell 主壳层 | `ShellPages.cpp` | 否 | 是，`ShellPages.h` | 高交互、timer、preview、overlay 集中 |
+| 剩余 Shell 收口层 | `ShellPages.cpp` | 是 | 是，`ShellPages.h` | dead residue 清理、聚合头滞后、注册结构未收口 |
 
 ## 当前最需要避免的误判
 
@@ -572,7 +570,7 @@ Power 仍与：
 1. `Display`、`Power`、`Daily`、`Health` 页面实现已显著分域下沉。
 2. `SettingsPages.h` 和 `ShellPages.h` 仍承担对外聚合入口。
 3. `LauncherPage` 已独立下沉到 `Shell/Launcher/ShellLauncherPages.cpp`，但 `ShellPages.h` 与 `Application.cpp` 的外部入口结构暂未变化。
-4. `ShellPages.cpp` 当前主要剩余主壳层、主页宿主、通知与快捷设置等高交互区域。
+4. `ShellPages.cpp` 当前已无页面实现，后续更像收口 dead residue 与澄清聚合边界，而不是继续迁页面。
 5. 后续任何关于“ShellPages 拆分是否继续”的讨论，都不应再基于早期“所有页面都还在壳层巨石里”的旧事实。
 
 ## 后续建议
