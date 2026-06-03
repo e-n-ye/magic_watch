@@ -203,7 +203,8 @@ Forbidden changes:
 ### Daily / Weather
 
 - Weather 页面已下沉到 `Daily/WeatherPages.cpp`。
-- 当前仍通过 `ShellPages.h` 暴露 `WeatherAppPage` 声明，并由 `Application.cpp` 注册。
+- `WeatherAppPage` 声明已下沉到 `Daily/WeatherPages.h`，`ShellPages.h` 仅通过过渡 include 兼容 Weather 声明。
+- 当前仍由 `Application.cpp` 注册。
 
 当前判断：
 
@@ -216,6 +217,7 @@ Forbidden changes:
   - `Daily/StepsPages.cpp`
   - `Daily/StepsPagePrimitives.*`
   - `Daily/StepsMainPrimitives.*`
+- `StepsAppPage` 与 `StepsDataInfoPage` 声明已下沉到 `Daily/StepsPages.h`，`ShellPages.h` 仅通过过渡 include 兼容 Steps 声明。
 - `StepsAppPage` 与 `StepsDataInfoPage` 已形成独立 Daily 域实现。
 
 当前判断：

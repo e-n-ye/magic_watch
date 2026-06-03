@@ -330,6 +330,7 @@ Forbidden changes:
 当前实现文件位于：
 
 - `Daily/WeatherPages.cpp`
+- `Daily/WeatherPages.h`
 
 当前状态：
 
@@ -338,7 +339,7 @@ Forbidden changes:
 拆分判断：
 
 - 页面实现：已迁出。
-- 外部暴露：仍通过 `ShellPages.h`。
+- 外部暴露：已具备 Weather 域声明头，`ShellPages.h` 仍通过过渡 include 兼容旧入口。
 
 风险等级：
 
@@ -353,6 +354,7 @@ Forbidden changes:
 当前实现文件位于：
 
 - `Daily/StepsPages.cpp`
+- `Daily/StepsPages.h`
 - `Daily/StepsPagePrimitives.*`
 - `Daily/StepsMainPrimitives.*`
 
@@ -364,7 +366,7 @@ Forbidden changes:
 
 - 页面实现：已迁出。
 - 域内共享 UI：已抽出。
-- 外部暴露：仍通过 `ShellPages.h`。
+- 外部暴露：已具备 Steps 域声明头，`ShellPages.h` 仍通过过渡 include 兼容旧入口。
 
 风险等级：
 

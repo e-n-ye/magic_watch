@@ -1,4 +1,4 @@
-#include "App/UI/Pages/ShellPages.h"
+#include "App/UI/Pages/Daily/StepsPages.h"
 
 #include "App/UI/Pages/Daily/StepsMainPrimitives.h"
 #include "App/UI/Pages/Daily/StepsPagePrimitives.h"

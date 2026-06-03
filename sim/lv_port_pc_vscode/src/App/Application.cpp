@@ -5,6 +5,8 @@
 #include <string>
 
 #include "App/UI/Pages/CommonPages.h"
+#include "App/UI/Pages/Daily/StepsPages.h"
+#include "App/UI/Pages/Daily/WeatherPages.h"
 #include "App/UI/Pages/SettingsPages.h"
 #include "App/UI/Pages/Shell/Home/ShellHomePages.h"
 #include "App/UI/Pages/Shell/Launcher/ShellLauncherPages.h"
