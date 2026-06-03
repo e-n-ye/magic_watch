@@ -241,13 +241,12 @@ Forbidden changes:
   - `notification_accent_color(...)`
   - `create_notification_icon(...)`
 - `NotificationWakePage` 已从 `ShellPages.cpp` 下沉到 `Shell/Notifications/ShellNotificationPages.cpp`。
-- `NotificationsPage` 仍留在 `ShellPages.cpp`。
+- `NotificationsPage` 已从 `ShellPages.cpp` 下沉到 `Shell/Notifications/ShellNotificationPages.cpp`。
 
 拆分判断：
 
-- 现在 Shell/Notifications 已同时承载通知视觉 shared primitives 和 `NotificationWakePage`。
-- 现在 Shell/Notifications 已同时承载通知视觉 shared primitives、`NotificationWakePage`，以及 `NotificationsPage` 单域 UI primitives。
-- 这不代表完整通知页面本体都已迁出；`NotificationsPage` 的行为逻辑仍是后续高风险主块。
+- 现在 Shell/Notifications 已同时承载通知视觉 shared primitives、`NotificationWakePage`、`NotificationsPage`，以及 `NotificationsPage` 单域 UI primitives。
+- 这不代表通知页复杂行为已经低风险；`NotificationsPage` 的 swipe / sheet / clear confirm / preview close timer 仍需手动回归。
 
 风险等级：
 
@@ -255,7 +254,7 @@ Forbidden changes:
 
 主要风险：
 
-- 完整 `NotificationsPage` 仍承载 swipe / sheet / clear confirm / preview close timer 等复杂行为。
+- `NotificationsPage` 已迁出，但仍承载 swipe / sheet / clear confirm / preview close timer 等复杂行为。
 - `QuickSettings` 仍是独立的高风险剩余区域，不能因为通知 visual helper 下沉就误判主壳层已接近拆完。
 
 ### F. Power 域
@@ -441,7 +440,6 @@ Forbidden changes:
 
 截至当前，`ShellPages.cpp` 仍主要承载以下高交互页面：
 
-- `NotificationsPage`
 - `QuickSettingsPage`
 
 这些页面共同特征是：
@@ -455,7 +453,7 @@ Forbidden changes:
 
 - 当前剩余未拆区域已经从“所有非 Settings 页面”收缩到“主壳层和高交互壳层”。
 - `WatchfacePage` 与 `HomeRingHostPage` 已迁入 `Shell/Home/ShellHomePages.cpp`，但 Watchface 的时间、电量、输入路径，以及 HomeRing 的 EventBus、preview、crown、卡片跳转和 daily 动态数据边界仍需谨慎手动回归。
-- `Notifications` 与 `QuickSettings` 仍是当前最需要谨慎处理的高风险剩余区域。
+- `QuickSettings` 仍是当前最需要谨慎处理的高风险剩余区域；Notifications 域则转入“实现已下沉，但复杂行为仍需谨慎回归”的阶段。
 - 这是后续讨论 `ShellPages.cpp` 时必须写清楚的边界变化。
 
 ## 聚合头状态
