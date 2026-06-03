@@ -296,6 +296,7 @@ Forbidden changes:
 当前实现文件位于：
 
 - `Shell/Power/ShellPowerPages.cpp`
+- `Shell/Power/ShellPowerPages.h`
 
 当前页面包括：
 
@@ -312,7 +313,7 @@ Forbidden changes:
 拆分判断：
 
 - Power 页面实现：已迁出。
-- Power 头部声明：仍通过 `ShellPages.h` 聚合。
+- Power 头部声明：已具备 Power 域声明头，`ShellPages.h` 仍通过过渡 include 兼容旧入口。
 
 风险等级：
 

@@ -186,6 +186,7 @@ Forbidden changes:
 ### Power
 
 - Power 域页面已下沉到 `Shell/Power/ShellPowerPages.cpp`。
+- Power 域页面声明已下沉到 `Shell/Power/ShellPowerPages.h`，`ShellPages.h` 仅通过过渡 include 兼容 Power 声明。
 - 当前承载页面包括：
   - `PowerMenuPage`
   - `ScreenOffPage`

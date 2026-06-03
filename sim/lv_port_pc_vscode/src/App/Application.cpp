@@ -9,6 +9,7 @@
 #include "App/UI/Pages/Shell/Home/ShellHomePages.h"
 #include "App/UI/Pages/Shell/Launcher/ShellLauncherPages.h"
 #include "App/UI/Pages/Shell/Notifications/ShellNotificationPages.h"
+#include "App/UI/Pages/Shell/Power/ShellPowerPages.h"
 #include "App/UI/Pages/Shell/QuickSettings/ShellQuickSettingsPages.h"
 #include "App/UI/Pages/ShellPages.h"
 #include "lvgl/lvgl.h"

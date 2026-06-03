@@ -1,4 +1,4 @@
-#include "App/UI/Pages/ShellPages.h"
+#include "App/UI/Pages/Shell/Power/ShellPowerPages.h"
 
 #include "App/Common/DisplayPolicyRules.h"
 #include "App/UI/Pages/Shell/ShellClickGuard.h"
