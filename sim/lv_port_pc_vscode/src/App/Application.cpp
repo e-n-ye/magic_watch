@@ -108,6 +108,13 @@ void register_shell_notification_pages(PageManager& page_manager, DataCenter& da
                              });
 }
 
+void register_shell_quick_settings_pages(PageManager& page_manager, DataCenter& data_center) {
+  page_manager.register_page(PageId::QuickSettings,
+                             [&data_center]() {
+                               return std::make_unique<QuickSettingsPage>(data_center);
+                             });
+}
+
 class NotificationToastOverlay {
  public:
   void attach(DataCenter& data_center) {
@@ -329,9 +336,8 @@ void Application::register_pages() {
 
   register_shell_home_pages(page_manager_, data_center_);
   register_shell_notification_pages(page_manager_, data_center_);
+  register_shell_quick_settings_pages(page_manager_, data_center_);
   page_manager_.register_page(PageId::Launcher, [this]() { return std::make_unique<LauncherPage>(data_center_); });
-  page_manager_.register_page(PageId::QuickSettings,
-                              [this]() { return std::make_unique<QuickSettingsPage>(data_center_); });
   page_manager_.register_page(PageId::PowerMenu, [this]() { return std::make_unique<PowerMenuPage>(data_center_); });
   page_manager_.register_page(
       PageId::ScreenOff,
