@@ -154,6 +154,7 @@ Forbidden changes:
 - `ShellNotificationPagePrimitives.*` 只承载 `NotificationsPage` 单域纯 UI 构建 helper。
 - `NotificationWakePage` 已迁入 `Shell/Notifications/ShellNotificationPages.cpp`。
 - `NotificationsPage` 已迁入 `Shell/Notifications/ShellNotificationPages.cpp`。
+- `NotificationWakePage` 与 `NotificationsPage` 声明已下沉到 `Shell/Notifications/ShellNotificationPages.h`，`ShellPages.h` 仅通过过渡 include 兼容通知声明。
 - `ShellNotificationPrimitives.*` 仍是通知视觉共享 helper 边界。
 - `ShellPages.h` 仍是聚合声明头，`Application.cpp` 注册未变。
 - 这不代表通知复杂行为已经低风险；swipe / sheet / clear confirm / preview close timer 仍需手动回归。

@@ -1,4 +1,4 @@
-#include "App/UI/Pages/ShellPages.h"
+#include "App/UI/Pages/Shell/Notifications/ShellNotificationPages.h"
 
 #include "App/UI/Pages/Shell/Notifications/ShellNotificationPagePrimitives.h"
 #include "App/UI/Pages/Shell/Notifications/ShellNotificationPrimitives.h"

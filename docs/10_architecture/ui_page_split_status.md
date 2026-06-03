@@ -230,6 +230,7 @@ Forbidden changes:
 - `Shell/Notifications/ShellNotificationPagePrimitives.*`
 - `Shell/Notifications/ShellNotificationPrimitives.*`
 - `Shell/Notifications/ShellNotificationPages.cpp`
+- `Shell/Notifications/ShellNotificationPages.h`
 
 当前状态：
 
@@ -244,6 +245,7 @@ Forbidden changes:
   - `create_notification_icon(...)`
 - `NotificationWakePage` 已从 `ShellPages.cpp` 下沉到 `Shell/Notifications/ShellNotificationPages.cpp`。
 - `NotificationsPage` 已从 `ShellPages.cpp` 下沉到 `Shell/Notifications/ShellNotificationPages.cpp`。
+- `NotificationWakePage` / `NotificationsPage` 声明已下沉到 `Shell/Notifications/ShellNotificationPages.h`，`ShellPages.h` 仅通过过渡 include 兼容通知入口。
 
 拆分判断：
 
