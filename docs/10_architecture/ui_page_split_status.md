@@ -221,6 +221,38 @@ Forbidden changes:
 - 这说明 Shell/Home 当前已经承载 `WatchfacePage` 与 `HomeRingHostPage`，但不代表 `Notifications`、`QuickSettings` 已完成同级迁移。
 - 如果后续文档把“Launcher 已迁出”误写成“整个主壳层已拆开”，会直接高估当前壳层边界清晰度。
 
+### E. Shell / Notifications shared visual boundary
+
+当前实现文件位于：
+
+- `Shell/Notifications/ShellNotificationPrimitives.*`
+
+当前状态：
+
+- Notifications 域已经开始形成共享视觉 helper 边界。
+- 当前承载的 helper 包括：
+  - `notification_card_color(...)`
+  - `notification_read_card_color(...)`
+  - `notification_primary_text_color(...)`
+  - `notification_secondary_text_color(...)`
+  - `notification_accent_color(...)`
+  - `create_notification_icon(...)`
+- `NotificationsPage` 与 `NotificationWakePage` 仍留在 `ShellPages.cpp`。
+
+拆分判断：
+
+- 这一步只是在通知域内先抽 shared visual primitives，不代表通知页面本体已迁出。
+- 它降低了后续 `NotificationWakePage` 单页迁移时的 helper 可见性阻塞。
+
+风险等级：
+
+- 中。
+
+主要风险：
+
+- 完整 `NotificationsPage` 仍承载 swipe / sheet / clear confirm / preview close timer 等复杂行为。
+- `QuickSettings` 仍是独立的高风险剩余区域，不能因为通知 visual helper 下沉就误判主壳层已接近拆完。
+
 ### F. Power 域
 
 当前实现文件位于：

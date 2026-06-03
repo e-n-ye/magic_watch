@@ -136,6 +136,22 @@ Forbidden changes:
 - 这也不代表 HomeRing 整页已迁出。
 - 后续文档若继续把 HomeRing 描述成“只有页面未迁出，尚无单域 helper 边界”，会低估当前拆分进度。
 
+### Shell / Notifications shared visual helpers
+
+- `Shell/Notifications/ShellNotificationPrimitives.*` 已新增并登记到 `CMakeLists.txt`。
+- 它承载 Notifications 域共享视觉 helper，包括：
+  - `notification_card_color(...)`
+  - `notification_read_card_color(...)`
+  - `notification_primary_text_color(...)`
+  - `notification_secondary_text_color(...)`
+  - `notification_accent_color(...)`
+  - `create_notification_icon(...)`
+
+当前判断：
+
+- `NotificationsPage` 与 `NotificationWakePage` 仍留在 `ShellPages.cpp`。
+- 本轮只是解除后续 `NotificationWakePage` 迁移的 helper 可见性阻塞，不代表通知页面已迁出。
+
 ### Shell / Launcher
 
 - `LauncherPage` 已从 `ShellPages.cpp` 下沉到 `Shell/Launcher/ShellLauncherPages.cpp`。
@@ -256,6 +272,7 @@ Forbidden changes:
 
 - `ShellPages.cpp` 仍然大，但它现在更接近“通知与快捷设置等剩余壳层实现聚集区”，而不是所有非 Settings 页面的大杂烩。
 - `WatchfacePage` 与 `HomeRingHostPage` 已共同迁入 `Shell/Home/ShellHomePages.cpp`。
+- `Shell/Notifications/ShellNotificationPrimitives.*` 已承载通知域共享视觉 helper，但 `NotificationsPage` 与 `NotificationWakePage` 实现本体仍留在 `ShellPages.cpp`。
 - `HomeRingHostPage` 已迁入 `Shell/Home/ShellHomePages.cpp`；其 layout / stage / pager 纯 UI 构件已下沉到 `Shell/Home/ShellHomeLayoutPrimitives.*`，payment / NFC 卡片纯 UI 构件已下沉到 `Shell/Home/ShellHomePaymentCardPrimitives.*`，health 类卡片纯 UI 构件已下沉到 `Shell/Home/ShellHomeHealthCardPrimitives.*`，daily 类卡片纯 UI 构件已下沉到 `Shell/Home/ShellHomeDailyCardPrimitives.*`。
 - 后续任何“ShellPages 拆分”文档，都应明确它的剩余内容已不同于早期版本。
 
@@ -305,6 +322,7 @@ Forbidden changes:
   - `Shell/Home/ShellHomeLayoutPrimitives.cpp`
   - `Shell/Home/ShellHomeHealthCardPrimitives.cpp`
   - `Shell/Home/ShellHomePaymentCardPrimitives.cpp`
+  - `Shell/Notifications/ShellNotificationPrimitives.cpp`
   - `Shell/Launcher/ShellLauncherPages.cpp`
   - `Shell/Power/ShellPowerPages.cpp`
 

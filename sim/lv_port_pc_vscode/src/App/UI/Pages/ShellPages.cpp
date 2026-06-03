@@ -17,6 +17,7 @@
 #include "App/UI/Pages/Shell/Home/ShellHomeDailyCardPrimitives.h"
 #include "App/UI/Pages/Shell/Home/ShellHomeLayoutPrimitives.h"
 #include "App/UI/Pages/Shell/Home/ShellHomePaymentCardPrimitives.h"
+#include "App/UI/Pages/Shell/Notifications/ShellNotificationPrimitives.h"
 #include "App/UI/Pages/Shell/ShellImagePrimitives.h"
 #include "App/UI/Pages/Shell/ShellPagePrimitives.h"
 #include "App/UI/UiStyles.h"
@@ -51,8 +52,6 @@ using shell_font::cjk_font_72;
 using shell_asset::file_exists;
 using shell_asset::nfc_school_card_asset_path;
 using shell_asset::nfc_school_card_inner_asset_path;
-using shell_asset::payment_alipay_asset_path;
-using shell_asset::payment_wechat_asset_path;
 using shell_asset::payment_wechat_green_asset_path;
 
 constexpr const char* kTextClear = "\xE6\xB8\x85\xE7\xA9\xBA";
@@ -171,73 +170,6 @@ void set_translate_y_exec(void* obj, int32_t value) {
 }
 
 }  // namespace
-
-lv_color_t notification_card_color(NotificationCategory category) {
-  return category == NotificationCategory::BatteryLow ? lv_color_hex(0x172636) : lv_color_hex(0x132033);
-}
-
-lv_color_t notification_accent_color(NotificationCategory category) {
-  return category == NotificationCategory::BatteryLow ? lv_color_hex(0xFACC15) : lv_color_hex(0x22D3EE);
-}
-
-lv_color_t notification_read_card_color(const NotificationItem& item) {
-  return item.read ? lv_color_hex(0x0E1824) : notification_card_color(item.category);
-}
-
-lv_color_t notification_primary_text_color(const NotificationItem& item) {
-  return item.read ? lv_color_hex(0xD3DCE8) : lv_color_hex(0xF8FAFC);
-}
-
-lv_color_t notification_secondary_text_color(const NotificationItem& item) {
-  return item.read ? lv_color_hex(0x94A3B8) : lv_color_hex(0xE2E8F0);
-}
-
-lv_obj_t* create_notification_icon(lv_obj_t* parent, const NotificationItem& item, bool compact) {
-  lv_obj_t* holder = lv_obj_create(parent);
-  if (holder == nullptr) {
-    return nullptr;
-  }
-
-  const lv_coord_t size = compact ? 38 : 48;
-  lv_obj_remove_flag(holder, LV_OBJ_FLAG_SCROLLABLE);
-  lv_obj_set_size(holder, size, size);
-  lv_obj_set_style_border_width(holder, 0, 0);
-  lv_obj_set_style_radius(holder, compact ? 14 : 18, 0);
-  lv_obj_set_style_pad_all(holder, 0, 0);
-
-  if (item.category == NotificationCategory::Message && file_exists(payment_wechat_green_asset_path())) {
-    lv_obj_set_style_bg_color(holder, lv_color_hex(0x19C37D), 0);
-    lv_obj_set_style_bg_opa(holder, LV_OPA_COVER, 0);
-    lv_obj_t* image = lv_image_create(holder);
-    if (image == nullptr) {
-      return holder;
-    }
-    lv_image_set_src(image, payment_wechat_green_asset_path());
-    lv_image_set_inner_align(image, LV_IMAGE_ALIGN_STRETCH);
-    lv_obj_set_size(image, compact ? 24 : 30, compact ? 24 : 30);
-    lv_obj_center(image);
-    return holder;
-  }
-
-  lv_obj_set_style_bg_color(holder,
-                            item.category == NotificationCategory::BatteryLow ? lv_color_hex(0x8A6A00)
-                                                                              : lv_color_hex(0x1D4ED8),
-                            0);
-  lv_obj_set_style_bg_opa(holder, LV_OPA_COVER, 0);
-
-  lv_obj_t* label = lv_label_create(holder);
-  if (label == nullptr) {
-    return holder;
-  }
-  lv_obj_set_style_text_font(label, compact ? &lv_font_montserrat_14 : &lv_font_montserrat_16, 0);
-  lv_obj_set_style_text_color(label, lv_color_hex(0xFFFFFF), 0);
-  lv_label_set_text(label,
-                    item.category == NotificationCategory::BatteryLow
-                        ? (item.badge_text.empty() ? LV_SYMBOL_CHARGE : item.badge_text.c_str())
-                        : LV_SYMBOL_BELL);
-  lv_obj_center(label);
-  return holder;
-}
 
 NotificationsPage::NotificationsPage(DataCenter& data_center) : PageBase(data_center) {}
 
@@ -1067,7 +999,7 @@ void NotificationsPage::refresh_list_content() {
     lv_obj_set_width(card, LV_PCT(100));
     lv_obj_set_height(card, LV_SIZE_CONTENT);
     lv_obj_set_style_pad_all(card, 12, 0);
-    lv_obj_set_style_bg_color(card, notification_read_card_color(item), 0);
+    lv_obj_set_style_bg_color(card, shell_notification::notification_read_card_color(item), 0);
     lv_obj_set_style_bg_opa(card, LV_OPA_COVER, 0);
     lv_obj_set_style_border_width(card, 0, 0);
     lv_obj_set_style_radius(card, 20, 0);
@@ -1080,7 +1012,7 @@ void NotificationsPage::refresh_list_content() {
     lv_obj_add_event_cb(card, &NotificationsPage::notification_card_swipe_event_cb, LV_EVENT_RELEASED, this);
     lv_obj_add_event_cb(card, &NotificationsPage::notification_card_swipe_event_cb, LV_EVENT_PRESS_LOST, this);
 
-    lv_obj_t* icon = create_notification_icon(card, item, true);
+    lv_obj_t* icon = shell_notification::create_notification_icon(card, item, true);
     lv_obj_t* status_chip = lv_obj_create(card);
     lv_obj_t* status_label = status_chip == nullptr ? nullptr : lv_label_create(status_chip);
     lv_obj_t* source = lv_label_create(card);
@@ -1116,19 +1048,19 @@ void NotificationsPage::refresh_list_content() {
     lv_obj_set_width(source, 104);
     lv_label_set_long_mode(source, LV_LABEL_LONG_DOT);
     lv_obj_set_style_text_font(source, cjk_font_14(), 0);
-    lv_obj_set_style_text_color(source, notification_accent_color(item.category), 0);
+    lv_obj_set_style_text_color(source, shell_notification::notification_accent_color(item.category), 0);
     lv_obj_align(source, LV_ALIGN_TOP_LEFT, 52, 2);
 
     lv_label_set_text(title, item.title.c_str());
     lv_obj_set_style_text_font(title, cjk_font_16(), 0);
-    lv_obj_set_style_text_color(title, notification_primary_text_color(item), 0);
+    lv_obj_set_style_text_color(title, shell_notification::notification_primary_text_color(item), 0);
     lv_obj_align(title, LV_ALIGN_TOP_LEFT, 0, 48);
 
     lv_label_set_text(body, item.body.c_str());
     lv_obj_set_width(body, 182);
     lv_label_set_long_mode(body, LV_LABEL_LONG_WRAP);
     lv_obj_set_style_text_font(body, cjk_font_14(), 0);
-    lv_obj_set_style_text_color(body, notification_secondary_text_color(item), 0);
+    lv_obj_set_style_text_color(body, shell_notification::notification_secondary_text_color(item), 0);
     lv_obj_align(body, LV_ALIGN_TOP_LEFT, 0, 82);
     lv_obj_update_layout(body);
 
@@ -1160,7 +1092,7 @@ void NotificationsPage::refresh_detail_content() {
   lv_obj_clear_flag(detail_root_, LV_OBJ_FLAG_HIDDEN);
 
   lv_label_set_text(detail_source_label_, item->source_label.c_str());
-  lv_obj_set_style_text_color(detail_source_label_, notification_accent_color(item->category), 0);
+  lv_obj_set_style_text_color(detail_source_label_, shell_notification::notification_accent_color(item->category), 0);
   lv_label_set_text(detail_title_label_, item->title.c_str());
   lv_label_set_text(detail_body_label_, item->body.c_str());
   lv_label_set_text(detail_time_label_, item->time_text.c_str());
@@ -1417,7 +1349,7 @@ void NotificationWakePage::refresh_content() {
   }
 
   lv_label_set_text(source_label_, item->source_label.c_str());
-  lv_obj_set_style_text_color(source_label_, notification_accent_color(item->category), 0);
+  lv_obj_set_style_text_color(source_label_, shell_notification::notification_accent_color(item->category), 0);
   lv_label_set_text(title_label_, item->title.c_str());
   lv_label_set_text(body_label_, item->body.c_str());
   lv_label_set_text(time_label_, item->time_text.c_str());
