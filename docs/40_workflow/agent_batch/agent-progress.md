@@ -91,3 +91,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：已撤回对只读文件 `docs/00_current/v0_scope.md` 的越界改动；`watchface_style_architecture.md` 保持根目录架构专题位置未迁移；未新增任何硬件实现或选型结论
 - 阻塞与待决：
 - 下一步：队列项 `DOCROOT-Q3-WAVE1` 已完成，按停止策略停止，等待用户验收；不执行 `DOCROOT-Q6-REVIEW`
+
+### 会话 2026-06-03 23:35
+
+- 本轮范围：已验收队列项 `DOCROOT-Q3-WAVE1` 收尾清理；队列项 `DOCROOT-Q6-REVIEW`
+- 完成：已根据用户验收，将 `DOCROOT-Q3-WAVE1` 从 `agent-queue.md` 当前队列移除
+- 修改文件：`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：待提交前执行
+- 风险回应：只清理已验收 DONE 队列项，保留卡片文件 `cards/docroot-reorg-wave1.md`，未触碰仍需执行的 `DOCROOT-Q6-REVIEW`
+- 阻塞与待决：
+- 下一步：单独提交本次清理后，执行 `DOCROOT-B6-C01`
