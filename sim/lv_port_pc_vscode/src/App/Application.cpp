@@ -159,6 +159,101 @@ void register_daily_pages(PageManager& page_manager, DataCenter& data_center) {
                              });
 }
 
+void register_health_pages(PageManager& page_manager, DataCenter& data_center) {
+  page_manager.register_page(PageId::AppHeartRate,
+                             [&data_center]() {
+                               return std::make_unique<HeartRateAppPage>(data_center);
+                             });
+  page_manager.register_page(
+      PageId::AppHeartRateResting30Days,
+      [&data_center]() {
+        return std::make_unique<HeartRateResting30DaysPage>(data_center);
+      });
+  page_manager.register_page(
+      PageId::AppHeartRateSettings,
+      [&data_center]() {
+        return std::make_unique<HeartRateSettingsPage>(data_center);
+      });
+  page_manager.register_page(
+      PageId::AppHeartRateAllDayMonitoring,
+      [&data_center]() {
+        return std::make_unique<HeartRateAllDayMonitoringPage>(data_center);
+      });
+  page_manager.register_page(
+      PageId::AppHeartRateHeartHealthMonitoring,
+      [&data_center]() {
+        return std::make_unique<HeartRateHeartHealthMonitoringPage>(data_center);
+      });
+  page_manager.register_page(
+      PageId::AppHeartRateHighReminder,
+      [&data_center]() {
+        return std::make_unique<HeartRateHighReminderPage>(data_center);
+      });
+  page_manager.register_page(
+      PageId::AppHeartRateLowReminder,
+      [&data_center]() {
+        return std::make_unique<HeartRateLowReminderPage>(data_center);
+      });
+  page_manager.register_page(
+      PageId::AppHeartRateInfo,
+      [&data_center]() {
+        return std::make_unique<HeartRateInfoPage>(data_center);
+      });
+  page_manager.register_page(PageId::AppBloodOxygen,
+                             [&data_center]() {
+                               return std::make_unique<BloodOxygenAppPage>(data_center);
+                             });
+  page_manager.register_page(
+      PageId::AppBloodOxygenSettings,
+      [&data_center]() {
+        return std::make_unique<BloodOxygenSettingsPage>(data_center);
+      });
+  page_manager.register_page(
+      PageId::AppBloodOxygenLowOxygenReminder,
+      [&data_center]() {
+        return std::make_unique<BloodOxygenLowOxygenReminderPage>(data_center);
+      });
+  page_manager.register_page(
+      PageId::AppBloodOxygenInfo,
+      [&data_center]() {
+        return std::make_unique<BloodOxygenInfoPage>(data_center);
+      });
+  page_manager.register_page(PageId::AppSleep,
+                             [&data_center]() {
+                               return std::make_unique<SleepAppPage>(data_center);
+                             });
+  page_manager.register_page(
+      PageId::AppSleepSettings,
+      [&data_center]() {
+        return std::make_unique<SleepSettingsPage>(data_center);
+      });
+  page_manager.register_page(
+      PageId::AppSleepSettingHighPrecision,
+      [&data_center]() {
+        return std::make_unique<SleepMonitoringDetailPage>(
+            data_center,
+            PageId::AppSleepSettingHighPrecision,
+            "睡眠高精度监测",
+            "开启后，可以跟踪睡眠的快速眼动期（REM）分布。",
+            SleepMonitoringDetailPage::SettingKind::HighPrecisionSleep);
+      });
+  page_manager.register_page(
+      PageId::AppSleepSettingBreathingQuality,
+      [&data_center]() {
+        return std::make_unique<SleepMonitoringDetailPage>(
+            data_center,
+            PageId::AppSleepSettingBreathingQuality,
+            "睡眠呼吸质量监测",
+            "开启后，监测到夜间睡眠入睡会自动监测呼吸质量（请在App端查看睡眠呼吸质量分数）。",
+            SleepMonitoringDetailPage::SettingKind::SleepBreathingQuality);
+      });
+  page_manager.register_page(
+      PageId::AppSleepInfo,
+      [&data_center]() {
+        return std::make_unique<SleepInfoPage>(data_center);
+      });
+}
+
 class NotificationToastOverlay {
  public:
   void attach(DataCenter& data_center) {
@@ -383,97 +478,13 @@ void Application::register_pages() {
   register_shell_quick_settings_pages(page_manager_, data_center_);
   register_shell_power_pages(page_manager_, data_center_);
   register_daily_pages(page_manager_, data_center_);
+  register_health_pages(page_manager_, data_center_);
   page_manager_.register_page(PageId::Launcher, [this]() { return std::make_unique<LauncherPage>(data_center_); });
 
   page_manager_.register_page(PageId::SettingsHome,
                               [this]() {
                                 return std::make_unique<SettingsHomePage>(data_center_);
                               });
-  page_manager_.register_page(PageId::AppHeartRate,
-                              [this]() { return std::make_unique<HeartRateAppPage>(data_center_); });
-  page_manager_.register_page(
-      PageId::AppHeartRateResting30Days,
-      [this]() {
-        return std::make_unique<HeartRateResting30DaysPage>(data_center_);
-      });
-  page_manager_.register_page(
-      PageId::AppHeartRateSettings,
-      [this]() {
-        return std::make_unique<HeartRateSettingsPage>(data_center_);
-      });
-  page_manager_.register_page(
-      PageId::AppHeartRateAllDayMonitoring,
-      [this]() {
-        return std::make_unique<HeartRateAllDayMonitoringPage>(data_center_);
-      });
-  page_manager_.register_page(
-      PageId::AppHeartRateHeartHealthMonitoring,
-      [this]() {
-        return std::make_unique<HeartRateHeartHealthMonitoringPage>(data_center_);
-      });
-  page_manager_.register_page(
-      PageId::AppHeartRateHighReminder,
-      [this]() {
-        return std::make_unique<HeartRateHighReminderPage>(data_center_);
-      });
-  page_manager_.register_page(
-      PageId::AppHeartRateLowReminder,
-      [this]() {
-        return std::make_unique<HeartRateLowReminderPage>(data_center_);
-      });
-  page_manager_.register_page(
-      PageId::AppHeartRateInfo,
-      [this]() {
-        return std::make_unique<HeartRateInfoPage>(data_center_);
-      });
-  page_manager_.register_page(PageId::AppBloodOxygen,
-                              [this]() { return std::make_unique<BloodOxygenAppPage>(data_center_); });
-  page_manager_.register_page(
-      PageId::AppBloodOxygenSettings,
-      [this]() {
-        return std::make_unique<BloodOxygenSettingsPage>(data_center_);
-      });
-  page_manager_.register_page(
-      PageId::AppBloodOxygenLowOxygenReminder,
-      [this]() {
-        return std::make_unique<BloodOxygenLowOxygenReminderPage>(data_center_);
-      });
-  page_manager_.register_page(
-      PageId::AppBloodOxygenInfo,
-      [this]() {
-        return std::make_unique<BloodOxygenInfoPage>(data_center_);
-      });
-  page_manager_.register_page(PageId::AppSleep, [this]() { return std::make_unique<SleepAppPage>(data_center_); });
-  page_manager_.register_page(
-      PageId::AppSleepSettings,
-      [this]() {
-        return std::make_unique<SleepSettingsPage>(data_center_);
-      });
-  page_manager_.register_page(
-      PageId::AppSleepSettingHighPrecision,
-      [this]() {
-        return std::make_unique<SleepMonitoringDetailPage>(
-            data_center_,
-            PageId::AppSleepSettingHighPrecision,
-            "睡眠高精度监测",
-            "开启后，可以跟踪睡眠的快速眼动期（REM）分布。",
-            SleepMonitoringDetailPage::SettingKind::HighPrecisionSleep);
-      });
-  page_manager_.register_page(
-      PageId::AppSleepSettingBreathingQuality,
-      [this]() {
-        return std::make_unique<SleepMonitoringDetailPage>(
-            data_center_,
-            PageId::AppSleepSettingBreathingQuality,
-            "睡眠呼吸质量监测",
-            "开启后，监测到夜间睡眠入睡会自动监测呼吸质量（请在App端查看睡眠呼吸质量分数）。",
-            SleepMonitoringDetailPage::SettingKind::SleepBreathingQuality);
-      });
-  page_manager_.register_page(
-      PageId::AppSleepInfo,
-      [this]() {
-        return std::make_unique<SleepInfoPage>(data_center_);
-      });
 
   page_manager_.register_page(
       PageId::SettingDisplay,
