@@ -225,12 +225,14 @@ Forbidden changes:
 
 当前实现文件位于：
 
+- `Shell/Notifications/ShellNotificationPagePrimitives.*`
 - `Shell/Notifications/ShellNotificationPrimitives.*`
 - `Shell/Notifications/ShellNotificationPages.cpp`
 
 当前状态：
 
 - Notifications 域已经开始形成共享视觉 helper 边界。
+- `NotificationsPage` 单域 UI primitives 已开始独立。
 - 当前承载的 helper 包括：
   - `notification_card_color(...)`
   - `notification_read_card_color(...)`
@@ -244,7 +246,8 @@ Forbidden changes:
 拆分判断：
 
 - 现在 Shell/Notifications 已同时承载通知视觉 shared primitives 和 `NotificationWakePage`。
-- 这不代表完整通知页面本体都已迁出；`NotificationsPage` 仍是后续高风险主块。
+- 现在 Shell/Notifications 已同时承载通知视觉 shared primitives、`NotificationWakePage`，以及 `NotificationsPage` 单域 UI primitives。
+- 这不代表完整通知页面本体都已迁出；`NotificationsPage` 的行为逻辑仍是后续高风险主块。
 
 风险等级：
 

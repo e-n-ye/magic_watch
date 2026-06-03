@@ -17,6 +17,7 @@
 #include "App/UI/Pages/Shell/Home/ShellHomeDailyCardPrimitives.h"
 #include "App/UI/Pages/Shell/Home/ShellHomeLayoutPrimitives.h"
 #include "App/UI/Pages/Shell/Home/ShellHomePaymentCardPrimitives.h"
+#include "App/UI/Pages/Shell/Notifications/ShellNotificationPagePrimitives.h"
 #include "App/UI/Pages/Shell/Notifications/ShellNotificationPrimitives.h"
 #include "App/UI/Pages/Shell/ShellImagePrimitives.h"
 #include "App/UI/Pages/Shell/ShellPagePrimitives.h"
@@ -286,206 +287,38 @@ lv_obj_t* NotificationsPage::build() {
   lv_obj_set_style_shadow_opa(sheet_container_, LV_OPA_40, 0);
   lv_obj_set_style_clip_corner(sheet_container_, true, 0);
 
-  clear_button_ = lv_button_create(sheet_container_);
-  list_root_ = lv_obj_create(sheet_container_);
-  empty_state_ = lv_obj_create(sheet_container_);
-  detail_root_ = lv_obj_create(sheet_container_);
-  drag_handle_ = lv_obj_create(sheet_container_);
-  clear_confirm_overlay_ = lv_obj_create(root);
+  shell_notification_page::NotificationsPagePrimitivesView primitives {};
+  if (!shell_notification_page::create_notifications_page_primitives(root, sheet_container_, primitives)) {
+    return nullptr;
+  }
+  clear_button_ = primitives.clear_button;
+  list_root_ = primitives.list_root;
+  empty_state_ = primitives.empty_state;
+  detail_root_ = primitives.detail_root;
+  detail_back_button_ = primitives.detail_back_button;
+  detail_source_label_ = primitives.detail_source_label;
+  detail_title_label_ = primitives.detail_title_label;
+  detail_body_label_ = primitives.detail_body_label;
+  detail_time_label_ = primitives.detail_time_label;
+  clear_confirm_overlay_ = primitives.clear_confirm_overlay;
+  drag_handle_ = primitives.drag_handle;
   if (clear_button_ == nullptr || list_root_ == nullptr || empty_state_ == nullptr || detail_root_ == nullptr ||
-      clear_confirm_overlay_ == nullptr ||
+      detail_back_button_ == nullptr || detail_source_label_ == nullptr || detail_title_label_ == nullptr ||
+      detail_body_label_ == nullptr || detail_time_label_ == nullptr || clear_confirm_overlay_ == nullptr ||
+      primitives.clear_confirm_cancel_button == nullptr || primitives.clear_confirm_confirm_button == nullptr ||
       drag_handle_ == nullptr) {
     return nullptr;
   }
-
-  lv_obj_set_size(clear_button_, 208, 46);
-  lv_obj_align(clear_button_, LV_ALIGN_TOP_MID, 0, 18);
-  lv_obj_set_style_bg_color(clear_button_, lv_color_hex(0x17304A), 0);
-  lv_obj_set_style_bg_opa(clear_button_, LV_OPA_COVER, 0);
-  lv_obj_set_style_border_width(clear_button_, 0, 0);
-  lv_obj_set_style_radius(clear_button_, 22, 0);
   lv_obj_add_event_cb(clear_button_, &NotificationsPage::clear_event_cb, LV_EVENT_CLICKED, this);
-
-  lv_obj_t* clear_label = lv_label_create(clear_button_);
-  if (clear_label == nullptr) {
-    return nullptr;
-  }
-  lv_obj_set_style_text_font(clear_label, cjk_font_16(), 0);
-  lv_obj_set_style_text_color(clear_label, lv_color_hex(0xF8FAFC), 0);
-  lv_label_set_text(clear_label, kTextClear);
-  lv_obj_center(clear_label);
-
-  lv_obj_set_size(list_root_, 208, 156);
-  lv_obj_align(list_root_, LV_ALIGN_TOP_MID, 0, 76);
-  lv_obj_set_flex_flow(list_root_, LV_FLEX_FLOW_COLUMN);
-  lv_obj_set_scroll_dir(list_root_, LV_DIR_VER);
-  lv_obj_set_scrollbar_mode(list_root_, LV_SCROLLBAR_MODE_OFF);
-  lv_obj_add_flag(list_root_, LV_OBJ_FLAG_SCROLL_ELASTIC);
-  lv_obj_add_flag(list_root_, LV_OBJ_FLAG_SCROLL_MOMENTUM);
-  lv_obj_set_style_pad_all(list_root_, 0, 0);
-  lv_obj_set_style_pad_row(list_root_, 10, 0);
-  lv_obj_set_style_bg_opa(list_root_, LV_OPA_TRANSP, 0);
-  lv_obj_set_style_border_width(list_root_, 0, 0);
-  lv_obj_set_style_radius(list_root_, 0, 0);
-
-  lv_obj_remove_flag(empty_state_, LV_OBJ_FLAG_SCROLLABLE);
-  lv_obj_set_size(empty_state_, LV_PCT(100), LV_PCT(100));
-  lv_obj_set_style_bg_opa(empty_state_, LV_OPA_TRANSP, 0);
-  lv_obj_set_style_border_width(empty_state_, 0, 0);
-  lv_obj_set_style_pad_all(empty_state_, 0, 0);
-
-  lv_obj_t* bubble = lv_obj_create(empty_state_);
-  if (bubble == nullptr) {
-    return nullptr;
-  }
-  lv_obj_remove_flag(bubble, LV_OBJ_FLAG_SCROLLABLE);
-  lv_obj_set_size(bubble, 68, 68);
-  lv_obj_align(bubble, LV_ALIGN_CENTER, 0, -30);
-  lv_obj_set_style_bg_color(bubble, lv_color_hex(0x1D4ED8), 0);
-  lv_obj_set_style_bg_opa(bubble, LV_OPA_COVER, 0);
-  lv_obj_set_style_border_width(bubble, 0, 0);
-  lv_obj_set_style_radius(bubble, LV_RADIUS_CIRCLE, 0);
-
-  lv_obj_t* bubble_label = lv_label_create(bubble);
-  lv_obj_t* empty_text = lv_label_create(empty_state_);
-  if (bubble_label == nullptr || empty_text == nullptr) {
-    return nullptr;
-  }
-  lv_obj_set_style_text_font(bubble_label, &lv_font_montserrat_18, 0);
-  lv_obj_set_style_text_color(bubble_label, lv_color_hex(0xFFFFFF), 0);
-  lv_label_set_text(bubble_label, LV_SYMBOL_BELL);
-  lv_obj_center(bubble_label);
-
-  lv_obj_set_style_text_font(empty_text, cjk_font_16(), 0);
-  lv_obj_set_style_text_color(empty_text, lv_color_hex(0xF8FAFC), 0);
-  lv_label_set_text(empty_text, kTextNoMessages);
-  lv_obj_align(empty_text, LV_ALIGN_CENTER, 0, 34);
-
-  lv_obj_remove_flag(detail_root_, LV_OBJ_FLAG_SCROLLABLE);
-  lv_obj_set_size(detail_root_, LV_PCT(100), LV_PCT(100));
-  lv_obj_set_style_bg_opa(detail_root_, LV_OPA_TRANSP, 0);
-  lv_obj_set_style_border_width(detail_root_, 0, 0);
-  lv_obj_set_style_pad_all(detail_root_, 0, 0);
-  lv_obj_add_flag(detail_root_, LV_OBJ_FLAG_HIDDEN);
-
-  detail_back_button_ = lv_button_create(detail_root_);
-  lv_obj_t* detail_card = lv_obj_create(detail_root_);
-  if (detail_back_button_ == nullptr || detail_card == nullptr) {
-    return nullptr;
-  }
-
-  lv_obj_set_size(detail_back_button_, 48, 34);
-  lv_obj_align(detail_back_button_, LV_ALIGN_TOP_LEFT, 14, 16);
-  lv_obj_set_style_bg_color(detail_back_button_, lv_color_hex(0x17304A), 0);
-  lv_obj_set_style_bg_opa(detail_back_button_, LV_OPA_COVER, 0);
-  lv_obj_set_style_border_width(detail_back_button_, 0, 0);
-  lv_obj_set_style_radius(detail_back_button_, 16, 0);
   lv_obj_add_event_cb(detail_back_button_, &NotificationsPage::detail_back_event_cb, LV_EVENT_CLICKED, this);
-
-  lv_obj_t* detail_back_label = lv_label_create(detail_back_button_);
-  if (detail_back_label == nullptr) {
-    return nullptr;
-  }
-  lv_obj_set_style_text_font(detail_back_label, &lv_font_montserrat_18, 0);
-  lv_obj_set_style_text_color(detail_back_label, lv_color_hex(0xF8FAFC), 0);
-  lv_label_set_text(detail_back_label, LV_SYMBOL_LEFT);
-  lv_obj_center(detail_back_label);
-
-  lv_obj_remove_flag(detail_card, LV_OBJ_FLAG_SCROLLABLE);
-  lv_obj_set_size(detail_card, 208, 206);
-  lv_obj_align(detail_card, LV_ALIGN_TOP_MID, 0, 58);
-  lv_obj_set_style_bg_color(detail_card, lv_color_hex(0x132033), 0);
-  lv_obj_set_style_bg_opa(detail_card, LV_OPA_COVER, 0);
-  lv_obj_set_style_border_width(detail_card, 0, 0);
-  lv_obj_set_style_radius(detail_card, 22, 0);
-  lv_obj_set_style_pad_all(detail_card, 14, 0);
-
-  detail_source_label_ = lv_label_create(detail_card);
-  detail_title_label_ = lv_label_create(detail_card);
-  detail_body_label_ = lv_label_create(detail_card);
-  detail_time_label_ = lv_label_create(detail_card);
-  if (detail_source_label_ == nullptr || detail_title_label_ == nullptr || detail_body_label_ == nullptr ||
-      detail_time_label_ == nullptr) {
-    return nullptr;
-  }
-
-  lv_obj_set_style_text_font(detail_source_label_, cjk_font_14(), 0);
-  lv_obj_set_style_text_color(detail_source_label_, lv_color_hex(0x67E8F9), 0);
-  lv_obj_align(detail_source_label_, LV_ALIGN_TOP_LEFT, 0, 0);
-
-  lv_obj_set_width(detail_title_label_, 178);
-  lv_label_set_long_mode(detail_title_label_, LV_LABEL_LONG_WRAP);
-  lv_obj_set_style_text_font(detail_title_label_, cjk_font_16(), 0);
-  lv_obj_set_style_text_color(detail_title_label_, lv_color_hex(0xF8FAFC), 0);
-  lv_obj_align(detail_title_label_, LV_ALIGN_TOP_LEFT, 0, 26);
-
-  lv_obj_set_width(detail_body_label_, 178);
-  lv_label_set_long_mode(detail_body_label_, LV_LABEL_LONG_WRAP);
-  lv_obj_set_style_text_font(detail_body_label_, cjk_font_14(), 0);
-  lv_obj_set_style_text_color(detail_body_label_, lv_color_hex(0xE2E8F0), 0);
-  lv_obj_align(detail_body_label_, LV_ALIGN_TOP_LEFT, 0, 78);
-
-  lv_obj_set_style_text_font(detail_time_label_, cjk_font_14(), 0);
-  lv_obj_set_style_text_color(detail_time_label_, lv_color_hex(0xCBD5E1), 0);
-  lv_obj_align(detail_time_label_, LV_ALIGN_BOTTOM_LEFT, 0, 0);
-
-  ui_prepare_box(clear_confirm_overlay_);
-  lv_obj_set_size(clear_confirm_overlay_, LV_PCT(100), LV_PCT(100));
-  lv_obj_align(clear_confirm_overlay_, LV_ALIGN_TOP_LEFT, 0, 0);
-  lv_obj_set_style_bg_color(clear_confirm_overlay_, lv_color_hex(0x02060D), 0);
-  lv_obj_set_style_bg_opa(clear_confirm_overlay_, LV_OPA_90, 0);
-  lv_obj_set_style_border_width(clear_confirm_overlay_, 0, 0);
-  lv_obj_set_style_radius(clear_confirm_overlay_, 0, 0);
-  lv_obj_add_flag(clear_confirm_overlay_, LV_OBJ_FLAG_HIDDEN);
-  lv_obj_move_foreground(clear_confirm_overlay_);
-
-  lv_obj_t* confirm_body = lv_label_create(clear_confirm_overlay_);
-  lv_obj_t* cancel_button = lv_button_create(clear_confirm_overlay_);
-  lv_obj_t* confirm_button = lv_button_create(clear_confirm_overlay_);
-  if (confirm_body == nullptr || cancel_button == nullptr || confirm_button == nullptr) {
-    return nullptr;
-  }
-
-  lv_obj_set_width(confirm_body, 176);
-  lv_label_set_long_mode(confirm_body, LV_LABEL_LONG_WRAP);
-  lv_obj_set_style_text_font(confirm_body, cjk_font_16(), 0);
-  lv_obj_set_style_text_color(confirm_body, lv_color_hex(0xF8FAFC), 0);
-  lv_label_set_text(confirm_body, kTextNotificationClearConfirmBody);
-  lv_obj_set_style_text_align(confirm_body, LV_TEXT_ALIGN_CENTER, 0);
-  lv_obj_align(confirm_body, LV_ALIGN_CENTER, 0, -28);
-
-  for (const auto [button, text, accent] : {std::tuple {cancel_button, kTextCancel, lv_color_hex(0x334155)},
-                                            std::tuple {confirm_button, kTextConfirm, lv_color_hex(0x2563EB)}}) {
-    lv_obj_set_size(button, 82, 44);
-    lv_obj_set_style_bg_color(button, accent, 0);
-    lv_obj_set_style_bg_opa(button, LV_OPA_COVER, 0);
-    lv_obj_set_style_border_width(button, 0, 0);
-    lv_obj_set_style_radius(button, 20, 0);
-    lv_obj_t* label = lv_label_create(button);
-    if (label == nullptr) {
-      return nullptr;
-    }
-    lv_obj_set_style_text_font(label, cjk_font_16(), 0);
-    lv_obj_set_style_text_color(label, lv_color_hex(0xF8FAFC), 0);
-    lv_label_set_text(label, text);
-    lv_obj_center(label);
-  }
-  lv_obj_align(cancel_button, LV_ALIGN_CENTER, -48, 64);
-  lv_obj_align(confirm_button, LV_ALIGN_CENTER, 48, 64);
-  lv_obj_add_event_cb(cancel_button, &NotificationsPage::clear_cancel_event_cb, LV_EVENT_CLICKED, this);
-  lv_obj_add_event_cb(confirm_button, &NotificationsPage::clear_confirm_event_cb, LV_EVENT_CLICKED, this);
-
-  lv_obj_remove_flag(drag_handle_, LV_OBJ_FLAG_SCROLLABLE);
-  lv_obj_remove_flag(drag_handle_, LV_OBJ_FLAG_CLICKABLE);
-  lv_obj_set_size(drag_handle_, 46, 7);
-  lv_obj_align(drag_handle_, LV_ALIGN_BOTTOM_MID, 0, -14);
-  lv_obj_set_style_bg_color(drag_handle_, lv_color_hex(0x60A5FA), 0);
-  lv_obj_set_style_bg_opa(drag_handle_, LV_OPA_COVER, 0);
-  lv_obj_set_style_border_width(drag_handle_, 0, 0);
-  lv_obj_set_style_radius(drag_handle_, LV_RADIUS_CIRCLE, 0);
-  lv_obj_set_style_shadow_width(drag_handle_, 16, 0);
-  lv_obj_set_style_shadow_color(drag_handle_, lv_color_hex(0x60A5FA), 0);
-  lv_obj_set_style_shadow_opa(drag_handle_, static_cast<lv_opa_t>(140), 0);
+  lv_obj_add_event_cb(primitives.clear_confirm_cancel_button,
+                      &NotificationsPage::clear_cancel_event_cb,
+                      LV_EVENT_CLICKED,
+                      this);
+  lv_obj_add_event_cb(primitives.clear_confirm_confirm_button,
+                      &NotificationsPage::clear_confirm_event_cb,
+                      LV_EVENT_CLICKED,
+                      this);
 
   bind_input();
   bind_notifications();

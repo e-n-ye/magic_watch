@@ -120,6 +120,7 @@ set(MAIN_SOURCES
     src/App/UI/Pages/Shell/Home/ShellHomeDailyCardPrimitives.cpp
     src/App/UI/Pages/Shell/Home/ShellHomePages.cpp
     src/App/UI/Pages/Shell/Home/ShellHomePaymentCardPrimitives.cpp
+    src/App/UI/Pages/Shell/Notifications/ShellNotificationPagePrimitives.cpp
     src/App/UI/Pages/Shell/Notifications/ShellNotificationPrimitives.cpp
     src/App/UI/Pages/Shell/Notifications/ShellNotificationPages.cpp
     src/App/UI/Pages/Shell/Launcher/ShellLauncherPages.cpp
