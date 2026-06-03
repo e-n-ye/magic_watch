@@ -143,6 +143,22 @@ void register_shell_power_pages(PageManager& page_manager, DataCenter& data_cent
       });
 }
 
+void register_daily_pages(PageManager& page_manager, DataCenter& data_center) {
+  page_manager.register_page(PageId::Pedometer,
+                             [&data_center]() {
+                               return std::make_unique<StepsAppPage>(data_center);
+                             });
+  page_manager.register_page(
+      PageId::PedometerDataInfo,
+      [&data_center]() {
+        return std::make_unique<StepsDataInfoPage>(data_center);
+      });
+  page_manager.register_page(PageId::AppWeather,
+                             [&data_center]() {
+                               return std::make_unique<WeatherAppPage>(data_center);
+                             });
+}
+
 class NotificationToastOverlay {
  public:
   void attach(DataCenter& data_center) {
@@ -366,18 +382,13 @@ void Application::register_pages() {
   register_shell_notification_pages(page_manager_, data_center_);
   register_shell_quick_settings_pages(page_manager_, data_center_);
   register_shell_power_pages(page_manager_, data_center_);
+  register_daily_pages(page_manager_, data_center_);
   page_manager_.register_page(PageId::Launcher, [this]() { return std::make_unique<LauncherPage>(data_center_); });
 
   page_manager_.register_page(PageId::SettingsHome,
                               [this]() {
                                 return std::make_unique<SettingsHomePage>(data_center_);
                               });
-  page_manager_.register_page(PageId::Pedometer, [this]() { return std::make_unique<StepsAppPage>(data_center_); });
-  page_manager_.register_page(
-      PageId::PedometerDataInfo,
-      [this]() {
-        return std::make_unique<StepsDataInfoPage>(data_center_);
-      });
   page_manager_.register_page(PageId::AppHeartRate,
                               [this]() { return std::make_unique<HeartRateAppPage>(data_center_); });
   page_manager_.register_page(
@@ -623,7 +634,6 @@ void Application::register_pages() {
       });
   register_app_placeholder(PageId::AppBreathing, "Breathing", "Breathing training placeholder page.");
   register_app_placeholder(PageId::AppStress, "Stress", "Stress app placeholder page.");
-  page_manager_.register_page(PageId::AppWeather, [this]() { return std::make_unique<WeatherAppPage>(data_center_); });
   register_app_placeholder(PageId::AppNfc, "NFC", "NFC wallet placeholder page.");
   register_app_placeholder(PageId::AppAlipay, "Alipay", "Alipay app placeholder page.");
   register_app_placeholder(PageId::AppWeChatPay, "WeChat Pay", "WeChat Pay app placeholder page.");
