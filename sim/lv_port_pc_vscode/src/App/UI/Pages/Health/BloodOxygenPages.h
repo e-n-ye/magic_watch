@@ -3,6 +3,7 @@
 #include <array>
 #include <cstdint>
 
+#include "App/UI/LvglLifecycle.h"
 #include "App/UI/PageBase.h"
 
 namespace twsim::app {
@@ -30,7 +31,7 @@ class BloodOxygenAppPage : public PageBase {
 
   lv_obj_t* scroll_root_ {nullptr};
   lv_obj_t* time_label_ {nullptr};
-  lv_timer_t* crown_release_timer_ {nullptr};
+  LvglTimerGuard crown_release_timer_;
 };
 
 class BloodOxygenSettingsPage : public PageBase {

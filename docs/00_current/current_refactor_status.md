@@ -247,6 +247,7 @@ Forbidden changes:
 
 - Blood Oxygen 页面已下沉到 `Health/BloodOxygenPages.cpp`。
 - Blood Oxygen 页面声明已下沉到 `Health/BloodOxygenPages.h`，`ShellPages.h` 仅通过过渡 include 兼容 Blood Oxygen 声明。
+- `BloodOxygenAppPage` 的 crown release timer 已迁入 `LvglTimerGuard`；`BloodOxygenSettingsPage`、`BloodOxygenLowOxygenReminderPage` 与 `BloodOxygenInfoPage` 的同类 timer 仍待后续逐页迁移。
 - 共享 helper 已出现：
   - `Health/HealthInfoPagePrimitives.*`
   - `Health/HealthIconPrimitives.*`
@@ -261,6 +262,7 @@ Forbidden changes:
 当前判断：
 
 - Blood Oxygen 已形成“独立页面实现 + Health shared helpers + domain helper”结构。
+- 这说明 `LvglTimerGuard` 已开始进入 BloodOxygen 域，但当前仍只是单页试点，不应误写成整个 BloodOxygen 文件生命周期风险已消失。
 
 ### Health / HeartRate
 
