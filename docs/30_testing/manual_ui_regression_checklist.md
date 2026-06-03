@@ -1,6 +1,6 @@
 # Manual UI Regression Checklist
 
-日期：2026-06-02
+日期：2026-06-03
 
 本文档不是完整测试矩阵。
 
@@ -90,86 +90,121 @@ Forbidden changes:
 3. 当前时间、电量文本能正常刷新一次。
 4. 当前轮改动没有越过 Scope Lock。
 
-## 当前默认小包回归
+## 当前默认手动回归包
 
-### 包 A：壳层与主页基线
+构建通过只说明当前代码至少还能编译，不等于手动 UI 回归通过。
+
+未实际执行的手动 UI 项必须保持“未执行”或“待执行”，不能因为 `cmake --build` 通过就写成通过。
+
+### Home
 
 适用场景：
 
-- 修改 `ShellPages.cpp` 剩余区域相关文档或代码后。
-- 修改 `Launcher`、`HomeRingHost`、`QuickSettings`、`Notifications` 相关逻辑后。
-- 修改输入、返回、临时壳层开合后。
+- 修改 `HomeRingHost`、`Watchface`、主页环预览或主页快捷卡相关逻辑后。
+- 修改主页输入、返回、预览或壳层拉起逻辑后。
 
 至少检查：
 
 1. 启动进入主页路径。
 2. 横向滑动与 `Q / E` 能切换 HomeRing。
-3. crown press 可进入 `Launcher`。
+3. 高风险路径：HomeRing crown/preview 的预览、确认和取消行为一致。
 4. 主页下拉能进入通知壳层，上拉能进入快捷设置壳层。
-5. 二级页面左缘返回、左上角返回、crown 返回行为一致。
 
 对应完整矩阵：
 
 - `A1`
 - `A2`
-- `A3`
-- `A4`
 
-### 包 B：Display policy 与 Settings / Display
+### Launcher
 
 适用场景：
 
-- 修改 `Settings/Display/*` 文档或代码后。
-- 修改亮度、息屏时间、抬腕亮屏、遮盖息屏、息屏显示、持续亮屏相关逻辑后。
-- 修改 Quick Settings 中与 Display policy 联动的 tile 后。
+- 修改 `LauncherPage`、Launcher 入口或主页到 App 页跳转后。
 
 至少检查：
 
-1. `设置 -> 显示与亮度` 入口与可见项顺序正确。
-2. 亮度模式切换、手动亮度页返回与摘要文本更新正常。
-3. 息屏时间切换后摘要文本更新正常。
-4. `抬腕亮屏` 三种模式下 `R / F` 行为正确。
-5. `单击亮屏`、`遮盖息屏` 的开关行为和 `C` 事件路径正确。
-6. `持续亮屏` 的选择、确认、运行时策略正确。
-7. `息屏显示` 模式、默认样式、冲突弹层与摘要文本正确。
+1. crown press 可进入 `Launcher`。
+2. 三种 Launcher 布局进入目标应用路径一致。
+3. 从 Launcher 进入二级页面后，左缘返回、左上角返回、crown 返回行为一致。
 
 对应完整矩阵：
 
-- `B1`
-- `B2`
-- `B3`
-- `C1`
-- `C2`
-- `C3`
-- `C4`
-- `D1`
-- `D2`
-- `E1`
-- `E2`
-- `E3`
-- `E4`
-- `F1`
-- `G1`
-- `G3`
+- `A3`
+- `A4`
 
-### 包 C：Power / ScreenOff / LongBattery
+### Notifications
 
 适用场景：
 
-- 修改 `Shell/Power/ShellPowerPages.cpp` 后。
-- 修改 `PowerController`、screen-off、wake、long-battery、页面栈保存/恢复逻辑后。
-- 修改 Display policy 与 screen-off 恢复交界逻辑后。
+- 修改 `NotificationsPage`、`NotificationWakePage`、通知预览、详情、清空或删除逻辑后。
+
+至少检查：
+
+1. 注入通知后列表可刷新，toast 正常。
+2. 高风险路径：screen-off 下 `N` 可进入 notification wake preview。
+3. 高风险路径：preview 点击或 crown 可进入完整通知列表。
+4. 高风险路径：通知列表支持 swipe/detail/clear，且 unread -> detail -> read 状态变化正常。
+5. `清空` 需要确认，取消不清空，确认后进入空态。
+6. 单卡右滑删除、短滑回弹、详情点击、列表纵向滚动互不干扰。
+
+对应完整矩阵：
+
+- `G1`
+- `G2`
+- `G3`
+- `K1`
+- `K2`
+- `K3`
+- `L1`
+- `L2`
+- `L3`
+- `M1`
+- `M2`
+- `M3`
+- `N1`
+- `N2`
+- `N3`
+- `N4`
+
+### QuickSettings
+
+适用场景：
+
+- 修改 `QuickSettingsPage`、tile、drag close、toast、backdrop 或 timer 相关逻辑后。
+
+至少检查：
+
+1. Quick Settings tile 点击、长按与状态刷新正常。
+2. 高风险路径：drag close 手势可关闭且不误触其他交互。
+3. 高风险路径：toggle / timer / backdrop 状态变化正常。
+4. `Quick Settings -> 长续航模式` 的确认弹层与状态联动正常。
+
+对应完整矩阵：
+
+- `O1`
+- `O2`
+- `O3`
+- `O4`
+- `P1`
+- `P2`
+- `P3`
+
+### Power
+
+适用场景：
+
+- 修改 `PowerController`、`Shell/Power/*`、screen-off、wake、long-battery、页面栈保存/恢复逻辑后。
+- 修改 Display policy 与 screen-off restore 的交界逻辑后。
 
 至少检查：
 
 1. 自动熄屏后能按当前允许路径恢复。
 2. 普通页面自动熄屏后可恢复到原页面。
 3. prompt / overlay 自动熄屏后可恢复到原状态。
-4. `设置 -> 电池`、`长续航模式`、`续航优化` 路径正常。
+4. 高风险路径：Power screen-off/restore 行为正确。
 5. 进入长续航模式后，主页环、通知下拉、快捷设置上拉均被抑制。
 6. 长续航退出页 `Q / E` 进度、自动熄屏恢复、完成退出行为正常。
 7. 充电或外接电源触发退出长续航时路径正常。
-8. `Quick Settings -> 长续航模式` 的确认弹层与状态联动正常。
 
 对应完整矩阵：
 
@@ -184,7 +219,7 @@ Forbidden changes:
 - `I7`
 - `I8`
 
-### 包 D：Daily apps
+### Daily
 
 适用场景：
 
@@ -209,52 +244,7 @@ Forbidden changes:
 - `J1`
 - `J3`
 
-### 包 E：Notifications / QuickSettings 壳层
-
-适用场景：
-
-- 修改 `NotificationsPage`
-- 修改 `NotificationWakePage`
-- 修改 `QuickSettingsPage`
-- 修改通知预览、清空、详情、右滑删除、toast、backdrop、preview timer 等逻辑后
-
-至少检查：
-
-1. 注入通知后列表可刷新，toast 正常。
-2. screen-off 下 `N` 可进入 notification wake preview。
-3. preview 点击或 crown 可进入完整通知列表。
-4. unread -> detail -> read 的状态变化正常。
-5. `清空` 需要确认，取消不清空，确认后进入空态。
-6. 单卡右滑删除、短滑回弹、详情点击、列表纵向滚动互不干扰。
-7. Quick Settings tile 点击、长按、toast、drag close、backdrop 正常。
-
-对应完整矩阵：
-
-- `G1`
-- `G2`
-- `G3`
-- `K1`
-- `K2`
-- `K3`
-- `L1`
-- `L2`
-- `L3`
-- `M1`
-- `M2`
-- `M3`
-- `N1`
-- `N2`
-- `N3`
-- `N4`
-- `O1`
-- `O2`
-- `O3`
-- `O4`
-- `P1`
-- `P2`
-- `P3`
-
-### 包 F：Health shared settings 与 Sleep / BloodOxygen / HeartRate
+### Health
 
 适用场景：
 
@@ -300,6 +290,41 @@ Forbidden changes:
 - `T8`
 - `T9`
 
+### Settings
+
+适用场景：
+
+- 修改 `Settings/Display/*` 文档或代码后。
+- 修改亮度、息屏时间、抬腕亮屏、遮盖息屏、息屏显示、持续亮屏相关逻辑后。
+- 修改与 Display policy 联动的设置入口或 Quick Settings tile 后。
+
+至少检查：
+
+1. `设置 -> 显示与亮度` 入口与可见项顺序正确。
+2. 亮度模式切换、手动亮度页返回与摘要文本更新正常。
+3. 息屏时间切换后摘要文本更新正常。
+4. `抬腕亮屏` 三种模式下 `R / F` 行为正确。
+5. `单击亮屏`、`遮盖息屏` 的开关行为和 `C` 事件路径正确。
+6. `持续亮屏` 的选择、确认、运行时策略正确。
+7. `息屏显示` 模式、默认样式、冲突弹层与摘要文本正确。
+
+对应完整矩阵：
+
+- `B1`
+- `B2`
+- `B3`
+- `C1`
+- `C2`
+- `C3`
+- `C4`
+- `D1`
+- `D2`
+- `E1`
+- `E2`
+- `E3`
+- `E4`
+- `F1`
+
 ## 当前推荐组合回归
 
 ### 组合 1：Display + Power
@@ -317,17 +342,19 @@ Forbidden changes:
 - screen-off restore
 - long battery
 
-### 组合 2：Shell + Notifications
+### 组合 2：Home / Launcher / Notifications / QuickSettings
 
 当改动涉及以下任一情况时，至少跑：
 
-- 包 `A`
-- 包 `E`
+- `Home`
+- `Launcher`
+- `Notifications`
+- `QuickSettings`
 
 典型场景：
 
 - 临时壳层 drag close
-- preview open / close
+- HomeRing preview
 - 通知唤醒
 - backdrop / toast
 
@@ -335,8 +362,8 @@ Forbidden changes:
 
 当改动涉及以下任一情况时，至少跑：
 
-- 包 `F`
-- 再补 `C` 中与电池/长续航有关的最小路径
+- `Health`
+- 再补 `Power` 中与电池/长续航有关的最小路径
 
 典型场景：
 
@@ -348,7 +375,7 @@ Forbidden changes:
 
 当改动同时触及以下两类以上区域时，不建议只跑小包，应回到完整矩阵：
 
-- `ShellPages.cpp` 剩余壳层
+- `Home` / `Launcher`
 - `Shell/Power/*`
 - `Settings/Display/*`
 - `Notifications / QuickSettings`
@@ -356,14 +383,14 @@ Forbidden changes:
 
 ## 当前最需要优先盯住的风险点
 
-### 风险 1：`ShellPages.cpp` 剩余高交互区域
+### 风险 1：Home / Launcher / Notifications / QuickSettings 高交互区域
 
 当前最容易回归的仍是：
 
+- `HomeRingHost`
 - `Launcher`
 - `Notifications`
 - `QuickSettings`
-- `HomeRingHost`
 
 这些区域往往伴随：
 
@@ -407,8 +434,8 @@ Forbidden changes:
 
 更稳的做法是：
 
-1. 先根据改动域选择对应的小包回归。
-2. 涉及 `Display + Power`、`Shell + Notifications`、`Health shared settings` 这类交界时，升级为组合回归。
+1. 先根据改动域选择对应页面结构对应的回归包。
+2. 涉及 `Display + Power`、`Home / Launcher / Notifications / QuickSettings`、`Health shared settings` 这类交界时，升级为组合回归。
 3. 触及多个高风险域时，回到完整矩阵。
 
 这样可以在保持节奏的同时，把当前真正容易回归的结构风险盯住。

@@ -416,6 +416,12 @@ Forbidden changes:
 2. 继续维护 UI 页面归属与拆分状态文档，明确哪些域已下沉、哪些仍受聚合头和注册结构影响。
 3. 再整理手动回归清单与当前结构之间的映射，避免“行为回归文档知道页面，但结构文档不知道页面在哪”。
 
+## 当前回归文档状态
+
+- `docs/30_testing/manual_ui_regression_checklist.md` 已按 `Home`、`Launcher`、`Notifications`、`QuickSettings`、`Power`、`Daily`、`Health`、`Settings` 重排。
+- 清单已经单独标出 HomeRing crown/preview、Notifications swipe/detail/clear、QuickSettings drag/toggle/timer、Power screen-off/restore 等高风险路径。
+- 手动 UI 本身在本轮未执行，不能视为通过；当前仅完成回归清单重排。
+
 ## 本轮结论
 
 截至 2026-06-03，项目代码现状已经从“SettingsPages / ShellPages 双巨石”前进到“ShellPages.cpp 已退场、实现文件显著分域下沉、聚合头与注册层仍保守维持”的过渡阶段。

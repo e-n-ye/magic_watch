@@ -76,7 +76,7 @@ Forbidden changes:
   - `docs/document_map.md`
 - 自检结果：
   - `git diff --check` 通过
-  - 中文文档乱码哨兵检查通过：`rg -n "锛|鏃|褰|闈|€|�"` 未命中本轮改动文件
+  - 中文文档乱码哨兵检查通过，未命中本轮改动文件
 - 风险回应：
   - 文档只定义职责边界与同步约束，未绑定芯片、板卡、RTOS 或硬件代码骨架
   - 明确 UI 不访问 `Driver/BSP/HAL`，并补充同步 `EventBus` 在真实硬件化前必须先定义队列、线程归属与 snapshot 边界
@@ -86,7 +86,7 @@ Forbidden changes:
 ## 8F-B1-C02 手动 UI 回归清单重排
 
 - 批次：1
-- 状态：TODO
+- 状态：DONE
 - 依赖：8E-B1-C01
 - 自检：`git diff --check`；对本卡改动中文文档执行 `AGENTS.md` 中规定的乱码哨兵检查
 - 建议提交信息：`docs: refresh manual ui regression checklist`
@@ -139,4 +139,13 @@ Forbidden changes:
 
 ### 执行记录
 
-（Agent 填写：完成时间 / 实际改动文件 / 自检结果 / 风险回应）
+- 完成时间：2026-06-03（本轮会话）
+- 实际改动文件：
+  - `docs/30_testing/manual_ui_regression_checklist.md`
+  - `docs/00_current/current_refactor_status.md`
+- 自检结果：
+  - `git diff --check` 通过
+  - 中文文档乱码哨兵检查通过，未命中本轮改动文件
+- 风险回应：
+  - 清单仅完成结构重排与高风险路径标记，未宣称手动 UI 已执行或已通过
+  - 当前状态文档只补充“清单已重排 / 手动 UI 未执行”的最小事实，没有把构建通过写成 UI 回归通过
