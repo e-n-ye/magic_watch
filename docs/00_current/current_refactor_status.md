@@ -162,9 +162,10 @@ Forbidden changes:
 
 - `Shell/QuickSettings/ShellQuickSettingsPrimitives.*` 已新增并登记到 `CMakeLists.txt`。
 - 它只承载 `QuickSettingsPage` 单域纯 UI 构建 helper，包括 backdrop shell、sheet shell、toast、long-battery confirm overlay、toggle grid 与 drag handle。
-- `QuickSettingsPage` 仍留在 `ShellPages.cpp`。
+- `QuickSettingsPage` 已迁入 `Shell/QuickSettings/ShellQuickSettingsPages.cpp`。
+- `ShellPages.cpp` 中不再保留 `QuickSettingsPage::` 实现。
 - DataCenter 读写、EventBus 订阅、toggle / slider 行为、NavigationCommand、timer 与 shell surface 行为仍留在 `QuickSettingsPage`。
-- 这不代表完整 `QuickSettingsPage` 已迁出。
+- `ShellPages.h` 仍是聚合声明头，`Application.cpp` 注册未变。
 
 ### Shell / Launcher
 
@@ -286,7 +287,7 @@ Forbidden changes:
 - `WatchfacePage` 与 `HomeRingHostPage` 已共同迁入 `Shell/Home/ShellHomePages.cpp`。
 - `NotificationWakePage` 与 `NotificationsPage` 已迁入 `Shell/Notifications/ShellNotificationPages.cpp`；`Shell/Notifications/ShellNotificationPrimitives.*` 继续承载通知域共享视觉 helper。
 - `Shell/Notifications/ShellNotificationPagePrimitives.*` 已承载 `NotificationsPage` 单域纯 UI 构建 helper。
-- `Shell/QuickSettings/ShellQuickSettingsPrimitives.*` 已承载 `QuickSettingsPage` 单域纯 UI 构建 helper，但完整页面实现仍留在 `ShellPages.cpp`。
+- `Shell/QuickSettings/ShellQuickSettingsPrimitives.*` 继续承载 `QuickSettingsPage` 单域纯 UI 构建 helper；`QuickSettingsPage` 页面实现已迁入 `Shell/QuickSettings/ShellQuickSettingsPages.cpp`。
 - `HomeRingHostPage` 已迁入 `Shell/Home/ShellHomePages.cpp`；其 layout / stage / pager 纯 UI 构件已下沉到 `Shell/Home/ShellHomeLayoutPrimitives.*`，payment / NFC 卡片纯 UI 构件已下沉到 `Shell/Home/ShellHomePaymentCardPrimitives.*`，health 类卡片纯 UI 构件已下沉到 `Shell/Home/ShellHomeHealthCardPrimitives.*`，daily 类卡片纯 UI 构件已下沉到 `Shell/Home/ShellHomeDailyCardPrimitives.*`。
 - 后续任何“ShellPages 拆分”文档，都应明确它的剩余内容已不同于早期版本。
 
@@ -340,6 +341,7 @@ Forbidden changes:
   - `Shell/Notifications/ShellNotificationPrimitives.cpp`
   - `Shell/Notifications/ShellNotificationPages.cpp`
   - `Shell/QuickSettings/ShellQuickSettingsPrimitives.cpp`
+  - `Shell/QuickSettings/ShellQuickSettingsPages.cpp`
   - `Shell/Launcher/ShellLauncherPages.cpp`
   - `Shell/Power/ShellPowerPages.cpp`
 

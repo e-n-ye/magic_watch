@@ -124,6 +124,7 @@ set(MAIN_SOURCES
     src/App/UI/Pages/Shell/Notifications/ShellNotificationPrimitives.cpp
     src/App/UI/Pages/Shell/Notifications/ShellNotificationPages.cpp
     src/App/UI/Pages/Shell/QuickSettings/ShellQuickSettingsPrimitives.cpp
+    src/App/UI/Pages/Shell/QuickSettings/ShellQuickSettingsPages.cpp
     src/App/UI/Pages/Shell/Launcher/ShellLauncherPages.cpp
     src/App/UI/Pages/Shell/ShellPagePrimitives.cpp
     src/App/UI/Pages/Shell/Power/ShellPowerPages.cpp

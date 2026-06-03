@@ -262,18 +262,18 @@ Forbidden changes:
 当前实现文件位于：
 
 - `Shell/QuickSettings/ShellQuickSettingsPrimitives.*`
-- `ShellPages.cpp`
+- `Shell/QuickSettings/ShellQuickSettingsPages.cpp`
 
 当前状态：
 
 - Shell/QuickSettings 已开始形成单域 UI primitives 边界。
 - `ShellQuickSettingsPrimitives.*` 只承载 `QuickSettingsPage` 的 backdrop shell、sheet shell、toast、long-battery confirm overlay、toggle grid 与 drag handle 等纯 UI 构建。
-- `QuickSettingsPage` 仍留在 `ShellPages.cpp`。
+- `QuickSettingsPage` 已从 `ShellPages.cpp` 下沉到 `Shell/QuickSettings/ShellQuickSettingsPages.cpp`。
+- `ShellPages.h` 仍是聚合声明头，`Application.cpp` 注册未变。
 
 拆分判断：
 
-- 这一步只是在不触碰 DataCenter、EventBus、timer、NavigationCommand、toggle 状态刷新和 shell surface 行为的前提下，下沉最独立的 UI 壳层。
-- 这不代表完整 `QuickSettingsPage` 已迁出。
+- 这一步延续了前一轮 UI primitives 下沉边界，并在不触碰 DataCenter、EventBus、timer、NavigationCommand、toggle 状态刷新和 shell surface 行为语义的前提下，下沉 `QuickSettingsPage` 页面本体。
 
 风险等级：
 
@@ -482,6 +482,7 @@ Forbidden changes:
 - `WatchfacePage` 与 `HomeRingHostPage` 已迁入 `Shell/Home/ShellHomePages.cpp`，但 Watchface 的时间、电量、输入路径，以及 HomeRing 的 EventBus、preview、crown、卡片跳转和 daily 动态数据边界仍需谨慎手动回归。
 - `QuickSettings` 仍是当前最需要谨慎处理的高风险剩余区域；Notifications 域则转入“实现已下沉，但复杂行为仍需谨慎回归”的阶段。
 - 这是后续讨论 `ShellPages.cpp` 时必须写清楚的边界变化。
+- `QuickSettingsPage` 已迁出后，`ShellPages.cpp` 的剩余内容应重新做一次区域盘点，而不是继续沿用旧的“QuickSettings 仍在其中”的描述。
 
 ## 聚合头状态
 
