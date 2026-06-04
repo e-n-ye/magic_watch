@@ -281,3 +281,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：本轮明确区分“可复用的数据形状与职责链”与“不可直接整搬的容器、字符串、通知副作用和 UI 依赖”，防止后续窗口把阶段 9 错写成全量 UI 下放或为了 MCU 编译去回改模拟器实现
 - 阻塞与待决：
 - 下一步：`H9-Q2` 当前队列已全部完成，按工作流停止并等待用户验收；如用户确认，可进入已验收队列项清理或规划下一批硬件桥接卡
+
+### 会话 2026-06-04 F411-Q1 规划
+
+- 本轮范围：清理旧 H9 DONE 队列入口；准备 F411 最小应用骨架闭环卡片
+- 完成：已从 `agent-queue.md` 移除 H9-Q2A 至 H9-Q2E 的 DONE 队列项；已新增 `cards/f411-core-q1.md`；已建立 `F411-Q1` 队列项，包含 `F411-CORE-1` / `F411-CORE-2` / `F411-CORE-3`
+- 修改文件：`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/cards/f411-core-q1.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`git diff --check` 通过（仅 LF/CRLF 提示，无 diff 格式错误）；本轮实际改动中文文档乱码哨兵检查通过；`agent-queue.md` 当前只指向 `F411-Q1`
+- 风险回应：新批次只规划 F411 输入语义、固定事件队列和最小 ScreenManager；明确不移植 LVGL、不接传感器、不做 USB/FATFS/蓝牙、不搬模拟器 UI
+- 阻塞与待决：`try/my_watch_f411_v2.1/Core/Src/main.c` 当前存在非本轮规划产生的本地 diff；进入目标模式前需要由用户确认保留、提交或处理该差异
+- 下一步：处理或确认 `main.c` 本地差异后，用户可进入目标模式执行 `F411-Q1`
