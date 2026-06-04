@@ -201,3 +201,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：只把 8B-8E 从旧“下一步”表述改成当前完成态，把 Launcher / Settings 注册尾巴明确记成阶段性接受偏离，并刷新 8F checklist；没有扩大到代码改动，也没有把模拟器未执行写成已通过
 - 阻塞与待决：
 - 下一步：队列项 `S8-Q1` 已完成，按停止策略停止，等待用户验收；如用户确认，可再决定是否执行实际模拟器手动 UI 回归
+
+### 会话 2026-06-04 16:05
+
+- 本轮范围：已验收队列项 `S8-Q1` 收尾清理
+- 完成：已从 `agent-queue.md` 移除已验收队列项 `S8-Q1`；已从 `agent-plan.md` 清理对应 DONE 卡片 `S8-CLOSE-1`、`S8-CLOSE-2`、`S8-REG-1`
+- 修改文件：`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-plan.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：待提交前执行
+- 风险回应：只清理已验收 DONE 队列项与 DONE 内联卡片，未触碰其它队列项、历史会话块或 inbox 草稿
+- 阻塞与待决：
+- 下一步：清理提交后，`agent_batch` 运行入口回到空闲状态；后续可直接规划下一阶段开发卡片
