@@ -24,6 +24,31 @@ tmp/
 __pycache__/
 *.pyc
 
+# Keil/MDK local state and build outputs
+try/**/MDK-ARM/**/*.o
+try/**/MDK-ARM/**/*.d
+try/**/MDK-ARM/**/*.crf
+try/**/MDK-ARM/**/*.lst
+try/**/MDK-ARM/**/*.axf
+try/**/MDK-ARM/**/*.map
+try/**/MDK-ARM/**/*.htm
+try/**/MDK-ARM/**/*.lnp
+try/**/MDK-ARM/**/*.iex
+try/**/MDK-ARM/**/*.hex
+try/**/MDK-ARM/**/*.dep
+try/**/MDK-ARM/**/*.sct
+try/**/MDK-ARM/JLinkLog.txt
+try/**/MDK-ARM/JLinkSettings.ini
+try/**/MDK-ARM/*.uvoptx
+try/**/MDK-ARM/*.uvguix.*
+try/**/MDK-ARM/*.uvgui.*
+try/**/MDK-ARM/EventRecorderStub.scvd
+try/**/*_build.log
+
+# CubeMX generated top-level reports can be regenerated from the .ioc file
+try/**/*.pdf
+try/**/my_watch_f411.txt
+
 # Local AI workflow config and generated assets
 .agents/config/right_code.env
 .agents/generated/
