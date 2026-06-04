@@ -154,6 +154,21 @@ PC trace replay / log replay 只能作为辅助测试，用来复现样本、对
 
 本阶段不要求完整 Magic Watch UI 真机移植，也不要求最终硬件选型完成。
 
+## 阶段 9 当前复用边界
+
+基于 T-Watch S3 Plus 上已经跑通的 Battery 垂直切片，当前可以稳定复用的是：
+
+- `hal::BatterySample -> BatteryPowerService -> DataCenter -> simplified EventBus -> observer` 这条职责链。
+- Battery 数据形状本身，以及 `BatteryPowerService` 负责样本转模型、百分比钳制的职责。
+- `Power_Task` 作为唯一 PMU 周期采样入口的线程归属思路。
+
+当前不能直接把模拟器实现原样下放到 MCU 的部分是：
+
+- 通用 `EventBus`：模拟器实现依赖 `std::function`、`std::vector`、`std::unordered_map`；prototype 当前只证明固定槽位 + 函数指针的同步事件链。
+- 全量 `DataCenter`：模拟器版聚合了通知、显示策略、导航和设置等多模型状态，还暴露多种 `std::string_view` 驱动接口；prototype 当前只保留 Battery 最后快照。
+- 带通知副作用的 `BatteryPowerService`：低电量通知注入路径依赖 `NotificationItem`、`std::string` 和通知中心模型，尚未进入第一轮真机子集。
+- UI 相关上层：`AppStateMachine`、`PageManager`、LVGL `Pages` 与通知中心并未进入当前 MCU 闭环，不得被误记成“下一步直接全量移植”。
+
 ## 对后续实现轮次的约束
 
 - 若未来代码改动让 UI 直接访问 Driver / BSP / HAL，应视为边界破坏。

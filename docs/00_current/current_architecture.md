@@ -55,6 +55,7 @@ flowchart LR
 - `EventBus` 当前同步分发不能原样作为 RTOS 多任务边界证明；阶段 9 第一轮应使用简化板载子集，并记录 `free_heap` 与 task high water mark。
 - `H9-Q2B` 的推荐方向不是整搬模拟器 `DataCenter` / `EventBus`，而是在 T-Watch prototype 中先建立 Battery-only 的最小兼容子集：固定槽位同步回调、最后快照存储、避免把 `std::function` / `std::vector` / `std::string` 依赖直接带进 MCU。
 - `H9-Q2D` 之后，阶段 9 的串口证据应优先来自 BatteryChanged 事件观察，而不是原始 PMU 摘要日志；后者只作为板级采样对照。
+- `H9-Q2E` 已明确：当前可直接复用的是 Battery 数据形状、`BatteryPowerService` 的样本转模型职责、`Service -> DataCenter -> EventBus -> observer` 单向链路和 `Power_Task` 线程归属思路；不能直接整搬的是模拟器版 `std::function` / `std::vector` / `std::string` 依赖、全量 `DataCenter`、通知中心副作用和整套 UI 上层。
 
 ## 阶段 8 验收地图
 

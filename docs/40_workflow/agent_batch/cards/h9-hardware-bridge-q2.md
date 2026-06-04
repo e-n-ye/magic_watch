@@ -295,7 +295,7 @@ Forbidden changes:
 ## H9-BRIDGE-2E 复用边界记录
 
 - 批次：H9-Q2
-- 状态：TODO
+- 状态：DONE
 - 依赖：`H9-BRIDGE-2D`
 - 自检：
   - `git status --short -uall`
@@ -353,8 +353,8 @@ Forbidden changes:
 
 ### 执行记录
 
-- 完成时间：
-- 实际改动文件：
-- 自检结果：
-- 提交状态：
-- 风险回应：
+- 完成时间：2026-06-04 19:30
+- 实际改动文件：`docs/70_hardware_reference/stage9_hardware_bridge_plan.md`、`docs/10_architecture/hardware_boundary.md`、`docs/00_current/current_architecture.md`、`docs/40_workflow/agent_batch/cards/h9-hardware-bridge-q2.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检结果：`git status --short -uall` 仅出现本轮允许文件；`git diff --check` 通过；`rg "std::function|std::vector|std::string|EventBus|UI" docs/70_hardware_reference/stage9_hardware_bridge_plan.md docs/10_architecture/hardware_boundary.md` 命中均处于复用边界说明语境；本轮实际改动中文文档乱码哨兵检查通过
+- 提交状态：待提交
+- 风险回应：本轮只把“哪些概念能复用、哪些实现不能直接整搬”沉入文档，不修改 prototype 或 `sim/**` 代码；后续若继续桥接，应优先复用 Battery 数据形状和职责链，谨慎适配 `std::function` / `std::vector` / `std::string`、全量 `DataCenter`、通知中心副作用和 UI 依赖，而不是回改模拟器实现来迁就 MCU。

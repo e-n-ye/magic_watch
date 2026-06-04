@@ -40,7 +40,7 @@
 
 ### H9-Q2E 复用边界记录
 
-- 状态：TODO
+- 状态：DONE
 - 卡片来源：cards/h9-hardware-bridge-q2.md
 - 执行范围：卡片 `H9-BRIDGE-2E`
 - 停止策略：队列项完成后停止

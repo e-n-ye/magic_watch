@@ -94,6 +94,23 @@ PC trace replay / log replay 只能作为辅助测试，用来对比模型转换
 
 记录哪些 Magic Watch 上层代码可以直接复用，哪些因为 `std::function`、`std::vector`、`std::string`、同步 `EventBus` 或 UI 依赖暂时不能直接下放。
 
+基于 `H9-Q2A` 到 `H9-Q2D` 的当前事实，阶段 9 第一轮可直接复用或保持同形的内容是：
+
+- Battery 垂直切片的数据形状：`BatterySample` / `BatteryModel` 继续保持 `present`、`charging`、`external_power`、`percent`、`millivolts` 五个核心字段。
+- `BatteryPowerService` 的核心职责：把板级样本转换成应用层 Battery 模型，并在进入 `DataCenter` 前完成百分比钳制。
+- `Service -> DataCenter -> EventBus -> observer` 这条单向链路本身，已经证明可以在真实 MCU 上保住最小职责切分，而不是退回“loop 里直接读 PMU 再打印”。
+- `Power_Task` 作为唯一 PMU 周期采样入口的线程归属，可以继续作为后续把更多 Service 下放到真实硬件时的参考模板。
+
+当前明确不能直接整搬的内容是：
+
+- 模拟器版 `EventBus` 依赖 `std::function`、`std::unordered_map` 和 `std::vector` 做通用事件分发；T-Watch prototype 当前只证明了固定槽位、函数指针、Battery-only 的同步事件链。
+- 模拟器版 `DataCenter` 是多模型聚合中枢，包含通知、显示策略、导航、设置等状态，以及 `std::string_view` 驱动的多种更新接口；prototype 当前只保留 Battery 最后快照与 `BatteryChanged` 发布入口。
+- 模拟器版 `BatteryPowerService` 还承担低电量通知注入，依赖 `NotificationItem`、`std::string`、`std::to_string`、`snprintf` 和通知中心模型；这一段没有进入第一轮 MCU 子集。
+- 当前同步 `EventBus` 只是在“同核 `Power_Task` + 串口观察者”边界下可用，不能直接外推为多任务、多传感器或跨核线程安全模型。
+- `AppStateMachine`、`PageManager`、LVGL `Pages`、通知中心和其它 UI 相关上层代码仍停留在 PC 主线，阶段 9 当前没有也不应宣称已经完成真机下放。
+
+因此，后续桥接卡的默认策略应是：优先复用“数据形状、职责切分、单向数据流”，谨慎适配“容器、字符串、同步模型和 UI 依赖”，而不是为了 MCU 过编译去回改模拟器实现。
+
 ## 阶段 9 第一验收定义
 
 第一轮真正通过的标准是：

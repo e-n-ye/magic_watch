@@ -271,3 +271,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：当前串口证据已经优先来自 `[bridge-battery-event] name=BatteryChanged ...` 事件观察，而不是原始 `[bringup-pmu]` PMU 摘要；但本轮仍未做真机上传后的人工串口目视验收，也未扩展到完整通用日志框架
 - 阻塞与待决：`pio` 不在 PATH，后续仍需显式使用 `C:\Users\13984\.platformio\penv\Scripts\pio.exe`
 - 下一步：按停止策略停止，等待用户验收；如继续执行下一张卡，应进入 `H9-Q2E` 复用边界记录
+
+### 会话 2026-06-04 19:30
+
+- 本轮范围：队列项 `H9-Q2E`，卡片 `H9-BRIDGE-2E`
+- 完成：`H9-BRIDGE-2E`；已把阶段 9 第一轮真实桥接的可复用项与暂不能直接下放项沉入主入口文档与硬件边界文档；队列项 `H9-Q2E`
+- 修改文件：`docs/70_hardware_reference/stage9_hardware_bridge_plan.md`、`docs/10_architecture/hardware_boundary.md`、`docs/00_current/current_architecture.md`、`docs/40_workflow/agent_batch/cards/h9-hardware-bridge-q2.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`git status --short -uall` 仅出现本轮允许文件；`git diff --check` 通过；`rg "std::function|std::vector|std::string|EventBus|UI" docs/70_hardware_reference/stage9_hardware_bridge_plan.md docs/10_architecture/hardware_boundary.md` 命中均处于复用边界说明语境；本轮实际改动中文文档乱码哨兵检查通过
+- 风险回应：本轮明确区分“可复用的数据形状与职责链”与“不可直接整搬的容器、字符串、通知副作用和 UI 依赖”，防止后续窗口把阶段 9 错写成全量 UI 下放或为了 MCU 编译去回改模拟器实现
+- 阻塞与待决：
+- 下一步：`H9-Q2` 当前队列已全部完成，按工作流停止并等待用户验收；如用户确认，可进入已验收队列项清理或规划下一批硬件桥接卡
