@@ -195,9 +195,9 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 ### 会话 2026-06-04 14:12
 
 - 本轮范围：队列项 `S8-Q1`，卡片 `S8-CLOSE-1` / `S8-CLOSE-2` / `S8-REG-1`
-- 完成：`S8-CLOSE-1`；`S8-CLOSE-2`
-- 修改文件：`docs/00_current/current_architecture.md`、`docs/10_architecture/ui_page_split_status.md`、`docs/40_workflow/agent_batch/agent-plan.md`、`docs/40_workflow/agent_batch/agent-progress.md`、`docs/40_workflow/agent_batch/agent-queue.md`
-- 自检：`git diff --check` 通过；阶段 8 旧表述定向扫描已收口；`Application.cpp` 注册尾巴只读审计完成；本轮实际改动中文文档乱码哨兵检查通过
-- 风险回应：只把 8B-8E 从旧“下一步”表述改成当前完成态，并把 Launcher / Settings 注册尾巴明确记成阶段性接受偏离，没有扩大到代码改动
+- 完成：`S8-CLOSE-1`；`S8-CLOSE-2`；`S8-REG-1`；队列项 `S8-Q1`
+- 修改文件：`docs/00_current/current_architecture.md`、`docs/10_architecture/ui_page_split_status.md`、`docs/30_testing/manual_ui_regression_checklist.md`、`docs/40_workflow/agent_batch/agent-plan.md`、`docs/40_workflow/agent_batch/agent-progress.md`、`docs/40_workflow/agent_batch/agent-queue.md`
+- 自检：`git diff --check` 通过；阶段 8 旧表述定向扫描已收口；`Application.cpp` 注册尾巴只读审计完成；checklist 关键词扫描通过；本轮实际改动中文文档乱码哨兵检查通过
+- 风险回应：只把 8B-8E 从旧“下一步”表述改成当前完成态，把 Launcher / Settings 注册尾巴明确记成阶段性接受偏离，并刷新 8F checklist；没有扩大到代码改动，也没有把模拟器未执行写成已通过
 - 阻塞与待决：
-- 下一步：继续执行 `S8-REG-1`，刷新阶段 8F 手动 UI 回归 checklist，但不提前宣称已执行模拟器
+- 下一步：队列项 `S8-Q1` 已完成，按停止策略停止，等待用户验收；如用户确认，可再决定是否执行实际模拟器手动 UI 回归

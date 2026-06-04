@@ -101,7 +101,7 @@
 ## S8-REG-1 刷新阶段 8F 手动 UI 回归 checklist
 
 - 批次：阶段 8 收尾 Batch 1
-- 状态：IN_PROGRESS
+- 状态：DONE
 - 依赖：S8-CLOSE-2
 - 自检：
   - `git diff --check`
@@ -136,4 +136,7 @@
   - 文档明确区分“待执行”和“已执行”。
   - `git diff --check` 通过。
 - 执行记录：
-  - 待执行。
+  - 完成时间：2026-06-04
+  - 实际改动文件：`docs/30_testing/manual_ui_regression_checklist.md`
+  - 自检结果：`git diff --check` 通过；checklist 关键词扫描通过；本轮实际改动中文文档乱码哨兵检查通过
+  - 风险回应：只刷新阶段 8F 的回归清单和结构说明，没有提前执行模拟器，也没有把“准备执行”写成“已通过”

@@ -1,6 +1,6 @@
 # Manual UI Regression Checklist
 
-日期：2026-06-03
+日期：2026-06-04
 
 本文档不是完整测试矩阵。
 
@@ -51,8 +51,9 @@ Forbidden changes:
 当前代码与文档已经进入一个中间态：
 
 - `Display`、`Power`、`Daily`、`Health` 页面实现已经显著分域下沉。
-- `ShellPages.cpp` 仍承载主壳层、高交互壳层与一部分高生命周期风险区域。
-- `ShellPages.h` / `SettingsPages.h` 仍承担聚合头职责。
+- `ShellPages.cpp` 已从构建退场，`ShellPages.h` 已收口为过渡兼容 include 头。
+- `Application.cpp` 已完成 Home、Notifications、QuickSettings、Power、Daily、Health 的注册分流；剩余尾巴集中在 Launcher 直接注册与 Settings 长列表。
+- `SettingsPages.h` 仍承担 Settings 聚合头职责；Launcher / Settings 的注册尾巴当前接受为阶段性偏离，不在本轮继续扩成代码收口。
 
 如果每次都直接要求通跑完整矩阵，会带来两个问题：
 
@@ -95,6 +96,11 @@ Forbidden changes:
 构建通过只说明当前代码至少还能编译，不等于手动 UI 回归通过。
 
 未实际执行的手动 UI 项必须保持“未执行”或“待执行”，不能因为 `cmake --build` 通过就写成通过。
+
+本轮状态：
+
+- 本文档当前只完成结构对齐与回归包刷新。
+- 模拟器手动 UI 仍未执行；后续如需实际跑回归，应单独记录执行结果。
 
 ### Home
 
@@ -357,6 +363,7 @@ Forbidden changes:
 - HomeRing preview
 - 通知唤醒
 - backdrop / toast
+- 阶段 8 收尾后首次准备手动 UI 回归
 
 ### 组合 3：Health shared settings
 

@@ -7,7 +7,7 @@
 ## 当前队列
 
 ### S8-Q1 阶段 8 收尾 Batch 1
-- 状态：IN_PROGRESS
+- 状态：DONE
 - 卡片来源：agent-plan.md
 - 执行范围：批次 阶段 8 收尾 Batch 1 / `S8-CLOSE-1`、`S8-CLOSE-2`、`S8-REG-1`
 - 停止策略：队列项完成后停止
