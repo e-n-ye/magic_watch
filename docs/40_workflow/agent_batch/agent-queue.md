@@ -16,7 +16,7 @@
 
 ### DOCROOT-Q9-HISTORY docs 根目录第二轮历史归档迁移
 
-- 状态：TODO
+- 状态：DONE
 - 卡片来源：cards/docroot-reorg-wave2-history.md
 - 执行范围：全文件
 - 停止策略：队列项完成后停止

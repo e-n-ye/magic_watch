@@ -31,12 +31,12 @@
 
 以下文档不再作为默认入口：
 
-- [project_charter.md](/D:/MY_Desk/watch/magic_watch/docs/project_charter.md): 旧阶段项目宪章，已由 `00_current/project_brief.md` 接管当前定位。
+- [project_charter.md](/D:/MY_Desk/watch/magic_watch/docs/80_history/project_charter.md): 旧阶段项目宪章，已由 `00_current/project_brief.md` 接管当前定位。
 - [current_refactor_status.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_refactor_status.md): 当前代码事实基线，内容较长，只在需要确认“代码实际拆到哪”时补读。
 - [current_architecture.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_architecture.md): 架构主线入口，不是每次新会话都必须先读。
 - [v0_scope.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/v0_scope.md): 当前范围摘要，在需要确认阶段边界时补读。
 - [decision_log.md](/D:/MY_Desk/watch/magic_watch/docs/decision_log.md): 历史决策流水账，只作历史检索。
-- [page_reachability_audit.md](/D:/MY_Desk/watch/magic_watch/docs/page_reachability_audit.md): 历史页面可达性审计，只在查旧入口、旧页面或历史判断时选读。
+- [page_reachability_audit.md](/D:/MY_Desk/watch/magic_watch/docs/80_history/page_reachability_audit.md): 历史页面可达性审计，只在查旧入口、旧页面或历史判断时选读。
 
 ## 当前代码事实补读
 
@@ -221,7 +221,21 @@
 说明：
 
 - `DOCROOT-B6-C01` 已把 Wave 1 迁移后的剩余根目录文档分成三类：明确保留根目录、第二轮候选迁移、仍需单独决策。
-- `cpp_minimal_glossary.md`、`learning_plan.md`、`simulator_reading_guide.md` 已迁入 [20_guides/](/D:/MY_Desk/watch/magic_watch/docs/20_guides)；`project_charter.md`、`prototype_progress.md` 等仍属于后续 `80_history` 候选。
+- `cpp_minimal_glossary.md`、`learning_plan.md`、`simulator_reading_guide.md` 已迁入 [20_guides/](/D:/MY_Desk/watch/magic_watch/docs/20_guides)；`project_charter.md`、`prototype_progress.md`、`page_reachability_audit.md`、`simulator_manual_regression_run_2026_05_19.md` 已迁入 [80_history/](/D:/MY_Desk/watch/magic_watch/docs/80_history)。
+
+### 我想查历史归档文档
+
+先读：
+
+- [project_charter.md](/D:/MY_Desk/watch/magic_watch/docs/80_history/project_charter.md)
+- [prototype_progress.md](/D:/MY_Desk/watch/magic_watch/docs/80_history/prototype_progress.md)
+- [page_reachability_audit.md](/D:/MY_Desk/watch/magic_watch/docs/80_history/page_reachability_audit.md)
+- [simulator_manual_regression_run_2026_05_19.md](/D:/MY_Desk/watch/magic_watch/docs/80_history/simulator_manual_regression_run_2026_05_19.md)
+
+说明：
+
+- 这四份文档属于历史归档/历史检索入口，不回到默认新会话入口。
+- 它们分别服务于旧阶段定位、原型推进记录、历史页面可达性判断和一次性手动回归运行记录的追溯。
 
 ### 我想补读开发指南
 

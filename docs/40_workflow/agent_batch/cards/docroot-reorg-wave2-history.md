@@ -7,7 +7,7 @@
 ### DOCROOT-B9-C01 迁移历史归档到 80_history
 
 - 批次：9
-- 状态：TODO
+- 状态：DONE
 - 依赖：DOCROOT-B7-C01
 - 自检：`git diff --check`；对本卡改动的中文文档执行 `AGENTS.md` 中规定的乱码哨兵检查；扫描 `page_reachability_audit.md`、`project_charter.md`、`prototype_progress.md`、`simulator_manual_regression_run_2026_05_19.md` 旧路径引用是否已清空
 - 建议提交信息：`docs: move history docs under 80_history`
@@ -51,13 +51,16 @@ Forbidden changes:
 
 #### 验收标准
 
-- [ ] `docs/80_history/` 已创建。
-- [ ] 四份历史文档已迁入 `docs/80_history/` 且文件名不变。
-- [ ] `document_map.md` 已统一为历史检索/历史归档入口。
-- [ ] 必要旧路径链接已修复。
-- [ ] `docs_root_reorg_inventory.md` 已同步为“已迁移”结论。
-- [ ] `decision_log.md`、`current_sim_architecture.md`、`simulator_manual_regression_matrix.md` 未被迁移。
+- [x] `docs/80_history/` 已创建。
+- [x] 四份历史文档已迁入 `docs/80_history/` 且文件名不变。
+- [x] `document_map.md` 已统一为历史检索/历史归档入口。
+- [x] 必要旧路径链接已修复。
+- [x] `docs_root_reorg_inventory.md` 已同步为“已迁移”结论。
+- [x] `decision_log.md`、`current_sim_architecture.md`、`simulator_manual_regression_matrix.md` 未被迁移。
 
 #### 执行记录
 
-（Agent 填写：完成时间 / 实际改动文件 / 自检结果 / 风险回应）
+- 完成时间：2026-06-04
+- 实际改动文件：`docs/80_history/page_reachability_audit.md`、`docs/80_history/project_charter.md`、`docs/80_history/prototype_progress.md`、`docs/80_history/simulator_manual_regression_run_2026_05_19.md`、`docs/document_map.md`、`docs/40_workflow/docs_root_reorg_inventory.md`、`docs/decision_log.md`、`docs/50_stage_records/v0_8a_health_monitoring_settings_model_entry.md`、`docs/50_stage_records/v0_2_shell_closure.md`、`docs/40_workflow/agent_batch/cards/docroot-reorg-wave2-history.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检结果：`git diff --check` 通过；旧根目录路径扫描已清空真实正文引用，仅剩卡片说明文本和历史会话记录中的旧路径字符串；本轮实际改动中文文档乱码哨兵检查仅命中 `docs/decision_log.md` 中原有乱码示例说明文本
+- 风险回应：只修复旧路径引用，不改当前说明文档的语义结论；`decision_log.md`、`current_sim_architecture.md`、`simulator_manual_regression_matrix.md` 保持原位未迁移

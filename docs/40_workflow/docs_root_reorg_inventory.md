@@ -29,11 +29,11 @@
 | `document_map.md` | 保留根目录 | 当前文档路由器，必须继续占据根目录入口。 |
 | `home_interaction_model.md` | 保留根目录 | 表盘中心交互模型仍是长期架构基线。 |
 | `learning_plan.md` | `已迁移至 20_guides` | 学习路径指南，保留价值在于方法论，不必占用根目录默认入口。 |
-| `page_reachability_audit.md` | `80_history` | `document_map.md` 已明确它是历史页面审计。 |
-| `project_charter.md` | `80_history` | `document_map.md` 已说明该文档被 `00_current/project_brief.md` 替代。 |
-| `prototype_progress.md` | `80_history` | 原型推进记录，历史上下文价值大于当前入口价值。 |
+| `page_reachability_audit.md` | `已迁移至 80_history` | `document_map.md` 已明确它是历史页面审计。 |
+| `project_charter.md` | `已迁移至 80_history` | `document_map.md` 已说明该文档被 `00_current/project_brief.md` 替代。 |
+| `prototype_progress.md` | `已迁移至 80_history` | 原型推进记录，历史上下文价值大于当前入口价值。 |
 | `simulator_manual_regression_matrix.md` | `待单独决策` | 内容属于测试矩阵，更像未来 `30_testing` 二次整理对象，不建议先硬塞到 `20_guides`。 |
-| `simulator_manual_regression_run_2026_05_19.md` | `80_history` | 一次性回归运行记录，适合历史归档。 |
+| `simulator_manual_regression_run_2026_05_19.md` | `已迁移至 80_history` | 一次性回归运行记录，适合历史归档。 |
 | `simulator_reading_guide.md` | `已迁移至 20_guides` | 阅读引导型文档，属于开发指南。 |
 | `target_architecture.md` | 保留根目录 | 长期目标架构骨架，仍是跨阶段核心架构文档。 |
 | `watchface_style_architecture.md` | 保留根目录 | 虽与视觉有关，但本质是表盘风格架构边界，不建议并入视觉探索目录。 |
@@ -61,16 +61,7 @@
 
 ## 第二轮候选迁移名单
 
-`DOCROOT-B8-C01` 已完成 `20_guides` 波次迁移；以下列表仅保留尚未迁移的候选。
-
-### `80_history` 候选
-
-- `page_reachability_audit.md`
-- `project_charter.md`
-- `prototype_progress.md`
-- `simulator_manual_regression_run_2026_05_19.md`
-
-以上只是后续独立卡片候选，不代表本卡已批准迁移。
+`DOCROOT-B8-C01` 已完成 `20_guides` 波次迁移，`DOCROOT-B9-C01` 已完成 `80_history` 波次迁移；以下列表仅保留尚未迁移的候选。
 
 ## 已迁移
 
@@ -79,6 +70,13 @@
 - [cpp_minimal_glossary.md](/D:/MY_Desk/watch/magic_watch/docs/20_guides/cpp_minimal_glossary.md)
 - [learning_plan.md](/D:/MY_Desk/watch/magic_watch/docs/20_guides/learning_plan.md)
 - [simulator_reading_guide.md](/D:/MY_Desk/watch/magic_watch/docs/20_guides/simulator_reading_guide.md)
+
+### `80_history`
+
+- [page_reachability_audit.md](/D:/MY_Desk/watch/magic_watch/docs/80_history/page_reachability_audit.md)
+- [project_charter.md](/D:/MY_Desk/watch/magic_watch/docs/80_history/project_charter.md)
+- [prototype_progress.md](/D:/MY_Desk/watch/magic_watch/docs/80_history/prototype_progress.md)
+- [simulator_manual_regression_run_2026_05_19.md](/D:/MY_Desk/watch/magic_watch/docs/80_history/simulator_manual_regression_run_2026_05_19.md)
 
 ## 仍需单独决策项
 

@@ -182,7 +182,7 @@ It has now gone through one real manual regression run and the issues found in t
 
 Regression run artifact:
 
-- `docs/simulator_manual_regression_run_2026_05_19.md`
+- `docs/80_history/simulator_manual_regression_run_2026_05_19.md`
 
 Issues found and closed during that run included:
 

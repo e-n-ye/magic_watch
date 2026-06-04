@@ -1067,7 +1067,7 @@
 - 如果不先分清“当前主路径页面”和“仓库保留资产页面”，后续继续扩模型和 UI 时很容易改错对象
 
 决定：
-- 新增 [page_reachability_audit.md](/D:/MY_Desk/watch/magic_watch/docs/page_reachability_audit.md)
+- 新增 [page_reachability_audit.md](/D:/MY_Desk/watch/magic_watch/docs/80_history/page_reachability_audit.md)
 - 明确记录：
   - 当前主路径可达页面
   - `HomeRingHost` 内嵌 surface 与独立 `PageId` 的区别

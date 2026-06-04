@@ -131,3 +131,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：三份指南已迁到 `docs/20_guides/`，但只作为按需开发指南入口保留，没有回流到默认新会话入口；`simulator_manual_regression_matrix.md` 未迁移
 - 阻塞与待决：
 - 下一步：队列项 `DOCROOT-Q8-GUIDES` 已完成，按停止策略停止，等待用户验收；不执行 `DOCROOT-Q9-HISTORY`
+
+### 会话 2026-06-04 14:39
+
+- 本轮范围：队列项 `DOCROOT-Q9-HISTORY`，卡片 `DOCROOT-B9-C01`
+- 完成：`DOCROOT-B9-C01`；队列项 `DOCROOT-Q9-HISTORY`
+- 修改文件：`docs/80_history/page_reachability_audit.md`、`docs/80_history/project_charter.md`、`docs/80_history/prototype_progress.md`、`docs/80_history/simulator_manual_regression_run_2026_05_19.md`、`docs/document_map.md`、`docs/40_workflow/docs_root_reorg_inventory.md`、`docs/decision_log.md`、`docs/50_stage_records/v0_8a_health_monitoring_settings_model_entry.md`、`docs/50_stage_records/v0_2_shell_closure.md`、`docs/40_workflow/agent_batch/cards/docroot-reorg-wave2-history.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`git diff --check` 通过；`docs/page_reachability_audit.md`、`docs/project_charter.md`、`docs/prototype_progress.md`、`docs/simulator_manual_regression_run_2026_05_19.md` 旧路径真实正文引用已清空，仅剩卡片说明文本和历史会话记录中的旧路径字符串；本轮实际改动中文文档乱码哨兵检查仅命中 `docs/decision_log.md` 中原有乱码示例说明文本
+- 风险回应：4 份历史文档已迁到 `docs/80_history/`，但只作为历史归档/历史检索入口保留，没有回流到默认新会话入口；`decision_log.md`、`current_sim_architecture.md`、`simulator_manual_regression_matrix.md` 未迁移
+- 阻塞与待决：
+- 下一步：队列项 `DOCROOT-Q9-HISTORY` 已完成，按停止策略停止，等待用户验收

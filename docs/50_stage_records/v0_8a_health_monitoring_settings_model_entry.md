@@ -70,7 +70,7 @@
 
 - [Application.cpp](/D:/MY_Desk/watch/magic_watch/sim/lv_port_pc_vscode/src/App/Application.cpp)
 - [ShellPages.cpp](/D:/MY_Desk/watch/magic_watch/sim/lv_port_pc_vscode/src/App/UI/Pages/ShellPages.cpp)
-- [page_reachability_audit.md](/D:/MY_Desk/watch/magic_watch/docs/page_reachability_audit.md)
+- [page_reachability_audit.md](/D:/MY_Desk/watch/magic_watch/docs/80_history/page_reachability_audit.md)
 
 ### 3. 当前最缺的不是新页面，而是共享设置语义
 
