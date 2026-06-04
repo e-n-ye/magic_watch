@@ -181,3 +181,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：本轮只做最终复核与结论落档，不清理已验收队列项和历史卡片文件；这样“当前 docs 已干净”的判断不依赖后续清理动作
 - 阻塞与待决：
 - 下一步：队列项 `DOCROOT-Q13-DOCS-ROOT-REVIEW` 已完成，按停止策略停止，等待用户验收；如用户确认，可再执行已验收队列项清理
+
+### 会话 2026-06-04 15:52
+
+- 本轮范围：已验收 DONE 队列项收尾清理
+- 完成：已从 `agent-queue.md` 移除 `DOCROOT-Q8-GUIDES`、`DOCROOT-Q9-HISTORY`、`DOCROOT-Q12-REGRESSION-MATRIX`、`DOCROOT-Q10-CURRENT-SIM-ARCH`、`DOCROOT-Q11-DECISION-LOG`、`DOCROOT-Q13-DOCS-ROOT-REVIEW`；按用户要求删除已验收且文件内无未完成卡的 `cards/docroot-reorg-wave2-guides.md`、`cards/docroot-reorg-wave2-history.md`、`cards/docroot-reorg-wave3-decisions.md`
+- 修改文件：`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`、`docs/40_workflow/agent_batch/cards/docroot-reorg-wave2-guides.md`、`docs/40_workflow/agent_batch/cards/docroot-reorg-wave2-history.md`、`docs/40_workflow/agent_batch/cards/docroot-reorg-wave3-decisions.md`
+- 自检：`git diff --check` 通过（仅有 LF/CRLF 警告，无 diff 格式错误）；本轮实际改动中文文档乱码哨兵检查通过；`agent-queue.md` 已无实际队列项，仅保留格式与使用说明
+- 风险回应：只清理已验收且对应卡片文件已无 TODO / IN_PROGRESS / BLOCKED 的对象；未触碰 `agent-plan.md`、`agent-inbox.md` 和其它历史卡片文件
+- 阻塞与待决：
+- 下一步：收尾清理提交后，卡片批次队列回到空闲状态；如需新一轮卡片执行，可按新规则直接写正式卡片/队列
