@@ -481,7 +481,7 @@ void logPmu()
 
     const PmuSnapshot pmu = readPmuSnapshot();
     Serial.printf(
-        "[bringup-pmu] usb=%s charging=%s discharging=%s chg=%s batt=%umV vbus=%umV sys=%umV percent=%d\n",
+        "[bringup-pmu] usb=%s charging=%s discharging=%s chg=%s batt=%umV vbus=%umV sys=%umV percent=%d free_heap=%lu\n",
         yesNo(pmu.vbus_in),
         yesNo(pmu.charging),
         yesNo(pmu.discharging),
@@ -489,7 +489,8 @@ void logPmu()
         pmu.batt_mv,
         pmu.vbus_mv,
         pmu.sys_mv,
-        pmu.batt_percent);
+        pmu.batt_percent,
+        static_cast<unsigned long>(ESP.getFreeHeap()));
 }
 
 void logBma()

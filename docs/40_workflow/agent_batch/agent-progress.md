@@ -231,3 +231,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：`H9-BRIDGE-2A` 到 `2E` 已拆成五个可独立验收闭环，避免把板级读数、架构下放、RTOS 任务、事件观测和复用边界混成一轮
 - 阻塞与待决：待提交；后续目标模式执行前仍需再次确认工作区干净
 - 下一步：提交文档与卡片入口；后续按 `agent-queue.md` 从 `H9-Q2A` 开始进入目标模式
+
+### 会话 2026-06-04 17:20
+
+- 本轮范围：队列项 `H9-Q2A`，卡片 `H9-BRIDGE-2A`
+- 完成：`H9-BRIDGE-2A`；已确认 T-Watch S3 Plus 现有 bring-up 工程具备阶段 9 所需的 AXP2101 / BatteryPowerStatus 板级读数基线；队列项 `H9-Q2A`
+- 修改文件：`prototypes/twatch_s3_plus_bringup/src/main.cpp`、`prototypes/twatch_s3_plus_bringup/README.md`、`docs/70_hardware_reference/stage9_hardware_bridge_plan.md`、`docs/40_workflow/agent_batch/cards/h9-hardware-bridge-q2.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`git status --short -uall` 仅出现本轮允许文件；`C:\Users\13984\.platformio\penv\Scripts\pio.exe run -e twatch-s3 -j 1` 两次通过；`git diff --check` 通过（仅 LF/CRLF 提示，无 diff 格式错误）；本轮实际改动中文文档乱码哨兵检查通过
+- 风险回应：`[bringup-pmu]` 现已直接携带 `free_heap`，配合现有板级 Battery / PowerStatus 读数足以作为 `H9-Q2A` 的第一轮真机构建基线；但这仍不是 `BatterySample` / `BatteryPowerService` / `DataCenter` / `EventBus` 子集下放证明
+- 阻塞与待决：`pio` 不在 PATH，后续仍需显式使用 `C:\Users\13984\.platformio\penv\Scripts\pio.exe`
+- 下一步：按停止策略停止，等待用户验收；如继续执行下一张卡，应进入 `H9-Q2B` 最小架构子集下放

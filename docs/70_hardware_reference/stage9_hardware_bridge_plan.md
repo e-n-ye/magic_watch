@@ -46,6 +46,11 @@ PC trace replay / log replay 只能作为辅助测试，用来对比模型转换
 - 外部供电状态。
 - `free_heap`。
 
+当前收口要求：
+
+- 这一轮只证明板级读数与基础资源观测链路稳定存在。
+- 这一轮不证明 `hal::BatterySample`、`BatteryPowerService`、`DataCenter` 或 `EventBus` 已经下放到真机。
+
 ### H9-BRIDGE-2B：最小架构子集下放
 
 把最小化的 `hal::BatterySample`、`BatteryPowerService`、`DataCenter` 和简化 `EventBus` 移植进 T-Watch 工程，解决 Xtensa / Arduino / FreeRTOS 编译差异。

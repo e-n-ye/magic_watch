@@ -18,7 +18,12 @@
 
 - AXP2101 基础供电状态是否能被读取。
 - 屏幕上显示 USB、充电、放电、电池电压、电量和系统电压摘要。
-- 串口输出 `[bringup-pmu]`，用于记录 USB 插入、充电状态和电压变化。
+- 串口输出 `[bringup-pmu]`，用于记录 USB 插入、充电状态、电压变化和 `free_heap`。
+
+阶段 9 `H9-Q2A` 对应的就是这一层板级读数闭环：
+
+- 当前只证明 T-Watch S3 Plus 上的 AXP2101 / BatteryPowerStatus 读数和基础资源观测可稳定输出。
+- 当前不证明 `hal::BatterySample`、`BatteryPowerService`、`DataCenter` 或 `EventBus` 已经下放到真机。
 
 第四小闭环只验证：
 
@@ -82,7 +87,7 @@ pio device monitor -b 115200
 - 页面显示 BMA423 基础加速度摘要。
 - 页面底部显示 `Short PEK: screen | Long PEK: PMU sleep`。
 - 点按或拖动屏幕后，串口应出现 `[bringup-touch] press`、节流后的 `[bringup-touch] move` 和 `[bringup-touch] release`。
-- 串口每两秒输出一次 `[bringup-pmu] usb=... charging=... batt=... vbus=... sys=... percent=...`。
+- 串口每两秒输出一次 `[bringup-pmu] usb=... charging=... batt=... vbus=... sys=... percent=... free_heap=...`。
 - 串口每 0.5 秒输出一次 `[bringup-bma] x=... y=... z=... dir=...`。
 - 短按侧键时，串口应出现 `[bringup-screen] state=off/on reason=pmu-short`。
 - screen off 后触摸屏幕时，串口应出现 `[bringup-screen] state=on reason=touch`。
@@ -122,6 +127,13 @@ pio device monitor -b 115200
 - 电压观察示例：`batt=3540mV`、`vbus=4758mV`、`sys=4747mV`、`percent=4`。
 - 实物拔插确认：拔掉 USB 后显示 `usb=N`、`charging=N`、`discharging=Y`，插回 USB 后恢复为 USB 接入充电状态。
 - 本闭环仍不验证 PMU 中断、PEK 按键事件、充电策略、关机策略或 sleep/wake。
+
+## 2026-06-04 H9-Q2A 底层读数闭环对齐
+
+- 编译：通过，命令为 `C:\Users\13984\.platformio\penv\Scripts\pio.exe run -e twatch-s3 -j 1`。
+- 对齐动作：`[bringup-pmu]` 日志补充 `free_heap`，让阶段 9 第一轮所需的电压、百分比、充电、外部供电和堆内存观测进入同一条板级读数链路。
+- 结论：当前 bring-up 工程已经满足阶段 9 `H9-Q2A` 的板级读数闭环。
+- 边界说明：本轮仍不证明 Magic Watch 最小架构子集已经下放；`H9-Q2B` 之后才进入 `BatterySample` / `BatteryPowerService` / `DataCenter` / simplified `EventBus`。
 
 ## 2026-05-22 BMA423 基础加速度闭环验证
 

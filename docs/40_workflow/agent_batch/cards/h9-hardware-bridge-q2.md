@@ -7,7 +7,7 @@
 ## H9-BRIDGE-2A T-Watch AXP2101 底层读数闭环
 
 - 批次：H9-Q2
-- 状态：TODO
+- 状态：DONE
 - 依赖：无
 - 自检：
   - `git status --short -uall`
@@ -69,11 +69,11 @@ Forbidden changes:
 
 ### 执行记录
 
-- 完成时间：
-- 实际改动文件：
-- 自检结果：
-- 提交状态：
-- 风险回应：
+- 完成时间：2026-06-04 17:32
+- 实际改动文件：`prototypes/twatch_s3_plus_bringup/src/main.cpp`、`prototypes/twatch_s3_plus_bringup/README.md`、`docs/70_hardware_reference/stage9_hardware_bridge_plan.md`、`docs/40_workflow/agent_batch/cards/h9-hardware-bridge-q2.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检结果：`git status --short -uall` 仅出现本轮允许文件；`C:\Users\13984\.platformio\penv\Scripts\pio.exe run -e twatch-s3 -j 1` 两次通过；`git diff --check` 通过（仅 LF/CRLF 提示，无 diff 格式错误）；本轮实际改动中文文档乱码哨兵检查通过
+- 提交状态：待提交
+- 风险回应：本轮只确认 T-Watch S3 Plus 板级 Battery / PowerStatus 读数与资源观测基线，不把现有 bring-up 日志误写成最小架构子集已下放；`H9-BRIDGE-2B` 之后才进入 `BatterySample` / `BatteryPowerService` / `DataCenter` / simplified `EventBus`。
 
 ---
 
