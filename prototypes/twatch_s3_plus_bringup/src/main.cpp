@@ -68,6 +68,14 @@ struct BridgeBatteryObserverState {
     uint32_t publish_count = 0;
 };
 
+struct BridgeSerialObserverState {
+    bool has_model = false;
+    mwbridge::BatteryModel last_model {};
+    uint32_t event_count = 0;
+    uint32_t last_free_heap = 0;
+    uint32_t last_stack_high_water_mark = 0;
+};
+
 struct BridgePowerTaskState {
     bool has_snapshot = false;
     PmuSnapshot last_snapshot {};
@@ -78,7 +86,9 @@ mwbridge::EventBus g_bridge_event_bus;
 mwbridge::DataCenter g_bridge_data_center(g_bridge_event_bus);
 mwbridge::BatteryPowerService g_bridge_battery_service(g_bridge_data_center);
 mwbridge::EventBus::Subscription g_bridge_battery_subscription;
+mwbridge::EventBus::Subscription g_bridge_serial_subscription;
 BridgeBatteryObserverState g_bridge_battery_observer;
+BridgeSerialObserverState g_bridge_serial_observer;
 BridgePowerTaskState g_bridge_power_task_state;
 TaskHandle_t g_power_task_handle = nullptr;
 portMUX_TYPE g_bridge_lock = portMUX_INITIALIZER_UNLOCKED;
@@ -198,6 +208,39 @@ void handleBridgeBatteryChanged(void *context, const mwbridge::BatteryModel &mod
     portEXIT_CRITICAL(&g_bridge_lock);
 }
 
+void handleBridgeBatterySerial(void *context, const mwbridge::BatteryModel &model)
+{
+    auto *state = static_cast<BridgeSerialObserverState *>(context);
+    if (state == nullptr) {
+        return;
+    }
+
+    const uint32_t free_heap = static_cast<uint32_t>(ESP.getFreeHeap());
+    const uint32_t stack_high_water_mark = g_power_task_handle == nullptr
+                                               ? 0
+                                               : static_cast<uint32_t>(uxTaskGetStackHighWaterMark(g_power_task_handle));
+
+    portENTER_CRITICAL(&g_bridge_lock);
+    state->has_model = true;
+    state->last_model = model;
+    ++state->event_count;
+    state->last_free_heap = free_heap;
+    state->last_stack_high_water_mark = stack_high_water_mark;
+    const uint32_t event_count = state->event_count;
+    portEXIT_CRITICAL(&g_bridge_lock);
+
+    Serial.printf(
+        "[bridge-battery-event] name=BatteryChanged count=%lu present=%s charging=%s external=%s percent=%d millivolts=%u free_heap=%lu power_task_hwm=%lu\n",
+        static_cast<unsigned long>(event_count),
+        yesNo(model.present),
+        yesNo(model.charging),
+        yesNo(model.external_power),
+        static_cast<int>(model.percent),
+        static_cast<unsigned int>(model.millivolts),
+        static_cast<unsigned long>(free_heap),
+        static_cast<unsigned long>(stack_high_water_mark));
+}
+
 void storeBridgePmuSnapshot(const PmuSnapshot &snapshot)
 {
     portENTER_CRITICAL(&g_bridge_lock);
@@ -231,6 +274,14 @@ uint32_t readBridgePublishCount()
     const uint32_t publish_count = g_bridge_battery_observer.publish_count;
     portEXIT_CRITICAL(&g_bridge_lock);
     return publish_count;
+}
+
+uint32_t readBridgeSerialEventCount()
+{
+    portENTER_CRITICAL(&g_bridge_lock);
+    const uint32_t event_count = g_bridge_serial_observer.event_count;
+    portEXIT_CRITICAL(&g_bridge_lock);
+    return event_count;
 }
 
 void bridgeSampleBatteryOnce()
@@ -615,7 +666,7 @@ void logPmu()
         return;
     }
     Serial.printf(
-        "[bringup-pmu] usb=%s charging=%s discharging=%s chg=%s batt=%umV vbus=%umV sys=%umV percent=%d free_heap=%lu task_samples=%lu bridge_pub=%lu\n",
+        "[bringup-pmu] usb=%s charging=%s discharging=%s chg=%s batt=%umV vbus=%umV sys=%umV percent=%d free_heap=%lu task_samples=%lu bridge_pub=%lu bridge_evt=%lu\n",
         yesNo(pmu.vbus_in),
         yesNo(pmu.charging),
         yesNo(pmu.discharging),
@@ -626,7 +677,8 @@ void logPmu()
         pmu.batt_percent,
         static_cast<unsigned long>(ESP.getFreeHeap()),
         static_cast<unsigned long>(sample_count),
-        static_cast<unsigned long>(readBridgePublishCount()));
+        static_cast<unsigned long>(readBridgePublishCount()),
+        static_cast<unsigned long>(readBridgeSerialEventCount()));
 }
 
 void logBma()
@@ -688,6 +740,8 @@ void setup()
     watch.clearPMU();
     g_bridge_battery_subscription =
         g_bridge_data_center.subscribe_battery_changed(handleBridgeBatteryChanged, &g_bridge_battery_observer);
+    g_bridge_serial_subscription =
+        g_bridge_data_center.subscribe_battery_changed(handleBridgeBatterySerial, &g_bridge_serial_observer);
     const BaseType_t power_task_created = xTaskCreatePinnedToCore(
         bridgePowerTask,
         "Power_Task",

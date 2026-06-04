@@ -40,6 +40,12 @@
 - bring-up 页面与 `[bringup-pmu]` 日志改读 `Power_Task` 维护的共享快照，而不是在 loop 中直接重复读取 PMU。
 - 当前仍是“同核 + 同步回调 + 简化共享快照”边界，不代表已经证明跨核或通用多任务事件总线。
 
+阶段 9 `H9-Q2D` 在此基础上补齐事件观测：
+
+- 新增真正的 `BatteryChanged` 串口观察回调，不再只依赖 `[bringup-pmu]` 原始 PMU 摘要。
+- 事件日志输出当前电池模型、`free_heap` 和 `Power_Task` high water mark。
+- `[bringup-pmu]` 继续保留为板级采样摘要，但同时显示 `bridge_evt`，用于区分“任务采样次数”和“BatteryChanged 事件次数”。
+
 第四小闭环只验证：
 
 - BMA423 基础加速度读数是否可用。
@@ -165,6 +171,14 @@ pio device monitor -b 115200
 - 当前实现：页面状态行中的 `Sm` 显示 `Power_Task` 已累计的样本次数；`[bringup-pmu]` 日志新增 `task_samples=...`，用于区分“任务采样次数”和“BatteryChanged 发布次数”。
 - 当前实现：bring-up 在 `setup()` 中等待 `Power_Task` 首次样本，串口输出 `[bringup-power] bootstrap=... period_ms=1000`。
 - 边界说明：当前仍采用同核任务 + 同步 `EventBus` + 共享快照的简化同步边界，不代表已完成通用多任务队列设计；`Power_Task high water mark` 与 BatteryChanged 串口订阅留到 `H9-Q2D`。
+
+## 2026-06-04 H9-Q2D BatteryChanged 串口观测
+
+- 编译：预期用 `C:\Users\13984\.platformio\penv\Scripts\pio.exe run -e twatch-s3 -j 1` 验证。
+- 当前实现：新增 `[bridge-battery-event] name=BatteryChanged ...` 串口事件日志，由 `mwbridge::EventBus` 订阅回调直接输出。
+- 当前实现：事件日志包含 `present`、`charging`、`external`、`percent`、`millivolts`、`free_heap`、`power_task_hwm`。
+- 当前实现：`[bringup-pmu]` 增加 `bridge_evt=...`，用于和 `task_samples=...`、`bridge_pub=...` 对照当前事件链行为。
+- 阶段边界：本轮证明的是板载 `EventBus` 已经把 BatteryChanged 事件送到串口观察者；完整 UI 真机移植、真实低功耗电流、触摸 / BMA / 心率 / 血氧接入仍未验证。
 
 ## 2026-05-22 BMA423 基础加速度闭环验证
 

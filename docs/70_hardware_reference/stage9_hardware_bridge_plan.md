@@ -83,6 +83,13 @@ PC trace replay / log replay 只能作为辅助测试，用来对比模型转换
 - `free_heap`。
 - `Power_Task` high water mark。
 
+当前推荐收口方式：
+
+- 事件日志与板级 PMU 摘要日志分离，避免把“读到了 PMU 数据”误当成“看到了 BatteryChanged 事件”。
+- 事件日志中明确带上 `BatteryChanged` 名称、模型字段、`free_heap` 和 `Power_Task` high water mark。
+- 允许继续保留 `[bringup-pmu]` 摘要，但应增加事件计数或等价字段，帮助区分“任务采样次数”和“事件发布次数”。
+- 本轮只证明串口观察者已经挂到板载 `EventBus` 上，不扩成通用日志框架。
+
 ### H9-BRIDGE-2E：复用边界记录
 
 记录哪些 Magic Watch 上层代码可以直接复用，哪些因为 `std::function`、`std::vector`、`std::string`、同步 `EventBus` 或 UI 依赖暂时不能直接下放。

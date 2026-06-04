@@ -261,3 +261,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：当前 `Power_Task` 已以 1Hz 采样并驱动 `BatterySample -> BatteryPowerService -> DataCenter`，bring-up 页面和 `[bringup-pmu]` 日志也改为消费任务快照；但同步 `EventBus` 仍是同核简化边界，真正 BatteryChanged 串口观测和 `Power_Task` high water mark 验收继续留给 `H9-BRIDGE-2D`
 - 阻塞与待决：`pio` 不在 PATH，后续仍需显式使用 `C:\Users\13984\.platformio\penv\Scripts\pio.exe`
 - 下一步：按停止策略停止，等待用户验收；如继续执行下一张卡，应进入 `H9-Q2D` 串口 BatteryChanged 事件观测
+
+### 会话 2026-06-04 19:00
+
+- 本轮范围：队列项 `H9-Q2D`，卡片 `H9-BRIDGE-2D`
+- 完成：`H9-BRIDGE-2D`；已将板载 `BatteryChanged` 事件挂到串口观察回调，并输出模型、`free_heap`、`Power_Task` high water mark；队列项 `H9-Q2D`
+- 修改文件：`prototypes/twatch_s3_plus_bringup/src/main.cpp`、`prototypes/twatch_s3_plus_bringup/README.md`、`docs/70_hardware_reference/stage9_hardware_bridge_plan.md`、`docs/00_current/current_architecture.md`、`docs/40_workflow/agent_batch/cards/h9-hardware-bridge-q2.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`git status --short -uall` 仅出现本轮允许文件；`C:\Users\13984\.platformio\penv\Scripts\pio.exe run -e twatch-s3 -j 1` 先因重复定义失败，清理重复块后通过；`git diff --check` 通过（仅 LF/CRLF 提示，无 diff 格式错误）；本轮实际改动中文文档乱码哨兵检查通过
+- 风险回应：当前串口证据已经优先来自 `[bridge-battery-event] name=BatteryChanged ...` 事件观察，而不是原始 `[bringup-pmu]` PMU 摘要；但本轮仍未做真机上传后的人工串口目视验收，也未扩展到完整通用日志框架
+- 阻塞与待决：`pio` 不在 PATH，后续仍需显式使用 `C:\Users\13984\.platformio\penv\Scripts\pio.exe`
+- 下一步：按停止策略停止，等待用户验收；如继续执行下一张卡，应进入 `H9-Q2E` 复用边界记录
