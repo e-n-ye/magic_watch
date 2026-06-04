@@ -209,6 +209,7 @@ Forbidden changes:
 - `LauncherPage` 已从 `ShellPages.cpp` 下沉到独立 Launcher 域实现文件。
 - `LauncherPage` 声明已下沉到 `Shell/Launcher/ShellLauncherPages.h`，`ShellPages.h` 仅通过过渡 include 兼容 Launcher 入口。
 - `LauncherPage` 当前仍直接在 `Application.cpp` 中注册，尚未单独抽出 Launcher 域注册函数。
+- 当前判断：这是可接受的阶段性偏离，因为 Launcher 只剩单页入口，继续抽独立注册函数的收益有限。
 
 拆分判断：
 
@@ -586,7 +587,7 @@ Power 仍与：
 
 1. `Display`、`Power`、`Daily`、`Health` 页面实现已显著分域下沉。
 2. `SettingsPages.h` 仍承担 Settings 对外聚合入口，`ShellPages.h` 已收口为兼容 include 头。
-3. `Application.cpp` 已完成 Home、Notifications、QuickSettings、Power、Daily、Health 的注册分流；剩余讨论点集中在 Launcher 是否值得抽域注册，以及 Settings 长列表是否保留到后续阶段。
+3. `Application.cpp` 已完成 Home、Notifications、QuickSettings、Power、Daily、Health 的注册分流；当前接受两处阶段性偏离：Launcher 继续直接注册，Settings 继续保留长列表，待后续 Settings 专项审计时再决定是否继续收口。
 4. `ShellPages.cpp` 当前已从构建退场；后续更像澄清聚合边界与注册结构，而不是继续迁页面。
 5. 后续任何关于“ShellPages 拆分是否继续”的讨论，都不应再基于早期“所有页面都还在壳层巨石里”的旧事实。
 

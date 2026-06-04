@@ -57,7 +57,7 @@
 ## S8-CLOSE-2 审计 8C 注册尾巴并记录接受偏离
 
 - 批次：阶段 8 收尾 Batch 1
-- 状态：IN_PROGRESS
+- 状态：DONE
 - 依赖：S8-CLOSE-1
 - 自检：
   - `git diff --check`
@@ -93,12 +93,15 @@
   - 不产生任何代码 diff。
   - `git diff --check` 通过。
 - 执行记录：
-  - 待执行。
+  - 完成时间：2026-06-04
+  - 实际改动文件：`docs/00_current/current_architecture.md`、`docs/10_architecture/ui_page_split_status.md`
+  - 自检结果：`git diff --check` 通过；`Application.cpp` 注册结构只读审计完成；`Launcher` 直接注册与 Settings 长列表已记录为阶段性接受偏离
+  - 风险回应：没有顺手扩成代码收口轮，也没有把 Launcher / Settings 的尾巴伪装成“已经不存在”
 
 ## S8-REG-1 刷新阶段 8F 手动 UI 回归 checklist
 
 - 批次：阶段 8 收尾 Batch 1
-- 状态：TODO
+- 状态：IN_PROGRESS
 - 依赖：S8-CLOSE-2
 - 自检：
   - `git diff --check`

@@ -57,7 +57,7 @@ flowchart LR
 | --- | --- | --- | --- |
 | 新会话快速理解项目 | 基本达成 | `document_map.md` 已作为任务路由器，`00_current/` 承担当前入口；长历史文档不再默认读 | 继续保持入口短，避免旧事实回流 |
 | 页面实现不再回流巨石 | 已达成 | `ShellPages.cpp` 已退场，Shell/Home/Notifications/QuickSettings/Launcher/Power/Daily/Health 实现已分域下沉，`ShellPages.h` 已收口为兼容 include 头 | 保持当前边界，不让新页面回流 |
-| 新增功能最小化修改 | 部分达成 | 页面实现文件已分域；`Application.cpp` 已完成 Home、Notifications、QuickSettings、Power、Daily、Health 注册分流，剩余尾巴集中在 Launcher 与 Settings | 审计并记录剩余注册尾巴是否接受偏离 |
+| 新增功能最小化修改 | 部分达成 | 页面实现文件已分域；`Application.cpp` 已完成 Home、Notifications、QuickSettings、Power、Daily、Health 注册分流，剩余尾巴集中在 Launcher 与 Settings | 当前接受 Launcher 直接注册与 Settings 长列表的阶段性偏离，后续如需继续收口再单独拆轮 |
 | Controller 可复用且不操作 UI | 部分达成 | `PowerController` 已落地；其它 Controller 仍未提取 | 继续按状态归属逐个提取，不盲目新增 |
 | UI 生命周期清楚 | 部分达成 | `ui_lifecycle.md` 已定义契约，`LvglTimerGuard` 已存在，并已落到 Steps、Launcher、Notifications、QuickSettings、Sleep、BloodOxygen、HeartRate 的一部分 timer | 继续迁移复杂裸 timer，优先处理高风险剩余项 |
 | 未来硬件接入不重写上层 | 部分达成 | `hardware_boundary.md` 已定义上层职责边界；当前硬件选型未定，仍主要依赖模拟器路径 | 保持契约稳定，待后续硬件阶段落地实现 |
@@ -67,13 +67,16 @@ flowchart LR
 
 - 真实硬件接入的上层职责边界已定义在 `docs/10_architecture/hardware_boundary.md`。
 - 当前仍未绑定芯片、板卡或 RTOS；后续实现只能在该契约内补充具体同步机制。
+- 当前接受两处 8C 尾巴：
+  - `LauncherPage` 继续直接注册，原因是它只剩单页入口，继续抽独立注册函数的收益有限。
+  - Settings 继续保留注册长列表，原因是它仍与 `SettingsPages.h` 聚合入口绑定，更适合留到后续 Settings 专项审计阶段再处理。
 
 ## 阶段 8 架构收口路线
 
 ```text
 8A：文档入口与当前架构验收地图（已完成）
 8B：ShellPages.h 聚合头按领域拆分（已完成）
-8C：Application.cpp 页面注册按领域分流（已基本完成，仍有 Launcher / Settings 尾巴待审计）
+8C：Application.cpp 页面注册按领域分流（已基本完成；当前接受 Launcher / Settings 尾巴为阶段性偏离）
 8D：UI 生命周期落地到已有 LvglTimerGuard（已进入逐页落地阶段，仍有复杂 timer 待继续）
 8E：硬件接入边界文档契约（已完成）
 8F：手动 UI 回归闭环（待执行）
