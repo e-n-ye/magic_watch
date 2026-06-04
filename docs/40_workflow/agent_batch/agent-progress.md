@@ -171,3 +171,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：本轮不把 `decision_log.md` 迁入 `80_history`，因为 `workflow.md` 仍把它作为历史记忆落点，`AGENTS.md` 也仍把它列为关键背景；直接迁移会让路径整洁性收益小于跨会话检索成本
 - 阻塞与待决：
 - 下一步：队列项 `DOCROOT-Q11-DECISION-LOG` 已完成，按停止策略停止，等待用户验收；不执行 `DOCROOT-Q13-DOCS-ROOT-REVIEW`
+
+### 会话 2026-06-04 15:40
+
+- 本轮范围：队列项 `DOCROOT-Q13-DOCS-ROOT-REVIEW`，卡片 `DOCROOT-B10-C04`
+- 完成：`DOCROOT-B10-C04`；队列项 `DOCROOT-Q13-DOCS-ROOT-REVIEW`
+- 修改文件：`docs/40_workflow/docs_root_reorg_inventory.md`、`docs/40_workflow/agent_batch/cards/docroot-reorg-wave3-decisions.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`docs/*.md` 根目录当前仅剩 7 份保留项，和 `docs_root_reorg_inventory.md` / `document_map.md` 结论一致；根目录候选旧路径扫描未发现新的当前正文残留，仅剩历史会话记录、卡片说明文本和 `docs/decision_log.md` 的历史事故示例；本轮实际改动中文文档乱码哨兵检查通过；`git diff --check` 通过（仅有 LF/CRLF 警告，无 diff 格式错误）
+- 风险回应：本轮只做最终复核与结论落档，不清理已验收队列项和历史卡片文件；这样“当前 docs 已干净”的判断不依赖后续清理动作
+- 阻塞与待决：
+- 下一步：队列项 `DOCROOT-Q13-DOCS-ROOT-REVIEW` 已完成，按停止策略停止，等待用户验收；如用户确认，可再执行已验收队列项清理

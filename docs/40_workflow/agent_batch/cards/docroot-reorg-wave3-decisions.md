@@ -182,7 +182,7 @@ Forbidden changes:
 ### DOCROOT-B10-C04 复核 docs 根目录是否已干净
 
 - 批次：10
-- 状态：TODO
+- 状态：DONE
 - 依赖：DOCROOT-B10-C01, DOCROOT-B10-C02, DOCROOT-B10-C03
 - 自检：`git diff --check`；对本卡改动的中文文档执行 `AGENTS.md` 中规定的乱码哨兵检查；重新扫描 `docs/*.md` 根目录清单、`document_map.md`、`docs_root_reorg_inventory.md`、关键旧路径引用
 - 建议提交信息：`docs: review docs root cleanliness`
@@ -224,10 +224,13 @@ Forbidden changes:
 
 #### 验收标准
 
-- [ ] `docs_root_reorg_inventory.md` 不再保留未处理的“待单独决策”项，或明确说明仍未通过审核的原因。
-- [ ] `document_map.md` 与根目录实际清单一致。
-- [ ] 可以明确判断“当前 docs 已干净”或“尚未干净且阻塞项是什么”。
+- [x] `docs_root_reorg_inventory.md` 不再保留未处理的“待单独决策”项，或明确说明仍未通过审核的原因。
+- [x] `document_map.md` 与根目录实际清单一致。
+- [x] 可以明确判断“当前 docs 已干净”或“尚未干净且阻塞项是什么”。
 
 #### 执行记录
 
-（Agent 填写：完成时间 / 实际改动文件 / 自检结果 / 风险回应）
+- 完成时间：2026-06-04
+- 实际改动文件：`docs/40_workflow/docs_root_reorg_inventory.md`、`docs/40_workflow/agent_batch/cards/docroot-reorg-wave3-decisions.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检结果：`docs/*.md` 根目录当前仅剩 7 份保留项，和 `docs_root_reorg_inventory.md` / `document_map.md` 结论一致；根目录候选旧路径扫描未发现新的当前正文残留，仅剩历史会话记录、卡片说明文本和 `docs/decision_log.md` 的历史事故示例；本轮实际改动中文文档乱码哨兵检查通过；`git diff --check` 通过（仅有 LF/CRLF 警告，无 diff 格式错误）
+- 风险回应：本轮只做独立复核与结论落档，不提前清理已验收队列项或旧卡片文件；这样能把“审核是否通过”和“验收后清理”分成两个可独立回退的闭环

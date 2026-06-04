@@ -8,7 +8,7 @@
 
 - 盘点范围：仅 `docs/*.md`，不包含 `docs/00_current/`、`docs/10_architecture/`、`docs/30_testing/`、`docs/40_workflow/`、`docs/90_resume/` 等子目录文件。
 - 分类值只使用本卡实际结论范围：`保留根目录`、`30_testing`、`50_stage_records`、`60_visual_exploration`、`70_hardware_reference`、`20_guides`、`80_history`、`待单独决策`。
-- 本文档只给出迁移建议，不代表本轮已批准后续迁移。
+- 本文档已完成 Wave 1 / Wave 2 / Wave 3 审计与最终复核；当前结论可作为 docs 根目录清洁度判断依据。
 
 ## Wave 1 迁移完成情况
 
@@ -47,7 +47,7 @@
 | `20_guides` | 3 | 阅读/学习型材料适合在第二轮迁入开发指南目录。 |
 | `30_testing` | 1 | 完整手动回归矩阵应与测试入口文档放在同一目录。 |
 | `80_history` | 5 | 明确已被替代、属于旧现状地图或一次性运行记录的文档可归档。 |
-| `待单独决策` | 0 | 第二轮单独决策项已全部完成，最终是否“已干净”留待独立复核卡判断。 |
+| `待单独决策` | 0 | 第二轮单独决策项已全部完成，独立复核卡已确认当前 docs 根目录可视为干净。 |
 
 ## 明确保留根目录名单
 
@@ -109,6 +109,14 @@
 - Wave 1 迁移后的根目录剩余文件已经足够聚焦，默认入口没有继续被历史阶段记录、视觉流程或硬件参考淹没。
 - 第二轮如果继续推进，应拆成新的独立卡片，只处理 `20_guides`、`80_history` 或“待单独决策”中的一个清晰子集。
 - 本卡到此停止，不直接执行第二轮迁移。
+
+## DOCROOT-B10-C04 最终复核结论
+
+- 当前 `docs/*.md` 根目录只剩 7 份文档：`architecture_principles.md`、`document_map.md`、`home_interaction_model.md`、`target_architecture.md`、`watchface_style_architecture.md`、`workflow.md`、`decision_log.md`。
+- 其中前 6 份分别承担当前入口、长期架构专题或项目级协作工作流职责；`decision_log.md` 虽不再是默认入口，但保留为稳定历史检索路径。
+- `20_guides`、`30_testing`、`50_stage_records`、`60_visual_exploration`、`70_hardware_reference`、`80_history` 的候选根目录文档都已完成迁移或明确归类。
+- 旧路径字符串仍可能出现在历史执行记录、卡片说明文本和 `docs/decision_log.md` 的历史编码事故示例里，但这些都不属于当前正文路由残留。
+- 结论：当前 docs 根目录已干净，可视为“只剩应保留的稳定入口与稳定检索路径”。
 
 ## 历史执行顺序回顾
 
