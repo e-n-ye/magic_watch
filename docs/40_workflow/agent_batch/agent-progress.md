@@ -241,3 +241,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：`[bringup-pmu]` 现已直接携带 `free_heap`，配合现有板级 Battery / PowerStatus 读数足以作为 `H9-Q2A` 的第一轮真机构建基线；但这仍不是 `BatterySample` / `BatteryPowerService` / `DataCenter` / `EventBus` 子集下放证明
 - 阻塞与待决：`pio` 不在 PATH，后续仍需显式使用 `C:\Users\13984\.platformio\penv\Scripts\pio.exe`
 - 下一步：按停止策略停止，等待用户验收；如继续执行下一张卡，应进入 `H9-Q2B` 最小架构子集下放
+
+### 会话 2026-06-04 17:50
+
+- 本轮范围：队列项 `H9-Q2B`，卡片 `H9-BRIDGE-2B`
+- 完成：`H9-BRIDGE-2B`；已将 Battery-only 最小架构子集下放到 T-Watch prototype；队列项 `H9-Q2B`
+- 修改文件：`prototypes/twatch_s3_plus_bringup/src/main.cpp`、`prototypes/twatch_s3_plus_bringup/src/mwbridge/BatteryTypes.h`、`prototypes/twatch_s3_plus_bringup/src/mwbridge/EventBus.h`、`prototypes/twatch_s3_plus_bringup/src/mwbridge/EventBus.cpp`、`prototypes/twatch_s3_plus_bringup/src/mwbridge/DataCenter.h`、`prototypes/twatch_s3_plus_bringup/src/mwbridge/DataCenter.cpp`、`prototypes/twatch_s3_plus_bringup/src/mwbridge/BatteryPowerService.h`、`prototypes/twatch_s3_plus_bringup/src/mwbridge/BatteryPowerService.cpp`、`prototypes/twatch_s3_plus_bringup/README.md`、`docs/70_hardware_reference/stage9_hardware_bridge_plan.md`、`docs/00_current/current_architecture.md`、`docs/40_workflow/agent_batch/cards/h9-hardware-bridge-q2.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`git status --short -uall` 仅出现本轮允许文件；`C:\Users\13984\.platformio\penv\Scripts\pio.exe run -e twatch-s3 -j 1` 通过；`git diff --check` 通过（仅 LF/CRLF 提示，无 diff 格式错误）；本轮实际改动中文文档乱码哨兵检查通过
+- 风险回应：prototype 中已存在可编译的 `mwbridge::hal::BatterySample`、`mwbridge::app::BatteryPowerService`、`mwbridge::app::DataCenter`、`mwbridge::app::EventBus` 最小兼容子集；但当前仍是 loop 驱动的同步链，不代表已完成 FreeRTOS `Power_Task` 化，也不代表已把通知中心或全量 `std::function` / `std::vector` / `std::string` 依赖安全下放
+- 阻塞与待决：`pio` 不在 PATH，后续仍需显式使用 `C:\Users\13984\.platformio\penv\Scripts\pio.exe`
+- 下一步：按停止策略停止，等待用户验收；如继续执行下一张卡，应进入 `H9-Q2C` 真实 FreeRTOS `Power_Task` 闭环

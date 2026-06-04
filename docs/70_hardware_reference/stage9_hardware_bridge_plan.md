@@ -57,6 +57,13 @@ PC trace replay / log replay 只能作为辅助测试，用来对比模型转换
 
 本轮不追求完整复用 PC 模拟器代码，也不移植完整 UI。
 
+当前推荐收口方式：
+
+- 先做 Battery-only 子集，不把 Notifications、DisplayPolicy、Navigation 等大模型一起带进来。
+- `EventBus` 先用固定槽位和函数指针回调保住同步事件链，再把 `std::function` / `std::vector` / `std::string` 留给后续复用边界记录。
+- `DataCenter` 先只保留 `BatteryChanged` 的最后快照与发布入口，不在本轮扩成模拟器里的全量数据中枢。
+- 当前允许先挂接到 bring-up 主循环，真正 `Power_Task` 化留到 `H9-BRIDGE-2C`。
+
 ### H9-BRIDGE-2C：真实 FreeRTOS 任务闭环
 
 在 T-Watch 上创建真实 FreeRTOS `Power_Task`，以 1Hz 频率轮询 AXP2101，把读数封装为 `BatterySample` 并推入板载 `DataCenter`。

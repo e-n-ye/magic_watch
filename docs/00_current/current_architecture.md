@@ -53,6 +53,7 @@ flowchart LR
 - UI 生命周期契约已建立，`LvglTimerGuard` 已存在；裸 `lv_timer_t*` 仍需逐页小步迁移。
 - 阶段 9 已开始真实硬件桥接，PC replay 只能作为辅助测试；硬件闭环必须在真实 MCU 上运行最小架构子集。
 - `EventBus` 当前同步分发不能原样作为 RTOS 多任务边界证明；阶段 9 第一轮应使用简化板载子集，并记录 `free_heap` 与 task high water mark。
+- `H9-Q2B` 的推荐方向不是整搬模拟器 `DataCenter` / `EventBus`，而是在 T-Watch prototype 中先建立 Battery-only 的最小兼容子集：固定槽位同步回调、最后快照存储、避免把 `std::function` / `std::vector` / `std::string` 依赖直接带进 MCU。
 
 ## 阶段 8 验收地图
 

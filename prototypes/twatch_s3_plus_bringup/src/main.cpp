@@ -4,6 +4,10 @@
 #include <esp_sleep.h>
 #include <lvgl.h>
 
+#include "mwbridge/BatteryPowerService.h"
+#include "mwbridge/DataCenter.h"
+#include "mwbridge/EventBus.h"
+
 namespace {
 
 constexpr uint32_t kLogIntervalMs = 1000;
@@ -52,6 +56,18 @@ struct BmaSnapshot {
     int16_t z = 0;
     uint8_t direction = 0;
 };
+
+struct BridgeBatteryObserverState {
+    bool has_model = false;
+    mwbridge::BatteryModel last_model {};
+    uint32_t publish_count = 0;
+};
+
+mwbridge::EventBus g_bridge_event_bus;
+mwbridge::DataCenter g_bridge_data_center(g_bridge_event_bus);
+mwbridge::BatteryPowerService g_bridge_battery_service(g_bridge_data_center);
+mwbridge::EventBus::Subscription g_bridge_battery_subscription;
+BridgeBatteryObserverState g_bridge_battery_observer;
 
 const char *probeStatus(uint32_t probe_mask, uint32_t bit)
 {
@@ -141,6 +157,29 @@ BmaSnapshot readBmaSnapshot()
         snapshot.direction = watch.direction();
     }
     return snapshot;
+}
+
+mwbridge::BatterySample toBridgeBatterySample(const PmuSnapshot &snapshot)
+{
+    mwbridge::BatterySample sample;
+    sample.present = snapshot.batt_mv > 0;
+    sample.charging = snapshot.charging;
+    sample.external_power = snapshot.vbus_in;
+    sample.percent = static_cast<std::int16_t>(snapshot.batt_percent);
+    sample.millivolts = snapshot.batt_mv;
+    return sample;
+}
+
+void handleBridgeBatteryChanged(void *context, const mwbridge::BatteryModel &model)
+{
+    auto *state = static_cast<BridgeBatteryObserverState *>(context);
+    if (state == nullptr) {
+        return;
+    }
+
+    state->has_model = true;
+    state->last_model = model;
+    ++state->publish_count;
 }
 
 void setPmuIrqFlag()
@@ -302,7 +341,7 @@ void updateBringupScreen()
 
     lv_label_set_text_fmt(
         g_status_label,
-        "Wake %s | Boot %lu\nScr %s Rot %u Tog %lu\nPMU %s T %s BMA %s",
+        "Wake %s | Boot %lu\nScr %s Rot %u Tog %lu\nPMU %s T %s BMA %s Br %lu",
         wakeupCauseName(g_wakeup_cause),
         static_cast<unsigned long>(g_rtc_boot_count),
         g_screen_on ? "on" : "off",
@@ -310,7 +349,8 @@ void updateBringupScreen()
         static_cast<unsigned long>(g_screen_toggles),
         probeStatus(probe, WATCH_PMU_ONLINE),
         probeStatus(probe, WATCH_TOUCH_ONLINE),
-        probeStatus(probe, WATCH_BMA_ONLINE));
+        probeStatus(probe, WATCH_BMA_ONLINE),
+        static_cast<unsigned long>(g_bridge_battery_observer.publish_count));
 
     if (g_touch_pressed) {
         lv_label_set_text_fmt(
@@ -480,8 +520,9 @@ void logPmu()
     g_last_pmu_log_ms = now;
 
     const PmuSnapshot pmu = readPmuSnapshot();
+    g_bridge_battery_service.handle_sample(toBridgeBatterySample(pmu));
     Serial.printf(
-        "[bringup-pmu] usb=%s charging=%s discharging=%s chg=%s batt=%umV vbus=%umV sys=%umV percent=%d free_heap=%lu\n",
+        "[bringup-pmu] usb=%s charging=%s discharging=%s chg=%s batt=%umV vbus=%umV sys=%umV percent=%d free_heap=%lu bridge_pub=%lu\n",
         yesNo(pmu.vbus_in),
         yesNo(pmu.charging),
         yesNo(pmu.discharging),
@@ -490,7 +531,8 @@ void logPmu()
         pmu.vbus_mv,
         pmu.sys_mv,
         pmu.batt_percent,
-        static_cast<unsigned long>(ESP.getFreeHeap()));
+        static_cast<unsigned long>(ESP.getFreeHeap()),
+        static_cast<unsigned long>(g_bridge_battery_observer.publish_count));
 }
 
 void logBma()
@@ -550,6 +592,8 @@ void setup()
     watch.enableAccelerometer();
     watch.attachPMU(setPmuIrqFlag);
     watch.clearPMU();
+    g_bridge_battery_subscription =
+        g_bridge_data_center.subscribe_battery_changed(handleBridgeBatteryChanged, &g_bridge_battery_observer);
     beginLvglHelper(false);
     buildBringupScreen();
     updateBringupScreen();

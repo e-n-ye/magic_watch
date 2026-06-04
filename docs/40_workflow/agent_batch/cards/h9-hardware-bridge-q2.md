@@ -80,7 +80,7 @@ Forbidden changes:
 ## H9-BRIDGE-2B 最小架构子集下放
 
 - 批次：H9-Q2
-- 状态：TODO
+- 状态：DONE
 - 依赖：`H9-BRIDGE-2A`
 - 自检：
   - `git status --short -uall`
@@ -142,11 +142,11 @@ Forbidden changes:
 
 ### 执行记录
 
-- 完成时间：
-- 实际改动文件：
-- 自检结果：
-- 提交状态：
-- 风险回应：
+- 完成时间：2026-06-04 18:05
+- 实际改动文件：`prototypes/twatch_s3_plus_bringup/src/main.cpp`、`prototypes/twatch_s3_plus_bringup/src/mwbridge/BatteryTypes.h`、`prototypes/twatch_s3_plus_bringup/src/mwbridge/EventBus.h`、`prototypes/twatch_s3_plus_bringup/src/mwbridge/EventBus.cpp`、`prototypes/twatch_s3_plus_bringup/src/mwbridge/DataCenter.h`、`prototypes/twatch_s3_plus_bringup/src/mwbridge/DataCenter.cpp`、`prototypes/twatch_s3_plus_bringup/src/mwbridge/BatteryPowerService.h`、`prototypes/twatch_s3_plus_bringup/src/mwbridge/BatteryPowerService.cpp`、`prototypes/twatch_s3_plus_bringup/README.md`、`docs/70_hardware_reference/stage9_hardware_bridge_plan.md`、`docs/00_current/current_architecture.md`、`docs/40_workflow/agent_batch/cards/h9-hardware-bridge-q2.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检结果：`git status --short -uall` 仅出现本轮允许文件；`C:\Users\13984\.platformio\penv\Scripts\pio.exe run -e twatch-s3 -j 1` 通过；`git diff --check` 通过（仅 LF/CRLF 提示，无 diff 格式错误）；本轮实际改动中文文档乱码哨兵检查通过
+- 提交状态：待提交
+- 风险回应：本轮下放的是 Battery-only 最小兼容子集，不是模拟器全量 `DataCenter` / `EventBus`；当前 `EventBus` 采用固定槽位和函数指针回调，`DataCenter` 只保留 `BatteryChanged` 最后快照，`BatteryPowerService` 只负责样本转模型和同步发布，真正 `Power_Task` 化和串口事件观测继续留给 `H9-BRIDGE-2C` / `H9-BRIDGE-2D`。
 
 ---
 

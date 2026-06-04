@@ -25,6 +25,14 @@
 - 当前只证明 T-Watch S3 Plus 上的 AXP2101 / BatteryPowerStatus 读数和基础资源观测可稳定输出。
 - 当前不证明 `hal::BatterySample`、`BatteryPowerService`、`DataCenter` 或 `EventBus` 已经下放到真机。
 
+阶段 9 `H9-Q2B` 在此基础上继续下放最小架构子集：
+
+- `src/mwbridge/BatteryTypes.h` 提供 `mwbridge::hal::BatterySample` 与 `mwbridge::app::BatteryModel` 对齐层。
+- `src/mwbridge/BatteryPowerService.*` 负责把电池样本转换成电池模型。
+- `src/mwbridge/DataCenter.*` 只保留 Battery-only 的最后快照和发布入口。
+- `src/mwbridge/EventBus.*` 使用固定槽位和函数指针回调，故意不引入 `std::function`、`std::vector`、`std::string`。
+- 当前子集仍是 loop 驱动，不是 FreeRTOS `Power_Task`；真正任务化留到后续 `H9-Q2C`。
+
 第四小闭环只验证：
 
 - BMA423 基础加速度读数是否可用。
@@ -134,6 +142,14 @@ pio device monitor -b 115200
 - 对齐动作：`[bringup-pmu]` 日志补充 `free_heap`，让阶段 9 第一轮所需的电压、百分比、充电、外部供电和堆内存观测进入同一条板级读数链路。
 - 结论：当前 bring-up 工程已经满足阶段 9 `H9-Q2A` 的板级读数闭环。
 - 边界说明：本轮仍不证明 Magic Watch 最小架构子集已经下放；`H9-Q2B` 之后才进入 `BatterySample` / `BatteryPowerService` / `DataCenter` / simplified `EventBus`。
+
+## 2026-06-04 H9-Q2B 最小架构子集下放
+
+- 编译：通过，命令为 `C:\Users\13984\.platformio\penv\Scripts\pio.exe run -e twatch-s3 -j 1`。
+- 新增子集：`mwbridge::hal::BatterySample`、`mwbridge::app::BatteryPowerService`、`mwbridge::app::DataCenter`、`mwbridge::app::EventBus`。
+- 简化策略：`EventBus` 使用固定 4 槽订阅和函数指针回调；`DataCenter` 只保留 BatteryChanged 事件和最后一份电池模型；不引入通知中心、`std::function`、`std::vector`、`std::string`。
+- 当前接线：bring-up 仍由主循环中的 PMU 读数驱动，`BatteryPowerService` 将样本写入 `DataCenter`，并通过同步 `EventBus` 更新板载观察状态。
+- 阶段边界：本轮只证明最小兼容子集可编译、可接线、可在现有 loop 中跑通；真正的 `Power_Task`、1Hz 轮询和串口 `BatteryChanged` 观测留到后续卡片。
 
 ## 2026-05-22 BMA423 基础加速度闭环验证
 
