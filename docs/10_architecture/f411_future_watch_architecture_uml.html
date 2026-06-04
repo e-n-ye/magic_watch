@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>F411 Future Watch Architecture UML</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --panel: #151b23;
+      --panel-2: #1d2632;
+      --line: #6aa5ff;
+      --accent: #f6c177;
+      --green: #8bd5a0;
+      --pink: #f38ba8;
+      --text: #e6edf3;
+      --muted: #9fb1c7;
+      --stroke: #34465c;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 12% 8%, rgba(106, 165, 255, 0.20), transparent 28rem),
+        radial-gradient(circle at 88% 12%, rgba(246, 193, 119, 0.16), transparent 24rem),
+        linear-gradient(135deg, #0a0f16 0%, var(--bg) 52%, #101923 100%);
+      color: var(--text);
+      font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+      line-height: 1.6;
+    }
+
+    header {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 48px 24px 24px;
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(30px, 5vw, 58px);
+      letter-spacing: -0.04em;
+      line-height: 1.05;
+    }
+
+    .subtitle {
+      max-width: 760px;
+      color: var(--muted);
+      font-size: 17px;
+    }
+
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 8px 24px 56px;
+      display: grid;
+      gap: 22px;
+    }
+
+    section {
+      background: rgba(21, 27, 35, 0.86);
+      border: 1px solid rgba(100, 130, 166, 0.28);
+      border-radius: 28px;
+      padding: 22px;
+      box-shadow: 0 22px 70px rgba(0, 0, 0, 0.24);
+      overflow: hidden;
+    }
+
+    h2 {
+      margin: 0 0 6px;
+      font-size: 22px;
+    }
+
+    .note {
+      margin: 0 0 18px;
+      color: var(--muted);
+    }
+
+    .diagram {
+      width: 100%;
+      overflow-x: auto;
+      padding-bottom: 6px;
+    }
+
+    svg {
+      min-width: 920px;
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .box {
+      fill: var(--panel-2);
+      stroke: var(--stroke);
+      stroke-width: 1.4;
+      rx: 18;
+    }
+
+    .box-accent {
+      fill: rgba(246, 193, 119, 0.14);
+      stroke: rgba(246, 193, 119, 0.70);
+    }
+
+    .box-green {
+      fill: rgba(139, 213, 160, 0.12);
+      stroke: rgba(139, 213, 160, 0.72);
+    }
+
+    .box-pink {
+      fill: rgba(243, 139, 168, 0.12);
+      stroke: rgba(243, 139, 168, 0.70);
+    }
+
+    .arrow {
+      stroke: var(--line);
+      stroke-width: 2.2;
+      fill: none;
+    }
+
+    .soft-arrow {
+      stroke: rgba(159, 177, 199, 0.72);
+      stroke-width: 1.8;
+      fill: none;
+      stroke-dasharray: 5 6;
+    }
+
+    .label {
+      fill: var(--text);
+      font-size: 15px;
+      font-weight: 650;
+    }
+
+    .small {
+      fill: var(--muted);
+      font-size: 12px;
+    }
+
+    .fallback {
+      margin-top: 14px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.045);
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    code {
+      color: #b9d7ff;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>F411 Future Watch Architecture</h1>
+    <p class="subtitle">
+      这不是当前模拟器代码的复制图，也不是 T-Watch 参考板路线图。
+      它是一张 C-first 的未来骨架：先把层与层之间的关系想清楚，再慢慢填入真实代码。
+    </p>
+  </header>
+
+  <main>
+    <section>
+      <h2>1. 总体分层图</h2>
+      <p class="note">从硬件事实到 UI 绘制，每一层只做自己的事。</p>
+      <div class="diagram">
+        <svg viewBox="0 0 1120 360" role="img" aria-label="总体分层图">
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#6aa5ff"></path>
+            </marker>
+            <marker id="arrow-soft" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#9fb1c7"></path>
+            </marker>
+          </defs>
+
+          <rect class="box" x="24" y="92" width="120" height="96"></rect>
+          <text class="label" x="84" y="130" text-anchor="middle">Board</text>
+          <text class="small" x="84" y="152" text-anchor="middle">GPIO / I2C / SPI</text>
+
+          <rect class="box" x="174" y="92" width="136" height="96"></rect>
+          <text class="label" x="242" y="130" text-anchor="middle">Platform Port</text>
+          <text class="small" x="242" y="152" text-anchor="middle">time / queue / sample</text>
+
+          <rect class="box-green" x="340" y="92" width="126" height="96"></rect>
+          <text class="label" x="403" y="130" text-anchor="middle">Services</text>
+          <text class="small" x="403" y="152" text-anchor="middle">filter / debounce</text>
+
+          <rect class="box-accent" x="496" y="60" width="148" height="80"></rect>
+          <text class="label" x="570" y="94" text-anchor="middle">ModelStore</text>
+          <text class="small" x="570" y="116" text-anchor="middle">snapshots</text>
+
+          <rect class="box-accent" x="496" y="172" width="148" height="80"></rect>
+          <text class="label" x="570" y="206" text-anchor="middle">EventQueue</text>
+          <text class="small" x="570" y="228" text-anchor="middle">fixed events</text>
+
+          <rect class="box-pink" x="682" y="92" width="142" height="96"></rect>
+          <text class="label" x="753" y="130" text-anchor="middle">Coordinator</text>
+          <text class="small" x="753" y="152" text-anchor="middle">policy / actions</text>
+
+          <rect class="box" x="858" y="92" width="134" height="96"></rect>
+          <text class="label" x="925" y="130" text-anchor="middle">Screens</text>
+          <text class="small" x="925" y="152" text-anchor="middle">home / settings</text>
+
+          <rect class="box" x="1020" y="92" width="76" height="96"></rect>
+          <text class="label" x="1058" y="130" text-anchor="middle">UI</text>
+          <text class="small" x="1058" y="152" text-anchor="middle">draw</text>
+
+          <path class="arrow" marker-end="url(#arrow)" d="M144 140 H174"></path>
+          <path class="arrow" marker-end="url(#arrow)" d="M310 140 H340"></path>
+          <path class="arrow" marker-end="url(#arrow)" d="M466 118 C478 110 482 104 496 100"></path>
+          <path class="arrow" marker-end="url(#arrow)" d="M466 164 C478 174 482 190 496 206"></path>
+          <path class="arrow" marker-end="url(#arrow)" d="M644 212 C668 206 672 164 682 150"></path>
+          <path class="soft-arrow" marker-end="url(#arrow-soft)" d="M644 100 C668 106 672 122 682 132"></path>
+          <path class="arrow" marker-end="url(#arrow)" d="M824 140 H858"></path>
+          <path class="arrow" marker-end="url(#arrow)" d="M992 140 H1020"></path>
+        </svg>
+      </div>
+      <div class="fallback">
+        文本流：Board/Driver -> Platform Port -> Services -> ModelStore/EventQueue -> Coordinator -> Screens -> UI Adapter。
+      </div>
+    </section>
+
+    <section>
+      <h2>2. 输入流图</h2>
+      <p class="note">按键、触摸、旋钮先变成语义输入，再影响页面。</p>
+      <div class="diagram">
+        <svg viewBox="0 0 1120 280" role="img" aria-label="输入流图">
+          <defs>
+            <marker id="arrow2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#6aa5ff"></path>
+            </marker>
+          </defs>
+          <rect class="box" x="28" y="80" width="150" height="86"></rect>
+          <text class="label" x="103" y="115" text-anchor="middle">Button / Touch</text>
+          <text class="small" x="103" y="138" text-anchor="middle">raw hardware fact</text>
+
+          <rect class="box" x="220" y="80" width="140" height="86"></rect>
+          <text class="label" x="290" y="115" text-anchor="middle">Driver</text>
+          <text class="small" x="290" y="138" text-anchor="middle">read / EXTI</text>
+
+          <rect class="box-green" x="402" y="80" width="156" height="86"></rect>
+          <text class="label" x="480" y="115" text-anchor="middle">Input Service</text>
+          <text class="small" x="480" y="138" text-anchor="middle">debounce / map</text>
+
+          <rect class="box-accent" x="600" y="80" width="166" height="86"></rect>
+          <text class="label" x="683" y="115" text-anchor="middle">Input Event</text>
+          <text class="small" x="683" y="138" text-anchor="middle">CLICK / BACK / SCROLL</text>
+
+          <rect class="box-pink" x="808" y="80" width="140" height="86"></rect>
+          <text class="label" x="878" y="115" text-anchor="middle">Coordinator</text>
+          <text class="small" x="878" y="138" text-anchor="middle">decide action</text>
+
+          <rect class="box" x="990" y="80" width="104" height="86"></rect>
+          <text class="label" x="1042" y="115" text-anchor="middle">Screen</text>
+          <text class="small" x="1042" y="138" text-anchor="middle">update</text>
+
+          <path class="arrow" marker-end="url(#arrow2)" d="M178 123 H220"></path>
+          <path class="arrow" marker-end="url(#arrow2)" d="M360 123 H402"></path>
+          <path class="arrow" marker-end="url(#arrow2)" d="M558 123 H600"></path>
+          <path class="arrow" marker-end="url(#arrow2)" d="M766 123 H808"></path>
+          <path class="arrow" marker-end="url(#arrow2)" d="M948 123 H990"></path>
+        </svg>
+      </div>
+      <div class="fallback">
+        文本流：Button/Touch -> Driver -> Input Service -> fixed input event -> Coordinator -> Screen。
+      </div>
+    </section>
+
+    <section>
+      <h2>3. 传感器 / 电源数据流图</h2>
+      <p class="note">真实硬件样本先稳定成模型快照，再通知上层。</p>
+      <div class="diagram">
+        <svg viewBox="0 0 1120 330" role="img" aria-label="传感器电源数据流图">
+          <defs>
+            <marker id="arrow3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#6aa5ff"></path>
+            </marker>
+          </defs>
+          <rect class="box" x="34" y="72" width="156" height="86"></rect>
+          <text class="label" x="112" y="106" text-anchor="middle">Battery / IMU</text>
+          <text class="small" x="112" y="130" text-anchor="middle">raw sample</text>
+
+          <rect class="box-green" x="236" y="72" width="158" height="86"></rect>
+          <text class="label" x="315" y="106" text-anchor="middle">Domain Service</text>
+          <text class="small" x="315" y="130" text-anchor="middle">filter / limit rate</text>
+
+          <rect class="box-accent" x="454" y="32" width="166" height="82"></rect>
+          <text class="label" x="537" y="65" text-anchor="middle">ModelStore</text>
+          <text class="small" x="537" y="88" text-anchor="middle">last stable snapshot</text>
+
+          <rect class="box-accent" x="454" y="160" width="166" height="82"></rect>
+          <text class="label" x="537" y="193" text-anchor="middle">EventQueue</text>
+          <text class="small" x="537" y="216" text-anchor="middle">MODEL_CHANGED</text>
+
+          <rect class="box-pink" x="690" y="72" width="158" height="86"></rect>
+          <text class="label" x="769" y="106" text-anchor="middle">Coordinator</text>
+          <text class="small" x="769" y="130" text-anchor="middle">policy</text>
+
+          <rect class="box" x="908" y="72" width="166" height="86"></rect>
+          <text class="label" x="991" y="106" text-anchor="middle">Screen / UI</text>
+          <text class="small" x="991" y="130" text-anchor="middle">read snapshot</text>
+
+          <path class="arrow" marker-end="url(#arrow3)" d="M190 115 H236"></path>
+          <path class="arrow" marker-end="url(#arrow3)" d="M394 98 C420 86 428 78 454 73"></path>
+          <path class="arrow" marker-end="url(#arrow3)" d="M394 132 C420 150 428 178 454 198"></path>
+          <path class="arrow" marker-end="url(#arrow3)" d="M620 201 C655 188 664 144 690 122"></path>
+          <path class="soft-arrow" marker-end="url(#arrow-soft)" d="M620 73 C660 76 664 94 690 106"></path>
+          <path class="arrow" marker-end="url(#arrow3)" d="M848 115 H908"></path>
+        </svg>
+      </div>
+      <div class="fallback">
+        文本流：Battery/IMU sample -> Domain Service -> ModelStore snapshot + EventQueue event -> Coordinator/Screen。
+      </div>
+    </section>
+
+    <section>
+      <h2>4. 页面 / 屏幕切换流图</h2>
+      <p class="note">业务决策和显示执行分开，Screen Manager 只执行动作。</p>
+      <div class="diagram">
+        <svg viewBox="0 0 1120 310" role="img" aria-label="页面屏幕切换流图">
+          <defs>
+            <marker id="arrow4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#6aa5ff"></path>
+            </marker>
+          </defs>
+          <rect class="box-accent" x="40" y="84" width="166" height="86"></rect>
+          <text class="label" x="123" y="118" text-anchor="middle">Event + Model</text>
+          <text class="small" x="123" y="142" text-anchor="middle">input / battery / time</text>
+
+          <rect class="box-pink" x="260" y="84" width="154" height="86"></rect>
+          <text class="label" x="337" y="118" text-anchor="middle">Coordinator</text>
+          <text class="small" x="337" y="142" text-anchor="middle">make ui_action_t</text>
+
+          <rect class="box-green" x="468" y="84" width="166" height="86"></rect>
+          <text class="label" x="551" y="118" text-anchor="middle">Screen Manager</text>
+          <text class="small" x="551" y="142" text-anchor="middle">root / push / pop</text>
+
+          <rect class="box" x="704" y="32" width="142" height="68"></rect>
+          <text class="label" x="775" y="62" text-anchor="middle">Home</text>
+          <text class="small" x="775" y="83" text-anchor="middle">screen_home</text>
+
+          <rect class="box" x="704" y="122" width="142" height="68"></rect>
+          <text class="label" x="775" y="152" text-anchor="middle">Launcher</text>
+          <text class="small" x="775" y="173" text-anchor="middle">screen_launcher</text>
+
+          <rect class="box" x="704" y="212" width="142" height="68"></rect>
+          <text class="label" x="775" y="242" text-anchor="middle">Settings</text>
+          <text class="small" x="775" y="263" text-anchor="middle">screen_settings</text>
+
+          <rect class="box" x="926" y="84" width="154" height="86"></rect>
+          <text class="label" x="1003" y="118" text-anchor="middle">UI Adapter</text>
+          <text class="small" x="1003" y="142" text-anchor="middle">draw / flush</text>
+
+          <path class="arrow" marker-end="url(#arrow4)" d="M206 127 H260"></path>
+          <path class="arrow" marker-end="url(#arrow4)" d="M414 127 H468"></path>
+          <path class="arrow" marker-end="url(#arrow4)" d="M634 126 C668 96 674 70 704 66"></path>
+          <path class="arrow" marker-end="url(#arrow4)" d="M634 130 H704"></path>
+          <path class="arrow" marker-end="url(#arrow4)" d="M634 136 C668 182 674 236 704 246"></path>
+          <path class="arrow" marker-end="url(#arrow4)" d="M846 66 C894 68 898 104 926 116"></path>
+          <path class="arrow" marker-end="url(#arrow4)" d="M846 156 H926"></path>
+          <path class="arrow" marker-end="url(#arrow4)" d="M846 246 C894 236 898 154 926 136"></path>
+        </svg>
+      </div>
+      <div class="fallback">
+        文本流：Event + Model -> Coordinator -> ui_action_t -> Screen Manager -> Home/Launcher/Settings -> UI Adapter。
+      </div>
+    </section>
+  </main>
+</body>
+</html>

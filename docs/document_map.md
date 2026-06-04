@@ -167,6 +167,19 @@
 - [current_architecture.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_architecture.md)
 - [current_decisions.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_decisions.md)
 
+### 我想回到 F411 重新掌控架构蓝图
+
+先读：
+
+- [f411_future_watch_architecture.md](/D:/MY_Desk/watch/magic_watch/docs/10_architecture/f411_future_watch_architecture.md)
+- [f411_future_watch_architecture_uml.html](/D:/MY_Desk/watch/magic_watch/docs/10_architecture/f411_future_watch_architecture_uml.html)
+
+说明：
+
+- 这是新的 F411 / C-first 架构蓝图入口，不是阶段 9 T-Watch 路线的继续执行。
+- 它只抽取 Magic Watch 中值得保留的分层思想：输入语义、Service、ModelStore、EventQueue、Coordinator、Screen Manager 和 UI Adapter。
+- 它不要求当前 API 已存在，也不搬模拟器 C++ 实现；后续代码应按小卡片让骨架逐步长出来。
+
 ### 我想进入阶段 9 真实硬件桥接
 
 先读：

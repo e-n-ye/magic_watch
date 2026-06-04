@@ -6,7 +6,7 @@
 
 Magic Watch 当前不是以继续堆智能手表页面为目标。
 
-当前阶段目标是把已经收口的可维护、可扩展、事件驱动、可模拟架构，推进到真实硬件上的最小架构子集验证。
+当前阶段目标从继续证明模拟器或参考板，转向抽取一份可迁移、可亲手实现的 F411 / C-first 架构骨架。
 
 v0 的成功标准不是页面数量，而是：
 
@@ -19,22 +19,26 @@ v0 的成功标准不是页面数量，而是：
 
 ## 当前阶段
 
-阶段 8 架构收口已经完成。当前进入“阶段 9 真实硬件桥接”，暂停继续扩张健康、通知、设置等功能页。
+阶段 8 架构收口已经完成，阶段 9 的 T-Watch Battery 垂直切片留下了真实 MCU 上最小架构子集的参考价值。
+
+当前新的主线是“F411 架构蓝图重启”：把 Magic Watch 中真正有价值的分层思想剥离出来，用 C-first 的方式重新想象一个未来可以亲手实现的 STM32F411 手表骨架。
 
 本阶段优先证明一件事：
 
-Magic Watch 的最小架构子集能在 T-Watch S3 Plus 真机上交叉编译并运行，而不是只在 PC 模拟器里处理回放数据。
+即使不搬当前 C++ 模拟器代码，也能清楚说出未来 F411 项目的层次、数据流、事件流、页面流和第一批 C 模块该如何生长。
 
-第一条真实硬件切片固定为 Battery / PowerStatus：
+当前蓝图入口：
 
-- 以 AXP2101 作为第一真实数据源。
-- 以 `hal::BatterySample`、`BatteryPowerService`、`DataCenter` 和简化 `EventBus` 作为第一批下放架构子集。
-- 以真实 FreeRTOS `Power_Task`、串口 `BatteryChanged` 事件、`free_heap` 和 task high water mark 作为最小观测闭环。
+- `docs/10_architecture/f411_future_watch_architecture.md`
+- `docs/10_architecture/f411_future_watch_architecture_uml.html`
 
 ## 当前不做
 
 - 不推倒重写模拟器。
 - 不继续盲目填充页面。
+- 不把 T-Watch / AXP2101 路线当作 F411 最终方案。
+- 不把模拟器 C++ 架构代码原样搬进 F411。
+- 不让 AI 一口气生成完整工程骨架。
 - 不把 PC trace replay / log replay 当作阶段 9 硬件闭环验收。
 - 不只读取 AXP2101 PMU log 就宣称硬件桥接完成。
 - 不宣称完整 Magic Watch UI 已经移植到真机。
@@ -43,20 +47,19 @@ Magic Watch 的最小架构子集能在 T-Watch S3 Plus 真机上交叉编译并
 
 ## 当前优先级
 
-1. 阶段 9 真实硬件桥接方向落档。
-2. T-Watch S3 Plus 上稳定读取 AXP2101 / BatteryPowerStatus。
-3. 将最小 `hal::BatterySample`、`BatteryPowerService`、`DataCenter`、简化 `EventBus` 下放到 T-Watch prototype。
-4. 在真实 FreeRTOS `Power_Task` 中 1Hz 采样并推入板载 `DataCenter`。
-5. 通过串口观察 `BatteryChanged`、`free_heap` 与 task high water mark。
-6. 记录哪些上层代码可复用，哪些因动态分配、同步事件或 UI 依赖暂时不能直接下放。
+1. 维护 F411 / C-first 架构蓝图入口。
+2. 把 Magic Watch 中可保留的思想翻译成 C 模块边界：Input、Service、ModelStore、EventQueue、Coordinator、Screen Manager、UI Adapter。
+3. 明确哪些东西不照搬：模拟器 LVGL 页面代码、C++ 通用 EventBus、动态容器、全量 DataCenter、T-Watch/AXP2101 绑定。
+4. 后续用小卡片在 F411 项目中逐步长出最小 C 骨架，而不是一次性生成完整工程。
+5. 阶段 9 资料只作为真实 MCU 下放经验参考，不作为当前默认执行主线。
 
 ## 本阶段完成标准
 
-本阶段完成不以新增页面数量或文件变短为标准，而以真实硬件桥接证据为标准：
+本阶段完成不以新增页面数量、文件变短或 AI 生成代码量为标准，而以“人能否掌控架构”为标准：
 
 1. 新会话只读 `AGENTS.md`、`docs/document_map.md` 和 3-5 个当前文档即可理解项目方向。
 2. 每轮开发都有明确 Scope Lock，实际 diff 不越过本轮允许文件。
-3. 阶段 9 卡片不能把 PC replay 写成硬件闭环完成。
-4. 至少一轮代码在 T-Watch S3 Plus 上交叉编译并运行 Magic Watch 最小架构子集。
-5. 串口能观察到由板载 `EventBus` 发出的 `BatteryChanged` 事件。
-6. 真机日志记录 `free_heap` 和 `Power_Task` high water mark，并明确未验证项。
+3. 能用 F411 蓝图说清每一层负责什么、不负责什么。
+4. 能判断一个新功能应该进入 Driver、Service、ModelStore、EventQueue、Coordinator、Screen 还是 UI Adapter。
+5. 后续第一批 C 模块能按蓝图小步生长，而不是复制模拟器实现。
+6. T-Watch / 阶段 9 经验被保留为参考，不重新夺走当前 F411 主线。
