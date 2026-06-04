@@ -221,7 +221,20 @@
 说明：
 
 - `DOCROOT-B6-C01` 已把 Wave 1 迁移后的剩余根目录文档分成三类：明确保留根目录、第二轮候选迁移、仍需单独决策。
-- `cpp_minimal_glossary.md`、`learning_plan.md`、`simulator_reading_guide.md` 只是后续 `20_guides` 候选；`project_charter.md`、`prototype_progress.md` 等只是后续 `80_history` 候选，本轮没有继续搬运。
+- `cpp_minimal_glossary.md`、`learning_plan.md`、`simulator_reading_guide.md` 已迁入 [20_guides/](/D:/MY_Desk/watch/magic_watch/docs/20_guides)；`project_charter.md`、`prototype_progress.md` 等仍属于后续 `80_history` 候选。
+
+### 我想补读开发指南
+
+先读：
+
+- [cpp_minimal_glossary.md](/D:/MY_Desk/watch/magic_watch/docs/20_guides/cpp_minimal_glossary.md)
+- [learning_plan.md](/D:/MY_Desk/watch/magic_watch/docs/20_guides/learning_plan.md)
+- [simulator_reading_guide.md](/D:/MY_Desk/watch/magic_watch/docs/20_guides/simulator_reading_guide.md)
+
+说明：
+
+- 这三份文档属于按需阅读的开发指南，不回到默认新会话入口。
+- 它们分别服务于 C++ 代码阅读补盲、学习路径规划和模拟器主线代码导读。
 
 ## 文档维护规则
 

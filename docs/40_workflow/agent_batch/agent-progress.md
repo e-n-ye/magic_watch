@@ -121,3 +121,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：本提交只创建第二轮执行卡与队列入口，不提前迁移 docs 根目录正文文档；`decision_log.md`、`current_sim_architecture.md`、`simulator_manual_regression_matrix.md` 继续留在后续独立评审范围
 - 阻塞与待决：
 - 下一步：执行窗口可按 `agent-queue.md` 先执行 `DOCROOT-Q8-GUIDES`
+
+### 会话 2026-06-04 14:12
+
+- 本轮范围：队列项 `DOCROOT-Q8-GUIDES`，卡片 `DOCROOT-B8-C01`
+- 完成：`DOCROOT-B8-C01`；队列项 `DOCROOT-Q8-GUIDES`
+- 修改文件：`docs/20_guides/cpp_minimal_glossary.md`、`docs/20_guides/learning_plan.md`、`docs/20_guides/simulator_reading_guide.md`、`docs/document_map.md`、`docs/40_workflow/docs_root_reorg_inventory.md`、`docs/40_workflow/agent_batch/cards/docroot-reorg-wave2-guides.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`git diff --check` 通过；`docs/cpp_minimal_glossary.md`、`docs/learning_plan.md`、`docs/simulator_reading_guide.md` 旧路径直接引用扫描已清空；本轮实际改动中文文档乱码哨兵检查通过
+- 风险回应：三份指南已迁到 `docs/20_guides/`，但只作为按需开发指南入口保留，没有回流到默认新会话入口；`simulator_manual_regression_matrix.md` 未迁移
+- 阻塞与待决：
+- 下一步：队列项 `DOCROOT-Q8-GUIDES` 已完成，按停止策略停止，等待用户验收；不执行 `DOCROOT-Q9-HISTORY`

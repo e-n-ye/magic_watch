@@ -7,7 +7,7 @@
 ### DOCROOT-B8-C01 迁移开发指南到 20_guides
 
 - 批次：8
-- 状态：TODO
+- 状态：DONE
 - 依赖：DOCROOT-B7-C01
 - 自检：`git diff --check`；对本卡改动的中文文档执行 `AGENTS.md` 中规定的乱码哨兵检查；扫描 `cpp_minimal_glossary.md`、`learning_plan.md`、`simulator_reading_guide.md` 旧路径引用是否已清空
 - 建议提交信息：`docs: move guide docs under 20_guides`
@@ -53,13 +53,16 @@ Forbidden changes:
 
 #### 验收标准
 
-- [ ] `docs/20_guides/` 已创建。
-- [ ] 三份指南文档已迁入 `docs/20_guides/` 且文件名不变。
-- [ ] `document_map.md` 已新增按需开发指南入口。
-- [ ] 必要旧路径链接已修复。
-- [ ] `docs_root_reorg_inventory.md` 已同步为“已迁移”结论。
-- [ ] `simulator_manual_regression_matrix.md` 未被迁移。
+- [x] `docs/20_guides/` 已创建。
+- [x] 三份指南文档已迁入 `docs/20_guides/` 且文件名不变。
+- [x] `document_map.md` 已新增按需开发指南入口。
+- [x] 必要旧路径链接已修复。
+- [x] `docs_root_reorg_inventory.md` 已同步为“已迁移”结论。
+- [x] `simulator_manual_regression_matrix.md` 未被迁移。
 
 #### 执行记录
 
-（Agent 填写：完成时间 / 实际改动文件 / 自检结果 / 风险回应）
+- 完成时间：2026-06-04
+- 实际改动文件：`docs/20_guides/cpp_minimal_glossary.md`、`docs/20_guides/learning_plan.md`、`docs/20_guides/simulator_reading_guide.md`、`docs/document_map.md`、`docs/40_workflow/docs_root_reorg_inventory.md`、`docs/40_workflow/agent_batch/cards/docroot-reorg-wave2-guides.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检结果：`git diff --check` 通过；`docs/cpp_minimal_glossary.md`、`docs/learning_plan.md`、`docs/simulator_reading_guide.md` 旧路径直接引用扫描已清空，仅卡片说明文本保留旧路径字符串；本轮实际改动中文文档乱码哨兵检查通过
+- 风险回应：`document_map.md` 仅新增按需开发指南入口，没有把三份指南重新放回默认新会话入口；`simulator_manual_regression_matrix.md` 保持原位未迁移
