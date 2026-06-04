@@ -251,3 +251,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：prototype 中已存在可编译的 `mwbridge::hal::BatterySample`、`mwbridge::app::BatteryPowerService`、`mwbridge::app::DataCenter`、`mwbridge::app::EventBus` 最小兼容子集；但当前仍是 loop 驱动的同步链，不代表已完成 FreeRTOS `Power_Task` 化，也不代表已把通知中心或全量 `std::function` / `std::vector` / `std::string` 依赖安全下放
 - 阻塞与待决：`pio` 不在 PATH，后续仍需显式使用 `C:\Users\13984\.platformio\penv\Scripts\pio.exe`
 - 下一步：按停止策略停止，等待用户验收；如继续执行下一张卡，应进入 `H9-Q2C` 真实 FreeRTOS `Power_Task` 闭环
+
+### 会话 2026-06-04 18:25
+
+- 本轮范围：队列项 `H9-Q2C`，卡片 `H9-BRIDGE-2C`
+- 完成：`H9-BRIDGE-2C`；已把 Battery / PowerStatus 周期采样迁入真实同核 FreeRTOS `Power_Task`；队列项 `H9-Q2C`
+- 修改文件：`prototypes/twatch_s3_plus_bringup/src/main.cpp`、`prototypes/twatch_s3_plus_bringup/README.md`、`docs/70_hardware_reference/stage9_hardware_bridge_plan.md`、`docs/10_architecture/hardware_boundary.md`、`docs/40_workflow/agent_batch/cards/h9-hardware-bridge-q2.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`git status --short -uall` 仅出现本轮允许文件；`C:\Users\13984\.platformio\penv\Scripts\pio.exe run -e twatch-s3 -j 1` 通过；`git diff --check` 通过（仅 LF/CRLF 提示，无 diff 格式错误）；本轮实际改动中文文档乱码哨兵检查通过
+- 风险回应：当前 `Power_Task` 已以 1Hz 采样并驱动 `BatterySample -> BatteryPowerService -> DataCenter`，bring-up 页面和 `[bringup-pmu]` 日志也改为消费任务快照；但同步 `EventBus` 仍是同核简化边界，真正 BatteryChanged 串口观测和 `Power_Task` high water mark 验收继续留给 `H9-BRIDGE-2D`
+- 阻塞与待决：`pio` 不在 PATH，后续仍需显式使用 `C:\Users\13984\.platformio\penv\Scripts\pio.exe`
+- 下一步：按停止策略停止，等待用户验收；如继续执行下一张卡，应进入 `H9-Q2D` 串口 BatteryChanged 事件观测

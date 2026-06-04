@@ -2,6 +2,8 @@
 #include <LV_Helper.h>
 #include <LilyGoLib.h>
 #include <esp_sleep.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
 #include <lvgl.h>
 
 #include "mwbridge/BatteryPowerService.h"
@@ -12,12 +14,15 @@ namespace {
 
 constexpr uint32_t kLogIntervalMs = 1000;
 constexpr uint32_t kPmuLogIntervalMs = 2000;
+constexpr uint32_t kPowerTaskPeriodMs = 1000;
 constexpr uint32_t kBmaLogIntervalMs = 500;
 constexpr uint32_t kTouchMoveLogIntervalMs = 150;
 constexpr int16_t kTouchMoveThresholdPx = 3;
 constexpr uint8_t kBringupBrightness = 160;
 constexpr uint8_t kScreenOffBrightness = 0;
 constexpr uint32_t kPmuSleepReleaseTimeoutMs = 5000;
+constexpr uint32_t kPowerTaskBootstrapTimeoutMs = 1500;
+constexpr uint32_t kPowerTaskStackWords = 4096;
 
 lv_obj_t *g_uptime_label = nullptr;
 lv_obj_t *g_status_label = nullptr;
@@ -63,11 +68,20 @@ struct BridgeBatteryObserverState {
     uint32_t publish_count = 0;
 };
 
+struct BridgePowerTaskState {
+    bool has_snapshot = false;
+    PmuSnapshot last_snapshot {};
+    uint32_t sample_count = 0;
+};
+
 mwbridge::EventBus g_bridge_event_bus;
 mwbridge::DataCenter g_bridge_data_center(g_bridge_event_bus);
 mwbridge::BatteryPowerService g_bridge_battery_service(g_bridge_data_center);
 mwbridge::EventBus::Subscription g_bridge_battery_subscription;
 BridgeBatteryObserverState g_bridge_battery_observer;
+BridgePowerTaskState g_bridge_power_task_state;
+TaskHandle_t g_power_task_handle = nullptr;
+portMUX_TYPE g_bridge_lock = portMUX_INITIALIZER_UNLOCKED;
 
 const char *probeStatus(uint32_t probe_mask, uint32_t bit)
 {
@@ -177,9 +191,78 @@ void handleBridgeBatteryChanged(void *context, const mwbridge::BatteryModel &mod
         return;
     }
 
+    portENTER_CRITICAL(&g_bridge_lock);
     state->has_model = true;
     state->last_model = model;
     ++state->publish_count;
+    portEXIT_CRITICAL(&g_bridge_lock);
+}
+
+void storeBridgePmuSnapshot(const PmuSnapshot &snapshot)
+{
+    portENTER_CRITICAL(&g_bridge_lock);
+    g_bridge_power_task_state.has_snapshot = true;
+    g_bridge_power_task_state.last_snapshot = snapshot;
+    ++g_bridge_power_task_state.sample_count;
+    portEXIT_CRITICAL(&g_bridge_lock);
+}
+
+bool tryGetBridgePmuSnapshot(PmuSnapshot *snapshot, uint32_t *sample_count)
+{
+    if (snapshot == nullptr) {
+        return false;
+    }
+
+    portENTER_CRITICAL(&g_bridge_lock);
+    const bool has_snapshot = g_bridge_power_task_state.has_snapshot;
+    if (has_snapshot) {
+        *snapshot = g_bridge_power_task_state.last_snapshot;
+    }
+    if (sample_count != nullptr) {
+        *sample_count = g_bridge_power_task_state.sample_count;
+    }
+    portEXIT_CRITICAL(&g_bridge_lock);
+    return has_snapshot;
+}
+
+uint32_t readBridgePublishCount()
+{
+    portENTER_CRITICAL(&g_bridge_lock);
+    const uint32_t publish_count = g_bridge_battery_observer.publish_count;
+    portEXIT_CRITICAL(&g_bridge_lock);
+    return publish_count;
+}
+
+void bridgeSampleBatteryOnce()
+{
+    const PmuSnapshot snapshot = readPmuSnapshot();
+    storeBridgePmuSnapshot(snapshot);
+    g_bridge_battery_service.handle_sample(toBridgeBatterySample(snapshot));
+}
+
+void bridgePowerTask(void *parameter)
+{
+    (void)parameter;
+    const TickType_t period_ticks = pdMS_TO_TICKS(kPowerTaskPeriodMs);
+    TickType_t wake_tick = xTaskGetTickCount();
+
+    for (;;) {
+        bridgeSampleBatteryOnce();
+        vTaskDelayUntil(&wake_tick, period_ticks);
+    }
+}
+
+bool waitForBridgeBootstrap(uint32_t timeout_ms)
+{
+    const uint32_t start_ms = millis();
+    PmuSnapshot snapshot;
+    while (millis() - start_ms < timeout_ms) {
+        if (tryGetBridgePmuSnapshot(&snapshot, nullptr)) {
+            return true;
+        }
+        delay(20);
+    }
+    return false;
 }
 
 void setPmuIrqFlag()
@@ -336,12 +419,14 @@ void updateBringupScreen()
 {
     const uint32_t seconds = millis() / 1000;
     const uint32_t probe = watch.getDeviceProbe();
-    const PmuSnapshot pmu = readPmuSnapshot();
     const BmaSnapshot bma = readBmaSnapshot();
+    PmuSnapshot pmu {};
+    uint32_t sample_count = 0;
+    const bool has_pmu_snapshot = tryGetBridgePmuSnapshot(&pmu, &sample_count);
 
     lv_label_set_text_fmt(
         g_status_label,
-        "Wake %s | Boot %lu\nScr %s Rot %u Tog %lu\nPMU %s T %s BMA %s Br %lu",
+        "Wake %s | Boot %lu\nScr %s Rot %u Tog %lu\nPMU %s T %s BMA %s Sm %lu",
         wakeupCauseName(g_wakeup_cause),
         static_cast<unsigned long>(g_rtc_boot_count),
         g_screen_on ? "on" : "off",
@@ -350,7 +435,7 @@ void updateBringupScreen()
         probeStatus(probe, WATCH_PMU_ONLINE),
         probeStatus(probe, WATCH_TOUCH_ONLINE),
         probeStatus(probe, WATCH_BMA_ONLINE),
-        static_cast<unsigned long>(g_bridge_battery_observer.publish_count));
+        static_cast<unsigned long>(sample_count));
 
     if (g_touch_pressed) {
         lv_label_set_text_fmt(
@@ -373,16 +458,20 @@ void updateBringupScreen()
             static_cast<unsigned long>(g_touch_events));
     }
 
-    lv_label_set_text_fmt(
-        g_pmu_label,
-        "USB %s | Chg %s | Dis %s | %s\nBat %dmV %d%% | Sys %dmV",
-        yesNo(pmu.vbus_in),
-        yesNo(pmu.charging),
-        yesNo(pmu.discharging),
-        chargeStatusName(pmu.charge_status),
-        pmu.batt_mv,
-        pmu.batt_percent,
-        pmu.sys_mv);
+    if (has_pmu_snapshot) {
+        lv_label_set_text_fmt(
+            g_pmu_label,
+            "USB %s | Chg %s | Dis %s | %s\nBat %dmV %d%% | Sys %dmV",
+            yesNo(pmu.vbus_in),
+            yesNo(pmu.charging),
+            yesNo(pmu.discharging),
+            chargeStatusName(pmu.charge_status),
+            pmu.batt_mv,
+            pmu.batt_percent,
+            pmu.sys_mv);
+    } else {
+        lv_label_set_text(g_pmu_label, "Power_Task bootstrap...");
+    }
 
     if (bma.ok) {
         lv_label_set_text_fmt(
@@ -519,10 +608,14 @@ void logPmu()
     }
     g_last_pmu_log_ms = now;
 
-    const PmuSnapshot pmu = readPmuSnapshot();
-    g_bridge_battery_service.handle_sample(toBridgeBatterySample(pmu));
+    PmuSnapshot pmu {};
+    uint32_t sample_count = 0;
+    if (!tryGetBridgePmuSnapshot(&pmu, &sample_count)) {
+        Serial.println("[bringup-pmu] waiting_for_power_task_bootstrap");
+        return;
+    }
     Serial.printf(
-        "[bringup-pmu] usb=%s charging=%s discharging=%s chg=%s batt=%umV vbus=%umV sys=%umV percent=%d free_heap=%lu bridge_pub=%lu\n",
+        "[bringup-pmu] usb=%s charging=%s discharging=%s chg=%s batt=%umV vbus=%umV sys=%umV percent=%d free_heap=%lu task_samples=%lu bridge_pub=%lu\n",
         yesNo(pmu.vbus_in),
         yesNo(pmu.charging),
         yesNo(pmu.discharging),
@@ -532,7 +625,8 @@ void logPmu()
         pmu.sys_mv,
         pmu.batt_percent,
         static_cast<unsigned long>(ESP.getFreeHeap()),
-        static_cast<unsigned long>(g_bridge_battery_observer.publish_count));
+        static_cast<unsigned long>(sample_count),
+        static_cast<unsigned long>(readBridgePublishCount()));
 }
 
 void logBma()
@@ -594,6 +688,25 @@ void setup()
     watch.clearPMU();
     g_bridge_battery_subscription =
         g_bridge_data_center.subscribe_battery_changed(handleBridgeBatteryChanged, &g_bridge_battery_observer);
+    const BaseType_t power_task_created = xTaskCreatePinnedToCore(
+        bridgePowerTask,
+        "Power_Task",
+        kPowerTaskStackWords,
+        nullptr,
+        1,
+        &g_power_task_handle,
+        1);
+    if (power_task_created != pdPASS) {
+        Serial.printf("[bringup-power] FATAL: create Power_Task failed result=%ld\n",
+                      static_cast<long>(power_task_created));
+        while (true) {
+            delay(1000);
+        }
+    }
+    const bool bridge_bootstrapped = waitForBridgeBootstrap(kPowerTaskBootstrapTimeoutMs);
+    Serial.printf("[bringup-power] bootstrap=%s period_ms=%lu\n",
+                  bridge_bootstrapped ? "ok" : "timeout",
+                  static_cast<unsigned long>(kPowerTaskPeriodMs));
     beginLvglHelper(false);
     buildBringupScreen();
     updateBringupScreen();

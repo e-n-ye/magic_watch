@@ -33,6 +33,13 @@
 - `src/mwbridge/EventBus.*` 使用固定槽位和函数指针回调，故意不引入 `std::function`、`std::vector`、`std::string`。
 - 当前子集仍是 loop 驱动，不是 FreeRTOS `Power_Task`；真正任务化留到后续 `H9-Q2C`。
 
+阶段 9 `H9-Q2C` 再把这条链路推进到真实任务上下文：
+
+- 新增同核 FreeRTOS `Power_Task`，以 1Hz 频率轮询 AXP2101。
+- `Power_Task` 负责生成 `mwbridge::BatterySample`，再交给 `mwbridge::BatteryPowerService -> DataCenter`。
+- bring-up 页面与 `[bringup-pmu]` 日志改读 `Power_Task` 维护的共享快照，而不是在 loop 中直接重复读取 PMU。
+- 当前仍是“同核 + 同步回调 + 简化共享快照”边界，不代表已经证明跨核或通用多任务事件总线。
+
 第四小闭环只验证：
 
 - BMA423 基础加速度读数是否可用。
@@ -150,6 +157,14 @@ pio device monitor -b 115200
 - 简化策略：`EventBus` 使用固定 4 槽订阅和函数指针回调；`DataCenter` 只保留 BatteryChanged 事件和最后一份电池模型；不引入通知中心、`std::function`、`std::vector`、`std::string`。
 - 当前接线：bring-up 仍由主循环中的 PMU 读数驱动，`BatteryPowerService` 将样本写入 `DataCenter`，并通过同步 `EventBus` 更新板载观察状态。
 - 阶段边界：本轮只证明最小兼容子集可编译、可接线、可在现有 loop 中跑通；真正的 `Power_Task`、1Hz 轮询和串口 `BatteryChanged` 观测留到后续卡片。
+
+## 2026-06-04 H9-Q2C FreeRTOS Power_Task 闭环
+
+- 编译：预期用 `C:\Users\13984\.platformio\penv\Scripts\pio.exe run -e twatch-s3 -j 1` 验证。
+- 当前实现：新增同核 FreeRTOS `Power_Task`，1Hz 轮询 AXP2101，并把样本写入 `mwbridge::BatteryPowerService -> DataCenter`。
+- 当前实现：页面状态行中的 `Sm` 显示 `Power_Task` 已累计的样本次数；`[bringup-pmu]` 日志新增 `task_samples=...`，用于区分“任务采样次数”和“BatteryChanged 发布次数”。
+- 当前实现：bring-up 在 `setup()` 中等待 `Power_Task` 首次样本，串口输出 `[bringup-power] bootstrap=... period_ms=1000`。
+- 边界说明：当前仍采用同核任务 + 同步 `EventBus` + 共享快照的简化同步边界，不代表已完成通用多任务队列设计；`Power_Task high water mark` 与 BatteryChanged 串口订阅留到 `H9-Q2D`。
 
 ## 2026-05-22 BMA423 基础加速度闭环验证
 

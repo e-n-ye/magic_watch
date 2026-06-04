@@ -153,7 +153,7 @@ Forbidden changes:
 ## H9-BRIDGE-2C 真实 FreeRTOS Power_Task 闭环
 
 - 批次：H9-Q2
-- 状态：TODO
+- 状态：DONE
 - 依赖：`H9-BRIDGE-2B`
 - 自检：
   - `git status --short -uall`
@@ -213,11 +213,11 @@ Forbidden changes:
 
 ### 执行记录
 
-- 完成时间：
-- 实际改动文件：
-- 自检结果：
-- 提交状态：
-- 风险回应：
+- 完成时间：2026-06-04 18:40
+- 实际改动文件：`prototypes/twatch_s3_plus_bringup/src/main.cpp`、`prototypes/twatch_s3_plus_bringup/README.md`、`docs/70_hardware_reference/stage9_hardware_bridge_plan.md`、`docs/10_architecture/hardware_boundary.md`、`docs/40_workflow/agent_batch/cards/h9-hardware-bridge-q2.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检结果：`git status --short -uall` 仅出现本轮允许文件；`C:\Users\13984\.platformio\penv\Scripts\pio.exe run -e twatch-s3 -j 1` 通过；`git diff --check` 通过（仅 LF/CRLF 提示，无 diff 格式错误）；本轮实际改动中文文档乱码哨兵检查通过
+- 提交状态：待提交
+- 风险回应：本轮已把 AXP2101 周期采样迁入真实同核 FreeRTOS `Power_Task`，并让页面/PMU 日志改读任务共享快照；但当前仍是“同核任务 + 同步 EventBus + 简化共享快照”边界，不代表已经证明通用多任务队列或串口 BatteryChanged 观测闭环，后者继续留给 `H9-BRIDGE-2D`。
 
 ---
 

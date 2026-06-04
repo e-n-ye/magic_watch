@@ -146,6 +146,10 @@ AXP2101 -> hal::BatterySample -> BatteryPowerService -> DataCenter -> simplified
 - 板载 `EventBus` 发出 `BatteryChanged` 或等价电池变化事件。
 - 串口记录电池模型、`free_heap` 和 `Power_Task` high water mark。
 
+在这条路径中，允许先采用“同核 `Power_Task` + 同步 `EventBus` + 共享快照”的阶段性简化边界，把第一轮变量集中在真实任务调度、样本下放和板载数据流上。
+
+但这不等价于已经证明通用跨任务队列、跨核同步或完整线程安全模型；后续若继续扩展为多任务、多传感器或跨核架构，仍需单独定义队列、锁和 snapshot 策略。
+
 PC trace replay / log replay 只能作为辅助测试，用来复现样本、对比模型转换或做模拟器回归；不能作为阶段 9 硬件落地证明。
 
 本阶段不要求完整 Magic Watch UI 真机移植，也不要求最终硬件选型完成。

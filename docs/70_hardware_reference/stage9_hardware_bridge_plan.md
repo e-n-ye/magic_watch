@@ -68,6 +68,13 @@ PC trace replay / log replay 只能作为辅助测试，用来对比模型转换
 
 在 T-Watch 上创建真实 FreeRTOS `Power_Task`，以 1Hz 频率轮询 AXP2101，把读数封装为 `BatterySample` 并推入板载 `DataCenter`。
 
+当前推荐收口方式：
+
+- `Power_Task` 先与 Arduino `loop()` 保持同核，降低第一轮线程边界变量。
+- `Power_Task` 负责唯一的 PMU 周期采样入口；页面和 PMU 日志尽量改读任务维护的共享快照，而不是继续在 loop 中直接重复采样。
+- 当前阶段允许继续使用同步 `EventBus`，但必须在文档中明确这是“同核简化边界”，不是通用多任务事件系统证明。
+- `Power_Task` 的 high water mark 可以先为后续观测预留句柄，但真正的串口打印和验收收口留到 `H9-BRIDGE-2D`。
+
 ### H9-BRIDGE-2D：串口事件观测
 
 在 T-Watch 串口订阅 `BatteryChanged` 事件，打印：
