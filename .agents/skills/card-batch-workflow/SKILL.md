@@ -25,14 +25,23 @@ Do not create card runtime files directly under `docs/`.
 
 ### Planning Mode
 
-Use when the user wants to discuss scope, split work, generate cards, or add future work while another execution window is running.
+Use when the user wants to discuss scope, split work, generate cards, or prepare future work.
+
+Planning Mode has two cases:
+
+- Normal planning: no other execution window is actively using the runtime files. In this case, write confirmed cards directly into `agent-plan.md`, `agent-queue.md`, or `cards/` as appropriate.
+- Parallel planning: another execution window may be actively executing the current batch or queue item. In this case, use `agent-inbox.md` only as a temporary draft pool, unless the new cards clearly belong to a future queue entry and do not modify the active queue item.
 
 1. Read `agent-rules.md`, `agent-queue.md`, `agent-plan.md`, `agent-progress.md`, and `agent-inbox.md`.
 2. Generate cards with concrete batch or queue entry, dependency, allowed files, forbidden changes, self-checks, Doc Impact, suggested commit message, and stop policy.
-3. If the work is long or can run as a group, put cards under `docs/40_workflow/agent_batch/cards/` and add a queue entry in `agent-queue.md`.
-4. If the execution window is running, add new cards only to `agent-inbox.md` or to a future queue entry; do not change the active queue item.
-5. Do not edit the current batch, active queue item, or current session block while another execution window may be using it.
-6. Ask the user to confirm batch, queue order, dependencies, and stop policy before moving inbox cards into `agent-plan.md`, `agent-queue.md`, or `cards/`.
+3. In normal planning, write confirmed cards directly to the formal runtime files:
+   - short inline cards -> `agent-plan.md`
+   - longer grouped work -> `docs/40_workflow/agent_batch/cards/`
+   - execution entry -> `agent-queue.md`
+4. Use `agent-inbox.md` only when planning must be staged temporarily because another execution window may still be using the active batch, active queue item, or current session block.
+5. If the execution window is running, add new cards only to `agent-inbox.md` or to a future queue entry; do not change the active queue item.
+6. Do not edit the current batch, active queue item, or current session block while another execution window may be using it.
+7. Ask the user to confirm batch, queue order, dependencies, and stop policy before writing normal-planning cards into the formal runtime files, or before moving parallel-planning drafts out of `agent-inbox.md`.
 
 ### Execution Mode
 
@@ -61,7 +70,7 @@ Use when the user wants to inspect a completed batch.
 - `agent-plan.md` is the source of truth for inline card status; card files are the source of truth for cards stored in those files.
 - `agent-queue.md` is the execution entry when it has active queue items.
 - `agent-progress.md` stores the current batch pointer, auto-commit setting, card limit, do-not-repeat list, and session history. It must not mirror the full status table.
-- `agent-inbox.md` is a draft pool for new or parallel-planned cards.
+- `agent-inbox.md` is only a temporary draft pool for cards that must be staged during parallel planning or multi-window coordination. It is not the default destination for ordinary single-window planning.
 - A card's `Allowed files`, `Read-only files`, and `Forbidden changes` are scope locks.
 - If code or docs require edits outside a card's allowed files, mark the card BLOCKED unless the user expands scope.
 - If a dependency is TODO, IN_PROGRESS, or BLOCKED, do not execute dependent cards.
