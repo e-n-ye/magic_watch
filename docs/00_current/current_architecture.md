@@ -61,7 +61,7 @@ flowchart LR
 | Controller 可复用且不操作 UI | 部分达成 | `PowerController` 已落地；其它 Controller 仍未提取 | 继续按状态归属逐个提取，不盲目新增 |
 | UI 生命周期清楚 | 部分达成 | `ui_lifecycle.md` 已定义契约，`LvglTimerGuard` 已存在，并已落到 Steps、Launcher、Notifications、QuickSettings、Sleep、BloodOxygen、HeartRate 的一部分 timer | 继续迁移复杂裸 timer，优先处理高风险剩余项 |
 | 未来硬件接入不重写上层 | 部分达成 | `hardware_boundary.md` 已定义上层职责边界；当前硬件选型未定，仍主要依赖模拟器路径 | 保持契约稳定，待后续硬件阶段落地实现 |
-| 构建通过不等于行为通过 | 部分达成 | 文档已多次标注手动 UI 未执行 | 重新整理并执行手动 UI 回归 |
+| 构建通过不等于行为通过 | 已达成本阶段收口 | 阶段 8 手动 UI 回归已实际执行并通过；构建通过与行为通过已被明确区分 | 后续新改动仍按回归包或完整矩阵继续验证 |
 
 补充说明：
 
@@ -79,7 +79,7 @@ flowchart LR
 8C：Application.cpp 页面注册按领域分流（已基本完成；当前接受 Launcher / Settings 尾巴为阶段性偏离）
 8D：UI 生命周期落地到已有 LvglTimerGuard（已进入逐页落地阶段，仍有复杂 timer 待继续）
 8E：硬件接入边界文档契约（已完成）
-8F：手动 UI 回归闭环（待执行）
+8F：手动 UI 回归闭环（已执行并通过）
 ```
 
 ## Scope Lock 模板

@@ -498,7 +498,7 @@ Forbidden changes:
 - `WatchfacePage` 与 `HomeRingHostPage` 已迁入 `Shell/Home/ShellHomePages.cpp`，但 Watchface 的时间、电量、输入路径，以及 HomeRing 的 EventBus、preview、crown、卡片跳转和 daily 动态数据边界仍需谨慎手动回归。
 - `NotificationWakePage` 与 `NotificationsPage` 已迁入 `Shell/Notifications/ShellNotificationPages.cpp`，QuickSettings 页面实现也已迁入 `Shell/QuickSettings/ShellQuickSettingsPages.cpp`。
 - 剩余风险已从“页面迁移”转为“兼容聚合头维护、Launcher / Settings 注册尾巴、手动 UI 回归”。
-- 手动 UI 回归仍未执行，不应写成已通过。
+- 阶段 8 手动 UI 回归已实际执行并通过；后续新改动仍需按回归包或完整矩阵继续验证。
 
 ## 聚合头状态
 

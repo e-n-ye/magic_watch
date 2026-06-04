@@ -420,7 +420,7 @@ Forbidden changes:
 
 - `docs/30_testing/manual_ui_regression_checklist.md` 已按 `Home`、`Launcher`、`Notifications`、`QuickSettings`、`Power`、`Daily`、`Health`、`Settings` 重排。
 - 清单已经单独标出 HomeRing crown/preview、Notifications swipe/detail/clear、QuickSettings drag/toggle/timer、Power screen-off/restore 等高风险路径。
-- 手动 UI 本身在本轮未执行，不能视为通过；当前仅完成回归清单重排。
+- 回归清单重排完成后，阶段 8 的手动 UI 回归已在后续执行轮中实际跑通；因此这里不再把“清单已准备好”和“行为已验证”混为一谈。
 
 ## 本轮结论
 
