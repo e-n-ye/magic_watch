@@ -139,7 +139,7 @@ v0.4 不做以下事情：
 
 - 文档闭环的验证标准是：下一轮可直接执行，不留下路线空白。
 - 涉及模拟器代码时，运行 `sim/lv_port_pc_vscode` 的构建命令。
-- 涉及 shell、输入、显示策略或页面恢复时，按 `docs/simulator_manual_regression_matrix.md` 做目标回归。
+- 涉及 shell、输入、显示策略或页面恢复时，按 `docs/30_testing/simulator_manual_regression_matrix.md` 做目标回归。
 - 涉及 HAL / 平台契约时，只做最小 T-Watch 对照验证，不恢复大规模硬件实验。
 
 ## 当前结论

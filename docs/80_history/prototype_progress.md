@@ -207,7 +207,7 @@
   - raise-to-wake scheduled-card selection-dot layout inconsistency
 - Added:
   - `docs/50_stage_records/v0_2_shell_closure.md`
-  - `docs/simulator_manual_regression_matrix.md`
+  - `docs/30_testing/simulator_manual_regression_matrix.md`
   - `docs/80_history/simulator_manual_regression_run_2026_05_19.md`
 
 ### Why This Step Matters

@@ -6,7 +6,7 @@ Date: 2026-05-19
 
 This document is the execution copy of:
 
-- `docs/simulator_manual_regression_matrix.md`
+- `docs/30_testing/simulator_manual_regression_matrix.md`
 
 Use it to record one real regression pass against the current v0.2 simulator shell.
 

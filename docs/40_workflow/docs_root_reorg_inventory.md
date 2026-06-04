@@ -7,7 +7,7 @@
 ## 盘点范围与分类说明
 
 - 盘点范围：仅 `docs/*.md`，不包含 `docs/00_current/`、`docs/10_architecture/`、`docs/30_testing/`、`docs/40_workflow/`、`docs/90_resume/` 等子目录文件。
-- 分类值只使用本卡允许范围：`保留根目录`、`50_stage_records`、`60_visual_exploration`、`70_hardware_reference`、`20_guides`、`80_history`、`待单独决策`。
+- 分类值只使用本卡实际结论范围：`保留根目录`、`30_testing`、`50_stage_records`、`60_visual_exploration`、`70_hardware_reference`、`20_guides`、`80_history`、`待单独决策`。
 - 本文档只给出迁移建议，不代表本轮已批准后续迁移。
 
 ## Wave 1 迁移完成情况
@@ -32,7 +32,7 @@
 | `page_reachability_audit.md` | `已迁移至 80_history` | `document_map.md` 已明确它是历史页面审计。 |
 | `project_charter.md` | `已迁移至 80_history` | `document_map.md` 已说明该文档被 `00_current/project_brief.md` 替代。 |
 | `prototype_progress.md` | `已迁移至 80_history` | 原型推进记录，历史上下文价值大于当前入口价值。 |
-| `simulator_manual_regression_matrix.md` | `待单独决策` | 内容属于测试矩阵，更像未来 `30_testing` 二次整理对象，不建议先硬塞到 `20_guides`。 |
+| `simulator_manual_regression_matrix.md` | `已迁移至 30_testing` | 内容属于测试矩阵，应与更短回归清单一起留在 `docs/30_testing/`。 |
 | `simulator_manual_regression_run_2026_05_19.md` | `已迁移至 80_history` | 一次性回归运行记录，适合历史归档。 |
 | `simulator_reading_guide.md` | `已迁移至 20_guides` | 阅读引导型文档，属于开发指南。 |
 | `target_architecture.md` | 保留根目录 | 长期目标架构骨架，仍是跨阶段核心架构文档。 |
@@ -45,8 +45,9 @@
 | --- | ---: | --- |
 | 保留根目录 | 6 | 当前入口、长期架构、长期协作文档继续保留在根目录。 |
 | `20_guides` | 3 | 阅读/学习型材料适合在第二轮迁入开发指南目录。 |
+| `30_testing` | 1 | 完整手动回归矩阵应与测试入口文档放在同一目录。 |
 | `80_history` | 4 | 明确已被替代或一次性运行记录的文档可归档。 |
-| `待单独决策` | 3 | 涉及命名冲突、长期记忆角色或测试目录归属，先不机械迁移。 |
+| `待单独决策` | 2 | 当前只剩命名冲突与长期记忆角色两类需要单独评审。 |
 
 ## 明确保留根目录名单
 
@@ -78,6 +79,10 @@
 - [prototype_progress.md](/D:/MY_Desk/watch/magic_watch/docs/80_history/prototype_progress.md)
 - [simulator_manual_regression_run_2026_05_19.md](/D:/MY_Desk/watch/magic_watch/docs/80_history/simulator_manual_regression_run_2026_05_19.md)
 
+### `30_testing`
+
+- [simulator_manual_regression_matrix.md](/D:/MY_Desk/watch/magic_watch/docs/30_testing/simulator_manual_regression_matrix.md)
+
 ## 仍需单独决策项
 
 ### 1. `docs/current_sim_architecture.md` 与 `docs/00_current/current_architecture.md`
@@ -91,11 +96,6 @@
 - 它仍是长期记忆材料，但 `document_map.md` 已把它降为历史检索入口。
 - 如果直接迁入 `80_history`，需要同时检查 `AGENTS.md`、旧文档说明和团队使用习惯是否仍把它视为关键背景入口。
 
-### 3. `docs/simulator_manual_regression_matrix.md` 的归属
-
-- 这份文档明显属于测试资产，而不是普通指南或纯历史文档。
-- 但本轮目标类别里没有单独的测试归档桶，因此先列为“待单独决策”，避免误迁后让测试入口更混乱。
-
 ## 暂不迁移项
 
 - `document_map.md`
@@ -106,7 +106,6 @@
 - `watchface_style_architecture.md`
 - `current_sim_architecture.md`
 - `decision_log.md`
-- `simulator_manual_regression_matrix.md`
 
 这些文件要么是当前入口，要么存在命名/职责冲突，需要二次评审后再决定。
 
@@ -126,4 +125,4 @@
 这个顺序的原因是：
 
 - 阶段记录、视觉资料、硬件参考最不应该继续占据默认入口，且迁移边界相对清晰。
-- `decision_log.md`、`current_sim_architecture.md`、`simulator_manual_regression_matrix.md` 这类文件在角色上更模糊，适合放到第二轮评审。
+- `decision_log.md`、`current_sim_architecture.md` 这类文件在角色上更模糊，适合放到第二轮评审。

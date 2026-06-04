@@ -91,7 +91,7 @@ The project has since moved forward.
 For the current late-shell-stage closure focused on display policy, settings, quick settings, and screen-off behavior, read:
 
 - `docs/50_stage_records/v0_2_shell_closure.md`
-- `docs/simulator_manual_regression_matrix.md`
+- `docs/30_testing/simulator_manual_regression_matrix.md`
 
 ## Git Meaning Of This Baseline
 

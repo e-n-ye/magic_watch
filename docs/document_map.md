@@ -109,12 +109,14 @@
 先读：
 
 - [manual_ui_regression_checklist.md](/D:/MY_Desk/watch/magic_watch/docs/30_testing/manual_ui_regression_checklist.md)
+- [simulator_manual_regression_matrix.md](/D:/MY_Desk/watch/magic_watch/docs/30_testing/simulator_manual_regression_matrix.md)，仅在需要完整行为矩阵时补读。
 - [current_refactor_status.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_refactor_status.md)，仅在需要把回归包映射到当前结构风险时补读。
 
 说明：
 
 - 构建通过不等于手动 UI 通过。
 - 未执行的手动 UI 不能写成通过。
+- 完整矩阵与更短回归清单都归入 `docs/30_testing/`，避免测试入口继续散落在 docs 根目录。
 
 ### 我想查视觉探索资料
 

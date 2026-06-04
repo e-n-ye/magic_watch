@@ -12,7 +12,7 @@
 
 完整行为矩阵仍看：
 
-- [simulator_manual_regression_matrix.md](/D:/MY_Desk/watch/magic_watch_docs_sync/docs/simulator_manual_regression_matrix.md)
+- [simulator_manual_regression_matrix.md](/D:/MY_Desk/watch/magic_watch/docs/30_testing/simulator_manual_regression_matrix.md)
 
 ## Scope Lock
 
@@ -41,7 +41,7 @@ Forbidden changes:
   - 说明当前重构事实与主要风险区域。
 - `docs/10_architecture/ui_page_split_status.md`：
   - 说明当前页面拆分版图、剩余壳层和聚合头状态。
-- `docs/simulator_manual_regression_matrix.md`：
+- `docs/30_testing/simulator_manual_regression_matrix.md`：
   - 保留完整行为检查项。
 - 本文档：
   - 只给出当前默认应执行的手动回归包和触发条件。

@@ -141,3 +141,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：4 份历史文档已迁到 `docs/80_history/`，但只作为历史归档/历史检索入口保留，没有回流到默认新会话入口；`decision_log.md`、`current_sim_architecture.md`、`simulator_manual_regression_matrix.md` 未迁移
 - 阻塞与待决：
 - 下一步：队列项 `DOCROOT-Q9-HISTORY` 已完成，按停止策略停止，等待用户验收
+
+### 会话 2026-06-04 15:09
+
+- 本轮范围：队列项 `DOCROOT-Q12-REGRESSION-MATRIX`，卡片 `DOCROOT-B10-C03`
+- 完成：`DOCROOT-B10-C03`；队列项 `DOCROOT-Q12-REGRESSION-MATRIX`
+- 修改文件：`docs/30_testing/simulator_manual_regression_matrix.md`、`docs/30_testing/manual_ui_regression_checklist.md`、`docs/document_map.md`、`docs/40_workflow/docs_root_reorg_inventory.md`、`docs/50_stage_records/v0_4_system_skeleton_entry.md`、`docs/50_stage_records/v0_5_long_battery_regression_closure.md`、`docs/50_stage_records/v0_shell_baseline.md`、`docs/60_visual_exploration/settings_visual_reference.md`、`docs/70_hardware_reference/hardware_frontier_entry.md`、`docs/80_history/prototype_progress.md`、`docs/80_history/simulator_manual_regression_run_2026_05_19.md`、`docs/40_workflow/agent_batch/cards/docroot-reorg-wave3-decisions.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`git diff --check` 通过；`watch_docs_sync` 错误绝对路径已清除；`docs/simulator_manual_regression_matrix.md` 旧路径真实正文引用已清空，仅剩 `docs/decision_log.md` 中的历史示例文本与当前卡片文本中的旧路径字符串；本轮实际改动中文文档乱码哨兵检查通过
+- 风险回应：完整矩阵已迁入 `docs/30_testing/`，与更短回归清单同层；`docs/decision_log.md` 保留旧路径字符串仅作为历史编码事故示例，不代表未收口的当前路由
+- 阻塞与待决：
+- 下一步：队列项 `DOCROOT-Q12-REGRESSION-MATRIX` 已完成，按停止策略停止，等待用户验收；不执行 `DOCROOT-Q10-CURRENT-SIM-ARCH`

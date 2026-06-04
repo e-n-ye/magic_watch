@@ -7,7 +7,7 @@
 ### DOCROOT-B10-C03 审计 simulator_manual_regression_matrix 目录归属
 
 - 批次：10
-- 状态：TODO
+- 状态：DONE
 - 依赖：DOCROOT-B9-C01
 - 自检：`git diff --check`；对本卡改动的中文文档执行 `AGENTS.md` 中规定的乱码哨兵检查；扫描 `simulator_manual_regression_matrix.md` 旧路径引用是否已统一；重点核对 `docs/30_testing/manual_ui_regression_checklist.md` 是否清除错误绝对路径
 - 建议提交信息：`docs: audit regression matrix routing`
@@ -49,13 +49,16 @@ Forbidden changes:
 
 #### 验收标准
 
-- [ ] `simulator_manual_regression_matrix.md` 的目录归属已有明确结论。
-- [ ] `manual_ui_regression_checklist.md` 与其它引用文档的路径已一致。
-- [ ] `document_map.md` 与盘点表已反映最终测试路由。
+- [x] `simulator_manual_regression_matrix.md` 的目录归属已有明确结论。
+- [x] `manual_ui_regression_checklist.md` 与其它引用文档的路径已一致。
+- [x] `document_map.md` 与盘点表已反映最终测试路由。
 
 #### 执行记录
 
-（Agent 填写：完成时间 / 实际改动文件 / 自检结果 / 风险回应）
+- 完成时间：2026-06-04
+- 实际改动文件：`docs/30_testing/simulator_manual_regression_matrix.md`、`docs/30_testing/manual_ui_regression_checklist.md`、`docs/document_map.md`、`docs/40_workflow/docs_root_reorg_inventory.md`、`docs/50_stage_records/v0_4_system_skeleton_entry.md`、`docs/50_stage_records/v0_5_long_battery_regression_closure.md`、`docs/50_stage_records/v0_shell_baseline.md`、`docs/60_visual_exploration/settings_visual_reference.md`、`docs/70_hardware_reference/hardware_frontier_entry.md`、`docs/80_history/prototype_progress.md`、`docs/80_history/simulator_manual_regression_run_2026_05_19.md`、`docs/40_workflow/agent_batch/cards/docroot-reorg-wave3-decisions.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检结果：`git diff --check` 通过；`watch_docs_sync` 错误绝对路径已清除；`docs/simulator_manual_regression_matrix.md` 旧路径真实正文引用已清空，仅剩 `docs/decision_log.md` 中的历史示例文本与当前卡片文本中的旧路径字符串；本轮实际改动中文文档乱码哨兵检查通过
+- 风险回应：本轮结论已明确为“完整矩阵迁入 `docs/30_testing/` 与更短回归清单同层”；未改动 `simulator_manual_regression_run_2026_05_19.md` 的历史归档位置，只修复它对矩阵的新路径引用
 
 ---
 

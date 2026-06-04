@@ -14,7 +14,7 @@
 当前更适合优先阅读：
 
 - `docs/50_stage_records/v0_2_shell_closure.md`
-- `docs/simulator_manual_regression_matrix.md`
+- `docs/30_testing/simulator_manual_regression_matrix.md`
 
 如果本文件中的旧轮次描述与当前代码状态冲突，以 `v0.2` 收口文档和当前代码为准。
 

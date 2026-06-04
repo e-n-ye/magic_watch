@@ -23,7 +23,7 @@
 - 表盘中心交互、Launcher、Quick Settings、Settings、screen off / wake 路径已经形成主线闭环。
 - 显示策略已经从页面局部状态中抽出为 `DisplayPolicyModel` 和 `DisplayPolicyRules`。
 - `HAL::Device`、`BatterySample`、`CrownSample`、`TouchSample`、`MotionSample` 等硬件侧事件抽象已经存在。
-- `docs/simulator_manual_regression_matrix.md` 已经记录模拟器主路径回归项。
+- `docs/30_testing/simulator_manual_regression_matrix.md` 已经记录模拟器主路径回归项。
 
 因此，继续扩展 Weather、Steps、Sleep、Health、NFC、支付等 mock 页面，除非服务于硬件验证，否则当前收益开始下降。下一阶段更有价值的工作是让真实硬件反向检验这些模拟器假设。
 

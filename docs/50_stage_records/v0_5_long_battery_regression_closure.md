@@ -8,7 +8,7 @@
 
 ## 回归范围
 
-本轮按 [docs/simulator_manual_regression_matrix.md](/D:/MY_Desk/watch/magic_watch/docs/simulator_manual_regression_matrix.md) 中 v0.5 长续航相关条目进行手工验证，重点覆盖：
+本轮按 [docs/30_testing/simulator_manual_regression_matrix.md](/D:/MY_Desk/watch/magic_watch/docs/30_testing/simulator_manual_regression_matrix.md) 中 v0.5 长续航相关条目进行手工验证，重点覆盖：
 
 - `Settings -> Battery` 入口与说明页
 - `长续航模式` 与 `续航优化` 子页可达性

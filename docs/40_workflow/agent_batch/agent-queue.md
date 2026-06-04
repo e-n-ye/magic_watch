@@ -24,7 +24,7 @@
 
 ### DOCROOT-Q12-REGRESSION-MATRIX docs 测试矩阵目录归属审计
 
-- 状态：TODO
+- 状态：DONE
 - 卡片来源：cards/docroot-reorg-wave3-decisions.md
 - 执行范围：卡片 `DOCROOT-B10-C03`
 - 停止策略：队列项完成后停止
