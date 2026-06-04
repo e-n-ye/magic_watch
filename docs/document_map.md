@@ -37,6 +37,7 @@
 - [v0_scope.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/v0_scope.md): 当前范围摘要，在需要确认阶段边界时补读。
 - [decision_log.md](/D:/MY_Desk/watch/magic_watch/docs/decision_log.md): 历史决策流水账，只作历史检索。
 - [page_reachability_audit.md](/D:/MY_Desk/watch/magic_watch/docs/80_history/page_reachability_audit.md): 历史页面可达性审计，只在查旧入口、旧页面或历史判断时选读。
+- [current_sim_architecture.md](/D:/MY_Desk/watch/magic_watch/docs/80_history/current_sim_architecture.md): 旧版模拟器现状地图，只在追溯早期骨架或核对 `00_current/current_architecture.md` 之前的现状判断时补读。
 
 ## 当前代码事实补读
 
@@ -223,7 +224,7 @@
 说明：
 
 - `DOCROOT-B6-C01` 已把 Wave 1 迁移后的剩余根目录文档分成三类：明确保留根目录、第二轮候选迁移、仍需单独决策。
-- `cpp_minimal_glossary.md`、`learning_plan.md`、`simulator_reading_guide.md` 已迁入 [20_guides/](/D:/MY_Desk/watch/magic_watch/docs/20_guides)；`project_charter.md`、`prototype_progress.md`、`page_reachability_audit.md`、`simulator_manual_regression_run_2026_05_19.md` 已迁入 [80_history/](/D:/MY_Desk/watch/magic_watch/docs/80_history)。
+- `cpp_minimal_glossary.md`、`learning_plan.md`、`simulator_reading_guide.md` 已迁入 [20_guides/](/D:/MY_Desk/watch/magic_watch/docs/20_guides)；`project_charter.md`、`prototype_progress.md`、`page_reachability_audit.md`、`simulator_manual_regression_run_2026_05_19.md`、`current_sim_architecture.md` 已迁入 [80_history/](/D:/MY_Desk/watch/magic_watch/docs/80_history)。
 
 ### 我想查历史归档文档
 
@@ -233,11 +234,12 @@
 - [prototype_progress.md](/D:/MY_Desk/watch/magic_watch/docs/80_history/prototype_progress.md)
 - [page_reachability_audit.md](/D:/MY_Desk/watch/magic_watch/docs/80_history/page_reachability_audit.md)
 - [simulator_manual_regression_run_2026_05_19.md](/D:/MY_Desk/watch/magic_watch/docs/80_history/simulator_manual_regression_run_2026_05_19.md)
+- [current_sim_architecture.md](/D:/MY_Desk/watch/magic_watch/docs/80_history/current_sim_architecture.md)
 
 说明：
 
-- 这四份文档属于历史归档/历史检索入口，不回到默认新会话入口。
-- 它们分别服务于旧阶段定位、原型推进记录、历史页面可达性判断和一次性手动回归运行记录的追溯。
+- 这五份文档属于历史归档/历史检索入口，不回到默认新会话入口。
+- 它们分别服务于旧阶段定位、原型推进记录、历史页面可达性判断、一次性手动回归运行记录，以及旧版模拟器现状骨架的追溯。
 
 ### 我想补读开发指南
 

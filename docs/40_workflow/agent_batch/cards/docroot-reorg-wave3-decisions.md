@@ -65,7 +65,7 @@ Forbidden changes:
 ### DOCROOT-B10-C01 审计 current_sim_architecture 根目录归属
 
 - 批次：10
-- 状态：TODO
+- 状态：DONE
 - 依赖：DOCROOT-B9-C01
 - 自检：`git diff --check`；对本卡改动的中文文档执行 `AGENTS.md` 中规定的乱码哨兵检查；扫描 `current_sim_architecture.md` 旧路径引用与 `current_architecture.md` 路由说明是否一致
 - 建议提交信息：`docs: audit current_sim_architecture routing`
@@ -107,13 +107,16 @@ Forbidden changes:
 
 #### 验收标准
 
-- [ ] `current_sim_architecture.md` 的角色已有明确结论。
-- [ ] 如需迁移或降级，`document_map.md` 与盘点表已同步。
-- [ ] 不与 `docs/00_current/current_architecture.md` 形成双权威入口。
+- [x] `current_sim_architecture.md` 的角色已有明确结论。
+- [x] 如需迁移或降级，`document_map.md` 与盘点表已同步。
+- [x] 不与 `docs/00_current/current_architecture.md` 形成双权威入口。
 
 #### 执行记录
 
-（Agent 填写：完成时间 / 实际改动文件 / 自检结果 / 风险回应）
+- 完成时间：2026-06-04
+- 实际改动文件：`docs/80_history/current_sim_architecture.md`、`docs/current_sim_architecture.md`、`docs/document_map.md`、`docs/40_workflow/docs_root_reorg_inventory.md`、`docs/40_workflow/agent_batch/cards/docroot-reorg-wave3-decisions.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检结果：`current_sim_architecture.md` 已迁入 `docs/80_history/`；`document_map.md` 已把它降为历史归档补读入口；`docs/current_sim_architecture.md` 的真实正文路径引用已清空，仅剩当前卡片文本和执行历史中的旧路径字符串；本轮实际改动中文文档乱码哨兵检查通过；`git diff --check` 通过（仅有 LF/CRLF 警告，无 diff 格式错误）
+- 风险回应：本轮没有把 `current_sim_architecture.md` 合并进 `docs/00_current/current_architecture.md`，而是按其自述“第一版现状地图”角色迁入历史归档，从路由上明确“当前主线入口”与“旧模拟器现状材料”的分工
 
 ---
 

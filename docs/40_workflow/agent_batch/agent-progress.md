@@ -151,3 +151,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：完整矩阵已迁入 `docs/30_testing/`，与更短回归清单同层；`docs/decision_log.md` 保留旧路径字符串仅作为历史编码事故示例，不代表未收口的当前路由
 - 阻塞与待决：
 - 下一步：队列项 `DOCROOT-Q12-REGRESSION-MATRIX` 已完成，按停止策略停止，等待用户验收；不执行 `DOCROOT-Q10-CURRENT-SIM-ARCH`
+
+### 会话 2026-06-04 15:19
+
+- 本轮范围：队列项 `DOCROOT-Q10-CURRENT-SIM-ARCH`，卡片 `DOCROOT-B10-C01`
+- 完成：`DOCROOT-B10-C01`；队列项 `DOCROOT-Q10-CURRENT-SIM-ARCH`
+- 修改文件：`docs/80_history/current_sim_architecture.md`、`docs/current_sim_architecture.md`、`docs/document_map.md`、`docs/40_workflow/docs_root_reorg_inventory.md`、`docs/40_workflow/agent_batch/cards/docroot-reorg-wave3-decisions.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`docs/current_sim_architecture.md` 已迁入 `docs/80_history/current_sim_architecture.md`；`document_map.md` 已把它降为历史归档补读入口；旧路径真实正文引用已清空，仅剩当前卡片文本与执行历史中的旧路径字符串；本轮实际改动中文文档乱码哨兵检查通过；`git diff --check` 通过（仅有 LF/CRLF 警告，无 diff 格式错误）
+- 风险回应：本轮依据文档自述“第一版现状地图”与 `document_map.md` 现有默认入口分工，判定它不应继续与 `docs/00_current/current_architecture.md` 并列占据根目录；迁移后保留历史检索价值，但不再构成双权威入口
+- 阻塞与待决：
+- 下一步：队列项 `DOCROOT-Q10-CURRENT-SIM-ARCH` 已完成，按停止策略停止，等待用户验收；不执行 `DOCROOT-Q11-DECISION-LOG`

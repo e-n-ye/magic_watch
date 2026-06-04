@@ -24,7 +24,7 @@
 | --- | --- | --- |
 | `architecture_principles.md` | 保留根目录 | 长期架构原则，仍是跨阶段入口文档。 |
 | `cpp_minimal_glossary.md` | `已迁移至 20_guides` | 面向代码阅读的辅助指南，不属于默认入口。 |
-| `current_sim_architecture.md` | `待单独决策` | 名称与 `docs/00_current/current_architecture.md` 过于接近，需先确认是否保留为历史审计材料。 |
+| `current_sim_architecture.md` | `已迁移至 80_history` | 内容自定义为“第一版现状地图”，不是当前权威架构入口；迁入历史归档可避免与 `docs/00_current/current_architecture.md` 形成双权威。 |
 | `decision_log.md` | `待单独决策` | 仍有长期记忆价值，但 `document_map.md` 已把它降为历史检索入口，迁移前需评估 AGENTS 与旧引用。 |
 | `document_map.md` | 保留根目录 | 当前文档路由器，必须继续占据根目录入口。 |
 | `home_interaction_model.md` | 保留根目录 | 表盘中心交互模型仍是长期架构基线。 |
@@ -46,8 +46,8 @@
 | 保留根目录 | 6 | 当前入口、长期架构、长期协作文档继续保留在根目录。 |
 | `20_guides` | 3 | 阅读/学习型材料适合在第二轮迁入开发指南目录。 |
 | `30_testing` | 1 | 完整手动回归矩阵应与测试入口文档放在同一目录。 |
-| `80_history` | 4 | 明确已被替代或一次性运行记录的文档可归档。 |
-| `待单独决策` | 2 | 当前只剩命名冲突与长期记忆角色两类需要单独评审。 |
+| `80_history` | 5 | 明确已被替代、属于旧现状地图或一次性运行记录的文档可归档。 |
+| `待单独决策` | 1 | 当前只剩长期记忆角色一类需要单独评审。 |
 
 ## 明确保留根目录名单
 
@@ -78,6 +78,7 @@
 - [project_charter.md](/D:/MY_Desk/watch/magic_watch/docs/80_history/project_charter.md)
 - [prototype_progress.md](/D:/MY_Desk/watch/magic_watch/docs/80_history/prototype_progress.md)
 - [simulator_manual_regression_run_2026_05_19.md](/D:/MY_Desk/watch/magic_watch/docs/80_history/simulator_manual_regression_run_2026_05_19.md)
+- [current_sim_architecture.md](/D:/MY_Desk/watch/magic_watch/docs/80_history/current_sim_architecture.md)
 
 ### `30_testing`
 
@@ -85,13 +86,7 @@
 
 ## 仍需单独决策项
 
-### 1. `docs/current_sim_architecture.md` 与 `docs/00_current/current_architecture.md`
-
-- 二者名字相近，但职责可能不同：前者更像旧的模拟器现状地图，后者是当前主线架构入口。
-- 若直接迁移或保留其一，容易让新会话误读“哪个才是当前权威入口”。
-- 建议后续单独审计其引用关系和内容重叠度，再决定是迁入历史还是保留补充说明。
-
-### 2. `docs/decision_log.md` 的角色
+### 1. `docs/decision_log.md` 的角色
 
 - 它仍是长期记忆材料，但 `document_map.md` 已把它降为历史检索入口。
 - 如果直接迁入 `80_history`，需要同时检查 `AGENTS.md`、旧文档说明和团队使用习惯是否仍把它视为关键背景入口。
@@ -104,10 +99,9 @@
 - `target_architecture.md`
 - `home_interaction_model.md`
 - `watchface_style_architecture.md`
-- `current_sim_architecture.md`
 - `decision_log.md`
 
-这些文件要么是当前入口，要么存在命名/职责冲突，需要二次评审后再决定。
+这些文件要么是当前入口，要么仍带有长期记忆角色，需要二次评审后再决定。
 
 ## DOCROOT-B6-C01 结论
 
