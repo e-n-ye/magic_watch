@@ -291,3 +291,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：新批次只规划 F411 输入语义、固定事件队列和最小 ScreenManager；明确不移植 LVGL、不接传感器、不做 USB/FATFS/蓝牙、不搬模拟器 UI
 - 阻塞与待决：`try/my_watch_f411_v2.1/Core/Src/main.c` 当前存在非本轮规划产生的本地 diff；进入目标模式前需要由用户确认保留、提交或处理该差异
 - 下一步：处理或确认 `main.c` 本地差异后，用户可进入目标模式执行 `F411-Q1`
+
+### 会话 2026-06-04 F411-Q1 执行
+
+- 本轮范围：队列项 `F411-Q1`，卡片 `F411-CORE-1` / `F411-CORE-2` / `F411-CORE-3`
+- 完成：`F411-CORE-1`；`F411-CORE-2`；`F411-CORE-3` 代码实现完成但等待用户真机手动回归
+- 修改文件：`try/my_watch_f411_v2.1/user/app/input/watch_input_intent.*`、`try/my_watch_f411_v2.1/user/core/event/watch_event_queue.*`、`try/my_watch_f411_v2.1/user/app/screen/watch_screen_manager.*`、`try/my_watch_f411_v2.1/user/app/watch_bringup.c`、`try/my_watch_f411_v2.1/MDK-ARM/my_watch_f411.uvprojx`、`try/my_watch_f411_v2.1/README.md`、`docs/40_workflow/agent_batch/cards/f411-core-q1.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：应用层 BACK / WAKE 扫描无命中；heap / 动态对象扫描无命中；LVGL / 传感器 / USB / FATFS / 蓝牙误触扫描无命中；MDK 工程已登记三个新增用户分组；`git diff --check` 通过，仅有 LF/CRLF 提示；本轮中文文档乱码哨兵检查通过；本机命令行未找到 `UV4.exe` / `armcc`，Keil / MDK 编译需由用户本地执行
+- 风险回应：用户明确要求三张卡做完后统一提交，本轮不按 `agent-progress.md` 默认自动逐卡提交；`F411-Q1` 不移植 LVGL、不接传感器、不做 USB/FATFS/蓝牙、不搬模拟器 UI
+- 阻塞与待决：等待用户执行最后一轮真机手动回归；回归通过前不统一提交
+- 下一步：用户在 Keil 编译并烧录后验证最小屏幕状态；通过后由 Agent 标记 `F411-CORE-3` / `F411-Q1` DONE 并统一提交

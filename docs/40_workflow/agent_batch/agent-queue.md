@@ -8,7 +8,7 @@
 
 ### F411-Q1 最小应用骨架闭环
 
-- 状态：TODO
+- 状态：IN_PROGRESS
 - 卡片来源：cards/f411-core-q1.md
 - 执行范围：卡片 `F411-CORE-1` / `F411-CORE-2` / `F411-CORE-3`
 - 停止策略：队列项完成后停止

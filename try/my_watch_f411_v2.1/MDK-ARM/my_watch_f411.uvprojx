@@ -1182,6 +1182,21 @@
           </Files>
         </Group>
         <Group>
+          <GroupName>User/core/event</GroupName>
+          <Files>
+            <File>
+              <FileName>watch_event_queue.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\user\core\event\watch_event_queue.c</FilePath>
+            </File>
+            <File>
+              <FileName>watch_event_queue.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\user\core\event\watch_event_queue.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
           <GroupName>User/app</GroupName>
           <Files>
             <File>
@@ -1193,6 +1208,36 @@
               <FileName>watch_bringup.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\user\app\watch_bringup.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>User/app/input</GroupName>
+          <Files>
+            <File>
+              <FileName>watch_input_intent.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\user\app\input\watch_input_intent.c</FilePath>
+            </File>
+            <File>
+              <FileName>watch_input_intent.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\user\app\input\watch_input_intent.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>User/app/screen</GroupName>
+          <Files>
+            <File>
+              <FileName>watch_screen_manager.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\user\app\screen\watch_screen_manager.c</FilePath>
+            </File>
+            <File>
+              <FileName>watch_screen_manager.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\user\app\screen\watch_screen_manager.h</FilePath>
             </File>
           </Files>
         </Group>

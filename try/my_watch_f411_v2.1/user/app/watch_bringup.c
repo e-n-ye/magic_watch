@@ -2,61 +2,52 @@
 
 #include <stdint.h>
 
+#include "app/input/watch_input_intent.h"
+#include "app/screen/watch_screen_manager.h"
 #include "board/display/watch_lcd.h"
+#include "core/event/watch_event_queue.h"
 #include "services/input/watch_input_service.h"
 
-static uint32_t s_event_count;
+static watch_event_queue_t s_event_queue;
+static watch_screen_manager_t s_screen_manager;
 
-static void show_event_color(watch_input_event_t event)
+static void publish_intent(watch_input_intent_t intent)
 {
-    uint16_t color = WATCH_LCD_GRAY;
-    uint16_t bar_width;
+    watch_app_event_t app_event;
 
-    switch (event) {
-    case WATCH_INPUT_BACK_SHORT:
-        color = WATCH_LCD_YELLOW;
-        break;
-    case WATCH_INPUT_BACK_LONG:
-        color = WATCH_LCD_MAGENTA;
-        break;
-    case WATCH_INPUT_WAKE_SHORT:
-        color = WATCH_LCD_CYAN;
-        break;
-    case WATCH_INPUT_WAKE_LONG:
-        color = WATCH_LCD_WHITE;
-        break;
-    case WATCH_INPUT_ENCODER_PRESS:
-        color = WATCH_LCD_BLUE;
-        break;
-    case WATCH_INPUT_ENCODER_LONG:
-        color = WATCH_LCD_MAGENTA;
-        break;
-    case WATCH_INPUT_ENCODER_CW:
-        color = WATCH_LCD_GREEN;
-        break;
-    case WATCH_INPUT_ENCODER_CCW:
-        color = WATCH_LCD_RED;
-        break;
-    default:
+    if (intent == WATCH_INPUT_INTENT_NONE) {
         return;
     }
 
-    s_event_count++;
-    bar_width = (uint16_t)((s_event_count % 24U) * 10U);
-    if (bar_width == 0U) {
-        bar_width = 10U;
-    }
+    app_event.type = WATCH_APP_EVENT_INPUT_INTENT;
+    app_event.payload.input_intent = intent;
+    (void)watch_event_queue_push(&s_event_queue, app_event);
+}
 
-    watch_lcd_fill(color);
-    watch_lcd_fill_rect(0U, 0U, bar_width, 12U, WATCH_LCD_BLACK);
+static void pump_input_events(void)
+{
+    watch_input_event_t event;
+    watch_input_intent_t intent;
+
+    do {
+        event = watch_input_service_get_event();
+        intent = watch_input_intent_from_event(event);
+        publish_intent(intent);
+    } while (event != WATCH_INPUT_NONE);
+}
+
+static void handle_app_event(const watch_app_event_t *event)
+{
+    watch_screen_manager_handle_event(&s_screen_manager, event);
 }
 
 void watch_bringup_init(void)
 {
-    s_event_count = 0U;
+    watch_event_queue_init(&s_event_queue);
+    watch_screen_manager_init(&s_screen_manager);
     watch_lcd_init();
     watch_lcd_backlight_on();
-    watch_lcd_show_bringup_pattern();
+    watch_screen_manager_render(&s_screen_manager);
     watch_input_service_init();
 }
 
@@ -67,10 +58,12 @@ void watch_bringup_scan_input_10ms(void)
 
 void watch_bringup_task(void)
 {
-    watch_input_event_t event;
+    watch_app_event_t app_event;
 
-    do {
-        event = watch_input_service_get_event();
-        show_event_color(event);
-    } while (event != WATCH_INPUT_NONE);
+    pump_input_events();
+
+    while (watch_event_queue_pop(&s_event_queue, &app_event) != 0U) {
+        handle_app_event(&app_event);
+        watch_screen_manager_render(&s_screen_manager);
+    }
 }

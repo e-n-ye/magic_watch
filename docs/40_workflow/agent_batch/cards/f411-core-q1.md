@@ -9,7 +9,7 @@
 ## F411-CORE-1 输入语义收口
 
 - 批次：F411-Q1
-- 状态：TODO
+- 状态：DONE
 - 依赖：无
 - 自检：
   - `git status --short -uall`
@@ -77,14 +77,16 @@ Forbidden changes:
 
 ### 执行记录
 
-- 待执行。
+- 已完成：新增 `user/app/input/watch_input_intent.*`，编码器旋转、短按、长按已映射为应用层 `InputIntent`。
+- 自检：`rg "WATCH_INPUT_BACK|WATCH_INPUT_WAKE" try/my_watch_f411_v2.1/user/app/input try/my_watch_f411_v2.1/user/app/watch_bringup.c` 无命中；`git diff --check` 通过，仅有 LF/CRLF 提示。
+- 编译：本机命令行未找到 `UV4.exe` / `armcc`，Keil / MDK 编译需由用户本地执行。
 
 ---
 
 ## F411-CORE-2 EventQueue-lite
 
 - 批次：F411-Q1
-- 状态：TODO
+- 状态：DONE
 - 依赖：`F411-CORE-1`
 - 自检：
   - `git status --short -uall`
@@ -149,14 +151,16 @@ Forbidden changes:
 
 ### 执行记录
 
-- 待执行。
+- 已完成：新增 `user/core/event/watch_event_queue.*`，输入 intent 已包装为固定大小 app event 并通过静态队列进入 bring-up 消费逻辑。
+- 自检：`rg "malloc|free|strdup|std::|new |delete " try/my_watch_f411_v2.1/user/core/event try/my_watch_f411_v2.1/user/app/watch_bringup.c` 无命中；`git diff --check` 通过，仅有 LF/CRLF 提示。
+- 编译：本机命令行未找到 `UV4.exe` / `armcc`，Keil / MDK 编译需由用户本地执行。
 
 ---
 
 ## F411-CORE-3 最小 ScreenManager
 
 - 批次：F411-Q1
-- 状态：TODO
+- 状态：IN_PROGRESS
 - 依赖：`F411-CORE-2`
 - 自检：
   - `git status --short -uall`
@@ -223,4 +227,7 @@ Forbidden changes:
 
 ### 执行记录
 
-- 待执行。
+- 代码已完成：新增 `user/app/screen/watch_screen_manager.*`，编码器输入已按 `InputIntent -> EventQueue-lite -> ScreenManager -> LCD Debug Screen` 链路消费。
+- 自检：应用层 BACK / WAKE 扫描无命中；heap / 动态对象扫描无命中；LVGL / 传感器 / USB / FATFS / 蓝牙误触扫描无命中；MDK 工程已登记 `User/app/screen`；`git diff --check` 通过，仅有 LF/CRLF 提示；本轮中文文档乱码哨兵检查通过。
+- 编译：本机命令行未找到 `UV4.exe` / `armcc`，Keil / MDK 编译需由用户本地执行。
+- 手动回归：等待用户真机验证编码器旋转、短按、长按能驱动最小屏幕状态变化。
