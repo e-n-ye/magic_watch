@@ -25,7 +25,7 @@ rg --files
 3. 识别分歧：如果用户或 AI 的判断可能有问题，先搜集证据再讨论。
 4. 小步实施：优先做能形成闭环的小改动。
 5. 验证结果：运行能覆盖本次改动的检查。
-6. 记录记忆：必要时更新 `docs/decision_log.md` 或相关设计文档。
+6. 记录记忆：当前仍生效的结论优先收口到 `docs/00_current/current_decisions.md` 或相关设计文档；只有需要保留历史理由、阶段判断或检索轨迹时，再追加到 `docs/decision_log.md`。
 
 ## Planning Rules
 

@@ -25,7 +25,7 @@
 | `architecture_principles.md` | 保留根目录 | 长期架构原则，仍是跨阶段入口文档。 |
 | `cpp_minimal_glossary.md` | `已迁移至 20_guides` | 面向代码阅读的辅助指南，不属于默认入口。 |
 | `current_sim_architecture.md` | `已迁移至 80_history` | 内容自定义为“第一版现状地图”，不是当前权威架构入口；迁入历史归档可避免与 `docs/00_current/current_architecture.md` 形成双权威。 |
-| `decision_log.md` | `待单独决策` | 仍有长期记忆价值，但 `document_map.md` 已把它降为历史检索入口，迁移前需评估 AGENTS 与旧引用。 |
+| `decision_log.md` | 保留根目录 | 已被 `document_map.md` / `current_decisions.md` 降为历史检索材料，但 `workflow.md` 仍把它作为历史记忆落点；保留稳定根目录路径比迁入 `80_history` 更稳。 |
 | `document_map.md` | 保留根目录 | 当前文档路由器，必须继续占据根目录入口。 |
 | `home_interaction_model.md` | 保留根目录 | 表盘中心交互模型仍是长期架构基线。 |
 | `learning_plan.md` | `已迁移至 20_guides` | 学习路径指南，保留价值在于方法论，不必占用根目录默认入口。 |
@@ -47,7 +47,7 @@
 | `20_guides` | 3 | 阅读/学习型材料适合在第二轮迁入开发指南目录。 |
 | `30_testing` | 1 | 完整手动回归矩阵应与测试入口文档放在同一目录。 |
 | `80_history` | 5 | 明确已被替代、属于旧现状地图或一次性运行记录的文档可归档。 |
-| `待单独决策` | 1 | 当前只剩长期记忆角色一类需要单独评审。 |
+| `待单独决策` | 0 | 第二轮单独决策项已全部完成，最终是否“已干净”留待独立复核卡判断。 |
 
 ## 明确保留根目录名单
 
@@ -84,12 +84,13 @@
 
 - [simulator_manual_regression_matrix.md](/D:/MY_Desk/watch/magic_watch/docs/30_testing/simulator_manual_regression_matrix.md)
 
-## 仍需单独决策项
+## 单独决策项收口结论
 
-### 1. `docs/decision_log.md` 的角色
+### `docs/decision_log.md`
 
-- 它仍是长期记忆材料，但 `document_map.md` 已把它降为历史检索入口。
-- 如果直接迁入 `80_history`，需要同时检查 `AGENTS.md`、旧文档说明和团队使用习惯是否仍把它视为关键背景入口。
+- `document_map.md` 与 `current_decisions.md` 都已经把它降为“非默认入口”的历史检索材料。
+- `workflow.md` 仍要求在必要时把历史理由、阶段判断或检索轨迹写入这里，说明它还承担稳定记忆落点职责。
+- 由于 `AGENTS.md` 仍把它列为关键背景之一，本轮不迁入 `80_history`；结论改为“保留根目录，但不回默认入口”。
 
 ## 暂不迁移项
 
@@ -101,7 +102,7 @@
 - `watchface_style_architecture.md`
 - `decision_log.md`
 
-这些文件要么是当前入口，要么仍带有长期记忆角色，需要二次评审后再决定。
+这些文件要么是当前入口，要么已完成二次评审并确认应保留在根目录。
 
 ## DOCROOT-B6-C01 结论
 

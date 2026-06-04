@@ -35,7 +35,7 @@
 - [current_refactor_status.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_refactor_status.md): 当前代码事实基线，内容较长，只在需要确认“代码实际拆到哪”时补读。
 - [current_architecture.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_architecture.md): 架构主线入口，不是每次新会话都必须先读。
 - [v0_scope.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/v0_scope.md): 当前范围摘要，在需要确认阶段边界时补读。
-- [decision_log.md](/D:/MY_Desk/watch/magic_watch/docs/decision_log.md): 历史决策流水账，只作历史检索。
+- [decision_log.md](/D:/MY_Desk/watch/magic_watch/docs/decision_log.md): 历史决策流水账，只作历史检索；保留根目录稳定路径，避免跨会话检索入口漂移。
 - [page_reachability_audit.md](/D:/MY_Desk/watch/magic_watch/docs/80_history/page_reachability_audit.md): 历史页面可达性审计，只在查旧入口、旧页面或历史判断时选读。
 - [current_sim_architecture.md](/D:/MY_Desk/watch/magic_watch/docs/80_history/current_sim_architecture.md): 旧版模拟器现状地图，只在追溯早期骨架或核对 `00_current/current_architecture.md` 之前的现状判断时补读。
 
@@ -213,6 +213,7 @@
 说明：
 
 - 它是历史检索材料，不应回到默认入口。
+- 它继续保留在 docs 根目录，目的是给跨会话追溯和旧文档链接一个稳定、可预期的位置。
 - 读取时只检索相关日期或关键词，不默认通读全文。
 
 ### 我想看 docs 根目录剩余文档的二次评审

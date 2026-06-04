@@ -2,7 +2,7 @@
 
 日期：2026-05-26
 
-本文件只保留当前仍有效、会影响下一轮开发的决策。历史原因查 `docs/decision_log.md`，但它不再作为默认阅读文档。
+本文件只保留当前仍有效、会影响下一轮开发的决策。历史原因查 `docs/decision_log.md`；它继续保留 docs 根目录作为稳定历史检索路径，但不再作为默认阅读文档。
 
 ## D001: 当前阶段进入架构收口
 
@@ -42,7 +42,7 @@ Controller 返回的 Action 应固定大小、可按值传递、无动态资源�
 
 ## D010: 文档入口必须短
 
-默认新会话只读 `AGENTS.md`、`docs/document_map.md` 和 `docs/00_current/` 下的当前入口文档。`decision_log.md`、`page_reachability_audit.md`、旧 `project_charter.md` 都不再默认阅读。
+默认新会话只读 `AGENTS.md`、`docs/document_map.md` 和 `docs/00_current/` 下的当前入口文档。`decision_log.md`、`page_reachability_audit.md`、旧 `project_charter.md` 都不再默认阅读；其中 `decision_log.md` 仅保留为稳定历史检索路径。
 
 ## D011: 每轮必须 Scope Lock
 

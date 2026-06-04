@@ -123,7 +123,7 @@ Forbidden changes:
 ### DOCROOT-B10-C02 审计 decision_log 根目录归属
 
 - 批次：10
-- 状态：TODO
+- 状态：DONE
 - 依赖：DOCROOT-B9-C01
 - 自检：`git diff --check`；对本卡改动的中文文档执行 `AGENTS.md` 中规定的乱码哨兵检查；扫描 `decision_log.md` 旧路径引用与 `document_map.md` / `current_decisions.md` / `workflow.md` 的入口说明是否一致
 - 建议提交信息：`docs: audit decision log routing`
@@ -166,13 +166,16 @@ Forbidden changes:
 
 #### 验收标准
 
-- [ ] `decision_log.md` 的根目录归属已有明确结论。
-- [ ] 与 `document_map.md`、`current_decisions.md`、`workflow.md` 的入口说法一致。
-- [ ] 若决定迁移，必要旧路径链接已修复。
+- [x] `decision_log.md` 的根目录归属已有明确结论。
+- [x] 与 `document_map.md`、`current_decisions.md`、`workflow.md` 的入口说法一致。
+- [x] 若决定迁移，必要旧路径链接已修复。
 
 #### 执行记录
 
-（Agent 填写：完成时间 / 实际改动文件 / 自检结果 / 风险回应）
+- 完成时间：2026-06-04
+- 实际改动文件：`docs/document_map.md`、`docs/00_current/current_decisions.md`、`docs/workflow.md`、`docs/40_workflow/docs_root_reorg_inventory.md`、`docs/40_workflow/agent_batch/cards/docroot-reorg-wave3-decisions.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检结果：`decision_log.md` 保持原路径未迁移；`document_map.md`、`current_decisions.md`、`workflow.md` 对它的入口说法已统一为“非默认入口的稳定历史检索路径”；`docs/decision_log.md` 真实正文路径引用无需迁移修复；本轮实际改动中文文档乱码哨兵检查通过；`git diff --check` 通过（仅有 LF/CRLF 警告，无 diff 格式错误）
+- 风险回应：本轮没有为了目录整洁性强行把 `decision_log.md` 迁入 `80_history`；考虑到 `workflow.md` 仍把它当历史记忆落点、`AGENTS.md` 仍列它为关键背景，保留根目录更能避免跨会话检索入口漂移
 
 ---
 

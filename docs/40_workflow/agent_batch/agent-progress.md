@@ -161,3 +161,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：本轮依据文档自述“第一版现状地图”与 `document_map.md` 现有默认入口分工，判定它不应继续与 `docs/00_current/current_architecture.md` 并列占据根目录；迁移后保留历史检索价值，但不再构成双权威入口
 - 阻塞与待决：
 - 下一步：队列项 `DOCROOT-Q10-CURRENT-SIM-ARCH` 已完成，按停止策略停止，等待用户验收；不执行 `DOCROOT-Q11-DECISION-LOG`
+
+### 会话 2026-06-04 15:31
+
+- 本轮范围：队列项 `DOCROOT-Q11-DECISION-LOG`，卡片 `DOCROOT-B10-C02`
+- 完成：`DOCROOT-B10-C02`；队列项 `DOCROOT-Q11-DECISION-LOG`
+- 修改文件：`docs/document_map.md`、`docs/00_current/current_decisions.md`、`docs/workflow.md`、`docs/40_workflow/docs_root_reorg_inventory.md`、`docs/40_workflow/agent_batch/cards/docroot-reorg-wave3-decisions.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`decision_log.md` 保持根目录原路径；`document_map.md`、`current_decisions.md`、`workflow.md` 对其角色表述已统一为“非默认入口的稳定历史检索路径”；本轮实际改动中文文档乱码哨兵检查通过；`git diff --check` 通过（仅有 LF/CRLF 警告，无 diff 格式错误）
+- 风险回应：本轮不把 `decision_log.md` 迁入 `80_history`，因为 `workflow.md` 仍把它作为历史记忆落点，`AGENTS.md` 也仍把它列为关键背景；直接迁移会让路径整洁性收益小于跨会话检索成本
+- 阻塞与待决：
+- 下一步：队列项 `DOCROOT-Q11-DECISION-LOG` 已完成，按停止策略停止，等待用户验收；不执行 `DOCROOT-Q13-DOCS-ROOT-REVIEW`
