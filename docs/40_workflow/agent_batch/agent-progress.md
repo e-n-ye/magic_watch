@@ -191,3 +191,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：只清理已验收且对应卡片文件已无 TODO / IN_PROGRESS / BLOCKED 的对象；未触碰 `agent-plan.md`、`agent-inbox.md` 和其它历史卡片文件
 - 阻塞与待决：
 - 下一步：收尾清理提交后，卡片批次队列回到空闲状态；如需新一轮卡片执行，可按新规则直接写正式卡片/队列
+
+### 会话 2026-06-04 14:12
+
+- 本轮范围：队列项 `S8-Q1`，卡片 `S8-CLOSE-1` / `S8-CLOSE-2` / `S8-REG-1`
+- 完成：`S8-CLOSE-1`
+- 修改文件：`docs/00_current/current_architecture.md`、`docs/10_architecture/ui_page_split_status.md`、`docs/40_workflow/agent_batch/agent-plan.md`、`docs/40_workflow/agent_batch/agent-progress.md`、`docs/40_workflow/agent_batch/agent-queue.md`
+- 自检：`git diff --check` 通过；阶段 8 旧表述定向扫描已收口；本轮实际改动中文文档乱码哨兵检查通过
+- 风险回应：只把 8B-8E 从旧“下一步”表述改成当前完成态，同时保留 8F 未执行和 8C 尾巴待审计这两个事实
+- 阻塞与待决：
+- 下一步：继续执行 `S8-CLOSE-2`，只读审计 Launcher / Settings 注册尾巴并决定是否记录为接受偏离

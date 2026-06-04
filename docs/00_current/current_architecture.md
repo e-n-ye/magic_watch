@@ -1,6 +1,6 @@
 # Magic Watch Current Architecture
 
-日期：2026-06-03
+日期：2026-06-04
 
 ## 当前主线
 
@@ -44,7 +44,7 @@ flowchart LR
 ## 当前风险
 
 - `AppStateMachine` 同时处理输入、电源、主页环、壳层、通知唤醒和计时器，存在 God Class 风险。
-- `ShellPages.cpp` 已从构建退场；当前风险转向 `ShellPages.h` 聚合声明头和 `Application.cpp` 注册组合根。
+- `ShellPages.cpp` 已从构建退场；`ShellPages.h` 已收口为过渡兼容 include 头，当前风险转向 `Application.cpp` 剩余注册尾巴与手动 UI 回归。
 - `SettingsPages.cpp` / `SettingsPages.h` 仍需后续单独审计，不能和 Shell 收口混在一轮处理。
 - `DataCenter` 继续增加字段会形成超级对象风险。
 - `EventBus` 当前是同步分发，未来接 RTOS 或真实硬件时需要重新定义队列、快照或同步边界。
@@ -55,12 +55,12 @@ flowchart LR
 
 | 最初目标 | 当前判断 | 证据 / 现状 | 下一步收口 |
 | --- | --- | --- | --- |
-| 新会话快速理解项目 | 部分达成 | `document_map.md` 已作为任务路由器，`00_current/` 承担当前入口；长历史文档不再默认读 | 修正入口链接和旧事实残影，保持默认入口短 |
-| 页面实现不再回流巨石 | 已达成主要目标 | `ShellPages.cpp` 已退场，Shell/Home/Notifications/QuickSettings/Launcher/Power/Daily/Health 实现已分域下沉 | 拆 `ShellPages.h` 聚合声明头 |
-| 新增功能最小化修改 | 部分达成 | 页面实现文件已分域，但 `Application.cpp::register_pages()` 仍集中注册大量页面 | 注册按领域分流 |
+| 新会话快速理解项目 | 基本达成 | `document_map.md` 已作为任务路由器，`00_current/` 承担当前入口；长历史文档不再默认读 | 继续保持入口短，避免旧事实回流 |
+| 页面实现不再回流巨石 | 已达成 | `ShellPages.cpp` 已退场，Shell/Home/Notifications/QuickSettings/Launcher/Power/Daily/Health 实现已分域下沉，`ShellPages.h` 已收口为兼容 include 头 | 保持当前边界，不让新页面回流 |
+| 新增功能最小化修改 | 部分达成 | 页面实现文件已分域；`Application.cpp` 已完成 Home、Notifications、QuickSettings、Power、Daily、Health 注册分流，剩余尾巴集中在 Launcher 与 Settings | 审计并记录剩余注册尾巴是否接受偏离 |
 | Controller 可复用且不操作 UI | 部分达成 | `PowerController` 已落地；其它 Controller 仍未提取 | 继续按状态归属逐个提取，不盲目新增 |
-| UI 生命周期清楚 | 部分达成 | `ui_lifecycle.md` 已定义契约，`LvglTimerGuard` 已存在 | 逐页迁移裸 timer，先从低风险页面开始 |
-| 未来硬件接入不重写上层 | 未完成 | 当前硬件选型未定，仍主要依赖模拟器路径 | 先补硬件边界文档契约，不写芯片绑定代码 |
+| UI 生命周期清楚 | 部分达成 | `ui_lifecycle.md` 已定义契约，`LvglTimerGuard` 已存在，并已落到 Steps、Launcher、Notifications、QuickSettings、Sleep、BloodOxygen、HeartRate 的一部分 timer | 继续迁移复杂裸 timer，优先处理高风险剩余项 |
+| 未来硬件接入不重写上层 | 部分达成 | `hardware_boundary.md` 已定义上层职责边界；当前硬件选型未定，仍主要依赖模拟器路径 | 保持契约稳定，待后续硬件阶段落地实现 |
 | 构建通过不等于行为通过 | 部分达成 | 文档已多次标注手动 UI 未执行 | 重新整理并执行手动 UI 回归 |
 
 补充说明：
@@ -71,12 +71,12 @@ flowchart LR
 ## 阶段 8 架构收口路线
 
 ```text
-8A：文档入口与当前架构验收地图
-8B：ShellPages.h 聚合头按领域拆分
-8C：Application.cpp 页面注册按领域分流
-8D：UI 生命周期落地到已有 LvglTimerGuard
-8E：硬件接入边界文档契约
-8F：手动 UI 回归闭环
+8A：文档入口与当前架构验收地图（已完成）
+8B：ShellPages.h 聚合头按领域拆分（已完成）
+8C：Application.cpp 页面注册按领域分流（已基本完成，仍有 Launcher / Settings 尾巴待审计）
+8D：UI 生命周期落地到已有 LvglTimerGuard（已进入逐页落地阶段，仍有复杂 timer 待继续）
+8E：硬件接入边界文档契约（已完成）
+8F：手动 UI 回归闭环（待执行）
 ```
 
 ## Scope Lock 模板

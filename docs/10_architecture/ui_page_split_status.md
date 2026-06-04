@@ -1,6 +1,6 @@
 # UI Page Split Status
 
-日期：2026-06-02
+日期：2026-06-04
 
 本文档只回答当前一个问题：
 
@@ -50,8 +50,8 @@ Forbidden changes:
 更准确的判断是：
 
 1. 页面实现文件已经显著分域下沉。
-2. 聚合头和注册入口仍保守维持。
-3. `ShellPages.cpp` 已从构建退场，剩余高风险主要转向聚合头、注册结构与手动回归。
+2. 聚合头已收口为过渡兼容层，注册入口已开始分域收口。
+3. `ShellPages.cpp` 已从构建退场，剩余高风险主要转向注册尾巴、复杂生命周期与手动回归。
 4. 后续文档和讨论必须区分：
    - 页面实现是否已经迁出
    - 对外头文件是否仍聚合暴露
@@ -139,7 +139,7 @@ Forbidden changes:
 拆分判断：
 
 - 共享 UI 构件：已开始独立。
-- Shell 主页面实现：未完全拆净。
+- Shell 主页面实现：已完成分域下沉。
 
 风险等级：
 
@@ -208,7 +208,7 @@ Forbidden changes:
 
 - `LauncherPage` 已从 `ShellPages.cpp` 下沉到独立 Launcher 域实现文件。
 - `LauncherPage` 声明已下沉到 `Shell/Launcher/ShellLauncherPages.h`，`ShellPages.h` 仅通过过渡 include 兼容 Launcher 入口。
-- `Application.cpp` 注册入口未改。
+- `LauncherPage` 当前仍直接在 `Application.cpp` 中注册，尚未单独抽出 Launcher 域注册函数。
 
 拆分判断：
 
@@ -276,7 +276,7 @@ Forbidden changes:
 - `ShellQuickSettingsPrimitives.*` 只承载 `QuickSettingsPage` 的 backdrop shell、sheet shell、toast、long-battery confirm overlay、toggle grid 与 drag handle 等纯 UI 构建。
 - `QuickSettingsPage` 已从 `ShellPages.cpp` 下沉到 `Shell/QuickSettings/ShellQuickSettingsPages.cpp`。
 - `QuickSettingsPage` 声明已下沉到 `Shell/QuickSettings/ShellQuickSettingsPages.h`，`ShellPages.h` 仅通过过渡 include 兼容快捷设置入口。
-- `ShellPages.h` 仍是聚合声明头，`Application.cpp` 注册未变。
+- `ShellPages.h` 已收口为兼容 include 头；`Application.cpp` 已完成 Home、Notifications、QuickSettings、Power、Daily、Health 的注册分流。
 
 拆分判断：
 
@@ -496,7 +496,7 @@ Forbidden changes:
 - `ShellPages.cpp` 中的零引用 dead residue 已清理，空壳文件也已删除，`CMakeLists.txt` 已移除其编译登记。
 - `WatchfacePage` 与 `HomeRingHostPage` 已迁入 `Shell/Home/ShellHomePages.cpp`，但 Watchface 的时间、电量、输入路径，以及 HomeRing 的 EventBus、preview、crown、卡片跳转和 daily 动态数据边界仍需谨慎手动回归。
 - `NotificationWakePage` 与 `NotificationsPage` 已迁入 `Shell/Notifications/ShellNotificationPages.cpp`，QuickSettings 页面实现也已迁入 `Shell/QuickSettings/ShellQuickSettingsPages.cpp`。
-- 剩余风险已从“页面迁移”转为“聚合头拆分、注册结构重组、手动 UI 回归”。
+- 剩余风险已从“页面迁移”转为“兼容聚合头维护、Launcher / Settings 注册尾巴、手动 UI 回归”。
 - 手动 UI 回归仍未执行，不应写成已通过。
 
 ## 聚合头状态
@@ -528,7 +528,7 @@ Forbidden changes:
 风险：
 
 - 仍可能让读者误以为相关页面需要从兼容聚合头进入。
-- 真正剩余风险已转向 `Application.cpp` 注册结构重组与手动 UI 回归。
+- 真正剩余风险已转向 `Application.cpp` 中 Launcher / Settings 注册尾巴、以及手动 UI 回归。
 
 ## 拆分状态矩阵
 
@@ -543,7 +543,7 @@ Forbidden changes:
 | Health / Sleep | `Health/SleepPages.cpp/.h` | 是 | 过渡 include 兼容 | 容易仍被误写成 Shell 子块 |
 | Health / BloodOxygen | `Health/BloodOxygenPages.cpp/.h` + helpers | 是 | 过渡 include 兼容 | shared helper 与页面关系不易看清 |
 | Health / HeartRate | `Health/HeartRatePages.cpp/.h` | 是 | 过渡 include 兼容 | 生命周期风险高 |
-| 剩余 Shell 收口层 | `ShellPages.h` + `Application.cpp` | 是 | `ShellPages.h` 仅过渡 include | 注册结构未收口 |
+| 剩余 Shell 收口层 | `ShellPages.h` + `Application.cpp` | 是 | `ShellPages.h` 仅过渡 include | Launcher / Settings 注册尾巴与手动回归 |
 
 ## 当前最需要避免的误判
 
@@ -586,7 +586,7 @@ Power 仍与：
 
 1. `Display`、`Power`、`Daily`、`Health` 页面实现已显著分域下沉。
 2. `SettingsPages.h` 仍承担 Settings 对外聚合入口，`ShellPages.h` 已收口为兼容 include 头。
-3. `Application.cpp` 的注册结构暂未变化，后续仍需要按领域分流。
+3. `Application.cpp` 已完成 Home、Notifications、QuickSettings、Power、Daily、Health 的注册分流；剩余讨论点集中在 Launcher 是否值得抽域注册，以及 Settings 长列表是否保留到后续阶段。
 4. `ShellPages.cpp` 当前已从构建退场；后续更像澄清聚合边界与注册结构，而不是继续迁页面。
 5. 后续任何关于“ShellPages 拆分是否继续”的讨论，都不应再基于早期“所有页面都还在壳层巨石里”的旧事实。
 
