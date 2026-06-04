@@ -1,6 +1,6 @@
 # Hardware Boundary Contract
 
-日期：2026-06-03
+日期：2026-06-04
 
 本文档只定义未来真实硬件接入时的上层职责边界与同步约束，不定义芯片、板卡、RTOS、驱动框架或目录骨架。
 
@@ -128,9 +128,34 @@ flowchart LR
 - Controller 和页面读取的是模型快照或事件 payload，不共享跨层可变裸状态。
 - 在定义清楚队列、线程归属和 snapshot 边界之前，不把当前同步 `EventBus` 直接搬到真实硬件线程环境。
 
+## 阶段 9 硬件闭环验收规则
+
+阶段 9 开始后，硬件桥接闭环必须至少有一轮在真实 MCU 上交叉编译并运行 Magic Watch 最小架构子集。
+
+第一条垂直切片固定为：
+
+```text
+AXP2101 -> hal::BatterySample -> BatteryPowerService -> DataCenter -> simplified EventBus -> Serial observer
+```
+
+验收必须包含：
+
+- T-Watch S3 Plus prototype 交叉编译通过。
+- 真机运行真实 FreeRTOS `Power_Task`，以 1Hz 轮询 AXP2101。
+- 板载 `DataCenter` 接收 `BatterySample`。
+- 板载 `EventBus` 发出 `BatteryChanged` 或等价电池变化事件。
+- 串口记录电池模型、`free_heap` 和 `Power_Task` high water mark。
+
+PC trace replay / log replay 只能作为辅助测试，用来复现样本、对比模型转换或做模拟器回归；不能作为阶段 9 硬件落地证明。
+
+本阶段不要求完整 Magic Watch UI 真机移植，也不要求最终硬件选型完成。
+
 ## 对后续实现轮次的约束
 
 - 若未来代码改动让 UI 直接访问 Driver / BSP / HAL，应视为边界破坏。
 - 若未来代码改动让 ISR 直接写页面状态、直接切页或直接发布 UI 事件，应视为边界破坏。
 - 若未来代码改动让 `DataCenter` 暴露可变裸引用，应视为边界破坏。
 - 若未来准备引入 RTOS，但尚未补充队列、线程归属和 snapshot 策略，则不得宣称硬件接入边界已收口。
+- 若未来只读取 AXP2101 并打印 PMU log，但没有把 Magic Watch 最小架构子集编译进 MCU，不得宣称阶段 9 硬件桥接完成。
+- 若未来只把硬件 log 回放到 PC 模拟器，不得宣称阶段 9 硬件桥接完成。
+- 若未来没有记录 `free_heap` 和 task high water mark，不得宣称资源边界已经完成初步验证。

@@ -4,6 +4,8 @@
 
 ## 当前主线
 
+阶段 8 已完成架构收口与手动 UI 回归闭环。当前主线推进到阶段 9：真实硬件桥接。阶段 9 不以 PC trace replay / log replay 作为硬件闭环验收，而以 T-Watch S3 Plus 真机上交叉编译并运行 Magic Watch 最小架构子集为第一证明点。
+
 ```mermaid
 flowchart LR
     HAL["HAL / SimulatorDevice\nfuture Driver/BSP boundary"]
@@ -49,7 +51,8 @@ flowchart LR
 - `DataCenter` 继续增加字段会形成超级对象风险。
 - `EventBus` 当前是同步分发，未来接 RTOS 或真实硬件时需要重新定义队列、快照或同步边界。
 - UI 生命周期契约已建立，`LvglTimerGuard` 已存在；裸 `lv_timer_t*` 仍需逐页小步迁移。
-- 未来真实硬件接入的职责边界已单独收口到 `docs/10_architecture/hardware_boundary.md`，后续硬件化应以该契约约束上层不回流到 HAL。
+- 阶段 9 已开始真实硬件桥接，PC replay 只能作为辅助测试；硬件闭环必须在真实 MCU 上运行最小架构子集。
+- `EventBus` 当前同步分发不能原样作为 RTOS 多任务边界证明；阶段 9 第一轮应使用简化板载子集，并记录 `free_heap` 与 task high water mark。
 
 ## 阶段 8 验收地图
 
@@ -81,6 +84,20 @@ flowchart LR
 8E：硬件接入边界文档契约（已完成）
 8F：手动 UI 回归闭环（已执行并通过）
 ```
+
+## 阶段 9 真实硬件桥接路线
+
+```text
+9A：阶段 9 文档入口与硬规则落档（当前轮）
+9B：T-Watch S3 Plus AXP2101 -> BatteryPowerStatus 底层读数闭环
+9C：hal::BatterySample / BatteryPowerService / DataCenter / simplified EventBus 最小子集下放
+9D：真实 FreeRTOS Power_Task + BatteryChanged 串口观测
+9E：记录可复用上层代码与暂不能下放的边界
+```
+
+阶段 9 第一条垂直切片只覆盖 Battery / PowerStatus，不接完整 UI、不接高频传感器、不绑定最终硬件选型。
+
+PC trace replay / log replay 可以作为辅助对照，但不能替代 T-Watch S3 Plus 真机上的交叉编译、运行、`free_heap` 与 task high water mark 观测。
 
 ## Scope Lock 模板
 

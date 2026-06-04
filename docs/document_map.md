@@ -1,6 +1,6 @@
 # Magic Watch 文档任务路由器
 
-日期：2026-06-02
+日期：2026-06-04
 
 本文件不再是“推荐阅读清单”，而是任务路由器。默认上下文必须短；历史文档可以检索，但不能污染每次新会话。
 
@@ -166,6 +166,22 @@
 
 - [current_architecture.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_architecture.md)
 - [current_decisions.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_decisions.md)
+
+### 我想进入阶段 9 真实硬件桥接
+
+先读：
+
+- [stage9_hardware_bridge_plan.md](/D:/MY_Desk/watch/magic_watch/docs/70_hardware_reference/stage9_hardware_bridge_plan.md)
+- [hardware_boundary.md](/D:/MY_Desk/watch/magic_watch/docs/10_architecture/hardware_boundary.md)
+- [twatch_s3_plus_reference_validation_run.md](/D:/MY_Desk/watch/magic_watch/docs/70_hardware_reference/twatch_s3_plus_reference_validation_run.md)，仅在需要核对 T-Watch S3 Plus 既有 bring-up 事实时补读。
+
+说明：
+
+- 阶段 9 第一真实硬件对象默认是现有 T-Watch S3 Plus。
+- 第一真实数据源默认是 AXP2101 / BatteryPowerStatus。
+- 硬件闭环必须在真实 MCU 上交叉编译并运行 Magic Watch 最小架构子集。
+- PC trace replay / log replay 只能作为辅助测试，不能作为阶段 9 硬件落地证明。
+- F411 旧板作为 STM32 + FreeRTOS + 多传感器经验对照，不作为第一桥接对象。
 
 ### 我想规划未来真实硬件接入，但不想提前绑定芯片或 RTOS
 

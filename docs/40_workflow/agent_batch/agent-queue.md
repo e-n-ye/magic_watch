@@ -6,6 +6,46 @@
 
 ## 当前队列
 
+### H9-Q2A T-Watch AXP2101 底层读数闭环
+
+- 状态：TODO
+- 卡片来源：cards/h9-hardware-bridge-q2.md
+- 执行范围：卡片 `H9-BRIDGE-2A`
+- 停止策略：队列项完成后停止
+- 验收后处理：从队列移除
+
+### H9-Q2B 最小架构子集下放
+
+- 状态：TODO
+- 卡片来源：cards/h9-hardware-bridge-q2.md
+- 执行范围：卡片 `H9-BRIDGE-2B`
+- 停止策略：队列项完成后停止
+- 验收后处理：从队列移除
+
+### H9-Q2C 真实 FreeRTOS Power_Task 闭环
+
+- 状态：TODO
+- 卡片来源：cards/h9-hardware-bridge-q2.md
+- 执行范围：卡片 `H9-BRIDGE-2C`
+- 停止策略：队列项完成后停止
+- 验收后处理：从队列移除
+
+### H9-Q2D 串口 BatteryChanged 事件观测
+
+- 状态：TODO
+- 卡片来源：cards/h9-hardware-bridge-q2.md
+- 执行范围：卡片 `H9-BRIDGE-2D`
+- 停止策略：队列项完成后停止
+- 验收后处理：从队列移除
+
+### H9-Q2E 复用边界记录
+
+- 状态：TODO
+- 卡片来源：cards/h9-hardware-bridge-q2.md
+- 执行范围：卡片 `H9-BRIDGE-2E`
+- 停止策略：队列项完成后停止
+- 验收后处理：从队列移除
+
 ## 队列项格式
 
 ```text

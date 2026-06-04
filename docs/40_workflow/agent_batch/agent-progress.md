@@ -211,3 +211,23 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：只清理已验收 DONE 队列项与 DONE 内联卡片，未触碰其它队列项、历史会话块或 inbox 草稿
 - 阻塞与待决：
 - 下一步：清理提交后，`agent_batch` 运行入口回到空闲状态；后续可直接规划下一阶段开发卡片
+
+### 会话 2026-06-04 16:30
+
+- 本轮范围：队列项 `H9-Q1`，卡片 `H9-DOC-1`
+- 完成：`H9-DOC-1`；阶段 9 真实硬件桥接方向已落档；`H9-Q2` 代码批次只记录为后续候选，未进入当前执行队列
+- 修改文件：`docs/70_hardware_reference/stage9_hardware_bridge_plan.md`、`docs/00_current/project_brief.md`、`docs/00_current/current_architecture.md`、`docs/10_architecture/hardware_boundary.md`、`docs/document_map.md`、`docs/40_workflow/agent_batch/agent-plan.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`git diff --check` 通过；本轮实际改动中文文档乱码哨兵检查无命中；`trace replay|replay|回放` 扫描命中均处于“辅助测试 / 不得作为验收”语境；`git status --short -uall` 只出现本轮允许文件
+- 风险回应：阶段 9 不接受 PC trace replay / log replay 作为硬件闭环验收；下一步必须以 T-Watch S3 Plus 真机交叉编译并运行 Battery / PowerStatus 最小架构子集为主线
+- 阻塞与待决：提交未完成；`git add` 写入 `.git` 时因当前 Codex usage limit 未获审批
+- 下一步：等待用户验收 `H9-Q1`；后续如进入代码，应从 T-Watch S3 Plus AXP2101 / BatteryPowerStatus 最小架构子集开始
+
+### 会话 2026-06-04 17:05
+
+- 本轮范围：已验收队列项 `H9-Q1` 收尾清理；阶段 9 代码批次 `H9-Q2` 队列与卡片生成
+- 完成：已从正式入口清理已验收 `H9-Q1`；已新增 `cards/h9-hardware-bridge-q2.md`；已建立 `H9-Q2A` 到 `H9-Q2E` 顺序队列，供后续目标模式逐卡执行
+- 修改文件：`docs/40_workflow/agent_batch/agent-plan.md`、`docs/40_workflow/agent_batch/cards/h9-hardware-bridge-q2.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：待提交前执行；重点检查 `git diff --check`、本轮实际改动中文文档乱码哨兵、队列与卡片依赖一致性
+- 风险回应：`H9-BRIDGE-2A` 到 `2E` 已拆成五个可独立验收闭环，避免把板级读数、架构下放、RTOS 任务、事件观测和复用边界混成一轮
+- 阻塞与待决：待提交；后续目标模式执行前仍需再次确认工作区干净
+- 下一步：提交文档与卡片入口；后续按 `agent-queue.md` 从 `H9-Q2A` 开始进入目标模式
