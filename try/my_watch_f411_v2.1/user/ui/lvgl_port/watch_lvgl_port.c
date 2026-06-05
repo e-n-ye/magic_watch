@@ -64,3 +64,12 @@ void watch_lvgl_port_init(void)
 
     s_lvgl_port_initialized = 1U;
 }
+
+void watch_lvgl_port_task(void)
+{
+    if (s_lvgl_port_initialized == 0U) {
+        return;
+    }
+
+    (void)lv_timer_handler();
+}

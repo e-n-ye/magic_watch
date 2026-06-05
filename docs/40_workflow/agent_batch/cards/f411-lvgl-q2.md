@@ -153,14 +153,15 @@ Forbidden changes:
 
 - 已完成：已新增 `user/ui/lvgl_port/watch_lvgl_port.*`，注册 LVGL display driver 和 draw buffer；已在 `watch_lcd` 暴露 `watch_lcd_draw_rgb565()`，flush 只通过该 API 写入 LCD，不直接操作 SPI/GPIO；MDK 工程已登记 `User/ui/lvgl_port` 分组；尚未接 `lv_timer_handler()`、encoder indev 或 LVGL screen。
 - 自检：`git diff --check` 通过，仅有 LF/CRLF 提示；定向扫描确认本轮未调用 `lv_timer_handler`、未注册 indev、未创建 label/screen；定向扫描确认 `watch_lvgl_port` 未直接引用 SPI/GPIO/HAL 句柄。
-- 编译：本机命令行无法执行 Keil / MDK 编译，需要用户本地编译验证。
+- 编译：用户已确认 `F411-LVGL-2` 本地 MDK 编译成功。
+- 后续优化：当前 flush 为逐行 RGB565 转换和阻塞 SPI 写入，仅作为 bring-up 基线；后续单独规划 SPI DMA / 大块刷屏优化。
 
 ---
 
 ## F411-LVGL-3 接 lv_tick / lv_timer_handler 到 FreeRTOS
 
 - 批次：F411-Q2
-- 状态：TODO
+- 状态：DONE
 - 依赖：`F411-LVGL-2`
 - 自检：
   - `git status --short -uall`
@@ -227,7 +228,9 @@ Forbidden changes:
 
 ### 执行记录
 
-- 待执行。
+- 已完成：已确认 `lv_conf.h` 使用 `LV_TICK_CUSTOM + HAL_GetTick()`，本轮不调用 `lv_tick_inc()`；已新增 `watch_lvgl_port_task()` 包装 `lv_timer_handler()`，并由 `watch_bringup_task()` 在 FreeRTOS defaultTask 路径中调用；尚未接 encoder indev 或 LVGL screen。
+- 自检：`git diff --check` 通过，仅有 LF/CRLF 提示；本轮中文文档乱码哨兵检查通过；定向扫描确认没有调用 `lv_tick_inc()`，没有注册 indev，没有创建 label/debug screen；`lv_timer_handler()` 只通过 `watch_lvgl_port_task()` 进入 defaultTask 调用链。
+- 编译：本机命令行无法执行 Keil / MDK 编译，需要用户本地编译验证。
 
 ---
 

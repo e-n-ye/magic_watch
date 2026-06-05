@@ -341,3 +341,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：本轮只接 display flush，不接 handler、encoder indev 或 LVGL screen；flush 不直接操作 SPI/GPIO，而是复用 `watch_lcd`
 - 阻塞与待决：本机命令行无法执行 Keil / MDK 编译，需要用户本地编译验证
 - 下一步：完成 MDK 登记和自检后，按每张卡后停止
+
+### 会话 2026-06-05 F411-LVGL-3 执行
+
+- 本轮范围：队列项 `F411-Q2`，卡片 `F411-LVGL-3`
+- 完成：`F411-LVGL-3`；确认 tick 使用 `LV_TICK_CUSTOM + HAL_GetTick()`，不调用 `lv_tick_inc()`；新增 `watch_lvgl_port_task()` 并由 `watch_bringup_task()` 在 defaultTask 路径调用
+- 修改文件：`try/my_watch_f411_v2.1/user/app/watch_bringup.c`、`try/my_watch_f411_v2.1/user/ui/lvgl_port/watch_lvgl_port.*`、`try/my_watch_f411_v2.1/README.md`、`docs/40_workflow/agent_batch/cards/f411-lvgl-q2.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`git diff --check` 通过，仅有 LF/CRLF 提示；本轮中文文档乱码哨兵检查通过；没有调用 `lv_tick_inc()`，没有注册 indev，没有创建 label/debug screen；`lv_timer_handler()` 只通过 `watch_lvgl_port_task()` 进入 defaultTask 调用链
+- 风险回应：本轮只接 handler 和 tick 策略，不新增 FreeRTOS task，不接 encoder indev，不创建 LVGL screen；LCD flush 性能优化只记录为后续项，不混入本轮
+- 阻塞与待决：本机命令行无法执行 Keil / MDK 编译，需要用户本地编译验证
+- 下一步：按每张卡后停止；如用户确认编译通过，下一张进入 `F411-LVGL-4` encoder indev

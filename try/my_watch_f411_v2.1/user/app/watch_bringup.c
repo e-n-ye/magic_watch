@@ -7,6 +7,7 @@
 #include "board/display/watch_lcd.h"
 #include "core/event/watch_event_queue.h"
 #include "services/input/watch_input_service.h"
+#include "ui/lvgl_port/watch_lvgl_port.h"
 
 static watch_event_queue_t s_event_queue;
 static watch_screen_manager_t s_screen_manager;
@@ -47,6 +48,7 @@ void watch_bringup_init(void)
     watch_screen_manager_init(&s_screen_manager);
     watch_lcd_init();
     watch_lcd_backlight_on();
+    watch_lvgl_port_init();
     watch_screen_manager_render(&s_screen_manager);
     watch_input_service_init();
 }
@@ -66,4 +68,6 @@ void watch_bringup_task(void)
         handle_app_event(&app_event);
         watch_screen_manager_render(&s_screen_manager);
     }
+
+    watch_lvgl_port_task();
 }
