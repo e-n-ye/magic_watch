@@ -1212,6 +1212,21 @@
           </Files>
         </Group>
         <Group>
+          <GroupName>User/app/lvgl_demo</GroupName>
+          <Files>
+            <File>
+              <FileName>watch_lvgl_debug_screen.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\user\app\lvgl_demo\watch_lvgl_debug_screen.c</FilePath>
+            </File>
+            <File>
+              <FileName>watch_lvgl_debug_screen.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\user\app\lvgl_demo\watch_lvgl_debug_screen.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
           <GroupName>User/app/input</GroupName>
           <Files>
             <File>

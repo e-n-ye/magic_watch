@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #include "app/input/watch_input_intent.h"
+#include "app/lvgl_demo/watch_lvgl_debug_screen.h"
 #include "app/screen/watch_screen_manager.h"
 #include "board/display/watch_lcd.h"
 #include "core/event/watch_event_queue.h"
@@ -24,6 +25,7 @@ static void publish_intent(watch_input_intent_t intent)
     app_event.payload.input_intent = intent;
     (void)watch_event_queue_push(&s_event_queue, app_event);
     watch_lvgl_port_feed_input_intent(intent);
+    watch_lvgl_debug_screen_on_input_intent(intent);
 }
 
 static void pump_input_events(void)
@@ -51,6 +53,7 @@ void watch_bringup_init(void)
     watch_lcd_backlight_on();
     watch_lvgl_port_init();
     watch_screen_manager_render(&s_screen_manager);
+    watch_lvgl_debug_screen_init();
     watch_input_service_init();
 }
 
