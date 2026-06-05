@@ -23,6 +23,7 @@ static void publish_intent(watch_input_intent_t intent)
     app_event.type = WATCH_APP_EVENT_INPUT_INTENT;
     app_event.payload.input_intent = intent;
     (void)watch_event_queue_push(&s_event_queue, app_event);
+    watch_lvgl_port_feed_input_intent(intent);
 }
 
 static void pump_input_events(void)

@@ -230,14 +230,14 @@ Forbidden changes:
 
 - 已完成：已确认 `lv_conf.h` 使用 `LV_TICK_CUSTOM + HAL_GetTick()`，本轮不调用 `lv_tick_inc()`；已新增 `watch_lvgl_port_task()` 包装 `lv_timer_handler()`，并由 `watch_bringup_task()` 在 FreeRTOS defaultTask 路径中调用；尚未接 encoder indev 或 LVGL screen。
 - 自检：`git diff --check` 通过，仅有 LF/CRLF 提示；本轮中文文档乱码哨兵检查通过；定向扫描确认没有调用 `lv_tick_inc()`，没有注册 indev，没有创建 label/debug screen；`lv_timer_handler()` 只通过 `watch_lvgl_port_task()` 进入 defaultTask 调用链。
-- 编译：本机命令行无法执行 Keil / MDK 编译，需要用户本地编译验证。
+- 编译：用户已确认 `F411-LVGL-3` 本地 MDK 编译成功。
 
 ---
 
 ## F411-LVGL-4 接 encoder indev
 
 - 批次：F411-Q2
-- 状态：TODO
+- 状态：DONE
 - 依赖：`F411-LVGL-3`
 - 自检：
   - `git status --short -uall`
@@ -301,7 +301,9 @@ Forbidden changes:
 
 ### 执行记录
 
-- 待执行。
+- 已完成：已在 `watch_lvgl_port` 注册 LVGL encoder indev；`watch_bringup_task()` 仍只从 `watch_input_service` 消费一次硬件事件，再把生成的编码器 `InputIntent` 同步 feed 给 LVGL port，避免 LVGL 与 ScreenManager 抢底层 FIFO；BACK / WAKE 仍不进入 LVGL 主 UI；尚未创建 LVGL screen。
+- 自检：`git diff --check` 通过，仅有 LF/CRLF 提示；本轮中文文档乱码哨兵检查通过；定向扫描确认 BACK / WAKE 未进入 `watch_lvgl_port` 或 `watch_bringup.c`，确认没有创建 label/debug screen；LVGL indev 注册只出现在 `watch_lvgl_port`。
+- 编译：本机命令行无法执行 Keil / MDK 编译，需要用户本地编译验证。
 
 ---
 

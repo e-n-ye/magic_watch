@@ -351,3 +351,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：本轮只接 handler 和 tick 策略，不新增 FreeRTOS task，不接 encoder indev，不创建 LVGL screen；LCD flush 性能优化只记录为后续项，不混入本轮
 - 阻塞与待决：本机命令行无法执行 Keil / MDK 编译，需要用户本地编译验证
 - 下一步：按每张卡后停止；如用户确认编译通过，下一张进入 `F411-LVGL-4` encoder indev
+
+### 会话 2026-06-05 F411-LVGL-4 执行
+
+- 本轮范围：队列项 `F411-Q2`，卡片 `F411-LVGL-4`
+- 完成：`F411-LVGL-4`；注册 LVGL encoder indev，并通过 `InputIntent` feed 旋转与按压语义，避免 LVGL 与 ScreenManager 抢底层输入 FIFO
+- 修改文件：`try/my_watch_f411_v2.1/user/ui/lvgl_port/watch_lvgl_port.*`、`try/my_watch_f411_v2.1/user/app/watch_bringup.c`、`try/my_watch_f411_v2.1/README.md`、`docs/40_workflow/agent_batch/cards/f411-lvgl-q2.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`git diff --check` 通过，仅有 LF/CRLF 提示；本轮中文文档乱码哨兵检查通过；BACK / WAKE 未进入 LVGL port 或 bringup 主路径；没有创建 label/debug screen；LVGL indev 注册只出现在 `watch_lvgl_port`
+- 风险回应：本轮不改编码器硬件扫描和消抖语义，不把 BACK / WAKE 接入 LVGL 主 UI，不创建 LVGL screen
+- 阻塞与待决：本机命令行无法执行 Keil / MDK 编译，需要用户本地编译验证
+- 下一步：按每张卡后停止；如用户确认编译通过，下一张进入 `F411-LVGL-5` 最小 label/debug screen
