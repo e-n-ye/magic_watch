@@ -8,9 +8,17 @@
 
 ### F411-Q2 最小 LVGL 移植闭环
 
-- 状态：IN_PROGRESS
+- 状态：DONE
 - 卡片来源：cards/f411-lvgl-q2.md
 - 执行范围：卡片 `F411-LVGL-1` / `F411-LVGL-2` / `F411-LVGL-3` / `F411-LVGL-4` / `F411-LVGL-5`
+- 停止策略：每张卡后停止
+- 验收后处理：从队列移除
+
+### F411-Q3 LVGL 性能基线与 SPI DMA 准备
+
+- 状态：IN_PROGRESS
+- 卡片来源：cards/f411-lvgl-perf-q3.md
+- 执行范围：卡片 `F411-LVGL-PERF-1` / `F411-LVGL-PERF-2` / `F411-LVGL-DMA-PREP` / `F411-LVGL-DMA-1` / `F411-LVGL-DMA-2` / `F411-LVGL-DMA-3`
 - 停止策略：每张卡后停止
 - 验收后处理：从队列移除
 

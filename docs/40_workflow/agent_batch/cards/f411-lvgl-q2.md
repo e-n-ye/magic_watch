@@ -380,4 +380,4 @@ Forbidden changes:
 
 - 已完成：已新增 `user/app/lvgl_demo/watch_lvgl_debug_screen.*`，在 LVGL active screen 上创建一个最小 label，显示事件计数和最后一次编码器输入语义；`watch_bringup` 只调用 init / on_input_intent，不引入 PageManager，不迁移模拟器 UI，不删除现有 LCD Debug Screen 代码。
 - 自检：`git diff --check` 通过，仅有 LF/CRLF 提示；本轮中文文档乱码哨兵检查通过；定向扫描确认没有引入 PageManager、模拟器 UI、stdio 格式化、heap API 或 C++ 容器；MDK 工程已登记 `User/app/lvgl_demo`。
-- 编译与真机：本机命令行无法执行 Keil / MDK 编译；需要用户本地编译并真机验证最小 LVGL label/debug screen。
+- 编译与真机：本机命令行无法执行 Keil / MDK 编译；用户已确认真机现象正常，屏幕显示最小 LVGL label/debug screen，编码器事件能改变计数和最后输入语义。

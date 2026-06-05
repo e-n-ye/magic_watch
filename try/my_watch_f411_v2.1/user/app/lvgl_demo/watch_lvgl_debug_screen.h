@@ -5,5 +5,6 @@
 
 void watch_lvgl_debug_screen_init(void);
 void watch_lvgl_debug_screen_on_input_intent(watch_input_intent_t intent);
+void watch_lvgl_debug_screen_task(void);
 
 #endif /* WATCH_LVGL_DEBUG_SCREEN_H */

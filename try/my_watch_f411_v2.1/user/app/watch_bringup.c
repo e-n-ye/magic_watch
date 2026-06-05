@@ -74,4 +74,5 @@ void watch_bringup_task(void)
     }
 
     watch_lvgl_port_task();
+    watch_lvgl_debug_screen_task();
 }
