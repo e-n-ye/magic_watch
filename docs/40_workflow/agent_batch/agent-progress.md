@@ -301,3 +301,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：用户明确要求三张卡做完后统一提交，本轮不按 `agent-progress.md` 默认自动逐卡提交；`F411-Q1` 不移植 LVGL、不接传感器、不做 USB/FATFS/蓝牙、不搬模拟器 UI
 - 阻塞与待决：等待用户执行最后一轮真机手动回归；回归通过前不统一提交
 - 下一步：用户在 Keil 编译并烧录后验证最小屏幕状态；通过后由 Agent 标记 `F411-CORE-3` / `F411-Q1` DONE 并统一提交
+
+### 会话 2026-06-05 F411-Q1 验收与 F411-Q2 规划
+
+- 本轮范围：`F411-Q1` 用户验收收口；规划 `F411-Q2` 最小 LVGL 移植闭环
+- 完成：根据用户确认 `F411-Q1 编译通过，真机回归通过`，已将 `F411-CORE-3` 标记为 DONE，并按验收后处理从队列移除 `F411-Q1`；已新增 `F411-Q2` 队列项与 `cards/f411-lvgl-q2.md`
+- 修改文件：`docs/40_workflow/agent_batch/cards/f411-core-q1.md`、`docs/40_workflow/agent_batch/cards/f411-lvgl-q2.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：待提交前执行 `git diff --check` 与本轮中文文档乱码哨兵检查
+- 风险回应：`F411-Q2` 只规划最小 LVGL 编译、flush、tick/handler、encoder indev、label/debug screen；不搬模拟器页面、不接传感器、不做 USB/FATFS/蓝牙、不重写 FreeRTOS 结构
+- 阻塞与待决：`F411-Q2` 执行时每张卡后停止，避免一次性引入过多 LVGL 变量
+- 下一步：用户进入目标模式后，从 `F411-LVGL-1` 开始逐卡执行

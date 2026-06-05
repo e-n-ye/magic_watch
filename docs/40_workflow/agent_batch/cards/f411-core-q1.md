@@ -160,7 +160,7 @@ Forbidden changes:
 ## F411-CORE-3 最小 ScreenManager
 
 - 批次：F411-Q1
-- 状态：IN_PROGRESS
+- 状态：DONE
 - 依赖：`F411-CORE-2`
 - 自检：
   - `git status --short -uall`
@@ -230,4 +230,4 @@ Forbidden changes:
 - 代码已完成：新增 `user/app/screen/watch_screen_manager.*`，编码器输入已按 `InputIntent -> EventQueue-lite -> ScreenManager -> LCD Debug Screen` 链路消费。
 - 自检：应用层 BACK / WAKE 扫描无命中；heap / 动态对象扫描无命中；LVGL / 传感器 / USB / FATFS / 蓝牙误触扫描无命中；MDK 工程已登记 `User/app/screen`；`git diff --check` 通过，仅有 LF/CRLF 提示；本轮中文文档乱码哨兵检查通过。
 - 编译：本机命令行未找到 `UV4.exe` / `armcc`，Keil / MDK 编译需由用户本地执行。
-- 手动回归：等待用户真机验证编码器旋转、短按、长按能驱动最小屏幕状态变化。
+- 手动回归：用户已确认 `F411-Q1 编译通过，真机回归通过`；编码器旋转、短按、长按能驱动最小屏幕状态变化。
