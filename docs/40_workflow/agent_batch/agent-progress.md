@@ -321,3 +321,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：本轮只做编译源登记与配置收窄，不接 display flush、不接 handler、不接 encoder indev、不创建 LVGL screen，不改变真机显示行为
 - 阻塞与待决：本机命令行无法执行 Keil / MDK 编译；需要用户本地编译验证
 - 下一步：按“每张卡后停止”策略停止；如用户确认编译通过，下一张进入 `F411-LVGL-2` display flush
+
+### 会话 2026-06-05 F411-LVGL-1 编译补丁
+
+- 本轮范围：`F411-LVGL-1` 本地 MDK 编译反馈修复
+- 完成：补登记 `src/extra/lv_extra.c`，解决 `lv_obj.o` 引用 `lv_extra_init` 的链接缺口
+- 修改文件：`try/my_watch_f411_v2.1/MDK-ARM/my_watch_f411.uvprojx`、`docs/40_workflow/agent_batch/cards/f411-lvgl-q2.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：待提交前执行 `git diff --check`、中文文档乱码哨兵、MDK 禁止源扫描
+- 风险回应：只补 LVGL 8.2 必需的 `lv_extra.c` 初始化入口，不登记 extra widgets/libs/layouts/themes 大包；当前 `lv_conf.h` 仍关闭 flex/grid/fs/png 等 extra 功能
+- 阻塞与待决：需要用户重新执行 MDK 编译确认链接是否继续前进
+- 下一步：若仍有缺失符号，继续按编译错误补最小源；若编译通过，再进入 `F411-LVGL-2`

@@ -1440,6 +1440,11 @@
               <FilePath>..\user\third_party\lvgl\lvgl\src\font\lv_font_montserrat_14.c</FilePath>
             </File>
             <File>
+              <FileName>lv_extra.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\user\third_party\lvgl\lvgl\src\extra\lv_extra.c</FilePath>
+            </File>
+            <File>
               <FileName>lv_hal_disp.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\user\third_party\lvgl\lvgl\src\hal\lv_hal_disp.c</FilePath>

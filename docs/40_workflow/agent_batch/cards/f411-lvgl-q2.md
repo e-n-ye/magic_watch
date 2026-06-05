@@ -76,8 +76,9 @@ Forbidden changes:
 ### 执行记录
 
 - 已完成：已将 `lv_conf.h` 从旧项目 UI 配置收窄到最小 label bring-up 配置，关闭未用字体、控件、extra component、默认主题和 flex；已在 MDK 工程登记 LVGL core / draw / draw_sw / font / hal / misc / label 最小源组与 include path；未接 display flush、handler、encoder indev 或 LVGL screen。
-- 自检：`git diff --check` 通过，仅有 LF/CRLF 提示；定向扫描确认 MDK 工程未登记 SDL、GPU、extra、demo、examples、old porting 或旧控件源；定向扫描确认 `lv_conf.h` 未残留启用旧控件和大字体。
-- 编译：本机命令行仍无法执行 Keil / MDK 编译；需要用户在 MDK 中执行编译验证。
+- 补充修复：用户本地 MDK 编译暴露 `lv_obj.o` 引用 `lv_extra_init` 未解析；LVGL 8.2 的 `lv_obj.c` 无条件调用 `lv_extra_init()`，因此已补登记 `src/extra/lv_extra.c`。当前 `lv_conf.h` 关闭 flex/grid/fs/png 等 extra 功能，`lv_extra.c` 只作为最小初始化入口，不引入 extra 大包。
+- 自检：`git diff --check` 通过，仅有 LF/CRLF 提示；定向扫描确认 MDK 工程未登记 SDL、GPU、demo、examples、old porting 或旧控件源；定向扫描确认 `lv_conf.h` 未残留启用旧控件和大字体。
+- 编译：用户本地 MDK 编译先暴露 `lv_extra_init` 未解析；已补登记 `lv_extra.c`，需要用户重新编译验证。
 
 ---
 
