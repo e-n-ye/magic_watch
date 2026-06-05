@@ -311,3 +311,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：`F411-Q2` 只规划最小 LVGL 编译、flush、tick/handler、encoder indev、label/debug screen；不搬模拟器页面、不接传感器、不做 USB/FATFS/蓝牙、不重写 FreeRTOS 结构
 - 阻塞与待决：`F411-Q2` 执行时每张卡后停止，避免一次性引入过多 LVGL 变量
 - 下一步：用户进入目标模式后，从 `F411-LVGL-1` 开始逐卡执行
+
+### 会话 2026-06-05 F411-LVGL-1 执行
+
+- 本轮范围：队列项 `F411-Q2`，卡片 `F411-LVGL-1`
+- 完成：`F411-LVGL-1`；已完成最小 LVGL 编译源登记和 `lv_conf.h` 最小 label bring-up 配置收窄
+- 修改文件：`try/my_watch_f411_v2.1/MDK-ARM/my_watch_f411.uvprojx`、`try/my_watch_f411_v2.1/user/third_party/lvgl/lv_conf.h`、`try/my_watch_f411_v2.1/README.md`、`docs/40_workflow/agent_batch/cards/f411-lvgl-q2.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`git diff --check` 通过，仅有 LF/CRLF 提示；MDK 工程未登记 SDL、GPU、extra、demo、examples、old porting 或旧控件源；`lv_conf.h` 未残留启用旧控件和大字体
+- 风险回应：本轮只做编译源登记与配置收窄，不接 display flush、不接 handler、不接 encoder indev、不创建 LVGL screen，不改变真机显示行为
+- 阻塞与待决：本机命令行无法执行 Keil / MDK 编译；需要用户本地编译验证
+- 下一步：按“每张卡后停止”策略停止；如用户确认编译通过，下一张进入 `F411-LVGL-2` display flush
