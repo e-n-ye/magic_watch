@@ -2,15 +2,20 @@
 
 #include <stdint.h>
 
+#include "config/user_config.h"
 #include "lvgl.h"
 #include "ui/lvgl_port/watch_lvgl_port.h"
 
+#define WATCH_DEBUG_SCREEN_REFRESH_MS 500U
+#define WATCH_DEBUG_SCREEN_FULL_PIXELS ((uint32_t)WATCH_LCD_WIDTH * (uint32_t)WATCH_LCD_HEIGHT)
+
 static lv_obj_t *s_status_label;
 static uint32_t s_input_count;
+static uint32_t s_idle_pulse;
 static watch_input_intent_t s_last_intent = WATCH_INPUT_INTENT_NONE;
 static watch_lvgl_perf_snapshot_t s_perf_snapshot;
 static uint32_t s_last_perf_refresh_ms;
-static char s_label_text[192];
+static char s_label_text[224];
 
 static const char *intent_text(watch_input_intent_t intent)
 {
@@ -63,12 +68,27 @@ static char *append_u32(char *dst, uint32_t value)
     return dst;
 }
 
+static char *append_u32_x10(char *dst, uint32_t value_x10)
+{
+    dst = append_u32(dst, value_x10 / 10U);
+    *dst = '.';
+    dst++;
+    *dst = (char)('0' + (value_x10 % 10U));
+    return dst + 1;
+}
+
 static void render_label(void)
 {
     char *cursor = s_label_text;
+    uint32_t full_per_sec_x10 = 0U;
 
     if (s_status_label == 0) {
         return;
+    }
+
+    if (WATCH_DEBUG_SCREEN_FULL_PIXELS != 0U) {
+        full_per_sec_x10 = (uint32_t)(((uint64_t)s_perf_snapshot.pixels_per_sec * 10ULL) /
+                                      (uint64_t)WATCH_DEBUG_SCREEN_FULL_PIXELS);
     }
 
     cursor = append_text(cursor, "F411 LVGL\n");
@@ -77,13 +97,17 @@ static void render_label(void)
     cursor = append_u32(cursor, s_input_count);
     cursor = append_text(cursor, "\nlast: ");
     cursor = append_text(cursor, intent_text(s_last_intent));
-    cursor = append_text(cursor, "\nflush/s: ");
+    cursor = append_text(cursor, "\npulse: ");
+    cursor = append_u32(cursor, s_idle_pulse);
+    cursor = append_text(cursor, "\ncalls/s: ");
     cursor = append_u32(cursor, s_perf_snapshot.flush_per_sec);
-    cursor = append_text(cursor, "\npx/s: ");
+    cursor = append_text(cursor, "\nfull/s: ");
+    cursor = append_u32_x10(cursor, full_per_sec_x10);
+    cursor = append_text(cursor, "\npixels/s: ");
     cursor = append_u32(cursor, s_perf_snapshot.pixels_per_sec);
     cursor = append_text(cursor, "\nlast ms: ");
     cursor = append_u32(cursor, s_perf_snapshot.last_flush_ms);
-    cursor = append_text(cursor, "\nhandler/s: ");
+    cursor = append_text(cursor, "\nlvgl/s: ");
     cursor = append_u32(cursor, s_perf_snapshot.handler_per_sec);
     *cursor = '\0';
 
@@ -121,11 +145,12 @@ void watch_lvgl_debug_screen_task(void)
         return;
     }
 
-    if (lv_tick_elaps(s_last_perf_refresh_ms) < 500U) {
+    if (lv_tick_elaps(s_last_perf_refresh_ms) < WATCH_DEBUG_SCREEN_REFRESH_MS) {
         return;
     }
 
     watch_lvgl_port_get_perf_snapshot(&s_perf_snapshot);
+    s_idle_pulse++;
     s_last_perf_refresh_ms = lv_tick_get();
     render_label();
 }

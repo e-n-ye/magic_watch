@@ -381,3 +381,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：本轮只显示 `flush/s`、`px/s`、`last ms`、`handler/s` 基线，不改 SPI 发送路径、不启用 DMA、不修改 CubeMX 生成代码；DMA 底层配置明确留给用户通过 CubeMX 完成
 - 阻塞与待决：等待用户本地 MDK 编译和真机验证性能指标显示
 - 下一步：按每张卡后停止；用户验证 `F411-LVGL-PERF-1` 通过后，下一张进入 `F411-LVGL-PERF-2` RGB565 / 字体显示质量验证
+
+### 会话 2026-06-05 F411-LVGL-PERF-1B 执行
+
+- 本轮范围：队列项 `F411-Q3`，卡片 `F411-LVGL-PERF-1B`
+- 完成：`F411-LVGL-PERF-1B`；已把 LVGL 性能指标改成更可读的 debug 仪表，并增加无输入时的 `pulse` 可控刷新源
+- 修改文件：`try/my_watch_f411_v2.1/user/app/lvgl_demo/watch_lvgl_debug_screen.c`、`try/my_watch_f411_v2.1/README.md`、`docs/40_workflow/agent_batch/cards/f411-lvgl-perf-q3.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`git diff --check` 通过，仅有 LF/CRLF 提示；本轮实际改动中文文档乱码哨兵检查通过；定向扫描确认未修改 `watch_lcd`、CubeMX 生成代码或 MDK 工程，未启用 DMA；本机命令行无法执行 Keil / MDK 编译
+- 风险回应：本轮只改 debug 展示和说明，不改 SPI / LCD 发送实现、不启用 DMA、不修改 CubeMX 生成代码、不修改 MDK 工程
+- 阻塞与待决：等待用户本地 MDK 编译和真机验证 `pulse` 是否无输入递增
+- 下一步：按每张卡后停止；用户验证通过后，下一张进入 `F411-LVGL-PERF-2` RGB565 / 字体显示质量验证

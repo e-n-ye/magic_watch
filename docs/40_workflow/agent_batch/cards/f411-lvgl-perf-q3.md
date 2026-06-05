@@ -82,6 +82,79 @@ Forbidden changes:
 
 ---
 
+## F411-LVGL-PERF-1B 改善性能指标可读性并增加可控刷新源
+
+- 批次：F411-Q3
+- 状态：DONE
+- 依赖：`F411-LVGL-PERF-1`
+- 自检：
+  - `git status --short -uall`
+  - Keil / MDK 工程编译通过，或如本机无法编译则明确记录未执行原因
+  - `git diff --check`
+  - 真机观察：debug label 显示 `pulse`、`calls/s`、`full/s`、`pixels/s`、`last ms`、`lvgl/s`；无外部输入时 `pulse` 会周期递增
+- 建议提交信息：`feat: clarify f411 lvgl perf metrics`
+- Doc Impact：small
+
+### 问题定位
+
+`F411-LVGL-PERF-1` 直接显示了内部计数器，但 `flush/s` 容易被误解为 FPS，`px/s` 不直观，且没有外部输入时界面不产生新的脏区，导致指标看起来像“卡住”。
+
+### 实施方案
+
+1. 将指标文案改成人能理解的 debug 仪表：
+   - `calls/s`：每秒 flush 调用次数，不等于 FPS。
+   - `full/s`：按屏幕总像素折算的等效全屏刷新率。
+   - `pixels/s`：每秒实际刷出的像素数量。
+   - `last ms`：最近一次 flush 耗时。
+   - `lvgl/s`：`lv_timer_handler()` 调用频率。
+2. 增加 `pulse` 计数，作为无输入时的可控刷新源。
+3. 不改 SPI / LCD 发送实现，不接 DMA，不改 CubeMX。
+
+### 涉及位置
+
+Allowed files:
+
+- `try/my_watch_f411_v2.1/user/app/lvgl_demo/watch_lvgl_debug_screen.c`
+- `try/my_watch_f411_v2.1/README.md`
+- `docs/40_workflow/agent_batch/cards/f411-lvgl-perf-q3.md`
+- `docs/40_workflow/agent_batch/agent-queue.md`
+- `docs/40_workflow/agent_batch/agent-progress.md`
+
+Read-only files:
+
+- `try/my_watch_f411_v2.1/user/ui/lvgl_port/**`
+- `try/my_watch_f411_v2.1/user/board/display/watch_lcd.*`
+- `try/my_watch_f411_v2.1/user/third_party/lvgl/**`
+- `try/my_watch_f411_v2.1/Core/**`
+- `try/my_watch_f411_v2.1/MDK-ARM/**`
+
+Forbidden changes:
+
+- 禁止修改 SPI / LCD 发送实现。
+- 禁止修改 CubeMX 生成代码。
+- 禁止修改 MDK 工程登记。
+- 禁止启用 DMA。
+- 禁止迁移模拟器 UI。
+
+### 风险
+
+- `pulse` 是人为制造的 debug 刷新源，适合性能基线和 DMA 前后对比，不代表最终产品 UI 必须常刷。
+
+### 验收标准
+
+- debug label 的指标含义更清楚。
+- 无外部输入时 `pulse` 周期递增，并带动指标刷新。
+- 不改变现有阻塞 SPI flush 路径。
+- 构建通过。
+
+### 执行记录
+
+- 已完成：已将指标改为 `pulse`、`calls/s`、`full/s`、`pixels/s`、`last ms`、`lvgl/s`；`pulse` 每 500ms 递增，作为无输入时的可控刷新源。
+- 自检：`git diff --check` 通过，仅有 LF/CRLF 提示；本轮实际改动中文文档乱码哨兵检查通过；定向扫描确认未修改 `watch_lcd`、CubeMX 生成代码或 MDK 工程，未启用 DMA。
+- 编译与真机：本机命令行无法执行 Keil / MDK 编译，需要用户本地编译并真机验证。
+
+---
+
 ## F411-LVGL-PERF-2 验证 RGB565 字节序和字体显示质量
 
 - 批次：F411-Q3
