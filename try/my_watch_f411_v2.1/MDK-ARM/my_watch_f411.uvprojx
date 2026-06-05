@@ -1242,6 +1242,21 @@
           </Files>
         </Group>
         <Group>
+          <GroupName>User/ui/lvgl_port</GroupName>
+          <Files>
+            <File>
+              <FileName>watch_lvgl_port.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\user\ui\lvgl_port\watch_lvgl_port.c</FilePath>
+            </File>
+            <File>
+              <FileName>watch_lvgl_port.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\user\ui\lvgl_port\watch_lvgl_port.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
           <GroupName>User/third_party/lvgl/minimal</GroupName>
           <Files>
             <File>

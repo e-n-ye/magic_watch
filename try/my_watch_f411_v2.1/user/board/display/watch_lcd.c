@@ -197,6 +197,46 @@ void watch_lcd_fill_rect(uint16_t x, uint16_t y, uint16_t width, uint16_t height
     lcd_unselect();
 }
 
+void watch_lcd_draw_rgb565(uint16_t x, uint16_t y, uint16_t width, uint16_t height, const uint16_t *pixels)
+{
+    uint16_t row;
+    uint16_t column;
+    uint16_t line_bytes;
+    uint16_t src_width;
+    const uint16_t *src;
+    uint16_t pixel;
+
+    if ((pixels == 0) || (width == 0U) || (height == 0U) || (x >= WATCH_LCD_WIDTH) || (y >= WATCH_LCD_HEIGHT)) {
+        return;
+    }
+
+    src_width = width;
+
+    if ((uint32_t)x + width > WATCH_LCD_WIDTH) {
+        width = (uint16_t)(WATCH_LCD_WIDTH - x);
+    }
+    if ((uint32_t)y + height > WATCH_LCD_HEIGHT) {
+        height = (uint16_t)(WATCH_LCD_HEIGHT - y);
+    }
+
+    line_bytes = (uint16_t)(width * 2U);
+
+    lcd_select();
+    lcd_set_window(x, y, (uint16_t)(x + width - 1U), (uint16_t)(y + height - 1U));
+
+    for (row = 0U; row < height; ++row) {
+        src = &pixels[(uint32_t)row * src_width];
+        for (column = 0U; column < width; ++column) {
+            pixel = src[column];
+            s_line_buf[(uint16_t)(column * 2U)] = (uint8_t)(pixel >> 8);
+            s_line_buf[(uint16_t)(column * 2U + 1U)] = (uint8_t)(pixel & 0xFFU);
+        }
+        lcd_write_bytes(s_line_buf, line_bytes);
+    }
+
+    lcd_unselect();
+}
+
 void watch_lcd_show_bringup_pattern(void)
 {
     uint16_t stripe = (uint16_t)(WATCH_LCD_HEIGHT / 7U);

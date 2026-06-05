@@ -25,7 +25,7 @@
 - MDK 工程文件已收窄到当前 bring-up 所需的最小用户代码和必要外设。
 - 应用层事件入口使用固定数组 `EventQueue-lite`，当前只承载输入语义事件，不使用 heap 或复杂订阅机制。
 - 当前已存在最小 `ScreenManager`，只使用 LCD 直绘做 Debug Screen 验证；下一批才考虑接入 LVGL。
-- LVGL 已按最小 label bring-up 目标收窄配置并登记到 MDK 工程；当前只完成编译源登记，尚未接 display flush、handler、encoder indev 或 LVGL screen。
+- LVGL 已按最小 label bring-up 目标收窄配置并登记到 MDK 工程；当前已有项目自有 display flush port，flush 复用 `watch_lcd_draw_rgb565()`，尚未接 handler、encoder indev 或 LVGL screen。
 
 ## 下一步方向
 

@@ -18,6 +18,7 @@ void watch_lcd_backlight_on(void);
 void watch_lcd_backlight_set(uint8_t percent);
 void watch_lcd_fill(uint16_t color);
 void watch_lcd_fill_rect(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint16_t color);
+void watch_lcd_draw_rgb565(uint16_t x, uint16_t y, uint16_t width, uint16_t height, const uint16_t *pixels);
 void watch_lcd_show_bringup_pattern(void);
 
 #endif /* WATCH_LCD_H */
