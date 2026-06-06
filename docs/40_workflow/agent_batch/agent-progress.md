@@ -503,3 +503,14 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：本轮只验证颜色和字体显示质量，不改 SPI / DMA，不迁移 PC XML UI，不接真实传感器、USB、FATFS 或蓝牙
 - 阻塞与待决：无
 - 下一步：用户建议在进入 SPI DMA 前增加用户可感知帧率；建议新增小卡 `F411-LVGL-PERF-2B` 启用 LVGL 自带 perf monitor，显示 FPS/CPU 后再进入 `F411-LVGL-DMA-PREP`
+
+### 会话 2026-06-06 F411-LVGL-PERF-2B
+
+- 本轮范围：队列项 `F411-Q3`，卡片 `F411-LVGL-PERF-2B`
+- 完成：已新增并执行 `F411-LVGL-PERF-2B`；经用户真机观察确认 LVGL 自带 perf monitor 显示 `86`、`70`、`100` 等假高/跳变值，不适合作为主指标；已关闭内建 perf monitor，改用 display `monitor_cb` 按 1 秒墙钟窗口统计有效刷新周期数，并在右下角独立显示有效 `fps` 和最近一次刷新 `ms`；已新增固定 FPS 负载探针，黄色 marker 约每 33ms 移动一次并主动刷新 220x24 区域
+- 修改文件：`try/my_watch_f411_v2.1/user/app/lvgl_demo/watch_lvgl_debug_screen.c`、`try/my_watch_f411_v2.1/user/ui/lvgl_port/watch_lvgl_port.*`、`try/my_watch_f411_v2.1/user/third_party/lvgl/lv_conf.h`、`try/my_watch_f411_v2.1/README.md`、`docs/40_workflow/agent_batch/cards/f411-lvgl-perf-q3.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：待本轮静态检查和中文乱码哨兵；本机不能执行 Keil / MDK 编译和 F411 真机观察
+- 风险回应：本轮只建立有效刷新 FPS 指标，不接 DMA、不改 SPI / LCD 发送实现、不迁移 PC XML UI；`fps/s` 不替代底层 flush 指标
+- 阻塞与待决：无
+- 真机验证：用户确认静态刷新负载下 `fps` 稳定在 25~26，暴力旋转编码器时降到 2~5；该指标可作为 DMA 前用户可感知刷新基线
+- 下一步：进入 `F411-LVGL-DMA-PREP`，先由用户通过 CubeMX 配置 SPI1 TX DMA 并重新生成工程；本阶段不手写 CubeMX DMA 初始化

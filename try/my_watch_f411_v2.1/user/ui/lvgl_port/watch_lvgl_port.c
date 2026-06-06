@@ -17,6 +17,7 @@ static int16_t s_encoder_diff;
 static uint8_t s_encoder_press_pulse;
 static uint8_t s_lvgl_port_initialized;
 static uint32_t s_perf_window_start_ms;
+static uint32_t s_refresh_count_accum;
 static uint32_t s_flush_count_accum;
 static uint32_t s_pixels_accum;
 static uint32_t s_handler_count_accum;
@@ -32,6 +33,15 @@ static uint32_t scale_to_per_sec(uint32_t value, uint32_t elapsed_ms)
 
     scaled = ((uint64_t)value * 1000ULL) / (uint64_t)elapsed_ms;
     return (scaled > UINT32_MAX) ? UINT32_MAX : (uint32_t)scaled;
+}
+
+static void watch_lvgl_monitor(lv_disp_drv_t *disp_drv, uint32_t time, uint32_t px)
+{
+    (void)disp_drv;
+    (void)px;
+
+    s_refresh_count_accum++;
+    s_perf_snapshot.last_refresh_ms = time;
 }
 
 static void watch_lvgl_flush(lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_color_t *color_p)
@@ -101,6 +111,7 @@ void watch_lvgl_port_init(void)
     s_disp_drv.hor_res = WATCH_LCD_WIDTH;
     s_disp_drv.ver_res = WATCH_LCD_HEIGHT;
     s_disp_drv.flush_cb = watch_lvgl_flush;
+    s_disp_drv.monitor_cb = watch_lvgl_monitor;
     s_disp_drv.draw_buf = &s_draw_buf;
     (void)lv_disp_drv_register(&s_disp_drv);
 
@@ -148,10 +159,12 @@ void watch_lvgl_port_task(void)
 
     elapsed_ms = lv_tick_elaps(s_perf_window_start_ms);
     if (elapsed_ms >= 1000U) {
+        s_perf_snapshot.refresh_per_sec = scale_to_per_sec(s_refresh_count_accum, elapsed_ms);
         s_perf_snapshot.flush_per_sec = scale_to_per_sec(s_flush_count_accum, elapsed_ms);
         s_perf_snapshot.pixels_per_sec = scale_to_per_sec(s_pixels_accum, elapsed_ms);
         s_perf_snapshot.handler_per_sec = scale_to_per_sec(s_handler_count_accum, elapsed_ms);
 
+        s_refresh_count_accum = 0U;
         s_flush_count_accum = 0U;
         s_pixels_accum = 0U;
         s_handler_count_accum = 0U;

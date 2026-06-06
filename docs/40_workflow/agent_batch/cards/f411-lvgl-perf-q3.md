@@ -218,6 +218,74 @@ Forbidden changes:
 
 ---
 
+## F411-LVGL-PERF-2B 建立有效刷新 FPS 指标
+
+- 批次：F411-Q3
+- 状态：DONE
+- 依赖：`F411-LVGL-PERF-2`
+- 自检：`git status --short -uall`；Keil / MDK 编译；`git diff --check`；真机观察黄色 FPS 负载 marker 持续移动，底部 `fps/s` 稳定且不频繁跳到 `100`
+- 建议提交信息：`test: enable f411 lvgl perf monitor`
+- Doc Impact：small
+
+### 问题定位
+
+当前自定义指标能说明 flush 调用、像素吞吐和最近一次 flush 耗时，但缺少用户可感知的 FPS 口径。LVGL 自带 perf monitor 在当前场景中会按渲染耗时折算理论 FPS，并可能显示 `100 FPS` 假高值，因此需要改用 `monitor_cb` 按墙钟时间统计有效刷新周期。
+
+### 实施方案
+
+1. 关闭 LVGL 自带 `LV_USE_PERF_MONITOR`，避免显示理论假高值。
+2. 通过 LVGL display `monitor_cb` 记录有效刷新周期数和最近一次刷新周期耗时。
+3. 增加固定 FPS 负载探针，约每 33ms 移动一次，并主动刷新大于 5000 像素的区域。
+4. 在右下角独立徽标中显示有效 `fps` 和最近一次刷新 `ms`，保留自定义 flush 指标，不把有效 FPS 当成 SPI/LCD flush 性能结论。
+
+### 涉及位置
+
+Allowed files:
+
+- `try/my_watch_f411_v2.1/user/app/lvgl_demo/watch_lvgl_debug_screen.c`
+- `try/my_watch_f411_v2.1/user/ui/lvgl_port/watch_lvgl_port.h`
+- `try/my_watch_f411_v2.1/user/ui/lvgl_port/watch_lvgl_port.c`
+- `try/my_watch_f411_v2.1/user/third_party/lvgl/lv_conf.h`
+- `try/my_watch_f411_v2.1/README.md`
+- `docs/40_workflow/agent_batch/cards/f411-lvgl-perf-q3.md`
+- `docs/40_workflow/agent_batch/agent-queue.md`
+- `docs/40_workflow/agent_batch/agent-progress.md`
+
+Read-only files:
+
+- `try/my_watch_f411_v2.1/user/board/display/watch_lcd.*`
+- `try/my_watch_f411_v2.1/Core/**`
+- `try/my_watch_f411_v2.1/MDK-ARM/**`
+
+Forbidden changes:
+
+- 禁止修改 SPI / LCD 发送实现。
+- 禁止接 DMA。
+- 禁止迁移模拟器 UI。
+- 禁止把有效刷新 FPS 当作 LCD flush 性能结论。
+
+### 风险
+
+- 有效刷新 FPS 是用户可感知刷新口径，不等于 `flush/s` 或 SPI 吞吐；后续 DMA 对比必须同时看 `fps/s`、`last ms`、`pixels/s` 和稳定性。
+- LVGL 自带 perf monitor 在当前场景可能显示 `100 FPS` 假高值，不能作为 DMA 前后主对比指标。
+
+### 验收标准
+
+- 黄色 FPS 负载 marker 会持续移动。
+- 右下角 `fps / ms` 徽标会随固定负载周期更新，并稳定在真实刷新范围。
+- 右下角 `fps` 不应频繁空窗跳到 `100`；若仍跳变，不能用该值作为 DMA 前后对比基线。
+- 原有色块、字体样例和底部自定义指标仍可见。
+- 不接 DMA，不改 SPI / LCD 发送实现。
+
+### 执行记录
+
+- 已实现待验收：根据用户观察 LVGL 自带 `FPS` 显示 `86`、`70`、`100` 的问题，关闭 `LV_USE_PERF_MONITOR`，改用 display `monitor_cb` 按 1 秒墙钟窗口统计有效刷新周期数，并在右下角独立显示有效 `fps` 和最近一次刷新 `ms`。
+- 已实现待验收：新增固定 FPS 负载探针；黄色 marker 约每 33ms 移动一次，并主动 invalidate 220x24 区域，让有效 FPS 有稳定负载可统计。
+- 真机验证：用户确认静态刷新负载下 `fps` 稳定在 25~26，暴力旋转编码器时降到 2~5；右下角独立 `fps / ms` 徽标可见，黄色 marker 持续移动，LVGL 自带 perf monitor 的假高值问题已规避。
+- 自检：`git diff --check` 通过，仅有 LF/CRLF 提示；本轮实际改动中文文档乱码哨兵检查通过；未修改 SPI / LCD / DMA / Core / MDK 工程。
+
+---
+
 ## F411-LVGL-DMA-1 增加 watch_lcd SPI DMA fallback 接口
 
 - 批次：F411-Q3
@@ -394,7 +462,7 @@ Forbidden changes:
 
 - 批次：F411-Q3
 - 状态：TODO
-- 依赖：`F411-LVGL-PERF-2`
+- 依赖：`F411-LVGL-PERF-2B`
 - 自检：用户在 CubeMX 中完成 SPI1 TX DMA 配置并重新生成工程；现有阻塞刷屏仍可编译运行
 - 建议提交信息：`chore: prepare f411 spi dma cubemx config`
 - Doc Impact：small

@@ -6,9 +6,11 @@
 #include "app/input/watch_input_intent.h"
 
 typedef struct {
+    uint32_t refresh_per_sec;
     uint32_t flush_per_sec;
     uint32_t pixels_per_sec;
     uint32_t handler_per_sec;
+    uint32_t last_refresh_ms;
     uint32_t last_flush_ms;
 } watch_lvgl_perf_snapshot_t;
 

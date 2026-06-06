@@ -18,7 +18,7 @@
 
 - 状态：IN_PROGRESS
 - 卡片来源：cards/f411-lvgl-perf-q3.md
-- 执行范围：卡片 `F411-LVGL-PERF-2` / `F411-LVGL-DMA-PREP` / `F411-LVGL-DMA-1` / `F411-LVGL-DMA-2` / `F411-LVGL-DMA-3`
+- 执行范围：卡片 `F411-LVGL-PERF-2` / `F411-LVGL-PERF-2B` / `F411-LVGL-DMA-PREP` / `F411-LVGL-DMA-1` / `F411-LVGL-DMA-2` / `F411-LVGL-DMA-3`
 - 停止策略：每张卡后停止
 - 验收后处理：保留
 - 执行前条件：`LVGL-XML-Q1` 已完成并验收；`F411-LVGL-PERF-1` 与 `F411-LVGL-PERF-1B` 已在卡片文件中记录为 DONE。
