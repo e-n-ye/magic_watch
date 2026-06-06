@@ -23,6 +23,7 @@ static const WatchCoreHealthFeature health_card_features[WATCH_CORE_HEALTH_CARD_
 static void health_card_handler(const char * card_id, void * user_data);
 static void back_button_event_cb(lv_event_t * event);
 static void bind_health_shortcut_screen(WatchCoreUiAdapter * adapter, lv_obj_t * screen);
+static void create_health_card_hit_targets(lv_obj_t * screen);
 static void apply_snapshot_to_subjects(WatchCoreUiAdapter * adapter);
 static void dispatch_event(WatchCoreUiAdapter * adapter, WatchCoreUiEvent event);
 static void drain_core_events(WatchCoreUiAdapter * adapter);
@@ -102,13 +103,44 @@ static void bind_health_shortcut_screen(WatchCoreUiAdapter * adapter, lv_obj_t *
         lv_obj_t * card = magic_watch_ui_get_health_card(screen, i);
         lv_obj_t * metric_label = magic_watch_ui_get_health_card_metric_label(card);
 
-        if (card != NULL) {
-            lv_obj_add_event_cb(card, magic_watch_health_card_clicked, LV_EVENT_CLICKED, (void *)health_card_ids[i]);
-        }
-
         if (metric_label != NULL) {
             lv_label_bind_text(metric_label, &adapter->health_metric_subjects[i], NULL);
         }
+    }
+
+    create_health_card_hit_targets(screen);
+}
+
+static void create_health_card_hit_targets(lv_obj_t * screen)
+{
+    const int32_t x[WATCH_CORE_HEALTH_CARD_COUNT] = {
+        HEALTH_GRID_LEFT,
+        HEALTH_COL2_X,
+        HEALTH_GRID_LEFT,
+        HEALTH_COL2_X,
+    };
+    const int32_t y[WATCH_CORE_HEALTH_CARD_COUNT] = {
+        HEALTH_GRID_TOP,
+        HEALTH_GRID_TOP,
+        HEALTH_ROW2_Y,
+        HEALTH_ROW2_Y,
+    };
+
+    for (uint32_t i = 0U; i < WATCH_CORE_HEALTH_CARD_COUNT; ++i) {
+        lv_obj_t * hit = lv_obj_create(screen);
+        if (hit == NULL) {
+            continue;
+        }
+
+        lv_obj_remove_style_all(hit);
+        lv_obj_set_x(hit, x[i]);
+        lv_obj_set_y(hit, y[i]);
+        lv_obj_set_width(hit, HEALTH_CARD_W);
+        lv_obj_set_height(hit, HEALTH_CARD_H);
+        lv_obj_set_ext_click_area(hit, 6);
+        lv_obj_add_flag(hit, LV_OBJ_FLAG_CLICKABLE);
+        lv_obj_set_flag(hit, LV_OBJ_FLAG_SCROLLABLE, false);
+        lv_obj_add_event_cb(hit, magic_watch_health_card_clicked, LV_EVENT_CLICKED, (void *)health_card_ids[i]);
     }
 }
 
