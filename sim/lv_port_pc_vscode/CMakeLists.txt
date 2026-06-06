@@ -212,6 +212,18 @@ endif()
 set(MAGIC_WATCH_XML_UI_DIR
     "${PROJECT_SOURCE_DIR}/../../ui/lvgl_pro"
     CACHE PATH "Path to the Magic Watch LVGL Pro generated UI project")
+set(MAGIC_WATCH_CORE_DIR
+    "${PROJECT_SOURCE_DIR}/../../watch_core"
+    CACHE PATH "Path to the Magic Watch pure C product core")
+
+if(EXISTS "${MAGIC_WATCH_CORE_DIR}/src/watch_core.c")
+    add_library(magic_watch_core STATIC
+        ${MAGIC_WATCH_CORE_DIR}/src/watch_core.c
+    )
+    target_include_directories(magic_watch_core PUBLIC
+        ${MAGIC_WATCH_CORE_DIR}/include
+    )
+endif()
 
 if(EXISTS "${MAGIC_WATCH_XML_UI_DIR}/CMakeLists.txt")
     set(LVGL_COMPONENT_LIB_NAME magic_watch_xml_ui)
@@ -232,6 +244,7 @@ if(EXISTS "${MAGIC_WATCH_XML_UI_DIR}/CMakeLists.txt")
 
     add_executable(magic_watch_xml_sim
         src/xml_sim_main.cpp
+        src/XmlUi/watch_core_ui_adapter.c
         src/mouse_cursor_icon.c
         src/HAL/HAL.cpp
         src/Platform/Simulator/SimulatorDevice.cpp
@@ -242,6 +255,7 @@ if(EXISTS "${MAGIC_WATCH_XML_UI_DIR}/CMakeLists.txt")
     )
     target_include_directories(magic_watch_xml_sim PRIVATE ${PROJECT_SOURCE_DIR}/src)
     target_link_libraries(magic_watch_xml_sim
+        magic_watch_core
         magic_watch_xml_ui
         lvgl
         lvgl::thorvg

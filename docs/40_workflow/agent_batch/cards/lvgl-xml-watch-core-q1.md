@@ -279,7 +279,7 @@ Forbidden changes:
 ## LVGL-XML-Q1-4 实现 `watch_core` 最小快照、事件和 UI Adapter
 
 - 批次：LVGL-XML-Q1
-- 状态：TODO
+- 状态：DONE
 - 依赖：`LVGL-XML-Q1-3`
 - 自检：
   - `git status --short -uall`
@@ -338,7 +338,11 @@ Forbidden changes:
 
 ### 执行记录
 
-- 待执行。
+- 已完成：新增 `watch_core` 纯 C 最小核心，定义健康四卡 feature、固定大小 `UiEvent`、固定容量事件队列、`UiModelSnapshot`、`PageIntent` 和 Coordinator 状态机；默认健康快照可驱动四卡 metric 显示。
+- 已完成：新增 C 版 PC XML UI Adapter，负责 LVGL Subject 绑定、健康卡点击回调、`UiEvent` 入队、Coordinator 页面意图处理，以及主页/占位详情页 create/load。
+- 已完成：`ui/lvgl_pro/magic_watch_ui.*` 只新增生成 UI 的稳定挂接 helper 和 health card 事件 handler 注册，不保存业务状态；`magic_watch_xml_sim` 改为初始化 `WatchCore` 并通过 adapter 加载页面。
+- 自检：`cmake --build sim/lv_port_pc_vscode/build --config Debug` 通过；隐藏启动 `magic_watch_xml_sim.exe` 3 秒返回 `started-ok`；`git diff --check` 通过（仅有 LF/CRLF 提示，无 diff 格式错误）；本轮实际改动中文文档乱码哨兵检查无命中；定向扫描确认 `watch_core` 未 include LVGL、SDL、HAL、CubeMX 或 C++ 容器。
+- 风险回应：本轮实现点击到 `UiEvent -> Coordinator -> PageIntent -> UI Adapter` 的接线和占位详情页路径，但未做可见窗口人工点击验收；四卡点击、详情页区分来源和返回路径的人工验收继续留给 `LVGL-XML-Q1-5`。
 
 ---
 

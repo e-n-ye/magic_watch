@@ -81,6 +81,12 @@ F411 工程只在平台端口层接入同一套生成 C 和 `watch_core`，并�
 - 不直接调用 screen create/load API。
 - 不使用 `std::string`、`std::vector`、`std::function` 或 C++ 继承。
 
+当前 Q1-4 最小落点：
+
+- `watch_core/include/watch_core/watch_core.h` 定义健康四卡 feature、固定大小 `UiEvent`、`UiModelSnapshot` 和 `PageIntent`。
+- `watch_core/src/watch_core.c` 持有默认健康快照、固定容量事件队列和 Coordinator 状态机。
+- `watch_core` 只输出页面意图，不知道 LVGL screen、Subject、SDL 或 F411 平台。
+
 ### `magic_watch_xml_sim`
 
 职责：
@@ -96,6 +102,12 @@ F411 工程只在平台端口层接入同一套生成 C 和 `watch_core`，并�
 - 不复用旧 C++ `AppStateMachine`、`PageManager` 和手写页面系统作为新主线。
 - 不把 PC 结果当成真实 LCD 性能结论。
 - 不替代 F411 真机颜色、字体、flush、DMA 和触摸验证。
+
+当前 Q1-4 最小 adapter 落点：
+
+- `sim/lv_port_pc_vscode/src/XmlUi/watch_core_ui_adapter.*` 持有 LVGL 对象绑定、health metric subjects、点击回调和 screen create/load；该 adapter 使用 C struct + C 函数，便于后续 F411 侧复用同一方向。
+- `ui/lvgl_pro/magic_watch_ui.*` 只提供生成 UI 的稳定挂接 helper，不保存业务状态。
+- `magic_watch_xml_sim` 初始化 `WatchCore`，再由 adapter 加载 XML 健康四卡页面。
 
 ### F411 平台
 
@@ -208,4 +220,3 @@ F411 验收在 PC 闭环之后进行，并先执行 F411-Q3 性能/颜色/字体
 1. `LVGL-XML-Q1`：XML 健康四卡 + PC 垂直闭环。
 2. `F411-Q3`：颜色、字体、flush、DMA 性能基线。
 3. `F411-XML-Q2`：F411 接入同一套 XML 生成 UI。
-

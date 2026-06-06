@@ -473,3 +473,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：只修复新 XML sim 目标的资源路径规范化，不修改 LVGL Pro XML、生成 UI、旧 `magic_watch_sim` 或 `watch_core`。
 - 阻塞与待决：无。
 - 下一步：请用户重新打开 `magic_watch_xml_sim.exe` 做可见窗口验收，确认四张卡图片显示和 LVGL Pro 预览一致。
+
+### 会话 2026-06-06 LVGL-XML-Q1-4
+
+- 本轮范围：队列项 `LVGL-XML-Q1`，卡片 `LVGL-XML-Q1-4`
+- 完成：`LVGL-XML-Q1-4`；已实现 `watch_core` 最小快照、固定大小 `UiEvent`、固定容量事件队列、Coordinator 页面意图和 C 版 PC UI Adapter；`magic_watch_xml_sim` 现在通过 adapter 加载健康四卡并处理卡片点击/返回事件链。
+- 修改文件：`watch_core/include/watch_core/watch_core.h`、`watch_core/src/watch_core.c`、`sim/lv_port_pc_vscode/src/XmlUi/watch_core_ui_adapter.*`、`sim/lv_port_pc_vscode/src/xml_sim_main.cpp`、`sim/lv_port_pc_vscode/CMakeLists.txt`、`ui/lvgl_pro/magic_watch_ui.*`、`docs/10_architecture/lvgl_xml_watch_core_architecture.md`、`docs/10_architecture/lvgl_xml_watch_core_architecture_uml.html`、`docs/40_workflow/agent_batch/cards/lvgl-xml-watch-core-q1.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`cmake --build sim/lv_port_pc_vscode/build --config Debug` 通过；隐藏启动 `magic_watch_xml_sim.exe` 3 秒返回 `started-ok`；`git diff --check` 通过，仅有 LF/CRLF 提示；本轮实际改动中文文档乱码哨兵检查无命中；`watch_core` forbidden include / C++ 容器 / 堆分配定向扫描无命中，仅命中标准头 `<string.h>`。
+- 风险回应：本轮只接 PC XML target 与纯 C `watch_core`，不修改旧 `magic_watch_sim` 行为，不接真实传感器，不进入 F411；可见窗口点击验收留给 `LVGL-XML-Q1-5`。
+- 阻塞与待决：无。
+- 下一步：按停止策略提交 Q1-4；用户验收后进入 `LVGL-XML-Q1-5` 做 PC 可交互垂直闭环人工验证。

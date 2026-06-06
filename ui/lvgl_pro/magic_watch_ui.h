@@ -13,6 +13,8 @@ extern "C" {
  *      INCLUDES
  *********************/
 
+#include <stdint.h>
+
 #include "magic_watch_ui_gen.h"
 
 /*********************
@@ -22,6 +24,8 @@ extern "C" {
 /**********************
  *      TYPEDEFS
  **********************/
+
+typedef void (*magic_watch_health_card_event_handler_t)(const char * card_id, void * user_data);
 
 /**********************
  * GLOBAL VARIABLES
@@ -35,6 +39,14 @@ extern "C" {
  * Initialize the component library
  */
 void magic_watch_ui_init(const char * asset_path);
+
+void magic_watch_ui_set_health_card_event_handler(
+    magic_watch_health_card_event_handler_t handler,
+    void * user_data);
+
+lv_obj_t * magic_watch_ui_get_health_card(lv_obj_t * screen, uint32_t index);
+
+lv_obj_t * magic_watch_ui_get_health_card_metric_label(lv_obj_t * card);
 
 /**
  * Placeholder click hook for health shortcut cards.

@@ -5,9 +5,10 @@
 #include <thread>
 
 #include "HAL/HAL.h"
+#include "XmlUi/watch_core_ui_adapter.h"
 #include "lvgl/lvgl.h"
 #include "magic_watch_ui.h"
-#include "screens/screen_health_shortcuts_gen.h"
+#include "watch_core/watch_core.h"
 
 #ifndef MAGIC_WATCH_XML_UI_ASSET_PATH
 #define MAGIC_WATCH_XML_UI_ASSET_PATH "A:../../ui/lvgl_pro/"
@@ -39,11 +40,13 @@ int main(int argc, char ** argv)
   }
   magic_watch_ui_init(asset_path.c_str());
 
-  lv_obj_t * screen = screen_health_shortcuts_create();
-  if (screen == nullptr) {
+  WatchCore watch_core;
+  watch_core_init(&watch_core);
+
+  WatchCoreUiAdapter ui_adapter;
+  if (!watch_core_ui_adapter_init(&ui_adapter, &watch_core)) {
     return 1;
   }
-  lv_screen_load(screen);
 
   auto previous_tick = std::chrono::steady_clock::now();
   while (true) {

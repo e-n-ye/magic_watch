@@ -47,12 +47,16 @@ flowchart LR
     XML["ui/lvgl_pro<br/>XML / styles / assets / generated C"]
     Adapter["UI Adapter<br/>LVGL binding / callbacks / screen API"]
     Core["watch_core<br/>ModelStore / UiEvent / Coordinator / Snapshot"]
+    CoreFiles["watch_core/include + src<br/>pure C / fixed queue"]
+    AdapterFiles["XmlUi/watch_core_ui_adapter<br/>C subjects / callbacks / load"]
     PC["magic_watch_xml_sim<br/>SDL display/input/tick/fs"]
     F411["F411 platform<br/>LCD / touch / tick / fs / DMA"]
     OldSim["old magic_watch_sim<br/>behavior reference only"]
 
     XML --> Adapter
     Adapter <--> Core
+    CoreFiles --> Core
+    AdapterFiles --> Adapter
     PC --> Adapter
     F411 --> Adapter
     OldSim -.reference.-> Core
