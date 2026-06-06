@@ -16,12 +16,21 @@ typedef struct {
     bool moved;
 } WatchCoreUiClickGuardState;
 
+typedef void (*WatchCoreUiGuardedClickHandler)(void * user_data);
+
+typedef struct {
+    WatchCoreUiClickGuardState guard;
+    WatchCoreUiGuardedClickHandler handler;
+    void * user_data;
+    const char * log_label;
+} WatchCoreUiGuardedClick;
+
 struct WatchCoreUiAdapter;
 
 typedef struct {
     struct WatchCoreUiAdapter * adapter;
     const char * card_id;
-    WatchCoreUiClickGuardState guard;
+    WatchCoreUiGuardedClick click;
 } WatchCoreHealthHitTarget;
 
 typedef struct WatchCoreUiAdapter {
@@ -32,6 +41,7 @@ typedef struct WatchCoreUiAdapter {
     char health_metric_subject_buffers[WATCH_CORE_HEALTH_CARD_COUNT][WATCH_CORE_METRIC_TEXT_MAX];
     char health_metric_subject_previous_buffers[WATCH_CORE_HEALTH_CARD_COUNT][WATCH_CORE_METRIC_TEXT_MAX];
     WatchCoreHealthHitTarget health_hit_targets[WATCH_CORE_HEALTH_CARD_COUNT];
+    WatchCoreUiGuardedClick back_click;
 } WatchCoreUiAdapter;
 
 bool watch_core_ui_adapter_init(WatchCoreUiAdapter * adapter, WatchCore * core);

@@ -349,7 +349,7 @@ Forbidden changes:
 ## LVGL-XML-Q1-5 PC 可交互垂直闭环验收
 
 - 批次：LVGL-XML-Q1
-- 状态：TODO
+- 状态：DONE
 - 依赖：`LVGL-XML-Q1-4`
 - 自检：
   - `git status --short -uall`
@@ -411,7 +411,11 @@ Forbidden changes:
 
 ### 执行记录
 
-- 待执行。
+- 已完成：用户手动验收确认 PC XML simulator 可显示健康四卡，心率、血氧、呼吸、心情四卡均可进入占位详情页，详情页可区分来源功能，Back 可返回健康快捷页，日志可追踪 `UiEvent -> Coordinator -> PageIntent -> UI Adapter`。
+- 已完成：验收中发现 Back 按下后滑动松开仍触发返回语义；已将 PC XML UI Adapter 的防误触逻辑收敛为通用 `guarded_click` 注册入口，健康卡 hit target 和 Back 统一走同一套“滑动不算点击”语义，避免后续页面重复局部补丁。
+- 自检：`cmake --build sim/lv_port_pc_vscode/build --config Debug` 通过；隐藏启动 `magic_watch_xml_sim.exe` 3 秒返回 `started-ok`；`git diff --check` 通过，仅有 LF/CRLF 提示；本轮实际改动中文文档乱码哨兵检查通过。
+- 手动验收：用户确认修复后不再出现误触，`LVGL-XML-Q1-5` 通过。
+- 未验证：本卡只验证 PC XML simulator；未验证 F411 真机、真实传感器、LCD flush 性能或 DMA 稳定性。
 
 ---
 

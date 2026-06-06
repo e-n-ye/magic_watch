@@ -8,7 +8,7 @@
 
 ### LVGL-XML-Q1 健康四卡 XML 与 PC 垂直闭环
 
-- 状态：TODO
+- 状态：DONE
 - 卡片来源：cards/lvgl-xml-watch-core-q1.md
 - 执行范围：卡片 `LVGL-XML-Q1-1` / `LVGL-XML-Q1-2` / `LVGL-XML-Q1-3` / `LVGL-XML-Q1-4` / `LVGL-XML-Q1-5`
 - 停止策略：每张卡后停止

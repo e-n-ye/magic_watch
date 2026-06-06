@@ -483,3 +483,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：本轮只接 PC XML target 与纯 C `watch_core`，不修改旧 `magic_watch_sim` 行为，不接真实传感器，不进入 F411；可见窗口点击验收留给 `LVGL-XML-Q1-5`。
 - 阻塞与待决：无。
 - 下一步：按停止策略提交 Q1-4；用户验收后进入 `LVGL-XML-Q1-5` 做 PC 可交互垂直闭环人工验证。
+
+### 会话 2026-06-06 LVGL-XML-Q1-5
+
+- 本轮范围：队列项 `LVGL-XML-Q1`，卡片 `LVGL-XML-Q1-5`
+- 完成：`LVGL-XML-Q1-5`；用户手动验收确认 PC XML simulator 四卡显示、四卡详情进入、来源区分、Back 返回和事件日志链路均可用；验收中发现 Back 拖拽松手误触，已修复并由用户确认不再误触；队列项 `LVGL-XML-Q1` 已标记为 DONE
+- 修改文件：`sim/lv_port_pc_vscode/src/XmlUi/watch_core_ui_adapter.*`、`docs/30_testing/lvgl_xml_q1_pc_manual_acceptance.md`、`docs/40_workflow/agent_batch/cards/lvgl-xml-watch-core-q1.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`cmake --build sim/lv_port_pc_vscode/build --config Debug` 通过；隐藏启动 `magic_watch_xml_sim.exe` 3 秒返回 `started-ok`；`git diff --check` 通过，仅有 LF/CRLF 提示；本轮实际改动中文文档乱码哨兵检查通过
+- 风险回应：本卡只声明 PC XML simulator 垂直闭环通过，不声明 F411 真机、真实传感器、LCD flush 性能或 DMA 稳定性通过；防误触收敛为 XML UI Adapter 通用 guarded click 入口，后续新按钮应复用该入口
+- 阻塞与待决：`F411-XML-Q2-1` 仍依赖 `F411-LVGL-DMA-3`；当前 `F411-Q3` 中 `F411-LVGL-PERF-2`、`F411-LVGL-DMA-PREP`、`F411-LVGL-DMA-1`、`F411-LVGL-DMA-2`、`F411-LVGL-DMA-3` 仍未完成，不能直接跳到 Q2-1
+- 下一步：按队列应先执行 `F411-Q3` 的下一张 TODO 卡 `F411-LVGL-PERF-2`，完成颜色/字体质量验证后再进入 DMA 准备与 DMA 性能稳定性验证
