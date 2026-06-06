@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
+#include <string>
 #include <thread>
 
 #include "HAL/HAL.h"
@@ -32,7 +33,11 @@ int main(int argc, char ** argv)
     return 1;
   }
 
-  magic_watch_ui_init(MAGIC_WATCH_XML_UI_ASSET_PATH);
+  std::string asset_path = MAGIC_WATCH_XML_UI_ASSET_PATH;
+  if (!asset_path.empty() && asset_path.back() != '/' && asset_path.back() != '\\') {
+    asset_path.push_back('/');
+  }
+  magic_watch_ui_init(asset_path.c_str());
 
   lv_obj_t * screen = screen_health_shortcuts_create();
   if (screen == nullptr) {

@@ -463,3 +463,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：本轮只新增独立 XML UI PC 验证目标，不修改旧 `magic_watch_sim` 行为，不接 `watch_core`，不接 F411；隐藏启动烟测不等同于人工可见窗口验收，后续 Q1-5 仍需做四卡显示和交互手动验证。
 - 阻塞与待决：无。
 - 下一步：按停止策略停止并提交 Q3；用户验收后可进入 `LVGL-XML-Q1-4`，实现 `watch_core` 最小快照、事件和 UI Adapter。
+
+### 会话 2026-06-06 LVGL-XML-Q1-3 图片路径补丁
+
+- 本轮范围：`LVGL-XML-Q1-3` 用户验收反馈修复。
+- 完成：根据用户启动日志，修复 `magic_watch_xml_sim` 传给 `magic_watch_ui_init()` 的 asset path 尾部分隔符缺失问题；路径不再拼成 `ui/lvgl_proimages/...`。
+- 修改文件：`sim/lv_port_pc_vscode/src/xml_sim_main.cpp`、`docs/40_workflow/agent_batch/cards/lvgl-xml-watch-core-q1.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`cmake --build sim/lv_port_pc_vscode/build --config Debug` 通过；隐藏启动烟测 3 秒返回 `started-ok`；启动日志不再出现 `File open failed` 或 `lvgl_proimages`；提交前执行 `git diff --check` 与本轮实际改动中文文档乱码哨兵检查。
+- 风险回应：只修复新 XML sim 目标的资源路径规范化，不修改 LVGL Pro XML、生成 UI、旧 `magic_watch_sim` 或 `watch_core`。
+- 阻塞与待决：无。
+- 下一步：请用户重新打开 `magic_watch_xml_sim.exe` 做可见窗口验收，确认四张卡图片显示和 LVGL Pro 预览一致。
