@@ -27,6 +27,7 @@
 - 当前已存在最小 `ScreenManager`，保留 LCD 直绘 Debug Screen 骨架；LVGL 已作为当前可见 UI bring-up 链路接入。
 - LVGL 已按最小 label bring-up 目标收窄配置并登记到 MDK 工程；当前已有项目自有 display flush port，flush 复用 `watch_lcd_draw_rgb565()`；`lv_timer_handler()` 由 FreeRTOS defaultTask 通过 `watch_bringup_task()` 单任务驱动；LVGL encoder indev 只消费编码器 intent；当前显示一个最小 LVGL debug label，用于验证输入计数、最后一次输入语义和当前 flush 性能基线。
 - LVGL debug label 中的 `pulse` 是无输入时的可控刷新源；`calls/s` 是 flush 调用次数，不等于 FPS；`full/s` 是按全屏像素量折算出的等效全屏刷新率；`pixels/s` 是实际刷出的像素吞吐；`last ms` 是最近一次 flush 耗时；`lvgl/s` 是 `lv_timer_handler()` 调用频率。
+- LVGL debug screen 顶部显示红、绿、蓝、白、黑 5 个色块，中部显示 `font 10`、`font 14`、`font 20` 三组英文样例，用于在接入 XML UI 前验证 RGB565 字节序和字体显示质量。
 
 ## 下一步方向
 
@@ -35,3 +36,10 @@
 ## 后续优化记录
 
 - 当前 LCD flush 走逐行 RGB565 转换和阻塞 SPI 写入，适合作为安全 bring-up 基线；debug label 已显示 `calls/s`、`full/s`、`pixels/s`、`last ms` 和 `lvgl/s`，后续 SPI DMA / 大块刷屏优化必须用这些指标做前后对比。
+
+## LVGL 颜色和字体验收
+
+- 真机顶部色块应依次显示红、绿、蓝、白、黑；若红蓝互换或白色明显偏色，优先检查 RGB565 字节序和颜色转换。
+- `font 10`、`font 14`、`font 20` 三行英文应可读，且不应出现裁切、乱码或缺字；若颜色正常但文字观感差，优先调整字号或字体策略。
+- 当前 LVGL 端关闭 `LV_COLOR_16_SWAP`，因为 `watch_lcd_draw_rgb565()` 已经按 RGB565 高字节优先发送到 LCD。
+- 本验收不接 DMA，不迁移 PC XML UI，不代表后续健康四卡真机显示已经通过。

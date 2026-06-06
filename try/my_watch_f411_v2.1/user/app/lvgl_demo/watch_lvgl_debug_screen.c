@@ -112,7 +112,50 @@ static void render_label(void)
     *cursor = '\0';
 
     lv_label_set_text(s_status_label, s_label_text);
-    lv_obj_center(s_status_label);
+    lv_obj_set_pos(s_status_label, 8, 112);
+}
+
+static void create_color_block(lv_coord_t x, lv_coord_t y, lv_color_t color)
+{
+    lv_obj_t *block = lv_obj_create(lv_scr_act());
+    lv_obj_set_pos(block, x, y);
+    lv_obj_set_size(block, 40, 26);
+    lv_obj_set_style_bg_color(block, color, 0);
+    lv_obj_set_style_bg_opa(block, LV_OPA_COVER, 0);
+    lv_obj_set_style_border_color(block, lv_color_hex(0x404040), 0);
+    lv_obj_set_style_border_width(block, 1, 0);
+    lv_obj_set_style_radius(block, 0, 0);
+}
+
+static void create_font_check_label(
+    const char *text,
+    lv_coord_t y,
+    const lv_font_t *font,
+    lv_color_t color)
+{
+    lv_obj_t *label = lv_label_create(lv_scr_act());
+    lv_label_set_text(label, text);
+    lv_obj_set_width(label, WATCH_LCD_WIDTH);
+    lv_obj_set_pos(label, 0, y);
+    lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_style_text_color(label, color, 0);
+    lv_obj_set_style_text_font(label, font, 0);
+}
+
+static void create_color_and_font_checks(void)
+{
+    lv_obj_set_style_bg_color(lv_scr_act(), lv_color_hex(0x081018), 0);
+    lv_obj_set_style_bg_opa(lv_scr_act(), LV_OPA_COVER, 0);
+
+    create_color_block(12, 8, lv_color_hex(0xFF0000));
+    create_color_block(56, 8, lv_color_hex(0x00FF00));
+    create_color_block(100, 8, lv_color_hex(0x0000FF));
+    create_color_block(144, 8, lv_color_hex(0xFFFFFF));
+    create_color_block(188, 8, lv_color_hex(0x000000));
+
+    create_font_check_label("font 10: crisp small text", 42, &lv_font_montserrat_10, lv_color_hex(0xC8D6E5));
+    create_font_check_label("font 14: normal text", 60, &lv_font_montserrat_14, lv_color_hex(0xFFFFFF));
+    create_font_check_label("font 20: large text", 80, &lv_font_montserrat_20, lv_color_hex(0xFFD166));
 }
 
 void watch_lvgl_debug_screen_init(void)
@@ -121,8 +164,13 @@ void watch_lvgl_debug_screen_init(void)
         return;
     }
 
+    create_color_and_font_checks();
+
     s_status_label = lv_label_create(lv_scr_act());
+    lv_obj_set_width(s_status_label, WATCH_LCD_WIDTH - 16);
     lv_obj_set_style_text_align(s_status_label, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_style_text_color(s_status_label, lv_color_hex(0xFFFFFF), 0);
+    lv_obj_set_style_text_font(s_status_label, &lv_font_montserrat_10, 0);
     watch_lvgl_port_get_perf_snapshot(&s_perf_snapshot);
     s_last_perf_refresh_ms = lv_tick_get();
     render_label();

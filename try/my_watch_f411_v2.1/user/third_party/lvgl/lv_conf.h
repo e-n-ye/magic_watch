@@ -20,7 +20,7 @@
    COLOR SETTINGS
  *====================*/
 #define LV_COLOR_DEPTH          16
-#define LV_COLOR_16_SWAP        1    /* IMPORTANT: SPI displays need byte swap */
+#define LV_COLOR_16_SWAP        0    /* watch_lcd_draw_rgb565() already sends RGB565 high byte first */
 
 /*====================
    MEMORY SETTINGS
@@ -104,12 +104,12 @@
    FONTS
  *====================*/
 #define LV_FONT_MONTSERRAT_8        0
-#define LV_FONT_MONTSERRAT_10       0
+#define LV_FONT_MONTSERRAT_10       1
 #define LV_FONT_MONTSERRAT_12       0
 #define LV_FONT_MONTSERRAT_14       1   /* Default font */
 #define LV_FONT_MONTSERRAT_16       0
 #define LV_FONT_MONTSERRAT_18       0
-#define LV_FONT_MONTSERRAT_20       0
+#define LV_FONT_MONTSERRAT_20       1
 #define LV_FONT_MONTSERRAT_22       0
 #define LV_FONT_MONTSERRAT_24       0
 #define LV_FONT_MONTSERRAT_26       0

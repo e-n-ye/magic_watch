@@ -1465,9 +1465,19 @@
               <FilePath>..\user\third_party\lvgl\lvgl\src\font\lv_font_fmt_txt.c</FilePath>
             </File>
             <File>
+              <FileName>lv_font_montserrat_10.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\user\third_party\lvgl\lvgl\src\font\lv_font_montserrat_10.c</FilePath>
+            </File>
+            <File>
               <FileName>lv_font_montserrat_14.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\user\third_party\lvgl\lvgl\src\font\lv_font_montserrat_14.c</FilePath>
+            </File>
+            <File>
+              <FileName>lv_font_montserrat_20.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\user\third_party\lvgl\lvgl\src\font\lv_font_montserrat_20.c</FilePath>
             </File>
             <File>
               <FileName>lv_extra.c</FileName>

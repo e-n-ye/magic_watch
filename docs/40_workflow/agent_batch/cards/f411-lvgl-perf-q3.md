@@ -158,7 +158,7 @@ Forbidden changes:
 ## F411-LVGL-PERF-2 验证 RGB565 字节序和字体显示质量
 
 - 批次：F411-Q3
-- 状态：TODO
+- 状态：DONE
 - 依赖：`F411-LVGL-PERF-1`
 - 自检：`git status --short -uall`；Keil / MDK 编译；`git diff --check`；真机观察红绿蓝白黑与小字/大字显示
 - 建议提交信息：`test: add f411 lvgl color and font check screen`
@@ -209,7 +209,12 @@ Forbidden changes:
 
 ### 执行记录
 
-- 待执行。
+- 已实现待验收：在当前 LVGL debug screen 顶部新增红、绿、蓝、白、黑 5 个色块，中部新增 `font 10`、`font 14`、`font 20` 三组英文样例，底部保留 `pulse`、`calls/s`、`full/s`、`pixels/s`、`last ms`、`lvgl/s` 性能指标。
+- 已实现待验收：最小打开 `LV_FONT_MONTSERRAT_10` 和 `LV_FONT_MONTSERRAT_20`，并将 `lv_font_montserrat_10.c` / `lv_font_montserrat_20.c` 登记到 MDK 工程；不引入中文大字体，不接 DMA，不迁移 PC XML UI。
+- 第一轮真机观察：用户反馈顶部色块显示为蓝、红、绿、白、黑，字体像素不干净，未看到底部 `pulse`；已关闭 `LV_COLOR_16_SWAP`，因为当前 `watch_lcd_draw_rgb565()` 已按 RGB565 高字节优先发送；已将 debug screen 背景改为深色并把状态指标改用 10 号字体，避免白底强背光下文字和 `pulse` 不可见。
+- 复测通过：用户确认顶部色块为红、绿、蓝、白、黑，底部可见 `pulse` 且递增，三组字体比白底更可读且无裁切、乱码或缺字。
+- 自检：`git diff --check` 通过，仅有 LF/CRLF 提示；本轮实际改动中文文档乱码哨兵检查通过；定向确认未修改 SPI、DMA、Core 或 `watch_lcd` driver。
+- 编译与真机：Keil / MDK 编译和 F411 真机观察由用户侧执行并确认通过。
 
 ---
 
