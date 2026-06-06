@@ -1,0 +1,50 @@
+<globals>
+    <api>
+        <!-- Add <enumdefs> here -->
+    </api>
+
+    <consts>
+        <px name="screen_width" value="240" help="Primary watch preview width"/>
+        <px name="screen_height" value="280" help="Primary watch preview height"/>
+
+        <px name="safe_top" value="12" help="Top safe inset for compact watch layouts"/>
+        <px name="safe_bottom" value="12" help="Bottom safe inset for compact watch layouts"/>
+        <px name="safe_side" value="12" help="Left and right safe inset for compact watch layouts"/>
+
+        <px name="space_2xs" value="4" help="Tight internal spacing"/>
+        <px name="space_xs" value="8" help="Small spacing between related elements"/>
+        <px name="space_sm" value="12" help="Default block spacing on the watch home screen"/>
+        <px name="space_md" value="16" help="Section spacing for grouped content"/>
+        <px name="space_lg" value="20" help="Large separation between screen regions"/>
+
+        <px name="radius_sm" value="12" help="Small card radius"/>
+        <px name="radius_md" value="18" help="Primary card radius for 240x280 layouts"/>
+        <px name="radius_lg" value="24" help="Large container radius"/>
+
+        <px name="touch_min" value="44" help="Minimum recommended touch target"/>
+        <px name="card_min_h" value="96" help="Baseline card height for quarter shortcuts"/>
+
+        <color name="bg_base" value="0x08111a" help="Primary watch background"/>
+        <color name="bg_surface" value="0x122033" help="Card and container background"/>
+        <color name="fg_primary" value="0xf4f7fb" help="Primary foreground text"/>
+        <color name="fg_muted" value="0x94a4b8" help="Secondary foreground text"/>
+        <color name="accent_health" value="0x4fd1c5" help="Default accent for health shortcuts"/>
+    </consts>
+
+    <styles>
+        <style name="screen_base" bg_color="#bg_base" text_color="#fg_primary"/>
+        <style name="surface_card" bg_color="#bg_surface" text_color="#fg_primary" radius="#radius_md"/>
+    </styles>
+
+    <subjects>
+        <!-- Add <int>, <string>, or <float> subjects here -->
+    </subjects>
+
+    <images>
+        <!-- Add <file> or <data> tags here -->
+    </images>
+
+    <fonts>
+        <!-- Add <bin> , <tiny_ttf>, <freetype> tags here -->
+    </fonts>
+</globals>

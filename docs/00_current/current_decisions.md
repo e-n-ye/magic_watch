@@ -1,57 +1,73 @@
 # Magic Watch Current Decisions
 
-日期：2026-05-26
+日期：2026-06-06
 
 本文件只保留当前仍有效、会影响下一轮开发的决策。历史原因查 `docs/decision_log.md`；它继续保留 docs 根目录作为稳定历史检索路径，但不再作为默认阅读文档。
 
-## D001: 当前阶段进入架构收口
+## D001: 当前主线升级为 `LVGL XML + watch_core + PC/F411 双后端`
 
-当前优先目标不是继续新增功能页，而是恢复系统解释力、拆清职责边界、压缩默认文档入口。
+当前优先目标不是继续新增旧模拟器页面，而是用 LVGL XML 生成 UI、用纯 C `watch_core` 管理产品状态和事件，再分别通过 PC SDL 与 F411 平台端口验证。
 
-## D002: `HomeRingHost` 是当前默认主页
+## D002: XML 只作为 UI 源文件，固件只吃导出的 C
 
-旧 `Watchface` 仍可保留实现，但当前主路径默认根页面是 `HomeRingHost`。
+`ui/lvgl_pro` 中的 XML 是人维护的 UI 蓝图。进入 PC 和 F411 构建的是 LVGL Pro 导出的 C 文件。XML 与生成 C 都必须入库，避免构建依赖每台机器现场运行同版本 Editor。
 
-## D003: `InputIntentRouter` 只做输入语义转换
+## D003: `watch_core` 是纯 C 产品核心
 
-它负责把 HAL 层触摸、表冠、按键、调试输入转换成应用层 `InputCommand`。它不直接改页面、不直接改状态机状态、不触碰硬件以外的业务规则。
+`watch_core` 负责模型、事件、状态快照、页面意图和 Coordinator。它必须保持纯 C、固定容量、无堆分配，不依赖 LVGL、SDL、HAL、CubeMX 或具体传感器。
 
-## D004: Service 层负责平台样本到应用模型
+## D004: LVGL Subject 只允许作为 UI Adapter 内部绑定机制
 
-`BatteryPowerService`、`NotificationService`、`StepsActivityService` 这类模块负责解释、过滤、聚合平台样本，并通过 `DataCenter` 发布应用模型。
+业务状态权威源是 `watch_core` 的模型和 `UiModelSnapshot`。LVGL Subject 可以用于 UI Adapter 内部刷新生成 UI，但不得成为业务状态源，也不得跨过 `watch_core` 直接控制硬件或服务。
 
-## D005: `DataCenter + EventBus` 是 v0 共享模型入口
+## D005: UI 输入必须转成 typed `UiEvent`
 
-当前仍使用轻量同步事件分发。新增模型必须说明领域归属，避免把 `DataCenter` 继续膨胀成无边界全局对象。
+XML/LVGL 点击、返回、卡片选择等输入由 UI Adapter 转成固定大小的 `UiEvent`，进入 `watch_core` EventQueue。XML 不直接承担产品级导航。
 
-## D006: `AppStateMachine` 要退回 Coordinator
+## D006: 页面切换由 Coordinator 决定
 
-`AppStateMachine` 当前仍承担很多领域细节。目标方向是让它接收事件、调用子控制器、汇总 Action、统一调用 `PageManager` 并处理跨域冲突。
+Coordinator 根据 `UiEvent` 和模型状态产生页面意图，再由 UI Adapter 调用生成 screen 的 create/load API。这样 PC 占位页、未来真实详情页和 F411 页面迁移共享同一条事件链。
 
-## D007: 子 Controller 不直接操作 UI
+## D007: `magic_watch_xml_sim` 是新主线 PC 验证目标
 
-`PowerController`、`HomeRingController`、`ShellNavigationController`、`NotificationFlowController` 等未来子控制器不得直接调用 `PageManager`、不得创建 LVGL 对象、不得访问页面内部。
+PC 端需要一个独立目标运行 SDL + LVGL + XML 生成 C + `watch_core`。它可以复用现有 LVGL/SDL 端口，但不得继续扩建旧 C++ `AppStateMachine`、`PageManager` 和手写页面系统。
 
-## D008: Action/Event 必须适合嵌入式环境
+## D008: 旧 `magic_watch_sim` 只保留为行为参考
 
-Controller 返回的 Action 应固定大小、可按值传递、无动态资源。不在 Action/Event 中使用 `std::string`、`std::vector`、heap allocation 或复杂对象所有权。
+旧模拟器保留交互经验、页面行为和回归参考价值，但不是新主线产品核心。后续不得因为方便而把旧 C++ 页面或巨石状态机搬入 `watch_core`。
 
-## D009: `PageManager` 只负责页面显示与栈
+## D009: 第一条垂直闭环是主页健康四卡
 
-`PageManager` 管理 `set_root`、`push`、`pop`、临时页面和页面加载动画，不负责解释业务原因、系统状态或输入语义。
+首个 XML 页面是主页环中的健康快捷区，包含心率、血氧、呼吸、心情四张 1/4 卡。它不是完整心率详情应用。PC 验收是四卡可点击、进入占位详情页、可返回、事件链可追踪。
 
-## D010: 文档入口必须短
+## D010: 屏幕首目标是 F411 当前 240x280
 
-默认新会话只读 `AGENTS.md`、`docs/document_map.md` 和 `docs/00_current/` 下的当前入口文档。`decision_log.md`、`page_reachability_audit.md`、旧 `project_charter.md` 都不再默认阅读；其中 `decision_log.md` 仅保留为稳定历史检索路径。
+首轮 UI 优先精调 240x280。未来适配其他屏幕时，通过 Flex、百分比尺寸和集中式 layout token 降低改动，但不承诺未经适配的屏幕自动达到成品观感。
 
-## D011: 每轮必须 Scope Lock
+## D011: F411-Q3 排在 PC 垂直闭环之后
 
-每一轮实施前必须明确 `Allowed files`、`Forbidden files` 和 `Forbidden changes`。结束后检查 `git status`，实际修改文件必须落在允许范围内；若出现越权 diff，本轮判定失败，不在违规 diff 上继续修补。
+F411-Q3 的颜色、字体、flush、DMA 性能基线仍是主线的一部分，但应在 XML 页面和 PC 事件闭环完成之后执行，并且必须在 F411 XML 真机迁移之前完成。
 
-## D012: UI 巨石拆分前必须先建立 LVGL 生命周期契约
+## D012: 平台分叉只发生在 display/input/tick/fs 等 port 层
 
-拆 `SettingsPages.cpp` 或 `ShellPages.cpp` 前，必须先明确 LVGL root object、timer、EventBus subscription、临时壳层和页面状态的生命周期责任。不得在未处理 `LV_EVENT_DELETE` 和双重释放风险前复制页面拆分模式。
+PC SDL 与 F411 LCD/Touch 的差异应收敛在平台端口。`watch_core`、模型快照、`UiEvent`、页面意图和 XML 生成 C 不应感知具体平台。
 
-## D013: 新增 UI 页面必须先确定领域归属
+## D013: Action/Event 必须适合嵌入式环境
 
-新增 UI 页面、壳层 surface、临时 overlay 或应用页面前，必须先判断它属于 Settings、Shell、HomeRing、Launcher、Notifications、QuickSettings、Power、Health、Daily、Wallet、Shared primitive 或 domain helper 等哪个领域。不得因为注册方便或“不是 Settings”就默认进入 `ShellPages.cpp`。
+事件、快照、页面意图应固定大小、可按值传递、无动态资源。不在 Action/Event 中使用 `std::string`、`std::vector`、heap allocation 或复杂对象所有权。
+
+## D014: 子 Controller 不直接操作 UI
+
+后续如果 `watch_core` 内拆出子控制器，它们不得直接调用 LVGL、不得创建 UI 对象、不得访问页面内部。它们只能返回状态更新或页面意图。
+
+## D015: 文档入口必须短
+
+默认新会话只读 `AGENTS.md`、`docs/document_map.md` 和 `docs/00_current/` 下的当前入口文档。长架构、历史审计和旧决策只按任务补读。
+
+## D016: 每轮必须 Scope Lock
+
+每一轮实施前必须明确 `Allowed files`、`Forbidden files` 和 `Forbidden changes`。结束后检查 `git status`，实际修改文件必须落在允许范围内。
+
+## D017: 新增 UI 页面必须先确定归属
+
+新增 screen、component、surface、overlay 或详情页前，必须判断它属于 XML UI 资产、UI Adapter、`watch_core`、PC port、F411 port 还是旧 sim 参考，不得因为注册方便而塞进旧页面系统。

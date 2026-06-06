@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LVGL XML + watch_core UML</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 32px;
+      font-family: "Microsoft YaHei", "Noto Sans SC", sans-serif;
+      background: #f6f7f2;
+      color: #1d2521;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+    section {
+      margin: 28px 0;
+      padding: 24px;
+      border: 1px solid #d6dccf;
+      border-radius: 18px;
+      background: #ffffff;
+      box-shadow: 0 10px 28px rgba(24, 35, 30, 0.08);
+    }
+    h1, h2 {
+      margin-top: 0;
+    }
+    p {
+      line-height: 1.7;
+    }
+    .mermaid {
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>LVGL XML + watch_core UML</h1>
+  <p>本图集固定 Magic Watch 当前主线：XML 作为 UI 源，导出 C 入库；watch_core 作为纯 C 产品核心；PC SDL 与 F411 只在平台端口分叉。</p>
+
+  <section>
+    <h2>模块关系</h2>
+    <pre class="mermaid">
+flowchart LR
+    XML["ui/lvgl_pro<br/>XML / styles / assets / generated C"]
+    Adapter["UI Adapter<br/>LVGL binding / callbacks / screen API"]
+    Core["watch_core<br/>ModelStore / UiEvent / Coordinator / Snapshot"]
+    PC["magic_watch_xml_sim<br/>SDL display/input/tick/fs"]
+    F411["F411 platform<br/>LCD / touch / tick / fs / DMA"]
+    OldSim["old magic_watch_sim<br/>behavior reference only"]
+
+    XML --> Adapter
+    Adapter <--> Core
+    PC --> Adapter
+    F411 --> Adapter
+    OldSim -.reference.-> Core
+    OldSim -.reference.-> XML
+    </pre>
+  </section>
+
+  <section>
+    <h2>模型更新到 UI 刷新</h2>
+    <pre class="mermaid">
+sequenceDiagram
+    participant Source as Hardware or Fake Source
+    participant Service as Service
+    participant Core as watch_core ModelStore
+    participant Snapshot as UiModelSnapshot
+    participant Adapter as UI Adapter
+    participant Subject as LVGL Subject
+    participant Screen as Generated Screen
+
+    Source->>Service: sample/update
+    Service->>Core: typed model update
+    Core->>Snapshot: build read-only snapshot
+    Snapshot->>Adapter: publish snapshot
+    Adapter->>Subject: set UI binding values
+    Subject->>Screen: refresh generated widgets
+    </pre>
+  </section>
+
+  <section>
+    <h2>卡片点击到页面切换</h2>
+    <pre class="mermaid">
+sequenceDiagram
+    participant Card as Health Card XML/LVGL
+    participant Adapter as UI Adapter
+    participant Queue as watch_core EventQueue
+    participant Coord as Coordinator
+    participant Intent as PageIntent
+    participant ScreenApi as Generated Screen API
+
+    Card->>Adapter: LV_EVENT_CLICKED with feature id
+    Adapter->>Queue: push UiEvent
+    Queue->>Coord: dispatch event
+    Coord->>Intent: open placeholder detail
+    Intent->>Adapter: request screen transition
+    Adapter->>ScreenApi: create/load generated screen
+    </pre>
+  </section>
+
+  <section>
+    <h2>迁移顺序</h2>
+    <pre class="mermaid">
+flowchart TD
+    D["LVGL-XML-DOC-1<br/>architecture + UML + cards"]
+    X1["LVGL-XML-Q1-1<br/>create ui/lvgl_pro + 240x280 target"]
+    X2["LVGL-XML-Q1-2<br/>health four-card XML preview"]
+    X3["LVGL-XML-Q1-3<br/>magic_watch_xml_sim"]
+    X4["LVGL-XML-Q1-4<br/>watch_core snapshot + UiEvent + Adapter"]
+    X5["LVGL-XML-Q1-5<br/>PC clickable vertical loop"]
+    Q3["F411-Q3<br/>color / font / flush / DMA baseline"]
+    F2["F411-XML-Q2<br/>same generated UI on F411"]
+
+    D --> X1 --> X2 --> X3 --> X4 --> X5 --> Q3 --> F2
+    </pre>
+  </section>
+
+  <section>
+    <h2>责任矩阵</h2>
+    <pre class="mermaid">
+flowchart TB
+    subgraph UI["UI Assets"]
+      A1["XML layout"]
+      A2["styles/components"]
+      A3["generated C"]
+    end
+    subgraph Core["watch_core"]
+      B1["typed events"]
+      B2["model snapshot"]
+      B3["coordinator decisions"]
+    end
+    subgraph Ports["Platform Ports"]
+      C1["PC SDL"]
+      C2["F411 LCD/touch"]
+    end
+
+    A1 --> A3
+    A3 --> C1
+    A3 --> C2
+    B1 --> B3
+    B2 --> A3
+    C1 --> B1
+    C2 --> B1
+    </pre>
+  </section>
+</main>
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+  mermaid.initialize({ startOnLoad: true, theme: "neutral" });
+</script>
+</body>
+</html>

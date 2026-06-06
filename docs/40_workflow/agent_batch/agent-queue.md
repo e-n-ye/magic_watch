@@ -6,21 +6,31 @@
 
 ## 当前队列
 
-### F411-Q2 最小 LVGL 移植闭环
+### LVGL-XML-Q1 健康四卡 XML 与 PC 垂直闭环
 
-- 状态：DONE
-- 卡片来源：cards/f411-lvgl-q2.md
-- 执行范围：卡片 `F411-LVGL-1` / `F411-LVGL-2` / `F411-LVGL-3` / `F411-LVGL-4` / `F411-LVGL-5`
+- 状态：TODO
+- 卡片来源：cards/lvgl-xml-watch-core-q1.md
+- 执行范围：卡片 `LVGL-XML-Q1-1` / `LVGL-XML-Q1-2` / `LVGL-XML-Q1-3` / `LVGL-XML-Q1-4` / `LVGL-XML-Q1-5`
 - 停止策略：每张卡后停止
-- 验收后处理：从队列移除
+- 验收后处理：保留
 
 ### F411-Q3 LVGL 性能基线与 SPI DMA 准备
 
-- 状态：IN_PROGRESS
+- 状态：TODO
 - 卡片来源：cards/f411-lvgl-perf-q3.md
-- 执行范围：卡片 `F411-LVGL-PERF-1` / `F411-LVGL-PERF-1B` / `F411-LVGL-PERF-2` / `F411-LVGL-DMA-PREP` / `F411-LVGL-DMA-1` / `F411-LVGL-DMA-2` / `F411-LVGL-DMA-3`
+- 执行范围：卡片 `F411-LVGL-PERF-2` / `F411-LVGL-DMA-PREP` / `F411-LVGL-DMA-1` / `F411-LVGL-DMA-2` / `F411-LVGL-DMA-3`
 - 停止策略：每张卡后停止
-- 验收后处理：从队列移除
+- 验收后处理：保留
+- 执行前条件：`LVGL-XML-Q1` 已完成并验收；`F411-LVGL-PERF-1` 与 `F411-LVGL-PERF-1B` 已在卡片文件中记录为 DONE。
+
+### F411-XML-Q2 同一套 XML 生成 UI 上 F411
+
+- 状态：TODO
+- 卡片来源：cards/lvgl-xml-watch-core-q1.md
+- 执行范围：卡片 `F411-XML-Q2-1`
+- 停止策略：每张卡后停止
+- 验收后处理：保留
+- 执行前条件：`LVGL-XML-Q1` 已完成并验收；`F411-Q3` 已完成并验收。
 
 ## 队列项格式
 

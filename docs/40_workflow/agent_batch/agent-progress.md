@@ -258,6 +258,7 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 完成：`H9-BRIDGE-2C`；已把 Battery / PowerStatus 周期采样迁入真实同核 FreeRTOS `Power_Task`；队列项 `H9-Q2C`
 - 修改文件：`prototypes/twatch_s3_plus_bringup/src/main.cpp`、`prototypes/twatch_s3_plus_bringup/README.md`、`docs/70_hardware_reference/stage9_hardware_bridge_plan.md`、`docs/10_architecture/hardware_boundary.md`、`docs/40_workflow/agent_batch/cards/h9-hardware-bridge-q2.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
 - 自检：`git status --short -uall` 仅出现本轮允许文件；`C:\Users\13984\.platformio\penv\Scripts\pio.exe run -e twatch-s3 -j 1` 通过；`git diff --check` 通过（仅 LF/CRLF 提示，无 diff 格式错误）；本轮实际改动中文文档乱码哨兵检查通过
+
 - 风险回应：当前 `Power_Task` 已以 1Hz 采样并驱动 `BatterySample -> BatteryPowerService -> DataCenter`，bring-up 页面和 `[bringup-pmu]` 日志也改为消费任务快照；但同步 `EventBus` 仍是同核简化边界，真正 BatteryChanged 串口观测和 `Power_Task` high water mark 验收继续留给 `H9-BRIDGE-2D`
 - 阻塞与待决：`pio` 不在 PATH，后续仍需显式使用 `C:\Users\13984\.platformio\penv\Scripts\pio.exe`
 - 下一步：按停止策略停止，等待用户验收；如继续执行下一张卡，应进入 `H9-Q2D` 串口 BatteryChanged 事件观测
@@ -391,3 +392,23 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：本轮只改 debug 展示和说明，不改 SPI / LCD 发送实现、不启用 DMA、不修改 CubeMX 生成代码、不修改 MDK 工程
 - 阻塞与待决：等待用户本地 MDK 编译和真机验证 `pulse` 是否无输入递增
 - 下一步：按每张卡后停止；用户验证通过后，下一张进入 `F411-LVGL-PERF-2` RGB565 / 字体显示质量验证
+
+### 会话 2026-06-06 LVGL XML 主线文档固化
+
+- 本轮范围：`LVGL-XML-DOC-1`，只做文档固化，不创建工程、不写运行时代码、不改 F411 代码
+- 完成：已把当前主线固化为 `LVGL XML + watch_core + PC/F411 双后端`；已新增架构文档、UML、正式卡片包；已将执行队列调整为 `LVGL-XML-Q1` -> `F411-Q3` -> `F411-XML-Q2`
+- 修改文件：`docs/10_architecture/lvgl_xml_watch_core_architecture.md`、`docs/10_architecture/lvgl_xml_watch_core_architecture_uml.html`、`docs/00_current/project_brief.md`、`docs/00_current/current_decisions.md`、`docs/document_map.md`、`docs/40_workflow/agent_batch/cards/lvgl-xml-watch-core-q1.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`git status --short -uall` 已确认只改文档和卡片文件；`git diff --check` 通过，仅有 LF/CRLF 提示；本轮实际改动中文文档乱码哨兵检查无命中
+- 风险回应：`F411-Q3` 仍保留为主线的一部分，但从进行中恢复为待执行并排在 PC 闭环之后；旧 `magic_watch_sim` 只作为行为参考，不作为新主线继续扩建
+- 阻塞与待决：无
+- 下一步：从队列项 `LVGL-XML-Q1` 开始，先执行 `LVGL-XML-Q1-1` 创建 `ui/lvgl_pro` 工程骨架和 240x280 target
+
+### 会话 2026-06-06 LVGL-XML-Q1-1
+
+- 本轮范围：队列项 `LVGL-XML-Q1`，卡片 `LVGL-XML-Q1-1`
+- 完成：`LVGL-XML-Q1-1`；已把 `ui/lvgl_pro` 从 Editor 空工程补成可持续的仓库骨架，并建立 `watch_240x280` preview target
+- 修改文件：`ui/lvgl_pro/project.xml`、`ui/lvgl_pro/globals.xml`、`ui/lvgl_pro/file_list_gen.cmake`、`ui/lvgl_pro/component_lib_list_gen.cmake`、`docs/40_workflow/agent_batch/cards/lvgl-xml-watch-core-q1.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`git status --short -uall` 已确认工作区同时存在上一张依赖卡 `LVGL-XML-DOC-1` 的未提交文档文件与本轮 `Q1-1` 目标文件；`git diff --check` 通过（仅有 LF/CRLF 提示，无 diff 格式错误）；本轮实际改动中文文档乱码哨兵检查通过
+- 风险回应：本轮只建立目标尺寸、layout token 与生成清单占位，不提前实现 screen、component、PC 目标或 `watch_core`
+- 阻塞与待决：未在本机直接拉起 Editor 手动点击验证，但 `project.xml` 目标定义已切换为 `240x280`
+- 下一步：按队列停止策略等待用户验收；如继续下一张卡，进入 `LVGL-XML-Q1-2` 主页健康四卡 XML 预览

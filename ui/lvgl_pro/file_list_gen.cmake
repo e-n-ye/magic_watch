@@ -1,0 +1,6 @@
+set(LV_EDITOR_PROJECT_SOURCES)
+list(
+  APPEND
+  LV_EDITOR_PROJECT_SOURCES
+  ${CMAKE_CURRENT_LIST_DIR}/magic_watch_ui_gen.c
+  ${CMAKE_CURRENT_LIST_DIR}/magic_watch_ui.c)

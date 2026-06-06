@@ -1,6 +1,6 @@
 # Magic Watch 文档任务路由器
 
-日期：2026-06-04
+日期：2026-06-06
 
 本文件不再是“推荐阅读清单”，而是任务路由器。默认上下文必须短；历史文档可以检索，但不能污染每次新会话。
 
@@ -63,7 +63,23 @@
 
 - [project_brief.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/project_brief.md)
 - [current_decisions.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_decisions.md)
+- [lvgl_xml_watch_core_architecture.md](/D:/MY_Desk/watch/magic_watch/docs/10_architecture/lvgl_xml_watch_core_architecture.md)，仅在需要继续 XML / `watch_core` / PC / F411 主线时补读。
 - [v0_scope.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/v0_scope.md)，仅在需要确认当前阶段边界时补读。
+
+### 我想继续 LVGL XML / watch_core / F411 新主线
+
+先读：
+
+- [lvgl_xml_watch_core_architecture.md](/D:/MY_Desk/watch/magic_watch/docs/10_architecture/lvgl_xml_watch_core_architecture.md)
+- [lvgl_xml_watch_core_architecture_uml.html](/D:/MY_Desk/watch/magic_watch/docs/10_architecture/lvgl_xml_watch_core_architecture_uml.html)
+- [agent-queue.md](/D:/MY_Desk/watch/magic_watch/docs/40_workflow/agent_batch/agent-queue.md)
+- [lvgl-xml-watch-core-q1.md](/D:/MY_Desk/watch/magic_watch/docs/40_workflow/agent_batch/cards/lvgl-xml-watch-core-q1.md)
+
+说明：
+
+- 这是当前默认工程主线：XML 作为 UI 源，生成 C 入库，`watch_core` 作为纯 C 产品核心，PC SDL 与 F411 只在平台端口分叉。
+- 第一阶段只做主页健康四卡、PC 可交互闭环和 F411 显示链路验证，不迁 Zephyr、不绑定最终芯片、不接完整传感器业务。
+- 后续执行顺序以 `agent-queue.md` 为准：`LVGL-XML-Q1` -> `F411-Q3` -> `F411-XML-Q2`。
 
 ### 我想知道当前重构到哪了
 
@@ -82,6 +98,7 @@
 
 先读：
 
+- [lvgl_xml_watch_core_architecture.md](/D:/MY_Desk/watch/magic_watch/docs/10_architecture/lvgl_xml_watch_core_architecture.md)，如果页面属于新 XML 主线。
 - [ui_page_ownership.md](/D:/MY_Desk/watch/magic_watch/docs/10_architecture/ui_page_ownership.md)
 - [current_architecture.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_architecture.md)
 - [current_refactor_status.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_refactor_status.md)，仅在需要确认当前实现文件归属时补读。
@@ -171,12 +188,13 @@
 
 先读：
 
+- [lvgl_xml_watch_core_architecture.md](/D:/MY_Desk/watch/magic_watch/docs/10_architecture/lvgl_xml_watch_core_architecture.md)，如果目标是继续当前 XML/F411 主线。
 - [f411_future_watch_architecture.md](/D:/MY_Desk/watch/magic_watch/docs/10_architecture/f411_future_watch_architecture.md)
 - [f411_future_watch_architecture_uml.html](/D:/MY_Desk/watch/magic_watch/docs/10_architecture/f411_future_watch_architecture_uml.html)
 
 说明：
 
-- 这是新的 F411 / C-first 架构蓝图入口，不是阶段 9 T-Watch 路线的继续执行。
+- F411 / C-first 蓝图仍是当前真机落地参考，但当前执行主线已经升级为 `LVGL XML + watch_core + PC/F411 双后端`。
 - 它只抽取 Magic Watch 中值得保留的分层思想：输入语义、Service、ModelStore、EventQueue、Coordinator、Screen Manager 和 UI Adapter。
 - 它不要求当前 API 已存在，也不搬模拟器 C++ 实现；后续代码应按小卡片让骨架逐步长出来。
 
