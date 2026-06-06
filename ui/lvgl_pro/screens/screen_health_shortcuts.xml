@@ -1,0 +1,84 @@
+<screen>
+	<view style_bg_color="#health_screen_bg" style_text_color="#fg_primary" scrollable="false">
+		<health_shortcut_card
+			x="#health_grid_left"
+			y="#health_grid_top"
+			card_id="heart"
+			icon_src="health_heart_64"
+			metric_text="--"
+			style_bg_color="#card_dark"
+		/>
+
+		<health_shortcut_card
+			x="#health_col2_x"
+			y="#health_grid_top"
+			card_id="spo2"
+			icon_src="health_spo2_64"
+			metric_text="98 %"
+			style_bg_color="#card_red"
+		/>
+
+		<health_shortcut_card
+			x="#health_grid_left"
+			y="#health_row2_y"
+			card_id="breathe"
+			icon_src="health_breathe_64"
+			metric_text="18"
+			style_bg_color="#card_blue"
+		/>
+
+		<health_shortcut_card
+			x="#health_col2_x"
+			y="#health_row2_y"
+			card_id="stress"
+			icon_src="health_stress_64"
+			metric_text="34"
+			style_bg_color="#card_dark"
+		/>
+
+		<lv_obj
+			x="92"
+			y="250"
+			width="#pager_dot_size"
+			height="#pager_dot_size"
+			scrollable="false"
+			style_bg_color="#pager_inactive"
+			style_radius="#pager_dot_size"
+		>
+			<remove_style_all />
+		</lv_obj>
+		<lv_obj
+			x="106"
+			y="250"
+			width="#pager_dot_size"
+			height="#pager_dot_size"
+			scrollable="false"
+			style_bg_color="#pager_active"
+			style_radius="#pager_dot_size"
+		>
+			<remove_style_all />
+		</lv_obj>
+		<lv_obj
+			x="120"
+			y="250"
+			width="#pager_dot_size"
+			height="#pager_dot_size"
+			scrollable="false"
+			style_bg_color="#pager_inactive"
+			style_radius="#pager_dot_size"
+		>
+			<remove_style_all />
+		</lv_obj>
+		<lv_obj
+			x="134"
+			y="250"
+			width="#pager_dot_size"
+			height="#pager_dot_size"
+			scrollable="false"
+			style_bg_color="#pager_inactive"
+			style_radius="#pager_dot_size"
+		>
+			<remove_style_all />
+		</lv_obj>
+	</view>
+</screen>

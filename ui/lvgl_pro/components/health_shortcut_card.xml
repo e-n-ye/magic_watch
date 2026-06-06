@@ -1,0 +1,32 @@
+<component>
+	<api>
+		<prop name="card_id" type="string" default="heart" />
+		<prop name="icon_src" type="image" default="health_heart_64" />
+		<prop name="metric_text" type="string" default="--" />
+		<prop name="metric_color" type="color" default="#fg_primary" />
+	</api>
+
+	<styles>
+		<style
+			name="style_card"
+			width="#health_card_w"
+			height="#health_card_h"
+			pad_all="#space_sm"
+			radius="#radius_md"
+			bg_opa="100%"
+			bg_color="#card_dark"
+		/>
+		<style name="style_metric" text_color="#fg_primary" />
+	</styles>
+
+	<view extends="lv_button" scrollable="false">
+		<remove_style_all />
+		<style name="style_card" />
+
+		<lv_image src="$icon_src" x="-15" y="-15" />
+
+		<lv_label text="$metric_text" align="bottom_left" style_text_color="$metric_color" width="100%">
+			<style name="style_metric" />
+		</lv_label>
+	</view>
+</component>

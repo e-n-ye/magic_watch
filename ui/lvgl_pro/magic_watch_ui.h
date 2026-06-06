@@ -36,6 +36,12 @@ extern "C" {
  */
 void magic_watch_ui_init(const char * asset_path);
 
+/**
+ * Placeholder click hook for health shortcut cards.
+ * The component passes a string card id via user_data.
+ */
+void magic_watch_health_card_clicked(lv_event_t * e);
+
 /**********************
  *      MACROS
  **********************/

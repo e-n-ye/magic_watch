@@ -1,50 +1,82 @@
 <globals>
-    <api>
-        <!-- Add <enumdefs> here -->
-    </api>
+	<api>
+		<!-- Add <enumdefs> here -->
+	</api>
 
-    <consts>
-        <px name="screen_width" value="240" help="Primary watch preview width"/>
-        <px name="screen_height" value="280" help="Primary watch preview height"/>
+	<consts>
+		<px name="screen_width" value="240" help="Primary watch preview width" />
+		<px name="screen_height" value="280" help="Primary watch preview height" />
 
-        <px name="safe_top" value="12" help="Top safe inset for compact watch layouts"/>
-        <px name="safe_bottom" value="12" help="Bottom safe inset for compact watch layouts"/>
-        <px name="safe_side" value="12" help="Left and right safe inset for compact watch layouts"/>
+		<px name="safe_top" value="12" help="Top safe inset for compact watch layouts" />
+		<px name="safe_bottom" value="12" help="Bottom safe inset for compact watch layouts" />
+		<px name="safe_side" value="12" help="Left and right safe inset for compact watch layouts" />
 
-        <px name="space_2xs" value="4" help="Tight internal spacing"/>
-        <px name="space_xs" value="8" help="Small spacing between related elements"/>
-        <px name="space_sm" value="12" help="Default block spacing on the watch home screen"/>
-        <px name="space_md" value="16" help="Section spacing for grouped content"/>
-        <px name="space_lg" value="20" help="Large separation between screen regions"/>
+		<px name="space_2xs" value="4" help="Tight internal spacing" />
+		<px name="space_xs" value="8" help="Small spacing between related elements" />
+		<px name="space_sm" value="12" help="Default block spacing on the watch home screen" />
+		<px name="space_md" value="16" help="Section spacing for grouped content" />
+		<px name="space_lg" value="20" help="Large separation between screen regions" />
 
-        <px name="radius_sm" value="12" help="Small card radius"/>
-        <px name="radius_md" value="18" help="Primary card radius for 240x280 layouts"/>
-        <px name="radius_lg" value="24" help="Large container radius"/>
+		<px name="radius_sm" value="12" help="Small card radius" />
+		<px name="radius_md" value="18" help="Primary card radius for 240x280 layouts" />
+		<px name="radius_lg" value="24" help="Large container radius" />
 
-        <px name="touch_min" value="44" help="Minimum recommended touch target"/>
-        <px name="card_min_h" value="96" help="Baseline card height for quarter shortcuts"/>
+		<px name="touch_min" value="44" help="Minimum recommended touch target" />
+		<px name="card_min_h" value="96" help="Baseline card height for quarter shortcuts" />
+		<px name="health_card_w" value="102" help="Quarter card width for the 240x280 home preview" />
+		<px name="health_card_h" value="102" help="Quarter card height for the 240x280 home preview" />
+		<px name="health_grid_gap" value="12" help="Gap between the four shortcut cards" />
+		<px name="health_grid_top" value="30" help="Top offset of the 2x2 shortcut stage" />
+		<px name="health_grid_left" value="12" help="Left inset of the 2x2 shortcut stage" />
+		<px name="health_col2_x" value="126" help="Second column x position for the shortcut stage" />
+		<px name="health_row2_y" value="144" help="Second row y position for the shortcut stage" />
+		<px name="pager_dot_size" value="8" help="Size of the page indicator dots" />
 
-        <color name="bg_base" value="0x08111a" help="Primary watch background"/>
-        <color name="bg_surface" value="0x122033" help="Card and container background"/>
-        <color name="fg_primary" value="0xf4f7fb" help="Primary foreground text"/>
-        <color name="fg_muted" value="0x94a4b8" help="Secondary foreground text"/>
-        <color name="accent_health" value="0x4fd1c5" help="Default accent for health shortcuts"/>
-    </consts>
+		<color name="bg_base" value="0x08111a" help="Primary watch background" />
+		<color name="health_screen_bg" value="0x000000" help="Health shortcut screen background" />
+		<color name="bg_surface" value="0x122033" help="Card and container background" />
+		<color name="fg_primary" value="0xf4f7fb" help="Primary foreground text" />
+		<color name="fg_muted" value="0x94a4b8" help="Secondary foreground text" />
+		<color name="accent_health" value="0x4fd1c5" help="Default accent for health shortcuts" />
+		<color name="accent_heart" value="0xff6b6b" help="Heart rate accent" />
+		<color name="accent_oxygen" value="0x5cc8ff" help="SpO2 accent" />
+		<color name="accent_breath" value="0x7ce38b" help="Breath accent" />
+		<color name="accent_mood" value="0xffc857" help="Mood accent" />
+		<color name="badge_text" value="0x071018" help="Dark text used inside accent badges" />
+		<color name="card_dark" value="0x041a28" help="Dark card background used by most shortcuts" />
+		<color name="card_red" value="0xff4f7a" help="Warm highlight card background" />
+		<color name="card_blue" value="0x68d9e9" help="Cool highlight card background" />
+		<color name="pager_active" value="0x82d4ff" help="Active page indicator color" />
+		<color name="pager_inactive" value="0x35506f" help="Inactive page indicator color" />
+	</consts>
 
-    <styles>
-        <style name="screen_base" bg_color="#bg_base" text_color="#fg_primary"/>
-        <style name="surface_card" bg_color="#bg_surface" text_color="#fg_primary" radius="#radius_md"/>
-    </styles>
+	<styles>
+		<style name="screen_base" bg_color="#bg_base" text_color="#fg_primary" />
+		<style name="surface_card" bg_color="#bg_surface" text_color="#fg_primary" radius="#radius_md" />
+		<style name="screen_title" text_color="#fg_primary" />
+		<style name="screen_caption" text_color="#fg_muted" />
+	</styles>
 
-    <subjects>
-        <!-- Add <int>, <string>, or <float> subjects here -->
-    </subjects>
+	<subjects>
+		<!-- Add <int>, <string>, or <float> subjects here -->
+	</subjects>
 
-    <images>
-        <!-- Add <file> or <data> tags here -->
-    </images>
+	<images>
+		<file name="health_heart" src_path="images/health_heart.png" />
+		<file name="health_heart_36" src_path="images/health_heart_36.png" />
+		<file name="health_heart_64" src_path="images/health_heart_64.png" />
+		<file name="health_spo2" src_path="images/health_spo2.png" />
+		<file name="health_spo2_36" src_path="images/health_spo2_36.png" />
+		<file name="health_spo2_64" src_path="images/health_spo2_64.png" />
+		<file name="health_breathe" src_path="images/health_breathe.png" />
+		<file name="health_breathe_36" src_path="images/health_breathe_36.png" />
+		<file name="health_breathe_64" src_path="images/health_breathe_64.png" />
+		<file name="health_stress" src_path="images/health_stress.png" />
+		<file name="health_stress_36" src_path="images/health_stress_36.png" />
+		<file name="health_stress_64" src_path="images/health_stress_64.png" />
+	</images>
 
-    <fonts>
-        <!-- Add <bin> , <tiny_ttf>, <freetype> tags here -->
-    </fonts>
+	<fonts>
+		<!-- Add <bin> , <tiny_ttf>, <freetype> tags here -->
+	</fonts>
 </globals>

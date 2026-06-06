@@ -1,0 +1,4 @@
+interface:
+  display_name: "LVGL XML Workflow"
+  short_description: "Build reliable LVGL XML components and screens"
+  default_prompt: "Use $lvgl-xml-workflow to design or repair LVGL XML components, screens, styles, images, and preview workflows."

@@ -412,3 +412,44 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：本轮只建立目标尺寸、layout token 与生成清单占位，不提前实现 screen、component、PC 目标或 `watch_core`
 - 阻塞与待决：未在本机直接拉起 Editor 手动点击验证，但 `project.xml` 目标定义已切换为 `240x280`
 - 下一步：按队列停止策略等待用户验收；如继续下一张卡，进入 `LVGL-XML-Q1-2` 主页健康四卡 XML 预览
+
+### 会话 2026-06-06 LVGL-XML-Q1-2
+
+- 本轮范围：队列项 `LVGL-XML-Q1`，卡片 `LVGL-XML-Q1-2`
+- 完成：已按目标模式将 `LVGL-XML-Q1-2` 切为 `IN_PROGRESS`；已实现健康快捷页 screen、四张卡的复用 component，以及所需的全局 token
+- 修改文件：`ui/lvgl_pro/globals.xml`、`ui/lvgl_pro/components/health_shortcut_card.xml`、`ui/lvgl_pro/screens/screen_health_shortcuts.xml`、`ui/lvgl_pro/images/health_heart.png`、`ui/lvgl_pro/images/health_spo2.png`、`ui/lvgl_pro/images/health_breathe.png`、`ui/lvgl_pro/images/health_stress.png`、`ui/lvgl_pro/magic_watch_ui.c`、`ui/lvgl_pro/magic_watch_ui.h`、`docs/40_workflow/agent_batch/cards/lvgl-xml-watch-core-q1.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`git status --short -uall` 仅出现本轮允许文件；`git diff --check` 通过（仅有 LF/CRLF 提示，无 diff 格式错误）；本轮实际改动中文文档乱码哨兵检查通过
+- 风险回应：本轮只实现 Editor 预览层的 XML 结构和静态占位数据，不接 PC 目标、不接 `watch_core`、不接真实硬件数据
+- 风险回应：交互目前只预留统一点击回调和 `card_id`，还没有接产品事件链；图标使用 PNG 文件资源，后续如果你更想改成矢量/绘图组件，可以在当前 `icon_src` 接口不变的前提下替换内部实现
+- 阻塞与待决：本机未找到可调用的 LVGL Pro CLI，也未直接驱动 Editor GUI，因此尚未自动验证 `240x280` preview 中四卡是否可见、是否存在 invalid
+- 下一步：请用户在 LVGL Pro Editor 中打开 `ui/lvgl_pro` 工程确认预览；若预览正常，则把 `LVGL-XML-Q1-2` 标记为 DONE 并提交；若预览报 invalid，则根据报错继续最小修正
+
+### 会话 2026-06-06 LVGL-XML-Q1-2 颜色与图标微调
+
+- 本轮范围：队列项 `LVGL-XML-Q1`，卡片 `LVGL-XML-Q1-2`
+- 完成：已按官方 styles 语法把卡片背景色收敛为根节点本地 `style_bg_color` / `style_bg_opa` 绑定，以修正 `card_bg` 改动不可见的问题；已把图标改为使用原始 256x256 资源，并显式开放 `icon_scale` / `icon_x` / `icon_y` 三个手调入口，避免继续依赖猜测尺寸
+- 修改文件：`ui/lvgl_pro/components/health_shortcut_card.xml`、`ui/lvgl_pro/screens/screen_health_shortcuts.xml`、`docs/40_workflow/agent_batch/cards/lvgl-xml-watch-core-q1.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：待本轮修改后执行
+- 风险回应：当前仍保留 `card_id` 和 `lv_button` 作为后续点击接入边界，但为了避免 preview console 持续刷 `callback is not found`，本阶段暂不在 XML 里直绑事件回调；这不会影响 `Q1-4` 再接 `UiEvent`
+- 阻塞与待决：需要用户在 Editor 中再次观察 `card_bg="0xbf4c4c"`、`icon_scale`、`icon_x`、`icon_y` 的实时效果，确认 Preview 对这些属性的响应是否符合预期
+- 下一步：如果颜色和缩放已经可见，就把这组参数作为用户自调入口固定下来；若仍无效，再继续检查导出的生成代码和 Preview 对 `lv_button` / `lv_image` 的实际属性映射
+
+### 会话 2026-06-06 LVGL XML skill 与 Q1 返工
+
+- 本轮范围：沉淀 `.agents/skills/lvgl-xml-workflow`，并用该 skill 返工 `LVGL-XML-Q1-2` 的健康四卡 XML；评估 `F411-XML-Q2` 返工入口
+- 完成：已从本地 `lvgl_editor-master` 的 syntax docs、examples、tutorials 提炼组件、样式、图片和事件规则，新增项目级 `lvgl-xml-workflow` skill；已按该 skill 把健康卡改为组件拥有内部结构，screen 只实例化四张卡并用 `style_bg_color` 直接覆盖颜色；已生成并注册 `health_*_64.png`，改用已验证的 `<lv_image src="..."/>` 图片路径
+- 修改文件：`.agents/skills/lvgl-xml-workflow/SKILL.md`、`.agents/skills/lvgl-xml-workflow/agents/openai.yaml`、`.agents/skills/lvgl-xml-workflow/references/patterns.md`、`ui/lvgl_pro/globals.xml`、`ui/lvgl_pro/components/health_shortcut_card.xml`、`ui/lvgl_pro/screens/screen_health_shortcuts.xml`、`ui/lvgl_pro/images/health_*_64.png`、`docs/40_workflow/agent_batch/cards/lvgl-xml-watch-core-q1.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：待本轮修改后执行
+- 风险回应：当前 Q1-2 仍需用户在 LVGL Pro Editor 里确认最终视觉和 preview 是否无 invalid；`F411-XML-Q2` 依赖 `LVGL-XML-Q1-5` 与 `F411-LVGL-DMA-3`，本轮只建立返工规则和入口，不能跳过依赖执行 F411 接入
+- 阻塞与待决：本环境无法直接驱动 LVGL Pro Editor GUI，因此最终效果仍由用户侧检查
+- 下一步：运行 skill 校验、`git diff --check` 和中文乱码哨兵；如果静态自检通过，交给用户打开 Editor 检查 Q1 预览，确认后再继续 Q1-3/Q1-5 与 Q2
+
+### 会话 2026-06-06 LVGL-XML-Q1-2 验收收口
+
+- 本轮范围：队列项 `LVGL-XML-Q1`，卡片 `LVGL-XML-Q1-2`
+- 完成：根据用户确认，当前健康四卡 Editor preview 和生成代码可接受；已将 `LVGL-XML-Q1-2` 标记为 DONE，并保留 `LVGL-XML-Q1-3` 作为下一张卡。
+- 修改文件：`.agents/skills/lvgl-xml-workflow/**`、`ui/lvgl_pro/**`、`docs/40_workflow/agent_batch/cards/lvgl-xml-watch-core-q1.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：提交前执行 `git diff --check` 与本轮实际改动中文文档乱码哨兵检查。
+- 风险回应：本卡只证明 LVGL Pro Editor 预览层和生成产物已成形，不声明 PC simulator 目标、`watch_core` 事件链或 F411 接入已经完成；这些继续留给后续 Q3/Q4/Q5 与 F411 队列。
+- 阻塞与待决：无。
+- 下一步：提交 Q1-1/Q1-2 与 LVGL XML skill 收口；工作区清空后进入 `LVGL-XML-Q1-3` 新增 `magic_watch_xml_sim` PC 验证目标。

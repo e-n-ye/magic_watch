@@ -140,7 +140,7 @@ Forbidden changes:
 ## LVGL-XML-Q1-2 实现主页健康四卡 XML 预览
 
 - 批次：LVGL-XML-Q1
-- 状态：TODO
+- 状态：DONE
 - 依赖：`LVGL-XML-Q1-1`
 - 自检：
   - `git status --short -uall`
@@ -196,7 +196,15 @@ Forbidden changes:
 
 ### 执行记录
 
-- 待执行。
+- 已完成：已新增 `components/health_shortcut_card.xml` 与 `screens/screen_health_shortcuts.xml`，并在 `globals.xml` 补充 240x280 健康四卡所需的尺寸、颜色和标题样式 token；当前文件结构已经清楚区分全局 styles、卡片 component 和 screen 组织。
+- 已完成：根据参考图纠偏后，已把组件收敛为“顶部单图标 + 底部一行关键信息”的极简卡片，并把 screen 改成固定 2x2 卡片舞台，去掉导致滚动的顶部说明与列表式布局。
+- 已完成：已把 `assets/generated_icons/` 中的四个健康图标复制到 `ui/lvgl_pro/images/` 并在 `globals.xml` 注册为图片资源；卡片组件改为使用 `icon_src` 图片属性，不再用文字假图标。
+- 已完成：已保留 `card_id` 作为后续交互接线标识，组件根节点继续使用 `lv_button` 以保留可点击边界；但为避免 Editor preview 持续报 callback not found，本卡阶段暂不在 XML 里直绑 `magic_watch_health_card_clicked`，留待 `Q1-4` 接 `UiEvent` 时再恢复真实回调。
+- 已完成：用户侧验证显示早期 XML 工作流不可靠：screen 与 component 职责没有收敛，`card_bg` 不能稳定手调，图标也未正常显示；因此新增 `.agents/skills/lvgl-xml-workflow`，把 LVGL XML 语法、组件边界、样式、图片和事件规则沉淀后再返工健康四卡。
+- 已完成：已按新 skill 返工 `health_shortcut_card`：组件保留卡片尺寸、圆角、padding、内部图标和数值位置；screen 只负责实例化四张卡、传入 `card_id` / `icon_src` / `metric_text`，并通过官方例程已验证的 `style_bg_color` 直接覆盖卡片颜色。
+- 已完成：已放弃未在本地 examples/tutorials 中找到可靠样例的 `scale_x` / `scale_y` 主路径，改为生成并注册 `health_*_64.png`，让四卡先走 `globals.xml` + `<lv_image src="..."/>` 的已验证图片路径。
+- 已完成：用户已在 LVGL Pro Editor 侧确认 240x280 preview 四卡可见，并已生成代码；卡片背景、页面背景和呼吸卡颜色已收敛为全局 color token，screen 不再散写这些裸色值。
+- 自检：`git status --short -uall` 仅出现本轮允许文件；`git diff --check` 通过（仅有 LF/CRLF 提示，无 diff 格式错误）；本轮实际改动中文文档乱码哨兵检查通过；本机未找到可调用的 LVGL Pro CLI，也未直接驱动 Editor GUI，Editor 预览验收以用户侧确认为准。
 
 ---
 
@@ -459,4 +467,4 @@ Forbidden changes:
 
 ### 执行记录
 
-- 待执行。
+- 待执行：Q2 需要复用 Q1 已验证的同一套 XML 生成产物；当前只完成 skill 沉淀和 Q1 健康四卡 preview 返工入口，尚未满足 `LVGL-XML-Q1-5` 与 `F411-LVGL-DMA-3` 依赖，不能越过 F411-Q3 直接宣称 Q2 返工完成。

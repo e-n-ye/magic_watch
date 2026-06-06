@@ -111,9 +111,54 @@ extern "C" {
 #define CARD_MIN_H 96
 
 /**
+ * Quarter card width for the 240x280 home preview
+ */
+#define HEALTH_CARD_W 102
+
+/**
+ * Quarter card height for the 240x280 home preview
+ */
+#define HEALTH_CARD_H 102
+
+/**
+ * Gap between the four shortcut cards
+ */
+#define HEALTH_GRID_GAP 12
+
+/**
+ * Top offset of the 2x2 shortcut stage
+ */
+#define HEALTH_GRID_TOP 30
+
+/**
+ * Left inset of the 2x2 shortcut stage
+ */
+#define HEALTH_GRID_LEFT 12
+
+/**
+ * Second column x position for the shortcut stage
+ */
+#define HEALTH_COL2_X 126
+
+/**
+ * Second row y position for the shortcut stage
+ */
+#define HEALTH_ROW2_Y 144
+
+/**
+ * Size of the page indicator dots
+ */
+#define PAGER_DOT_SIZE 8
+
+/**
  * Primary watch background
  */
 #define BG_BASE lv_color_hex(0x08111a)
+
+/**
+ * Health shortcut screen background
+ */
+#define HEALTH_SCREEN_BG lv_color_hex(0x000000)
 
 /**
  * Card and container background
@@ -135,6 +180,56 @@ extern "C" {
  */
 #define ACCENT_HEALTH lv_color_hex(0x4fd1c5)
 
+/**
+ * Heart rate accent
+ */
+#define ACCENT_HEART lv_color_hex(0xff6b6b)
+
+/**
+ * SpO2 accent
+ */
+#define ACCENT_OXYGEN lv_color_hex(0x5cc8ff)
+
+/**
+ * Breath accent
+ */
+#define ACCENT_BREATH lv_color_hex(0x7ce38b)
+
+/**
+ * Mood accent
+ */
+#define ACCENT_MOOD lv_color_hex(0xffc857)
+
+/**
+ * Dark text used inside accent badges
+ */
+#define BADGE_TEXT lv_color_hex(0x071018)
+
+/**
+ * Dark card background used by most shortcuts
+ */
+#define CARD_DARK lv_color_hex(0x041a28)
+
+/**
+ * Warm highlight card background
+ */
+#define CARD_RED lv_color_hex(0xff4f7a)
+
+/**
+ * Cool highlight card background
+ */
+#define CARD_BLUE lv_color_hex(0x68d9e9)
+
+/**
+ * Active page indicator color
+ */
+#define PAGER_ACTIVE lv_color_hex(0x82d4ff)
+
+/**
+ * Inactive page indicator color
+ */
+#define PAGER_INACTIVE lv_color_hex(0x35506f)
+
 /**********************
  *      TYPEDEFS
  **********************/
@@ -153,6 +248,8 @@ extern "C" {
 
 extern lv_style_t screen_base;
 extern lv_style_t surface_card;
+extern lv_style_t screen_title;
+extern lv_style_t screen_caption;
 
 /*----------------
  * Fonts
@@ -161,6 +258,19 @@ extern lv_style_t surface_card;
 /*----------------
  * Images
  *----------------*/
+
+extern const void * health_heart;
+extern const void * health_heart_36;
+extern const void * health_heart_64;
+extern const void * health_spo2;
+extern const void * health_spo2_36;
+extern const void * health_spo2_64;
+extern const void * health_breathe;
+extern const void * health_breathe_36;
+extern const void * health_breathe_64;
+extern const void * health_stress;
+extern const void * health_stress_36;
+extern const void * health_stress_64;
 
 /*----------------
  * Subjects
@@ -187,6 +297,10 @@ void magic_watch_ui_init_gen(const char * asset_path);
 /**********************
  *   POST INCLUDES
  **********************/
+
+/*Include all the widgets, components and screens of this library*/
+#include "components/health_shortcut_card_gen.h"
+#include "screens/screen_health_shortcuts_gen.h"
 
 #ifdef __cplusplus
 } /*extern "C"*/
