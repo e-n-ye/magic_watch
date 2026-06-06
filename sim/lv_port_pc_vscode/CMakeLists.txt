@@ -209,6 +209,64 @@ if(LVGL_PRO_PROJECT_DIR)
   endif()
 endif()
 
+set(MAGIC_WATCH_XML_UI_DIR
+    "${PROJECT_SOURCE_DIR}/../../ui/lvgl_pro"
+    CACHE PATH "Path to the Magic Watch LVGL Pro generated UI project")
+
+if(EXISTS "${MAGIC_WATCH_XML_UI_DIR}/CMakeLists.txt")
+    set(LVGL_COMPONENT_LIB_NAME magic_watch_xml_ui)
+    add_subdirectory(${MAGIC_WATCH_XML_UI_DIR} magic_watch_xml_ui_build)
+    unset(LVGL_COMPONENT_LIB_NAME)
+
+    target_compile_definitions(magic_watch_xml_ui PUBLIC
+        LV_CONF_INCLUDE_SIMPLE
+        LV_LVGL_H_INCLUDE_SIMPLE
+    )
+    target_include_directories(magic_watch_xml_ui PUBLIC
+        ${MAGIC_WATCH_XML_UI_DIR}
+        ${CMAKE_SOURCE_DIR}/lvgl
+    )
+
+    file(TO_CMAKE_PATH "${MAGIC_WATCH_XML_UI_DIR}/" MAGIC_WATCH_XML_UI_ASSET_DIR)
+    set(MAGIC_WATCH_XML_UI_ASSET_PATH "A:${MAGIC_WATCH_XML_UI_ASSET_DIR}")
+
+    add_executable(magic_watch_xml_sim
+        src/xml_sim_main.cpp
+        src/mouse_cursor_icon.c
+        src/HAL/HAL.cpp
+        src/Platform/Simulator/SimulatorDevice.cpp
+    )
+    target_compile_definitions(magic_watch_xml_sim PRIVATE
+        LV_CONF_INCLUDE_SIMPLE
+        MAGIC_WATCH_XML_UI_ASSET_PATH="${MAGIC_WATCH_XML_UI_ASSET_PATH}"
+    )
+    target_include_directories(magic_watch_xml_sim PRIVATE ${PROJECT_SOURCE_DIR}/src)
+    target_link_libraries(magic_watch_xml_sim
+        magic_watch_xml_ui
+        lvgl
+        lvgl::thorvg
+        ${SDL2_LIBRARIES}
+    )
+
+    if(NOT MSVC)
+        target_link_libraries(magic_watch_xml_sim m pthread)
+    endif()
+
+    if (WIN32)
+        if (MSVC)
+            target_link_options(magic_watch_xml_sim PRIVATE "/SUBSYSTEM:CONSOLE")
+        else()
+            target_link_options(magic_watch_xml_sim PRIVATE "-mconsole")
+        endif()
+    endif()
+
+    add_custom_target(run_xml
+        COMMAND ${EXECUTABLE_OUTPUT_PATH}/magic_watch_xml_sim
+        DEPENDS magic_watch_xml_sim)
+else()
+    message(WARNING "Magic Watch XML UI project not found at: ${MAGIC_WATCH_XML_UI_DIR}")
+endif()
+
 add_executable(main ${MAIN_SOURCES})
 set_target_properties(main PROPERTIES OUTPUT_NAME magic_watch_sim)
 target_compile_definitions(main PRIVATE LV_CONF_INCLUDE_SIMPLE)

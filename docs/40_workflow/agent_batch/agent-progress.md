@@ -453,3 +453,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：本卡只证明 LVGL Pro Editor 预览层和生成产物已成形，不声明 PC simulator 目标、`watch_core` 事件链或 F411 接入已经完成；这些继续留给后续 Q3/Q4/Q5 与 F411 队列。
 - 阻塞与待决：无。
 - 下一步：提交 Q1-1/Q1-2 与 LVGL XML skill 收口；工作区清空后进入 `LVGL-XML-Q1-3` 新增 `magic_watch_xml_sim` PC 验证目标。
+
+### 会话 2026-06-06 LVGL-XML-Q1-3
+
+- 本轮范围：队列项 `LVGL-XML-Q1`，卡片 `LVGL-XML-Q1-3`
+- 完成：`LVGL-XML-Q1-3`；已在 `sim/lv_port_pc_vscode` 中新增独立 `magic_watch_xml_sim` PC 验证目标，并加载 `ui/lvgl_pro` 生成的健康四卡 screen。
+- 修改文件：`sim/lv_port_pc_vscode/CMakeLists.txt`、`sim/lv_port_pc_vscode/src/xml_sim_main.cpp`、`docs/40_workflow/agent_batch/cards/lvgl-xml-watch-core-q1.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`cmake --build sim/lv_port_pc_vscode/build --config Debug` 通过；`magic_watch_xml_sim.exe` 隐藏启动烟测 3 秒返回 `started-ok`；提交前执行 `git diff --check` 与本轮实际改动中文文档乱码哨兵检查。
+- 风险回应：本轮只新增独立 XML UI PC 验证目标，不修改旧 `magic_watch_sim` 行为，不接 `watch_core`，不接 F411；隐藏启动烟测不等同于人工可见窗口验收，后续 Q1-5 仍需做四卡显示和交互手动验证。
+- 阻塞与待决：无。
+- 下一步：按停止策略停止并提交 Q3；用户验收后可进入 `LVGL-XML-Q1-4`，实现 `watch_core` 最小快照、事件和 UI Adapter。

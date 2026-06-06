@@ -211,7 +211,7 @@ Forbidden changes:
 ## LVGL-XML-Q1-3 新增 `magic_watch_xml_sim` PC 验证目标
 
 - 批次：LVGL-XML-Q1
-- 状态：TODO
+- 状态：DONE
 - 依赖：`LVGL-XML-Q1-2`
 - 自检：
   - `git status --short -uall`
@@ -268,7 +268,10 @@ Forbidden changes:
 
 ### 执行记录
 
-- 待执行。
+- 已完成：新增独立 `magic_watch_xml_sim` target，入口为 `src/xml_sim_main.cpp`；该目标复用现有 SDL simulator device、链接 `ui/lvgl_pro` 生成库，并直接加载 `screen_health_shortcuts_create()`。
+- 已完成：`magic_watch_xml_sim` 使用 `MAGIC_WATCH_XML_UI_ASSET_PATH` 指向 `ui/lvgl_pro/` 图片资源目录，避免运行时依赖 LVGL Pro Editor。
+- 自检：`cmake --build sim/lv_port_pc_vscode/build --config Debug` 通过，构建产出 `build/out/magic_watch_xml_sim.exe`；隐藏启动烟测 3 秒返回 `started-ok`，说明新目标可启动并保持运行；`git diff --check` 提交前执行。
+- 风险回应：本轮未接旧 C++ 页面系统、旧 `AppStateMachine` 或旧 `PageManager`；旧 `magic_watch_sim` target 保留。隐藏启动烟测不等同于人工可见窗口验收，后续 Q1-5 仍需手动验证四卡显示和交互。
 
 ---
 
