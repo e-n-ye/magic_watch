@@ -20,10 +20,15 @@ static const WatchCoreHealthFeature health_card_features[WATCH_CORE_HEALTH_CARD_
     WATCH_CORE_HEALTH_FEATURE_STRESS,
 };
 
+static const lv_coord_t click_drag_threshold = 12;
+
 static void health_card_handler(const char * card_id, void * user_data);
+static void health_hit_target_event_cb(lv_event_t * event);
 static void back_button_event_cb(lv_event_t * event);
 static void bind_health_shortcut_screen(WatchCoreUiAdapter * adapter, lv_obj_t * screen);
-static void create_health_card_hit_targets(lv_obj_t * screen);
+static void create_health_card_hit_targets(WatchCoreUiAdapter * adapter, lv_obj_t * screen);
+static void click_guard_handle_event(WatchCoreUiClickGuardState * guard, lv_event_t * event);
+static bool click_guard_allows(WatchCoreUiClickGuardState * guard);
 static void apply_snapshot_to_subjects(WatchCoreUiAdapter * adapter);
 static void dispatch_event(WatchCoreUiAdapter * adapter, WatchCoreUiEvent event);
 static void drain_core_events(WatchCoreUiAdapter * adapter);
@@ -87,6 +92,29 @@ static void health_card_handler(const char * card_id, void * user_data)
     dispatch_event(adapter, watch_core_make_health_card_clicked_event(feature_from_card_id(card_id)));
 }
 
+static void health_hit_target_event_cb(lv_event_t * event)
+{
+    WatchCoreHealthHitTarget * target = (WatchCoreHealthHitTarget *)lv_event_get_user_data(event);
+    if (target == NULL || target->adapter == NULL) {
+        return;
+    }
+
+    if (lv_event_get_code(event) != LV_EVENT_CLICKED) {
+        click_guard_handle_event(&target->guard, event);
+        return;
+    }
+
+    if (!click_guard_allows(&target->guard)) {
+        LV_LOG_USER("UiEvent ignored after drag feature=%s",
+                    watch_core_health_feature_name(feature_from_card_id(target->card_id)));
+        return;
+    }
+
+    dispatch_event(
+        target->adapter,
+        watch_core_make_health_card_clicked_event(feature_from_card_id(target->card_id)));
+}
+
 static void back_button_event_cb(lv_event_t * event)
 {
     WatchCoreUiAdapter * adapter = (WatchCoreUiAdapter *)lv_event_get_user_data(event);
@@ -108,10 +136,10 @@ static void bind_health_shortcut_screen(WatchCoreUiAdapter * adapter, lv_obj_t *
         }
     }
 
-    create_health_card_hit_targets(screen);
+    create_health_card_hit_targets(adapter, screen);
 }
 
-static void create_health_card_hit_targets(lv_obj_t * screen)
+static void create_health_card_hit_targets(WatchCoreUiAdapter * adapter, lv_obj_t * screen)
 {
     const int32_t x[WATCH_CORE_HEALTH_CARD_COUNT] = {
         HEALTH_GRID_LEFT,
@@ -132,6 +160,13 @@ static void create_health_card_hit_targets(lv_obj_t * screen)
             continue;
         }
 
+        adapter->health_hit_targets[i].adapter = adapter;
+        adapter->health_hit_targets[i].card_id = health_card_ids[i];
+        adapter->health_hit_targets[i].guard.active = false;
+        adapter->health_hit_targets[i].guard.moved = false;
+        adapter->health_hit_targets[i].guard.press_point.x = 0;
+        adapter->health_hit_targets[i].guard.press_point.y = 0;
+
         lv_obj_remove_style_all(hit);
         lv_obj_set_x(hit, x[i]);
         lv_obj_set_y(hit, y[i]);
@@ -140,8 +175,63 @@ static void create_health_card_hit_targets(lv_obj_t * screen)
         lv_obj_set_ext_click_area(hit, 6);
         lv_obj_add_flag(hit, LV_OBJ_FLAG_CLICKABLE);
         lv_obj_set_flag(hit, LV_OBJ_FLAG_SCROLLABLE, false);
-        lv_obj_add_event_cb(hit, magic_watch_health_card_clicked, LV_EVENT_CLICKED, (void *)health_card_ids[i]);
+        lv_obj_add_event_cb(hit, health_hit_target_event_cb, LV_EVENT_ALL, &adapter->health_hit_targets[i]);
     }
+}
+
+static void click_guard_handle_event(WatchCoreUiClickGuardState * guard, lv_event_t * event)
+{
+    if (guard == NULL || event == NULL) {
+        return;
+    }
+
+    switch (lv_event_get_code(event)) {
+        case LV_EVENT_PRESSED: {
+            lv_point_t point = {0, 0};
+            lv_indev_t * indev = lv_event_get_indev(event);
+            if (indev != NULL) {
+                lv_indev_get_point(indev, &point);
+            }
+            guard->press_point = point;
+            guard->active = true;
+            guard->moved = false;
+            break;
+        }
+        case LV_EVENT_PRESSING: {
+            if (!guard->active) {
+                break;
+            }
+            lv_point_t point = {0, 0};
+            lv_indev_t * indev = lv_event_get_indev(event);
+            if (indev != NULL) {
+                lv_indev_get_point(indev, &point);
+            }
+            const lv_coord_t dx = point.x - guard->press_point.x;
+            const lv_coord_t dy = point.y - guard->press_point.y;
+            if (LV_ABS(dx) >= click_drag_threshold || LV_ABS(dy) >= click_drag_threshold) {
+                guard->moved = true;
+            }
+            break;
+        }
+        case LV_EVENT_PRESS_LOST:
+            guard->moved = true;
+            guard->active = false;
+            break;
+        default:
+            break;
+    }
+}
+
+static bool click_guard_allows(WatchCoreUiClickGuardState * guard)
+{
+    if (guard == NULL) {
+        return false;
+    }
+
+    const bool allows = !guard->moved;
+    guard->active = false;
+    guard->moved = false;
+    return allows;
 }
 
 static void apply_snapshot_to_subjects(WatchCoreUiAdapter * adapter)
