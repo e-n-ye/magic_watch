@@ -1,6 +1,6 @@
 # Magic Watch 文档任务路由器
 
-日期：2026-06-06
+日期：2026-06-07
 
 本文件不再是“推荐阅读清单”，而是任务路由器。默认上下文必须短；历史文档可以检索，但不能污染每次新会话。
 
@@ -35,6 +35,7 @@
 - [current_refactor_status.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_refactor_status.md): 当前代码事实基线，内容较长，只在需要确认“代码实际拆到哪”时补读。
 - [current_architecture.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_architecture.md): 架构主线入口，不是每次新会话都必须先读。
 - [v0_scope.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/v0_scope.md): 当前范围摘要，在需要确认阶段边界时补读。
+- [magicwatch_long_term_roadmap.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/magicwatch_long_term_roadmap.md): V0-V3 执行路线图，内容较长，只在规划阶段、拆执行卡或判断停止条件时补读。
 - [decision_log.md](/D:/MY_Desk/watch/magic_watch/docs/decision_log.md): 历史决策流水账，只作历史检索；保留根目录稳定路径，避免跨会话检索入口漂移。
 - [page_reachability_audit.md](/D:/MY_Desk/watch/magic_watch/docs/80_history/page_reachability_audit.md): 历史页面可达性审计，只在查旧入口、旧页面或历史判断时选读。
 - [current_sim_architecture.md](/D:/MY_Desk/watch/magic_watch/docs/80_history/current_sim_architecture.md): 旧版模拟器现状地图，只在追溯早期骨架或核对 `00_current/current_architecture.md` 之前的现状判断时补读。
@@ -65,6 +66,21 @@
 - [current_decisions.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_decisions.md)
 - [lvgl_xml_watch_core_architecture.md](/D:/MY_Desk/watch/magic_watch/docs/10_architecture/lvgl_xml_watch_core_architecture.md)，仅在需要继续 XML / `watch_core` / PC / F411 主线时补读。
 - [v0_scope.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/v0_scope.md)，仅在需要确认当前阶段边界时补读。
+- [magicwatch_long_term_roadmap.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/magicwatch_long_term_roadmap.md)，仅在需要 V0-V3 执行路线、阶段依赖、量化门槛或停止条件时补读。
+
+### 我想规划 V0-V3 长期路线或拆分下一批执行卡
+
+先读：
+
+- [magicwatch_long_term_roadmap.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/magicwatch_long_term_roadmap.md)
+- [current_decisions.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_decisions.md)
+- [lvgl_xml_watch_core_architecture.md](/D:/MY_Desk/watch/magic_watch/docs/10_architecture/lvgl_xml_watch_core_architecture.md)，仅在计划涉及 XML / `watch_core` / PC / F411 主线时补读。
+
+说明：
+
+- `magicwatch_long_term_roadmap.md` 是 V0-V3 的当前执行地图，包含阶段依赖图、V0 执行门、量化门槛、任务卡拆分和跨阶段复用规则。
+- 它是按需当前计划，不加入默认新会话入口。
+- 如果只是问项目当前定位，优先读更短的 `project_brief.md` 和 `current_decisions.md`。
 
 ### 我想继续 LVGL XML / watch_core / F411 新主线
 
@@ -72,6 +88,7 @@
 
 - [lvgl_xml_watch_core_architecture.md](/D:/MY_Desk/watch/magic_watch/docs/10_architecture/lvgl_xml_watch_core_architecture.md)
 - [lvgl_xml_watch_core_architecture_uml.html](/D:/MY_Desk/watch/magic_watch/docs/10_architecture/lvgl_xml_watch_core_architecture_uml.html)
+- [magicwatch_long_term_roadmap.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/magicwatch_long_term_roadmap.md)，仅在需要确认 V0 阶段依赖、量化指标或停止条件时补读。
 - [agent-queue.md](/D:/MY_Desk/watch/magic_watch/docs/40_workflow/agent_batch/agent-queue.md)
 - [lvgl-xml-watch-core-q1.md](/D:/MY_Desk/watch/magic_watch/docs/40_workflow/agent_batch/cards/lvgl-xml-watch-core-q1.md)
 
@@ -80,6 +97,7 @@
 - 这是当前默认工程主线：XML 作为 UI 源，生成 C 入库，`watch_core` 作为纯 C 产品核心，PC SDL 与 F411 只在平台端口分叉。
 - 第一阶段只做主页健康四卡、PC 可交互闭环和 F411 显示链路验证，不迁 Zephyr、不绑定最终芯片、不接完整传感器业务。
 - 后续执行顺序以 `agent-queue.md` 为准：`LVGL-XML-Q1` -> `F411-Q3` -> `F411-XML-Q2`。
+- 执行前如需要锁定 AI 边界，补读 [magicwatch_ai_collaboration_rules.md](/D:/MY_Desk/watch/magic_watch/docs/40_workflow/magicwatch_ai_collaboration_rules.md)。
 
 ### 我想知道当前重构到哪了
 
@@ -152,6 +170,7 @@
 
 先读：
 
+- [magicwatch_ai_collaboration_rules.md](/D:/MY_Desk/watch/magic_watch/docs/40_workflow/magicwatch_ai_collaboration_rules.md)
 - [agent-rules.md](/D:/MY_Desk/watch/magic_watch/docs/40_workflow/agent_batch/agent-rules.md)
 - [agent-queue.md](/D:/MY_Desk/watch/magic_watch/docs/40_workflow/agent_batch/agent-queue.md)
 - [agent-plan.md](/D:/MY_Desk/watch/magic_watch/docs/40_workflow/agent_batch/agent-plan.md)
@@ -161,9 +180,22 @@
 说明：
 
 - 这是按需执行流程，不是默认新会话入口。
+- `magicwatch_ai_collaboration_rules.md` 提供 Scope Lock、默认禁止事项、人工验收 checklist 和停止条件；复杂任务或多模块任务执行前应先读。
 - `agent-queue.md` 是目标模式执行入口；为空时回退到 `agent-progress.md` 当前批次和 `agent-plan.md`。
 - `agent-plan.md` 是内联卡片状态权威源；卡片文件中的卡片以对应文件为权威源；`agent-progress.md` 只记录当前批次、自动提交策略、不要重复做和会话历史。
 - 执行窗口只跑当前批次；并行规划窗口只能追加未来批次或写入 `agent-inbox.md`。
+
+### 我想让 AI 执行复杂任务前锁边界
+
+先读：
+
+- [magicwatch_ai_collaboration_rules.md](/D:/MY_Desk/watch/magic_watch/docs/40_workflow/magicwatch_ai_collaboration_rules.md)
+- [magicwatch_long_term_roadmap.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/magicwatch_long_term_roadmap.md)，仅在需要确认当前阶段门槛或停止条件时补读。
+
+说明：
+
+- 该规则文档用于每次实现前声明 `Allowed files / Forbidden files / Forbidden changes`，并在收尾时检查是否越界、是否破坏已验收行为、是否把未验证项写成通过。
+- 它补充卡片批次规则，不替代 `agent-queue.md` 和具体卡片。
 
 ### 我想写简历项目描述
 
@@ -293,14 +325,16 @@
 
 先读：
 
+- [magicwatch_personal_growth_plan.md](/D:/MY_Desk/watch/magic_watch/docs/20_guides/magicwatch_personal_growth_plan.md)
 - [cpp_minimal_glossary.md](/D:/MY_Desk/watch/magic_watch/docs/20_guides/cpp_minimal_glossary.md)
 - [learning_plan.md](/D:/MY_Desk/watch/magic_watch/docs/20_guides/learning_plan.md)
 - [simulator_reading_guide.md](/D:/MY_Desk/watch/magic_watch/docs/20_guides/simulator_reading_guide.md)
 
 说明：
 
-- 这三份文档属于按需阅读的开发指南，不回到默认新会话入口。
-- 它们分别服务于 C++ 代码阅读补盲、学习路径规划和模拟器主线代码导读。
+- 这些文档属于按需阅读的开发指南，不回到默认新会话入口。
+- `magicwatch_personal_growth_plan.md` 把 V0-V3 工程阶段映射到 C 工程化、LVGL 生命周期、性能分析、状态机、FreeRTOS、低功耗和 C++ 阅读能力。
+- 其余三份分别服务于 C++ 代码阅读补盲、学习路径规划和模拟器主线代码导读。
 
 ## 文档维护规则
 
