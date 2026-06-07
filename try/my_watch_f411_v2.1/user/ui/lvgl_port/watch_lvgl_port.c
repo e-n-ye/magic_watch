@@ -7,20 +7,33 @@
 #include "lvgl.h"
 
 #define WATCH_LVGL_DRAW_BUF_LINES 20U
+#define WATCH_LVGL_DMA_BUF_BYTES (WATCH_LCD_WIDTH * WATCH_LVGL_DRAW_BUF_LINES * 2U)
 
 static lv_color_t s_draw_buf_1[WATCH_LCD_WIDTH * WATCH_LVGL_DRAW_BUF_LINES];
 static lv_color_t s_draw_buf_2[WATCH_LCD_WIDTH * WATCH_LVGL_DRAW_BUF_LINES];
+/* The pending DMA flush owns this byte stream until flush_ready.
+ * LVGL must not submit a second flush for the same draw buffer before that. */
+static uint8_t s_flush_dma_bytes[WATCH_LVGL_DMA_BUF_BYTES];
 static lv_disp_draw_buf_t s_draw_buf;
 static lv_disp_drv_t s_disp_drv;
 static lv_indev_drv_t s_encoder_drv;
 static int16_t s_encoder_diff;
 static uint8_t s_encoder_press_pulse;
 static uint8_t s_lvgl_port_initialized;
+static uint8_t s_flush_waiting_dma;
 static uint32_t s_perf_window_start_ms;
 static uint32_t s_refresh_count_accum;
 static uint32_t s_flush_count_accum;
 static uint32_t s_pixels_accum;
 static uint32_t s_handler_count_accum;
+static uint32_t s_pending_flush_start_ms;
+static uint32_t s_pending_flush_pixels;
+static uint16_t s_pending_flush_x;
+static uint16_t s_pending_flush_y;
+static uint16_t s_pending_flush_width;
+static uint16_t s_pending_flush_height;
+static uint16_t s_pending_flush_byte_count;
+static lv_disp_drv_t *s_pending_flush_drv;
 static watch_lvgl_perf_snapshot_t s_perf_snapshot;
 
 static uint32_t scale_to_per_sec(uint32_t value, uint32_t elapsed_ms)
@@ -44,15 +57,141 @@ static void watch_lvgl_monitor(lv_disp_drv_t *disp_drv, uint32_t time, uint32_t 
     s_perf_snapshot.last_refresh_ms = time;
 }
 
+static void watch_lvgl_finish_flush(lv_disp_drv_t *disp_drv, uint32_t start_ms, uint32_t pixels)
+{
+    s_perf_snapshot.last_flush_ms = lv_tick_elaps(start_ms);
+    s_flush_count_accum++;
+    s_pixels_accum += pixels;
+    lv_disp_flush_ready(disp_drv);
+}
+
+static void watch_lvgl_try_complete_pending_flush(void)
+{
+    if ((s_flush_waiting_dma == 0U) || watch_lcd_dma_is_busy()) {
+        return;
+    }
+
+    s_flush_waiting_dma = 0U;
+    /* If SPI DMA aborted after the LCD window was armed, replay the same byte
+     * stream synchronously from defaultTask before releasing LVGL's draw buffer. */
+    if (watch_lcd_dma_consume_error()) {
+        watch_lcd_draw_rgb565_bytes_blocking(
+            s_pending_flush_x,
+            s_pending_flush_y,
+            s_pending_flush_width,
+            s_pending_flush_height,
+            s_flush_dma_bytes,
+            s_pending_flush_byte_count);
+    }
+
+    watch_lvgl_finish_flush(s_pending_flush_drv, s_pending_flush_start_ms, s_pending_flush_pixels);
+    s_pending_flush_drv = 0;
+    s_pending_flush_start_ms = 0U;
+    s_pending_flush_pixels = 0U;
+    s_pending_flush_x = 0U;
+    s_pending_flush_y = 0U;
+    s_pending_flush_width = 0U;
+    s_pending_flush_height = 0U;
+    s_pending_flush_byte_count = 0U;
+}
+
+static void watch_lvgl_wait_cb(lv_disp_drv_t *disp_drv)
+{
+    (void)disp_drv;
+
+    /* LVGL calls wait_cb from inside its internal flushing wait loop.
+     * Completing the pending DMA flush here avoids deadlocking on
+     * lv_timer_handler() -> while(draw_buf->flushing). */
+    watch_lvgl_try_complete_pending_flush();
+}
+
+static uint16_t watch_lvgl_clip_start(lv_coord_t value)
+{
+    return (value < 0) ? 0U : (uint16_t)value;
+}
+
+static uint16_t watch_lvgl_clip_end(lv_coord_t value, uint16_t max_value)
+{
+    if (value < 0) {
+        return 0U;
+    }
+
+    if (value > (lv_coord_t)max_value) {
+        return max_value;
+    }
+
+    return (uint16_t)value;
+}
+
+static uint16_t watch_lvgl_prepare_flush_bytes(
+    const lv_area_t *area,
+    const lv_color_t *color_p,
+    uint16_t *out_x,
+    uint16_t *out_y,
+    uint16_t *out_width,
+    uint16_t *out_height)
+{
+    uint16_t clipped_x1;
+    uint16_t clipped_y1;
+    uint16_t clipped_x2;
+    uint16_t clipped_y2;
+    uint16_t width;
+    uint16_t height;
+    uint16_t src_stride;
+    uint16_t src_offset_x;
+    uint16_t src_offset_y;
+    uint16_t row;
+    uint16_t column;
+    uint16_t byte_index;
+    uint16_t pixel;
+    const lv_color_t *src_row;
+
+    clipped_x1 = watch_lvgl_clip_start(area->x1);
+    clipped_y1 = watch_lvgl_clip_start(area->y1);
+    clipped_x2 = watch_lvgl_clip_end(area->x2, (uint16_t)(WATCH_LCD_WIDTH - 1U));
+    clipped_y2 = watch_lvgl_clip_end(area->y2, (uint16_t)(WATCH_LCD_HEIGHT - 1U));
+
+    if ((clipped_x2 < clipped_x1) || (clipped_y2 < clipped_y1)) {
+        return 0U;
+    }
+
+    width = (uint16_t)(clipped_x2 - clipped_x1 + 1U);
+    height = (uint16_t)(clipped_y2 - clipped_y1 + 1U);
+    src_stride = (uint16_t)(area->x2 - area->x1 + 1);
+    src_offset_x = (uint16_t)(clipped_x1 - area->x1);
+    src_offset_y = (uint16_t)(clipped_y1 - area->y1);
+
+    if (((uint32_t)width * (uint32_t)height * 2U) > (uint32_t)WATCH_LVGL_DMA_BUF_BYTES) {
+        return 0U;
+    }
+
+    byte_index = 0U;
+    for (row = 0U; row < height; ++row) {
+        src_row = &color_p[(uint32_t)(src_offset_y + row) * src_stride + src_offset_x];
+        for (column = 0U; column < width; ++column) {
+            pixel = src_row[column].full;
+            s_flush_dma_bytes[byte_index++] = (uint8_t)(pixel >> 8);
+            s_flush_dma_bytes[byte_index++] = (uint8_t)(pixel & 0xFFU);
+        }
+    }
+
+    *out_x = clipped_x1;
+    *out_y = clipped_y1;
+    *out_width = width;
+    *out_height = height;
+    return byte_index;
+}
+
 static void watch_lvgl_flush(lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_color_t *color_p)
 {
+    watch_lcd_transfer_result_t result;
     uint16_t x;
     uint16_t y;
     uint16_t width;
     uint16_t height;
+    uint16_t byte_count;
+    uint32_t pixels;
     uint32_t start_ms;
-
-    (void)disp_drv;
 
     if ((area == 0) || (color_p == 0)) {
         lv_disp_flush_ready(disp_drv);
@@ -66,17 +205,44 @@ static void watch_lvgl_flush(lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_
         return;
     }
 
-    x = (area->x1 < 0) ? 0U : (uint16_t)area->x1;
-    y = (area->y1 < 0) ? 0U : (uint16_t)area->y1;
-    width = (uint16_t)(area->x2 - area->x1 + 1);
-    height = (uint16_t)(area->y2 - area->y1 + 1);
+    byte_count = watch_lvgl_prepare_flush_bytes(area, color_p, &x, &y, &width, &height);
+    if (byte_count == 0U) {
+        lv_disp_flush_ready(disp_drv);
+        return;
+    }
+
+    pixels = (uint32_t)width * (uint32_t)height;
 
     start_ms = lv_tick_get();
-    watch_lcd_draw_rgb565(x, y, width, height, (const uint16_t *)color_p);
-    s_perf_snapshot.last_flush_ms = lv_tick_elaps(start_ms);
-    s_flush_count_accum++;
-    s_pixels_accum += (uint32_t)width * (uint32_t)height;
-    lv_disp_flush_ready(disp_drv);
+    result = watch_lcd_draw_rgb565_bytes(
+        x,
+        y,
+        width,
+        height,
+        s_flush_dma_bytes,
+        byte_count,
+        0,
+        0);
+
+    if (result == WATCH_LCD_TRANSFER_DMA_STARTED) {
+        s_flush_waiting_dma = 1U;
+        s_pending_flush_drv = disp_drv;
+        s_pending_flush_start_ms = start_ms;
+        s_pending_flush_pixels = pixels;
+        s_pending_flush_x = x;
+        s_pending_flush_y = y;
+        s_pending_flush_width = width;
+        s_pending_flush_height = height;
+        s_pending_flush_byte_count = byte_count;
+        return;
+    }
+
+    if (result == WATCH_LCD_TRANSFER_FAILED) {
+        lv_disp_flush_ready(disp_drv);
+        return;
+    }
+
+    watch_lvgl_finish_flush(disp_drv, start_ms, pixels);
 }
 
 static void watch_lvgl_encoder_read(lv_indev_drv_t *indev_drv, lv_indev_data_t *data)
@@ -111,6 +277,7 @@ void watch_lvgl_port_init(void)
     s_disp_drv.hor_res = WATCH_LCD_WIDTH;
     s_disp_drv.ver_res = WATCH_LCD_HEIGHT;
     s_disp_drv.flush_cb = watch_lvgl_flush;
+    s_disp_drv.wait_cb = watch_lvgl_wait_cb;
     s_disp_drv.monitor_cb = watch_lvgl_monitor;
     s_disp_drv.draw_buf = &s_draw_buf;
     (void)lv_disp_drv_register(&s_disp_drv);
@@ -154,8 +321,10 @@ void watch_lvgl_port_task(void)
         return;
     }
 
+    watch_lvgl_try_complete_pending_flush();
     (void)lv_timer_handler();
     s_handler_count_accum++;
+    watch_lvgl_try_complete_pending_flush();
 
     elapsed_ms = lv_tick_elaps(s_perf_window_start_ms);
     if (elapsed_ms >= 1000U) {

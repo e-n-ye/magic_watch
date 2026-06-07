@@ -491,7 +491,7 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 修改文件：`sim/lv_port_pc_vscode/src/XmlUi/watch_core_ui_adapter.*`、`docs/30_testing/lvgl_xml_q1_pc_manual_acceptance.md`、`docs/40_workflow/agent_batch/cards/lvgl-xml-watch-core-q1.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
 - 自检：`cmake --build sim/lv_port_pc_vscode/build --config Debug` 通过；隐藏启动 `magic_watch_xml_sim.exe` 3 秒返回 `started-ok`；`git diff --check` 通过，仅有 LF/CRLF 提示；本轮实际改动中文文档乱码哨兵检查通过
 - 风险回应：本卡只声明 PC XML simulator 垂直闭环通过，不声明 F411 真机、真实传感器、LCD flush 性能或 DMA 稳定性通过；防误触收敛为 XML UI Adapter 通用 guarded click 入口，后续新按钮应复用该入口
-- 阻塞与待决：`F411-XML-Q2-1` 仍依赖 `F411-LVGL-DMA-3`；当前 `F411-Q3` 中 `F411-LVGL-PERF-2`、`F411-LVGL-DMA-PREP`、`F411-LVGL-DMA-1`、`F411-LVGL-DMA-2`、`F411-LVGL-DMA-3` 仍未完成，不能直接跳到 Q2-1
+- 阻塞与待决：`F411-XML-Q2-1` 仍依赖 `F411-LVGL-DMA-3`；当时 `F411-Q3` 中 `F411-LVGL-PERF-2`、`F411-LVGL-DMA-PREP`、`F411-LVGL-DMA-1`、`F411-LVGL-DMA-2`、`F411-LVGL-DMA-3` 仍未完成，不能直接跳到 Q2-1
 - 下一步：按队列应先执行 `F411-Q3` 的下一张 TODO 卡 `F411-LVGL-PERF-2`，完成颜色/字体质量验证后再进入 DMA 准备与 DMA 性能稳定性验证
 
 ### 会话 2026-06-06 F411-LVGL-PERF-2
@@ -514,3 +514,28 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 阻塞与待决：无
 - 真机验证：用户确认静态刷新负载下 `fps` 稳定在 25~26，暴力旋转编码器时降到 2~5；该指标可作为 DMA 前用户可感知刷新基线
 - 下一步：进入 `F411-LVGL-DMA-PREP`，先由用户通过 CubeMX 配置 SPI1 TX DMA 并重新生成工程；本阶段不手写 CubeMX DMA 初始化
+
+### 会话 2026-06-06 F411-LVGL-DMA-PREP / DMA-1
+
+- 本轮范围：队列项 `F411-Q3`，卡片 `F411-LVGL-DMA-PREP` / `F411-LVGL-DMA-1`
+- 完成：用户已通过 CubeMX 配置 SPI1 TX DMA 并重新生成工程，`F411-LVGL-DMA-PREP` 已标记 DONE；当时已将 `F411-LVGL-DMA-1` 切为 `IN_PROGRESS`，并在 `watch_lcd` 层新增 RGB565 byte stream DMA fallback 接口、DMA busy 查询、SPI1 TX complete/error callback 状态收口；已补 `lcd_set_window()` 前置声明，避免严格 C 编译下的声明顺序问题
+- 修改文件：`try/my_watch_f411_v2.1/user/board/display/watch_lcd.*`、`docs/40_workflow/agent_batch/cards/f411-lvgl-perf-q3.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：本卡允许文件范围内 `git diff --check` 通过，仅有 LF/CRLF 提示；全局 `git diff --check` 被 CubeMX 生成文件末尾空行阻塞，未越权修改；本轮实际改动中文文档乱码哨兵检查无命中；定向扫描未发现 HAL SPI callback 重复实现；本机不能执行 Keil / MDK 编译和 F411 真机观察
+- 风险回应：本轮不修改 LVGL flush，不移动 `lv_disp_flush_ready()`，不启用异步 flush；短命令和短数据仍走阻塞路径，DMA 仅为大块像素数据预留
+- 阻塞与待决：需要用户 Keil / MDK 编译确认 HAL callback 和新增接口无冲突；CubeMX 生成改动由用户侧产生，Agent 不回退
+- 下一步：编译通过后再进入 `F411-LVGL-DMA-2`，让 LVGL flush 使用异步 DMA 并在 DMA 完成路径通知 LVGL
+
+- 验收追加：用户随后已明确 `F411-LVGL-DMA-1 已编译验收`；卡片状态应视为 DONE，后续直接推进 `F411-LVGL-DMA-2`
+
+### 会话 2026-06-07 F411-LVGL-DMA-2
+
+- 本轮范围：队列项 `F411-Q3`，卡片 `F411-LVGL-DMA-2`
+- 完成：已将 `watch_lvgl_port` 的 flush 路径切到 `watch_lcd_draw_rgb565_bytes()`；发送前先对 flush 区域做屏内裁剪，并把 `lv_color_t` 转成 RGB565 高字节优先 byte stream，避免 DMA 路径直接发送小端内存布局；DMA_STARTED 时挂起 flush；已把 `lv_disp_flush_ready()` 从“发送后立即调用”改为“DMA busy 清除后，由 `watch_lvgl_port_task()` 在 defaultTask 中收口调用”
+- 完成补充：已补 DMA error 收口路径；若 SPI DMA 中途报错，则由 `watch_lvgl_port_task()` 在 defaultTask 中复用同一份裁剪后 byte stream 做一次阻塞补发，再调用 `lv_disp_flush_ready()`，不再把错误静默当作正常完成
+- 完成补充：根据真机调试现象，已为 display driver 增加 `wait_cb`，让 LVGL 在 `lv_timer_handler()` 内部等待 flush 时就能调用 `watch_lvgl_try_complete_pending_flush()`；这样 `lv_disp_flush_ready()` 不再依赖 `lv_timer_handler()` 返回后才执行，避免 DMA flush 自锁
+- 修改文件：`try/my_watch_f411_v2.1/user/ui/lvgl_port/watch_lvgl_port.c`、`try/my_watch_f411_v2.1/README.md`、`docs/40_workflow/agent_batch/cards/f411-lvgl-perf-q3.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：定向 `git diff --check` 通过，仅有 LF/CRLF 提示；本轮实际改动中文文档乱码哨兵检查无命中；本机不能执行 Keil / MDK 编译和 F411 真机观察
+- 风险回应：未在 SPI DMA 完成中断中直接调用 LVGL，而是让中断只负责清 busy 状态，再由 defaultTask 轮询确认后调用 `lv_disp_flush_ready()`，以遵守现有 `lv_conf.h` 的单线程约束；当前 `last ms` 对 DMA 路径统计的是“从 flush 发起到 defaultTask 完成通知”的端到端耗时，而不是纯 SPI DMA 传输耗时
+- 阻塞与待决：需要用户执行 Keil / MDK 编译并在真机上观察是否存在花屏、卡死或明显输入迟滞；若稳定，再进入 `F411-LVGL-DMA-3` 记录前后指标
+- 下一步：若编译和真机观察通过，进入 `F411-LVGL-DMA-3`，只做 DMA 前后性能与稳定性记录，不再继续改代码
+- 验收追加：用户已确认修正 `wait_cb` 后真机恢复正常显示；`F411-LVGL-DMA-2` 可视为已验收通过。当前体感帧率提升不大，属于下一张卡 `F411-LVGL-DMA-3` 的对比记录范围，不影响本卡“异步 DMA flush 已接通”的完成判定。

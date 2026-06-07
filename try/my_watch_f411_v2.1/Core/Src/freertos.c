@@ -129,7 +129,7 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE END Init */
 
-/* USER CODE BEGIN RTOS_MUTEX */
+  /* USER CODE BEGIN RTOS_MUTEX */
   /* Mutexes will be introduced when a shared bus has more than one active owner. */
   /* USER CODE END RTOS_MUTEX */
 

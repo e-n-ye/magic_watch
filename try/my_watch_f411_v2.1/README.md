@@ -25,18 +25,18 @@
 - MDK 工程文件已收窄到当前 bring-up 所需的最小用户代码和必要外设。
 - 应用层事件入口使用固定数组 `EventQueue-lite`，当前只承载输入语义事件，不使用 heap 或复杂订阅机制。
 - 当前已存在最小 `ScreenManager`，保留 LCD 直绘 Debug Screen 骨架；LVGL 已作为当前可见 UI bring-up 链路接入。
-- LVGL 已按最小 label bring-up 目标收窄配置并登记到 MDK 工程；当前已有项目自有 display flush port，flush 复用 `watch_lcd_draw_rgb565()`；`lv_timer_handler()` 由 FreeRTOS defaultTask 通过 `watch_bringup_task()` 单任务驱动；LVGL encoder indev 只消费编码器 intent；当前显示一个最小 LVGL debug label，用于验证输入计数、最后一次输入语义和当前 flush 性能基线。
+- LVGL 已按最小 label bring-up 目标收窄配置并登记到 MDK 工程；当前已有项目自有 display flush port，flush 会先把 `lv_color_t` 裁剪并转换成 RGB565 高字节优先 byte stream，再优先走 `watch_lcd_draw_rgb565_bytes()` 的 SPI DMA fallback 接口；DMA 真正完成后不在中断里直接调用 LVGL，而是由 FreeRTOS `defaultTask` 中的 LVGL `wait_cb` / `watch_bringup_task()` 路径消费完成状态并调用 `lv_disp_flush_ready()`；若 DMA error callback 触发，则由 `defaultTask` 用同一份 byte stream 做一次阻塞补发后再结束 flush；LVGL encoder indev 只消费编码器 intent；当前显示一个最小 LVGL debug label，用于验证输入计数、最后一次输入语义和当前 flush 性能基线。
 - LVGL debug label 中的 `pulse` 是无输入时的可控刷新源；`calls/s` 是 flush 调用次数，不等于 FPS；`full/s` 是按全屏像素量折算出的等效全屏刷新率；`pixels/s` 是实际刷出的像素吞吐；`last ms` 是最近一次 flush 耗时；`lvgl/s` 是 `lv_timer_handler()` 调用频率。
 - LVGL debug screen 顶部显示红、绿、蓝、白、黑 5 个色块，中部显示 `font 10`、`font 14`、`font 20` 三组英文样例，用于在接入 XML UI 前验证 RGB565 字节序和字体显示质量。
 - `font 20` 下方的细条是 FPS 负载探针：黄色 marker 约每 33ms 移动一次，并主动刷新大于 5000 像素的区域，用于形成稳定可观察的刷新负载。
 
 ## 下一步方向
 
-下一轮不急着移植模拟器 UI。建议先用 LVGL debug label 建立阻塞 SPI flush 性能基线，再验证 RGB565 / 字体显示质量，之后由 CubeMX 配置 SPI DMA，最后在 `user/` 层接入异步 DMA flush。
+下一轮不急着移植模拟器 UI。建议先在真机上继续观察当前异步 DMA flush 的稳定性和性能，再记录 DMA 前后对比结果，然后才考虑把更复杂的 UI 迁移进来。
 
 ## 后续优化记录
 
-- 当前 LCD flush 走逐行 RGB565 转换和阻塞 SPI 写入，适合作为安全 bring-up 基线；debug label 已显示 `calls/s`、`full/s`、`pixels/s`、`last ms` 和 `lvgl/s`，后续 SPI DMA / 大块刷屏优化必须用这些指标做前后对比。
+- 当前 LCD flush 已接到 `watch_lcd` 的 SPI DMA fallback 接口：LVGL 侧会先处理部分越界区域裁剪，并把像素转换成 LCD 需要的 RGB565 高字节优先 byte stream；大块 byte stream 优先尝试 DMA，小块或 DMA 不可用时仍走阻塞路径；DMA 完成只更新底层 busy 状态，`lv_disp_flush_ready()` 统一留给 `defaultTask` 消费，避免在中断上下文直接调用 LVGL；若 DMA 中途出错，则由 `defaultTask` 复用同一份 byte stream 做阻塞补发，保证本次 flush 最终仍有完整像素落屏。
 - 右下角 `fps / ms` 徽标来自 LVGL display `monitor_cb`：`fps` 是按 1 秒墙钟窗口统计的有效刷新周期数，`ms` 是最近一次 LVGL 刷新周期耗时；`calls/s`、`full/s`、`pixels/s`、`last ms` 仍是底层 flush 诊断指标，不能互相替代。
 - LVGL 自带 perf monitor 已关闭：它在当前负载下会按渲染耗时折算理论 FPS，并可能显示 `100 FPS` 这类假高值，不适合作为 DMA 前后主对比指标。
 

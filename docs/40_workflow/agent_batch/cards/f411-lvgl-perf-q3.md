@@ -289,7 +289,7 @@ Forbidden changes:
 ## F411-LVGL-DMA-1 增加 watch_lcd SPI DMA fallback 接口
 
 - 批次：F411-Q3
-- 状态：TODO
+- 状态：DONE
 - 依赖：`F411-LVGL-DMA-PREP`
 - 自检：`git status --short -uall`；Keil / MDK 编译；`git diff --check`
 - 建议提交信息：`feat: add f411 lcd spi dma fallback path`
@@ -340,14 +340,17 @@ Forbidden changes:
 
 ### 执行记录
 
-- 待执行。
+- 已完成：在 `watch_lcd` 层新增 RGB565 byte stream 传输接口，返回 `BLOCKING_DONE` / `DMA_STARTED` / `FAILED` 三种结果；小于 128 字节、无 DMA 或 SPI 非 ready 时保留阻塞发送路径；若前一笔 LCD DMA 仍占用 CS/window，则将重入视为非法并返回 `FAILED`，不强行在 busy 状态下再做阻塞写入。
+- 已实现待验收：新增 SPI1 TX DMA 完成和错误回调处理；DMA 大块发送期间保持 CS 选中，完成回调后释放 CS，并调用可选完成回调；已补 `lcd_set_window()` 前置声明以避免严格 C 编译下的声明顺序问题。当前未修改 LVGL flush，未移动 `lv_disp_flush_ready()`。
+- 自检：本卡允许文件范围内 `git diff --check` 通过，仅有 LF/CRLF 提示；全局 `git diff --check` 被 CubeMX 生成文件末尾空行阻塞，未越权修改；本轮实际改动中文文档乱码哨兵检查无命中；定向扫描未发现 HAL SPI callback 重复实现。
+- 用户验收：用户已确认 `F411-LVGL-DMA-1` 编译验收通过；本卡不要求真机 FPS 提升，因为 LVGL flush 尚未切到 DMA。
 
 ---
 
 ## F411-LVGL-DMA-2 让 LVGL flush 使用异步 DMA
 
 - 批次：F411-Q3
-- 状态：TODO
+- 状态：DONE
 - 依赖：`F411-LVGL-DMA-1`
 - 自检：`git status --short -uall`；Keil / MDK 编译；`git diff --check`；真机观察无明显花屏或卡死
 - 建议提交信息：`feat: use spi dma for f411 lvgl flush`
@@ -399,7 +402,12 @@ Forbidden changes:
 
 ### 执行记录
 
-- 待执行。
+- 已实现待验收：`watch_lvgl_port` 已改用 `watch_lcd_draw_rgb565_bytes()`；发送前先对 flush 区域做屏内裁剪，并把 `lv_color_t` 转成 LCD 需要的 RGB565 高字节优先 byte stream，避免 DMA 路径绕过原阻塞实现中的字节序转换；大块 flush 优先尝试 SPI DMA，小块或 DMA 不可用时保留阻塞 fallback。
+- 已实现待验收：DMA 完成后不在 `HAL_SPI_TxCpltCallback()` 中直接调用 LVGL；改为由 `watch_lvgl_port_task()` 在 `defaultTask` 中轮询 `watch_lcd_dma_is_busy()`，确认 DMA 结束后再调用 `lv_disp_flush_ready()`，以满足 `lv_conf.h` 中“LVGL API 只在 defaultTask 调用”的线程安全约束。
+- 已实现待验收：若 SPI DMA error callback 触发，则由 `watch_lvgl_port_task()` 在 `defaultTask` 中消费 error 标志，并复用同一份 flush byte stream 做一次阻塞补发，再结束本次 flush，避免把 DMA 失败静默当作成功完成。
+- 已实现待验收：根据真机现象补上 `disp_drv.wait_cb`；LVGL 在 `lv_timer_handler()` 内部等待 `draw_buf->flushing` 时，会同步调用 `watch_lvgl_wait_cb()`，从而在同一个 `defaultTask` 上下文中完成 DMA 收口，避免把 `lv_disp_flush_ready()` 仅放在 `lv_timer_handler()` 返回后导致自锁。
+- 自检：本轮允许文件范围内 `git diff --check` 通过，仅有 LF/CRLF 提示；本轮实际改动中文文档乱码哨兵检查无命中；本机不能执行 Keil / MDK 编译和 F411 真机观察。
+- 真机验证：用户确认修正 `wait_cb` 后已恢复正常显示，`F411-LVGL-DMA-2` 的异步 DMA flush 链路可运行；当前主观帧率提升不大，需在 `F411-LVGL-DMA-3` 中按同口径指标记录 DMA 前后差异，不直接凭体感下结论。
 
 ---
 
@@ -461,7 +469,7 @@ Forbidden changes:
 ## F411-LVGL-DMA-PREP CubeMX 配置 SPI DMA 准备
 
 - 批次：F411-Q3
-- 状态：TODO
+- 状态：DONE
 - 依赖：`F411-LVGL-PERF-2B`
 - 自检：用户在 CubeMX 中完成 SPI1 TX DMA 配置并重新生成工程；现有阻塞刷屏仍可编译运行
 - 建议提交信息：`chore: prepare f411 spi dma cubemx config`
@@ -510,4 +518,5 @@ Forbidden changes:
 
 ### 执行记录
 
-- 待执行。
+- 已完成：用户已在 CubeMX 中配置 SPI1 TX DMA 并重新生成工程；生成结果显示 SPI1 仍为 8bit，SPI1_TX 使用 Memory-to-Peripheral、Byte/Byte、Normal mode、High priority，并启用对应 DMA IRQ。
+- 风险回应：CubeMX 生成代码由用户侧完成，本卡不手写 `MX_DMA_Init()` 或 MSP 非 USER CODE 区；后续 Agent 只在 `user/` 层接入 DMA fallback 接口。

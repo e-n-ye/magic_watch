@@ -10,6 +10,7 @@
 #define LCD_OFFSET_Y       20U
 #define LCD_BL_PWM_MAX     999U
 #define LCD_LINE_BUF_BYTES (WATCH_LCD_WIDTH * 2U)
+#define LCD_DMA_MIN_BYTES  128U
 
 static const uint8_t kGammaPositive[] = {
     0xD0U, 0x04U, 0x0DU, 0x11U, 0x13U, 0x2BU, 0x3FU,
@@ -22,6 +23,12 @@ static const uint8_t kGammaNegative[] = {
 };
 
 static uint8_t s_line_buf[LCD_LINE_BUF_BYTES];
+static volatile uint8_t s_dma_transfer_active;
+static volatile uint8_t s_dma_transfer_error;
+static watch_lcd_transfer_done_cb_t s_dma_done_cb;
+static void *s_dma_done_context;
+
+static void lcd_set_window(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
 
 static void lcd_select(void)
 {
@@ -56,6 +63,65 @@ static void lcd_write_data16(uint16_t data)
     bytes[0] = (uint8_t)(data >> 8);
     bytes[1] = (uint8_t)(data & 0xFFU);
     lcd_write_bytes(bytes, 2U);
+}
+
+static bool lcd_dma_available(void)
+{
+    return hspi1.hdmatx != 0;
+}
+
+static bool lcd_area_is_valid(uint16_t x, uint16_t y, uint16_t width, uint16_t height)
+{
+    if ((width == 0U) || (height == 0U) || (x >= WATCH_LCD_WIDTH) || (y >= WATCH_LCD_HEIGHT)) {
+        return false;
+    }
+
+    if (((uint32_t)x + (uint32_t)width) > (uint32_t)WATCH_LCD_WIDTH) {
+        return false;
+    }
+
+    if (((uint32_t)y + (uint32_t)height) > (uint32_t)WATCH_LCD_HEIGHT) {
+        return false;
+    }
+
+    return true;
+}
+
+static bool lcd_rgb565_byte_count_matches(uint16_t width, uint16_t height, uint16_t byte_count)
+{
+    const uint32_t expected = (uint32_t)width * (uint32_t)height * 2U;
+    return expected <= UINT16_MAX && byte_count == (uint16_t)expected;
+}
+
+static void lcd_draw_rgb565_bytes_blocking(
+    uint16_t x,
+    uint16_t y,
+    uint16_t width,
+    uint16_t height,
+    const uint8_t *bytes,
+    uint16_t byte_count)
+{
+    lcd_select();
+    lcd_set_window(x, y, (uint16_t)(x + width - 1U), (uint16_t)(y + height - 1U));
+    lcd_write_bytes(bytes, byte_count);
+    lcd_unselect();
+}
+
+void watch_lcd_draw_rgb565_bytes_blocking(
+    uint16_t x,
+    uint16_t y,
+    uint16_t width,
+    uint16_t height,
+    const uint8_t *bytes,
+    uint16_t byte_count)
+{
+    if ((bytes == 0) ||
+        !lcd_area_is_valid(x, y, width, height) ||
+        !lcd_rgb565_byte_count_matches(width, height, byte_count)) {
+        return;
+    }
+
+    lcd_draw_rgb565_bytes_blocking(x, y, width, height, bytes, byte_count);
 }
 
 static void lcd_set_window(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1)
@@ -234,6 +300,110 @@ void watch_lcd_draw_rgb565(uint16_t x, uint16_t y, uint16_t width, uint16_t heig
         lcd_write_bytes(s_line_buf, line_bytes);
     }
 
+    lcd_unselect();
+}
+
+watch_lcd_transfer_result_t watch_lcd_draw_rgb565_bytes(
+    uint16_t x,
+    uint16_t y,
+    uint16_t width,
+    uint16_t height,
+    const uint8_t *bytes,
+    uint16_t byte_count,
+    watch_lcd_transfer_done_cb_t done_cb,
+    void *context)
+{
+    HAL_StatusTypeDef status;
+
+    if ((bytes == 0) ||
+        !lcd_area_is_valid(x, y, width, height) ||
+        !lcd_rgb565_byte_count_matches(width, height, byte_count)) {
+        return WATCH_LCD_TRANSFER_FAILED;
+    }
+
+    /* A second LCD byte-stream transfer while CS/window are owned by an active DMA
+     * is treated as invalid re-entry. LVGL should not hit this path because it must
+     * wait for flush_ready before reusing the draw buffer. */
+    if (s_dma_transfer_active != 0U) {
+        return WATCH_LCD_TRANSFER_FAILED;
+    }
+
+    if (!lcd_dma_available() ||
+        (byte_count < LCD_DMA_MIN_BYTES) ||
+        (HAL_SPI_GetState(&hspi1) != HAL_SPI_STATE_READY)) {
+        lcd_draw_rgb565_bytes_blocking(x, y, width, height, bytes, byte_count);
+        return WATCH_LCD_TRANSFER_BLOCKING_DONE;
+    }
+
+    lcd_select();
+    lcd_set_window(x, y, (uint16_t)(x + width - 1U), (uint16_t)(y + height - 1U));
+
+    s_dma_done_cb = done_cb;
+    s_dma_done_context = context;
+    s_dma_transfer_error = 0U;
+    s_dma_transfer_active = 1U;
+
+    status = HAL_SPI_Transmit_DMA(&hspi1, (uint8_t *)bytes, byte_count);
+    if (status != HAL_OK) {
+        s_dma_transfer_active = 0U;
+        s_dma_done_cb = 0;
+        s_dma_done_context = 0;
+        lcd_write_bytes(bytes, byte_count);
+        lcd_unselect();
+        return WATCH_LCD_TRANSFER_BLOCKING_DONE;
+    }
+
+    return WATCH_LCD_TRANSFER_DMA_STARTED;
+}
+
+bool watch_lcd_dma_is_busy(void)
+{
+    return s_dma_transfer_active != 0U;
+}
+
+bool watch_lcd_dma_consume_error(void)
+{
+    uint8_t had_error = s_dma_transfer_error;
+
+    /* Error state is edge-triggered: defaultTask consumes it once when deciding
+     * whether the just-finished LVGL flush needs a blocking replay. */
+    s_dma_transfer_error = 0U;
+    return had_error != 0U;
+}
+
+void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef *hspi)
+{
+    watch_lcd_transfer_done_cb_t done_cb;
+    void *done_context;
+
+    if ((hspi == 0) || (hspi->Instance != SPI1) || (s_dma_transfer_active == 0U)) {
+        return;
+    }
+
+    done_cb = s_dma_done_cb;
+    done_context = s_dma_done_context;
+    s_dma_done_cb = 0;
+    s_dma_done_context = 0;
+    s_dma_transfer_error = 0U;
+    s_dma_transfer_active = 0U;
+
+    lcd_unselect();
+
+    if (done_cb != 0) {
+        done_cb(done_context);
+    }
+}
+
+void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi)
+{
+    if ((hspi == 0) || (hspi->Instance != SPI1) || (s_dma_transfer_active == 0U)) {
+        return;
+    }
+
+    s_dma_done_cb = 0;
+    s_dma_done_context = 0;
+    s_dma_transfer_error = 1U;
+    s_dma_transfer_active = 0U;
     lcd_unselect();
 }
 
