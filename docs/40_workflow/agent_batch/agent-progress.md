@@ -549,3 +549,43 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：本轮只整理文档和卡片入口，不修改 F411 C 代码，不宣称 Keil 编译或真机验证；`F411-LVGL-DMA-3` 等价于新路线 `V0.0-A` 的指标记录入口，仍需单独执行
 - 阻塞与待决：无
 - 下一步：先执行 `V0.0-F411-DMA-CLOSE`，记录 DMA 前后指标和稳定性；验收后进入 `V0.1-F411-REFRESH-DIAG`
+
+### 会话 2026-06-08 V0.0-F411-DMA-CLOSE 手测口径固化
+
+- 本轮范围：队列项 `V0.0-F411-DMA-CLOSE`，卡片 `F411-LVGL-DMA-3`
+- 完成：已在 `try/my_watch_f411_v2.1/README.md` 和 `docs/40_workflow/agent_batch/cards/f411-lvgl-perf-q3.md` 补充 DMA 前后基线的真机手测步骤、回填模板和记录约束；明确要求记录 `calls/s`、`full/s`、`pixels/s`、`last ms`、`lvgl/s`、`fps/ms`，以及花屏、撕裂、卡死和输入响应体感；明确 DMA 前缺失数据必须如实写为“未记录/未验证”
+- 修改文件：`try/my_watch_f411_v2.1/README.md`、`docs/40_workflow/agent_batch/cards/f411-lvgl-perf-q3.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：待本轮收尾执行 `git diff --check`；本机仍不能执行 Keil / MDK 编译和 F411 真机观察
+- 风险回应：本轮只固定手测口径和记录模板，不改 F411 DMA / SPI / LVGL 代码，不宣称任何新的真机性能结论
+- 阻塞与待决：等待用户按模板回填 DMA 前后指标和稳定性观察；若 DMA 前历史数字不存在，应保留“未记录/未验证”
+- 下一步：拿到用户手测结果后，补入 `F411-LVGL-DMA-3` 执行记录，判断 `V0.0-F411-DMA-CLOSE` 是否可验收收口
+
+### 会话 2026-06-08 V0.0-F411-DMA-CLOSE 真机结果回填
+
+- 本轮范围：队列项 `V0.0-F411-DMA-CLOSE`，卡片 `F411-LVGL-DMA-3`
+- 完成：已回填当前 DMA 后固件的真机结果。静态 60 秒读数为 `calls/s 63`、`full/s 2.7`、`pixels/s 183154`、`last ms 0`、`refr ms 6`、`lvgl/s 144`、右下角 `25fps 6ms`；输入压力 120 秒读数为 `calls/s 31`、`full/s 1.6`、`pixels/s 112209`、`last ms 2`、`refr ms 65`、`lvgl/s 3`、右下角 `3fps 65ms`；长稳 10 分钟无花屏、撕裂、卡死、停更
+- 修改文件：`try/my_watch_f411_v2.1/README.md`、`docs/40_workflow/agent_batch/cards/f411-lvgl-perf-q3.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：待本轮收尾执行 `git diff --check` 和本轮实际改动中文 Markdown 乱码哨兵检查；本机仍不能执行 Keil / MDK 编译和 F411 真机观察
+- 风险回应：当前只拿到了 DMA 后数据，尚未拿到 DMA 前阻塞路径的对应数字；因此只能确认“DMA 后当前版本稳定”，不能宣称“DMA 前后对比已完成”
+- 阻塞与待决：`V0.0-F411-DMA-CLOSE` 仍缺 DMA 前基线；“旋钮/输入响应是否比 DMA 前明显变差”也缺用户主观对比
+- 下一步：若你能补出 DMA 前历史读数，则继续完成前后对比表；若历史读数确实不存在，我们需要先对“DMA 前未记录是否接受为本阶段基线缺口”达成一致，再决定是否将 `V0.0` 以“部分缺口保留”的形式收口
+
+### 会话 2026-06-08 V0.0-F411-DMA-CLOSE 阻塞路径补测
+
+- 本轮范围：队列项 `V0.0-F411-DMA-CLOSE`，卡片 `F411-LVGL-DMA-3`
+- 完成：用户通过把 `LCD_DMA_MIN_BYTES` 临时改为 `128000000U` 后重新烧录，补测出当前 debug screen 场景的强制阻塞路径基线。根据 `watch_lcd_draw_rgb565_bytes()` 在 `byte_count < LCD_DMA_MIN_BYTES` 时走阻塞路径的代码判断，这组数据可作为 DMA 前对照。静态 60 秒读数为 `calls/s 60`、`full/s 2.5`、`pixels/s 174060`、`last ms 0`、`refr ms 7`、`lvgl/s 140`、右下角 `26fps 7ms`；输入压力 120 秒读数为 `calls/s 53`、`full/s 2.6`、`pixels/s 177370`、`last ms 2`、`refr ms 74`、`lvgl/s 55`、右下角 `3fps 74ms`；长稳 10 分钟无花屏、撕裂、卡死、停更
+- 修改文件：`try/my_watch_f411_v2.1/README.md`、`docs/40_workflow/agent_batch/cards/f411-lvgl-perf-q3.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：待本轮收尾执行 `git diff --check` 和本轮实际改动中文 Markdown 乱码哨兵检查；本机仍不能执行 Keil / MDK 编译和 F411 真机观察
+- 风险回应：这组 DMA 前数据是“强制阻塞路径补测”，不是更早历史原始留档；但相比补猜旧数字，它是可复现实验条件下的更可靠对照。当前指标显示 DMA 后静态略好，但压力场景下 `calls/s`、`full/s`、`pixels/s`、`lvgl/s` 反而低于本次阻塞路径，需要在下一阶段刷新诊断里解释原因，不能直接把 DMA 接入等同于压力场景更快
+- 阻塞与待决：无
+- 下一步：将主观体感结论补入收口记录后，结束 `V0.0-F411-DMA-CLOSE` 并进入 `V0.1-F411-REFRESH-DIAG`
+
+### 会话 2026-06-08 V0.0-F411-DMA-CLOSE 收口
+
+- 本轮范围：队列项 `V0.0-F411-DMA-CLOSE`
+- 完成：已补充用户主观体感结论“旋钮/输入响应和强制阻塞路径相比差不多，未感知到明显变差”；`V0.0-F411-DMA-CLOSE` 所需的 DMA 前后指标、稳定性和输入体感结果已全部入档，可正式收口
+- 修改文件：`try/my_watch_f411_v2.1/README.md`、`docs/40_workflow/agent_batch/cards/f411-lvgl-perf-q3.md`、`docs/40_workflow/agent_batch/agent-progress.md`、`docs/40_workflow/agent_batch/agent-queue.md`
+- 自检：待本轮收尾执行 `git diff --check` 和本轮实际改动中文 Markdown 乱码哨兵检查；本机仍不能执行 Keil / MDK 编译和 F411 真机观察
+- 风险回应：收口并不代表 DMA 压力场景一定优于阻塞路径；当前压力场景指标差异应留给 `V0.1-F411-REFRESH-DIAG` 继续拆解
+- 阻塞与待决：无
+- 下一步：进入 `V0.1-F411-REFRESH-DIAG`

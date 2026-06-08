@@ -8,7 +8,7 @@
 
 ### V0.0-F411-DMA-CLOSE DMA 小闭环收口
 
-- 状态：IN_PROGRESS
+- 状态：DONE
 - 卡片来源：cards/f411-lvgl-perf-q3.md
 - 执行范围：卡片 `F411-LVGL-DMA-3`
 - 停止策略：每张卡后停止

@@ -462,7 +462,65 @@ Forbidden changes:
 
 ### 执行记录
 
-- 待执行。
+- 已补充手测口径：本卡要求用户按同一 debug screen、同一固件场景分别记录 DMA 前后两组数据，不允许凭体感补写缺失数字。
+- 建议手测步骤：
+  1. 静态观察 60 秒：无操作停留在当前 LVGL debug screen，记录一组稳定读数。
+  2. 输入压力 120 秒：连续快速旋转旋钮，并间歇按下，记录压力下读数和体感响应。
+  3. 长稳观察 10 分钟：回到无操作状态，确认是否出现花屏、撕裂、卡死或停更。
+- 建议记录字段：
+  - DMA 前：`calls/s`、`full/s`、`pixels/s`、`last ms`、`lvgl/s`、`fps/ms`
+  - DMA 后：`calls/s`、`full/s`、`pixels/s`、`last ms`、`lvgl/s`、`fps/ms`
+  - 手动观察：花屏、撕裂、卡死、输入响应是否明显变差
+  - 备注：任何异常出现的大致时机和复现手法
+- 记录约束：
+  - 若 DMA 前阻塞路径没有留下对应数字，必须写“未记录/未验证”，不能倒推或补猜。
+  - `last ms` 当前口径是 flush 发起到 `defaultTask` 完成通知的端到端耗时，不等于纯 SPI DMA 传输时间。
+  - `fps/ms` 是用户可感知刷新辅助指标，不替代 flush 链路数据。
+- 待用户回填：
+
+```text
+DMA 基线记录
+
+测试日期：
+测试固件：
+硬件版本：
+
+一、DMA 前基线
+- 来源版本：
+- 静态 60 秒：calls/s= ，full/s= ，pixels/s= ，last ms= ，lvgl/s= ，fps/ms=
+- 输入压力 120 秒：calls/s= ，full/s= ，pixels/s= ，last ms= ，lvgl/s= ，fps/ms=
+- 稳定性：花屏=有/无/未验证，撕裂=有/无/未验证，卡死=有/无/未验证
+- 输入响应：正常/略差/明显变差/未验证
+- 备注：
+
+二、DMA 后基线
+- 来源版本：当前 `F411-LVGL-DMA-2` 验收后固件
+- 静态 60 秒：calls/s= ，full/s= ，pixels/s= ，last ms= ，lvgl/s= ，fps/ms=
+- 输入压力 120 秒：calls/s= ，full/s= ，pixels/s= ，last ms= ，lvgl/s= ，fps/ms=
+- 长稳 10 分钟：正常/异常/未验证
+- 稳定性：花屏=有/无/未验证，撕裂=有/无/未验证，卡死=有/无/未验证
+- 输入响应：正常/略差/明显变差/未验证
+- 备注：
+
+三、结论
+- DMA 前后数字变化：
+- 体感变化：
+- 未验证项：
+```
+- 真机回填结果（2026-06-08，当前 `F411-LVGL-DMA-2` 验收后固件）：
+  - DMA 前基线补充说明：用户通过把 `LCD_DMA_MIN_BYTES` 临时改为 `128000000U` 后重新烧录。根据 `watch_lcd_draw_rgb565_bytes()` 中 `byte_count < LCD_DMA_MIN_BYTES` 走阻塞路径的判断，这次测试等价于强制关闭当前场景下的 DMA 发送，可作为阻塞路径基线。
+  - DMA 前静态 60 秒：`calls/s 60`、`full/s 2.5`、`pixels/s 174060`、`last ms 0`、`refr ms 7`、`lvgl/s 140`、右下角 `26fps 7ms`
+  - DMA 前输入压力 120 秒：`calls/s 53`、`full/s 2.6`、`pixels/s 177370`、`last ms 2`、`refr ms 74`、`lvgl/s 55`、右下角 `3fps 74ms`
+  - DMA 前长稳 10 分钟：用户确认无花屏、撕裂、卡死、停更。
+  - DMA 后静态 60 秒：`calls/s 63`、`full/s 2.7`、`pixels/s 183154`、`last ms 0`、`refr ms 6`、`lvgl/s 144`、右下角 `25fps 6ms`
+  - DMA 后输入压力 120 秒：`calls/s 31`、`full/s 1.6`、`pixels/s 112209`、`last ms 2`、`refr ms 65`、`lvgl/s 3`、右下角 `3fps 65ms`
+  - DMA 后长稳 10 分钟：用户确认无花屏、撕裂、卡死、停更。
+  - 输入响应是否明显变差：用户主观对比结论为“和强制阻塞路径相比差不多”，未感知到明显变差。
+  - 结论：
+    - 稳定性：DMA 前后两组测试在本轮观察下都未出现花屏、撕裂、卡死、停更。
+    - 静态场景：DMA 后与强制阻塞路径接近，DMA 后 `full/s`、`pixels/s`、`lvgl/s` 略高，`refr ms` 略低。
+    - 输入压力场景：DMA 后 `refr ms` 从 `74` 降到 `65`，但 `calls/s`、`full/s`、`pixels/s`、`lvgl/s` 明显低于本次强制阻塞路径。
+    - 收口判断：`V0.0-F411-DMA-CLOSE` 所需的 DMA 前后指标、稳定性结果和输入体感结论现已入档，可结束 DMA 小闭环并进入 `V0.1-F411-REFRESH-DIAG`。
 
 ---
 
