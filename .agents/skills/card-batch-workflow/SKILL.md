@@ -54,7 +54,8 @@ Use when the user asks to run goal mode, execute the current batch, or continue 
 5. Append one new session block to `agent-progress.md`; never edit older session blocks.
 6. Execute only TODO cards from the active queue item or current batch, in declared order.
 7. For each card, update status to IN_PROGRESS, perform only the allowed work, run self-checks, update execution record, mark DONE or BLOCKED, and commit if allowed.
-8. Stop according to the queue item's stop policy, or when the current batch is complete, blocked, or reaches the configured card limit.
+8. If the previous card has already been accepted by the user and the worktree only contains that accepted card's in-scope changes, commit that card before starting the next card. Do not stack a new card on top of an already-accepted dirty worktree unless the user explicitly asks to defer the commit.
+9. Stop according to the queue item's stop policy, or when the current batch is complete, blocked, or reaches the configured card limit.
 
 ### Review Mode
 
@@ -80,6 +81,7 @@ Use when the user wants to inspect a completed batch.
 - Code cards default to `git status --short -uall`, `cmake --build sim/lv_port_pc_vscode/build --config Debug`, and `git diff --check` unless the card says otherwise.
 - Chinese docs edited in a card must run the garble sentinel defined in `AGENTS.md` on the touched Chinese files.
 - Commit once per DONE card when auto-commit is enabled. Do not split a card into multiple commits unless the card explicitly requires it.
+- When the stop policy is `每张卡后停止` and the user has accepted the just-finished card, treat "commit before next card" as the default behavior, not an optional cleanup step.
 
 ## Card Shape
 
