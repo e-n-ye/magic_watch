@@ -26,6 +26,13 @@ static uint32_t s_refresh_count_accum;
 static uint32_t s_flush_count_accum;
 static uint32_t s_pixels_accum;
 static uint32_t s_handler_count_accum;
+static uint32_t s_max_flush_pixels_accum;
+static uint32_t s_max_convert_ms_accum;
+static uint32_t s_blocking_count_accum;
+static uint32_t s_dma_count_accum;
+static uint32_t s_failed_count_accum;
+static uint32_t s_dma_fallback_count_accum;
+static uint32_t s_max_dma_wait_ms_accum;
 static uint32_t s_pending_flush_start_ms;
 static uint32_t s_pending_flush_pixels;
 static uint16_t s_pending_flush_x;
@@ -36,6 +43,8 @@ static uint16_t s_pending_flush_byte_count;
 static lv_disp_drv_t *s_pending_flush_drv;
 static watch_lvgl_perf_snapshot_t s_perf_snapshot;
 
+#define WATCH_LVGL_FULL_PIXELS ((uint32_t)WATCH_LCD_WIDTH * (uint32_t)WATCH_LCD_HEIGHT)
+
 static uint32_t scale_to_per_sec(uint32_t value, uint32_t elapsed_ms)
 {
     uint64_t scaled;
@@ -45,6 +54,18 @@ static uint32_t scale_to_per_sec(uint32_t value, uint32_t elapsed_ms)
     }
 
     scaled = ((uint64_t)value * 1000ULL) / (uint64_t)elapsed_ms;
+    return (scaled > UINT32_MAX) ? UINT32_MAX : (uint32_t)scaled;
+}
+
+static uint32_t scale_to_permille(uint32_t value, uint32_t total)
+{
+    uint64_t scaled;
+
+    if (total == 0U) {
+        return 0U;
+    }
+
+    scaled = ((uint64_t)value * 1000ULL) / (uint64_t)total;
     return (scaled > UINT32_MAX) ? UINT32_MAX : (uint32_t)scaled;
 }
 
@@ -60,21 +81,37 @@ static void watch_lvgl_monitor(lv_disp_drv_t *disp_drv, uint32_t time, uint32_t 
 static void watch_lvgl_finish_flush(lv_disp_drv_t *disp_drv, uint32_t start_ms, uint32_t pixels)
 {
     s_perf_snapshot.last_flush_ms = lv_tick_elaps(start_ms);
+    s_perf_snapshot.last_flush_pixels = pixels;
+    s_perf_snapshot.last_flush_area_permille = scale_to_permille(pixels, WATCH_LVGL_FULL_PIXELS);
+    s_perf_snapshot.dma_flush_pending = 0U;
     s_flush_count_accum++;
     s_pixels_accum += pixels;
+    if (pixels > s_max_flush_pixels_accum) {
+        s_max_flush_pixels_accum = pixels;
+    }
     lv_disp_flush_ready(disp_drv);
 }
 
 static void watch_lvgl_try_complete_pending_flush(void)
 {
+    uint32_t dma_wait_ms;
+
     if ((s_flush_waiting_dma == 0U) || watch_lcd_dma_is_busy()) {
         return;
     }
 
     s_flush_waiting_dma = 0U;
+    s_perf_snapshot.dma_flush_pending = 0U;
+    dma_wait_ms = lv_tick_elaps(s_pending_flush_start_ms);
+    s_perf_snapshot.last_dma_wait_ms = dma_wait_ms;
+    if (dma_wait_ms > s_max_dma_wait_ms_accum) {
+        s_max_dma_wait_ms_accum = dma_wait_ms;
+    }
     /* If SPI DMA aborted after the LCD window was armed, replay the same byte
      * stream synchronously from defaultTask before releasing LVGL's draw buffer. */
     if (watch_lcd_dma_consume_error()) {
+        s_perf_snapshot.last_transfer_result = WATCH_LCD_TRANSFER_FAILED;
+        s_dma_fallback_count_accum++;
         watch_lcd_draw_rgb565_bytes_blocking(
             s_pending_flush_x,
             s_pending_flush_y,
@@ -191,6 +228,8 @@ static void watch_lvgl_flush(lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_
     uint16_t height;
     uint16_t byte_count;
     uint32_t pixels;
+    uint32_t convert_start_ms;
+    uint32_t convert_ms;
     uint32_t start_ms;
 
     if ((area == 0) || (color_p == 0)) {
@@ -205,14 +244,21 @@ static void watch_lvgl_flush(lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_
         return;
     }
 
+    convert_start_ms = lv_tick_get();
     byte_count = watch_lvgl_prepare_flush_bytes(area, color_p, &x, &y, &width, &height);
+    convert_ms = lv_tick_elaps(convert_start_ms);
+    s_perf_snapshot.last_convert_ms = convert_ms;
+    if (convert_ms > s_max_convert_ms_accum) {
+        s_max_convert_ms_accum = convert_ms;
+    }
     if (byte_count == 0U) {
         lv_disp_flush_ready(disp_drv);
         return;
     }
 
     pixels = (uint32_t)width * (uint32_t)height;
-
+    s_perf_snapshot.last_flush_pixels = pixels;
+    s_perf_snapshot.last_flush_bytes = byte_count;
     start_ms = lv_tick_get();
     result = watch_lcd_draw_rgb565_bytes(
         x,
@@ -224,8 +270,11 @@ static void watch_lvgl_flush(lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_
         0,
         0);
 
+    s_perf_snapshot.last_transfer_result = (uint32_t)result;
     if (result == WATCH_LCD_TRANSFER_DMA_STARTED) {
         s_flush_waiting_dma = 1U;
+        s_perf_snapshot.dma_flush_pending = 1U;
+        s_dma_count_accum++;
         s_pending_flush_drv = disp_drv;
         s_pending_flush_start_ms = start_ms;
         s_pending_flush_pixels = pixels;
@@ -238,10 +287,13 @@ static void watch_lvgl_flush(lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_
     }
 
     if (result == WATCH_LCD_TRANSFER_FAILED) {
+        s_perf_snapshot.dma_flush_pending = 0U;
+        s_failed_count_accum++;
         lv_disp_flush_ready(disp_drv);
         return;
     }
 
+    s_blocking_count_accum++;
     watch_lvgl_finish_flush(disp_drv, start_ms, pixels);
 }
 
@@ -332,11 +384,28 @@ void watch_lvgl_port_task(void)
         s_perf_snapshot.flush_per_sec = scale_to_per_sec(s_flush_count_accum, elapsed_ms);
         s_perf_snapshot.pixels_per_sec = scale_to_per_sec(s_pixels_accum, elapsed_ms);
         s_perf_snapshot.handler_per_sec = scale_to_per_sec(s_handler_count_accum, elapsed_ms);
+        s_perf_snapshot.max_flush_pixels_per_sec_window = s_max_flush_pixels_accum;
+        s_perf_snapshot.max_flush_area_permille_per_sec_window =
+            scale_to_permille(s_max_flush_pixels_accum, WATCH_LVGL_FULL_PIXELS);
+        s_perf_snapshot.max_convert_ms_per_sec_window = s_max_convert_ms_accum;
+        s_perf_snapshot.blocking_count_per_sec = scale_to_per_sec(s_blocking_count_accum, elapsed_ms);
+        s_perf_snapshot.dma_count_per_sec = scale_to_per_sec(s_dma_count_accum, elapsed_ms);
+        s_perf_snapshot.failed_count_per_sec = scale_to_per_sec(s_failed_count_accum, elapsed_ms);
+        s_perf_snapshot.dma_fallback_count_per_sec =
+            scale_to_per_sec(s_dma_fallback_count_accum, elapsed_ms);
+        s_perf_snapshot.max_dma_wait_ms_per_sec_window = s_max_dma_wait_ms_accum;
 
         s_refresh_count_accum = 0U;
         s_flush_count_accum = 0U;
         s_pixels_accum = 0U;
         s_handler_count_accum = 0U;
+        s_max_flush_pixels_accum = 0U;
+        s_max_convert_ms_accum = 0U;
+        s_blocking_count_accum = 0U;
+        s_dma_count_accum = 0U;
+        s_failed_count_accum = 0U;
+        s_dma_fallback_count_accum = 0U;
+        s_max_dma_wait_ms_accum = 0U;
         s_perf_window_start_ms = lv_tick_get();
     }
 }

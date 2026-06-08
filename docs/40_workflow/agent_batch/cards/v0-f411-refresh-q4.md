@@ -9,7 +9,7 @@
 ## V0.1-A 定义性能指标结构
 
 - 批次：V0.1-F411-REFRESH-DIAG
-- 状态：TODO
+- 状态：DONE
 - 依赖：`F411-LVGL-DMA-3`
 - 自检：`git status --short -uall`；Keil / MDK 编译，或如本机无法编译则明确记录未执行原因；`git diff --check`；本轮实际改动中文文档乱码哨兵检查
 - 建议提交信息：`feat: add f411 lvgl refresh diagnostic fields`
@@ -63,14 +63,17 @@ Forbidden changes:
 
 ### 执行记录
 
-- 待执行。
+- 已完成：扩展 `watch_lvgl_perf_snapshot_t`，在不改变现有 flush 行为和 debug screen 文案的前提下，新增 `last_flush_pixels`、`last_flush_bytes`、`last_transfer_result`、`dma_flush_pending` 4 个只读观测字段。
+- 已完成：`last_flush_pixels` 和 `last_flush_bytes` 在现有 flush 路径中直接记录；`last_transfer_result` 复用 `watch_lcd_draw_rgb565_bytes()` 的返回值语义；`dma_flush_pending` 反映 DMA flush 是否仍在等待 `defaultTask` 收口。
+- 编译与真机：用户已确认本轮代码可正常编译、烧录，且真机无新增异常；由于本卡只定义结构、不改显示层，所以“没有可观察现象”符合预期。
+- 风险回应：本卡只扩观测结构，不新增面积峰值、转换耗时、DMA 次数或 fallback 次数；这些仍留给 `V0.1-B/C/D` 分步实现，避免一轮里把指标、显示和验证全耦合到一起。
 
 ---
 
 ## V0.1-B 记录 flush 调用频率和刷新面积
 
 - 批次：V0.1-F411-REFRESH-DIAG
-- 状态：TODO
+- 状态：DONE
 - 依赖：`V0.1-A`
 - 自检：`git status --short -uall`；Keil / MDK 编译，或如本机无法编译则明确记录未执行原因；`git diff --check`；真机观察新增面积指标随负载变化；本轮实际改动中文文档乱码哨兵检查
 - 建议提交信息：`feat: measure f411 lvgl dirty area`
@@ -123,14 +126,19 @@ Forbidden changes:
 
 ### 执行记录
 
-- 待执行。
+- 已完成：在 `watch_lvgl_perf_snapshot_t` 中补上 `max_flush_pixels_per_sec_window`、`last_flush_area_permille`、`max_flush_area_permille_per_sec_window`，用于记录最近一次 flush 面积、最近 1 秒窗口最大 dirty area，以及它们各自的整屏占比。
+- 已完成：在现有 `watch_lvgl_finish_flush()` 收口路径中记录最近一次 flush 像素数和面积占比，并在 1 秒窗口滚动统计最大 dirty area；未修改 SPI / LCD 发送实现、DMA 阈值或 draw buffer 行数。
+- 已完成：debug screen 新增 `area px` 和 `area %` 两行，其中 `max` 表示最近 1 秒窗口峰值；现有色块、字体样例、`calls/s`、`full/s`、`pixels/s`、`last ms`、`refr ms`、`lvgl/s` 和右下角 `fps/ms` 徽标仍保留。
+- 整理修正：`area %` 现按“百分比保留 1 位小数”显示，已修正此前把整屏占比额外缩小 10 倍的口径错误；本卡的面积采样字段和统计方式不变。
+- 真机观察：用户确认静态场景读数为 `area px 660 max 4800 / area % 0.9 max 7.1`；输入压力场景读数为 `area px 4320 max 4800 / area % 6.4 max 7.1`。按 `240x280=67200` 全屏像素口径折算，这组百分比与像素数自洽。
+- 风险回应：这些面积数字仍然包含 debug screen 自身和 FPS probe 带来的刷新负载，只能用于当前 bring-up 诊断，不能直接当成最终产品 UI 常态指标。
 
 ---
 
 ## V0.1-C 记录 RGB565 转换耗时
 
 - 批次：V0.1-F411-REFRESH-DIAG
-- 状态：TODO
+- 状态：DONE
 - 依赖：`V0.1-B`
 - 自检：`git status --short -uall`；Keil / MDK 编译，或如本机无法编译则明确记录未执行原因；`git diff --check`；真机观察转换耗时字段稳定可读；本轮实际改动中文文档乱码哨兵检查
 - 建议提交信息：`feat: measure f411 rgb565 conversion time`
@@ -180,14 +188,18 @@ Forbidden changes:
 
 ### 执行记录
 
-- 待执行。
+- 已完成：用 `lv_tick_get()` / `lv_tick_elaps()` 包住 `watch_lvgl_prepare_flush_bytes()`，新增 `last_convert_ms` 和 `max_convert_ms_per_sec_window` 两个只读字段，分别记录最近一次转换耗时和最近 1 秒窗口峰值。
+- 已完成：debug screen 新增 `conv ms` 一行，其中前一个值是最近一次 RGB565 转换耗时，后一个 `max` 是最近 1 秒窗口最大值；不改 RGB565 字节序、不改转换算法、不引入 DWT 或硬件 timer。
+- 真机观察：用户确认静态场景 `conv ms 1`（偶尔为 `0`）、`max 1`；输入压力场景也基本相同。该结果符合当前毫秒级 `lv_tick` 计时口径，`0ms` 可解释为低于当前 tick 分辨率。
+- 诊断含义：在当前 debug screen 场景下，RGB565 转换耗时大多落在 `0~1ms`，暂时不像主要瓶颈来源；后续更值得继续拆的是传输路径和 DMA 等待。
+- 风险回应：当前计时精度仍是毫秒级，若小面积场景显示 `0ms`，应如实记录为“低于当前 tick 分辨率”，而不是为了数字好看引入更复杂计时器。
 
 ---
 
 ## V0.1-D 记录 SPI / DMA 传输耗时和路径次数
 
 - 批次：V0.1-F411-REFRESH-DIAG
-- 状态：TODO
+- 状态：DONE
 - 依赖：`V0.1-C`
 - 自检：`git status --short -uall`；Keil / MDK 编译，或如本机无法编译则明确记录未执行原因；`git diff --check`；真机观察 DMA / blocking / fallback 计数随阈值和面积变化；本轮实际改动中文文档乱码哨兵检查
 - 建议提交信息：`feat: measure f411 lcd transfer path stats`
@@ -239,14 +251,19 @@ Forbidden changes:
 
 ### 执行记录
 
-- 待执行。
+- 已完成：在 LVGL port 层根据 `watch_lcd_draw_rgb565_bytes()` 的返回值累计 `blocking`、`DMA`、`failed` 三类路径次数，并补充 `dma_fallback_count_per_sec` 记录 DMA error 后转阻塞补发的次数。
+- 已完成：在 DMA pending 收口路径中记录 `last_dma_wait_ms` 和 `max_dma_wait_ms_per_sec_window`；其口径是“从 flush 发起到 `defaultTask` 完成通知”的端到端等待耗时，包含调度与 `wait_cb` 消费，不等于纯 SPI 线上时间。
+- 已完成：debug screen 新增 `path b/d/f` 与 `dma wait` 两行，便于在真机上观察路径分布和 DMA 等待峰值；未修改 `LCD_DMA_MIN_BYTES`、HAL callback 或 `lv_disp_flush_ready()` 的完成链路。
+- 真机观察：静态场景 `path b/d/f 0/59/0`、`fb 0`、`dma wait 0 max 16`；输入压力场景 `path b/d/f 0/13/0`、`fb 0`、`dma wait 0 max 15`。
+- 诊断含义：当前 debug screen 场景下，观测窗口内几乎全部 flush 都走 DMA，未看到失败或 error fallback；`last dma wait` 多数为 `0ms`，但 1 秒窗口峰值可到 `15~16ms`，说明当前更值得继续判断的是端到端调度/刷新节奏，而不是“DMA 根本没走上去”。
+- 风险回应：这些计数和等待耗时仍然属于 debug scene 诊断指标，不直接等同于产品 UI 最终刷新预算；特别是 `dma wait` 必须按端到端口径理解。
 
 ---
 
 ## V0.1-E 输出 F411 刷新瓶颈判断文档
 
 - 批次：V0.1-F411-REFRESH-DIAG
-- 状态：TODO
+- 状态：DONE
 - 依赖：`V0.1-D`
 - 自检：`git status --short -uall`；`git diff --check`；本轮实际改动中文文档乱码哨兵检查
 - 建议提交信息：`docs: record f411 lvgl refresh diagnostic`
@@ -298,7 +315,9 @@ Forbidden changes:
 
 ### 执行记录
 
-- 待执行。
+- 已完成：新增 `docs/30_testing/f411_lvgl_refresh_diagnostic.md`，收口 `V0.1-A` 到 `V0.1-D` 的真机证据、口径说明、已验证项、未验证项和下一步建议。
+- 已完成：文档结论明确指出当前更该优先怀疑 debug 负载与整体刷新调度节奏，而不是继续追 DMA、转换耗时或 dirty area 过大。
+- 已完成：已给出 `V0.2` 的进入顺序建议，优先执行 `V0.2-A` 隔离 FPS probe，再执行 `V0.2-B` 收敛 debug overlay。
 
 ---
 

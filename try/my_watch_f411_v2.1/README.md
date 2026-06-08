@@ -108,6 +108,15 @@ DMA 基线记录
 
 - 本工程当前右下角读数中的 `ms` 是 `refr ms`，表示最近一次 LVGL 刷新周期耗时；底部 `last ms` 仍是 flush 链路最近一次端到端耗时。
 - 当前这组 DMA 前数据来自“人为抬高 `LCD_DMA_MIN_BYTES` 阈值以强制阻塞路径”的补测，不是历史原始留档；但对当前 debug screen 场景来说，它比补猜历史数字更可信。
+- 当前 `watch_lvgl_perf_snapshot_t` 额外预留了 4 个诊断字段，供 `V0.1` 后续卡片继续接线：`last_flush_pixels` 表示最近一次 flush 的像素数，`last_flush_bytes` 表示最近一次送入 LCD 路径的 byte stream 大小，`last_transfer_result` 复用 `watch_lcd_draw_rgb565_bytes()` 的返回值语义，`dma_flush_pending` 表示当前是否仍有一笔 DMA flush 等待在 `defaultTask` 中完成收口。
+- `V0.1-B` 进一步把面积指标接到现有 debug screen：`area px` 表示最近一次 flush 的像素数，后面的 `max` 表示最近 1 秒窗口内的最大 dirty area；`area %` 把同一组面积折算成整屏百分比，便于和路线图里的 `<= 10%` 常规目标、`<= 50%` probe 目标对照。这里仍属于 debug 场景指标，不代表产品 UI 基线。
+- `area %` 的显示口径按“百分比保留 1 位小数”输出，例如整屏 `10%` 会显示为 `10.0`，不是千分比原值，也不会再额外缩小 10 倍。
+- 当前真机观察结果：静态场景 `area px 660 max 4800 / area % 0.9 max 7.1`；输入压力场景 `area px 4320 max 4800 / area % 6.4 max 7.1`。这说明当前 debug screen 常规最近一次刷新面积仍低于 `10%`，但由于 FPS probe 持续制造负载，1 秒窗口峰值约为 `7.1%`，属于当前 probe 场景可解释范围。
+- `V0.1-C` 继续在同一块 debug screen 上显示 `conv ms`：前一个值是最近一次 `watch_lvgl_prepare_flush_bytes()` 的 RGB565 转换耗时，后一个 `max` 是最近 1 秒窗口内的最大转换耗时。这里使用 `lv_tick` 毫秒精度计时，小面积场景可能显示 `0ms`，这属于预期。
+- 当前真机观察结果：静态场景 `conv ms 1`（偶尔 `0`）、`max 1`；输入压力场景也基本相同。说明当前 debug screen 下 RGB565 转换耗时大多在 `0~1ms`，暂时不像主瓶颈。
+- `V0.1-D` 继续把传输路径接到现有 debug screen：`path b/d/f` 分别表示每秒阻塞完成次数、DMA 启动次数、失败次数，`fb` 表示最近 1 秒窗口内 DMA error 后转阻塞补发的次数；`dma wait` 表示最近一次 DMA pending 从 flush 发起到 `defaultTask` 完成收口的端到端等待耗时，后面的 `max` 表示最近 1 秒窗口峰值。这里不是纯 SPI 线上时间，包含调度与 wait_cb 消费。
+- 当前真机观察结果：静态场景 `path b/d/f 0/59/0`、`fb 0`、`dma wait 0 max 16`；输入压力场景 `path b/d/f 0/13/0`、`fb 0`、`dma wait 0 max 15`。这说明当前观察窗口内 flush 基本都走 DMA，没有看到失败或补发，后续应更关注调度节奏和整体刷新链路，而不是“DMA 是否生效”。
+- `V0.1` 诊断结论已整理到 `docs/30_testing/f411_lvgl_refresh_diagnostic.md`。当前最可能的问题不是 DMA 未生效、不是 RGB565 转换过重，也不是 dirty area 明显超预算；更值得优先处理的是 debug FPS probe、debug overlay 和整体刷新调度节奏。
 
 ## LVGL 颜色和字体验收
 

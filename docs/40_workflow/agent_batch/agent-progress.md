@@ -589,3 +589,58 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：收口并不代表 DMA 压力场景一定优于阻塞路径；当前压力场景指标差异应留给 `V0.1-F411-REFRESH-DIAG` 继续拆解
 - 阻塞与待决：无
 - 下一步：进入 `V0.1-F411-REFRESH-DIAG`
+
+### 会话 2026-06-08 V0.1-A 定义性能指标结构
+
+- 本轮范围：队列项 `V0.1-F411-REFRESH-DIAG`，卡片 `V0.1-A`
+- 完成：已扩展 `watch_lvgl_perf_snapshot_t`，新增 `last_flush_pixels`、`last_flush_bytes`、`last_transfer_result`、`dma_flush_pending` 4 个只读诊断字段；已在现有 flush 路径中补最小赋值，不改变当前 DMA / blocking 行为，也不改 debug screen 显示文案
+- 验收追加：用户已确认本轮代码编译、烧录正常，真机无新增异常；由于本卡未接显示字段，所以本轮“没有可观察现象”符合预期
+- 修改文件：`try/my_watch_f411_v2.1/user/ui/lvgl_port/watch_lvgl_port.h`、`try/my_watch_f411_v2.1/user/ui/lvgl_port/watch_lvgl_port.c`、`try/my_watch_f411_v2.1/README.md`、`docs/40_workflow/agent_batch/cards/v0-f411-refresh-q4.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：待本轮收尾执行 `git diff --check` 和本轮实际改动中文 Markdown 乱码哨兵检查；本机仍不能执行 Keil / MDK 编译和 F411 真机观察
+- 风险回应：本卡只定义结构，不提前实现 `V0.1-B` 的面积指标、`V0.1-C` 的转换耗时或 `V0.1-D` 的 DMA 次数/等待耗时，避免把多方面诊断混成一轮
+- 阻塞与待决：需要用户本地编译确认结构扩展未破坏当前 F411 工程；真机观测字段展示仍不是本卡范围
+- 下一步：按队列每张卡后停止；若编译通过，进入 `V0.1-B` 记录 flush 调用频率和刷新面积
+
+### 会话 2026-06-08 V0.1-B 记录 flush 调用频率和刷新面积
+
+- 本轮范围：队列项 `V0.1-F411-REFRESH-DIAG`，卡片 `V0.1-B`
+- 完成：已在 `watch_lvgl_perf_snapshot_t` 中新增 `max_flush_pixels_per_sec_window`、`last_flush_area_permille`、`max_flush_area_permille_per_sec_window`；已在现有 flush 收口路径中记录最近一次面积和 1 秒窗口最大 dirty area；已在 F411 debug screen 中新增 `area px` / `area %` 两行用于真机观察面积趋势
+- 整理修正：已把 debug screen 中 `area %` 的显示口径改为真正的“百分比保留 1 位小数”，修正了此前多除一次 10 导致显示偏小的问题；本轮不新增字段，也不改面积采样逻辑
+- 验收追加：用户确认真机静态场景读数为 `area px 660 max 4800 / area % 0.9 max 7.1`，输入压力场景读数为 `area px 4320 max 4800 / area % 6.4 max 7.1`；按 `240x280` 全屏像素折算，面积百分比与像素读数一致，新增字段可用于后续诊断
+- 修改文件：`try/my_watch_f411_v2.1/user/ui/lvgl_port/watch_lvgl_port.h`、`try/my_watch_f411_v2.1/user/ui/lvgl_port/watch_lvgl_port.c`、`try/my_watch_f411_v2.1/user/app/lvgl_demo/watch_lvgl_debug_screen.c`、`try/my_watch_f411_v2.1/README.md`、`docs/40_workflow/agent_batch/cards/v0-f411-refresh-q4.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：待本轮收尾执行 `git diff --check` 和本轮实际改动中文 Markdown 乱码哨兵检查；本机仍不能执行 Keil / MDK 编译和 F411 真机观察
+- 风险回应：面积指标会被 debug overlay 和黄色 FPS probe 污染，所以本卡只建立“当前 debug 场景的可观察面积”，不把它写成真实产品 UI 常态面积
+- 阻塞与待决：需要用户本地编译、烧录并观察新增 `area px` / `area %` 字段是否随静态与输入压力变化
+- 下一步：按队列每张卡后停止；若真机观察通过，进入 `V0.1-C` 记录 RGB565 转换耗时
+
+### 会话 2026-06-08 V0.1-C 记录 RGB565 转换耗时
+
+- 本轮范围：队列项 `V0.1-F411-REFRESH-DIAG`，卡片 `V0.1-C`
+- 完成：已在 `watch_lvgl_prepare_flush_bytes()` 外围接入毫秒级转换计时，新增 `last_convert_ms`、`max_convert_ms_per_sec_window` 字段；已在 debug screen 中新增 `conv ms` 一行用于观察最近一次和最近 1 秒窗口峰值
+- 验收追加：用户确认静态场景 `conv ms 1`（偶尔 `0`）、`max 1`；输入压力场景也基本相同。该结果与毫秒级 `lv_tick` 计时口径一致，说明当前 debug screen 下 RGB565 转换耗时暂时不像主要瓶颈
+- 修改文件：`try/my_watch_f411_v2.1/user/ui/lvgl_port/watch_lvgl_port.h`、`try/my_watch_f411_v2.1/user/ui/lvgl_port/watch_lvgl_port.c`、`try/my_watch_f411_v2.1/user/app/lvgl_demo/watch_lvgl_debug_screen.c`、`try/my_watch_f411_v2.1/README.md`、`docs/40_workflow/agent_batch/cards/v0-f411-refresh-q4.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：待本轮收尾执行 `git diff --check` 和本轮实际改动中文 Markdown 乱码哨兵检查；本机仍不能执行 Keil / MDK 编译和 F411 真机观察
+- 风险回应：本卡只记录毫秒级转换耗时，不改 RGB565 字节序、转换算法、DMA 阈值或 SPI 路径；若小面积场景显示 `0ms`，应视为“低于当前 tick 分辨率”
+- 阻塞与待决：需要用户本地编译、烧录并观察 `conv ms` 字段是否稳定可读
+- 下一步：按队列每张卡后停止；若真机观察通过，进入 `V0.1-D` 记录 SPI / DMA 传输耗时和路径次数
+
+### 会话 2026-06-08 V0.1-D 记录 SPI / DMA 传输耗时和路径次数
+
+- 本轮范围：队列项 `V0.1-F411-REFRESH-DIAG`，卡片 `V0.1-D`
+- 完成：已在 LVGL port 层新增 `blocking_count_per_sec`、`dma_count_per_sec`、`failed_count_per_sec`、`dma_fallback_count_per_sec`、`last_dma_wait_ms`、`max_dma_wait_ms_per_sec_window` 字段；已在 debug screen 中新增 `path b/d/f` 和 `dma wait` 两行用于观察路径分布和 DMA 等待峰值
+- 验收追加：用户确认静态场景 `path b/d/f 0/59/0`、`fb 0`、`dma wait 0 max 16`；输入压力场景 `path b/d/f 0/13/0`、`fb 0`、`dma wait 0 max 15`。当前观测窗口内 flush 基本都走 DMA，未看到 failed 或 error fallback，说明下一步应进入 `V0.1-E` 汇总结论
+- 修改文件：`try/my_watch_f411_v2.1/user/ui/lvgl_port/watch_lvgl_port.h`、`try/my_watch_f411_v2.1/user/ui/lvgl_port/watch_lvgl_port.c`、`try/my_watch_f411_v2.1/user/app/lvgl_demo/watch_lvgl_debug_screen.c`、`try/my_watch_f411_v2.1/README.md`、`docs/40_workflow/agent_batch/cards/v0-f411-refresh-q4.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：待本轮收尾执行 `git diff --check` 和本轮实际改动中文 Markdown 乱码哨兵检查；本机仍不能执行 Keil / MDK 编译和 F411 真机观察
+- 风险回应：`dma wait` 的口径是端到端等待耗时，不是纯 SPI 线上传输时间；本卡不改 `LCD_DMA_MIN_BYTES`，不改 HAL callback，也不改 `lv_disp_flush_ready()` 的完成链路
+- 阻塞与待决：需要用户本地编译、烧录并观察 `path b/d/f`、`fb`、`dma wait` 是否稳定可读并随场景变化
+- 下一步：按队列每张卡后停止；若真机观察通过，进入 `V0.1-E` 输出 F411 刷新瓶颈判断文档
+
+### 会话 2026-06-08 V0.1-E 输出 F411 刷新瓶颈判断文档
+
+- 本轮范围：队列项 `V0.1-F411-REFRESH-DIAG`，卡片 `V0.1-E`
+- 完成：已新增 `docs/30_testing/f411_lvgl_refresh_diagnostic.md`，汇总 `V0.1-A` 到 `V0.1-D` 的指标口径、静态与输入压力证据、已验证项、未验证项和下一步建议；已把 `V0.1-F411-REFRESH-DIAG` 队列项标记为 `DONE`
+- 修改文件：`docs/30_testing/f411_lvgl_refresh_diagnostic.md`、`try/my_watch_f411_v2.1/README.md`、`docs/40_workflow/agent_batch/cards/v0-f411-refresh-q4.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：待本轮收尾执行 `git diff --check` 和本轮实际改动中文 Markdown 乱码哨兵检查
+- 风险回应：当前文档结论只覆盖 debug screen 场景，不把 FPS probe 污染下的数字直接写成最终产品 UI 结论；但已经足够支持“不继续追 DMA，优先进入 V0.2 隔离 debug 负载”的判断
+- 阻塞与待决：无
+- 下一步：进入 `V0.2-F411-REFRESH-OPT`，优先执行 `V0.2-A` 隔离 debug FPS 负载和真实 UI 负载

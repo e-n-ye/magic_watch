@@ -12,6 +12,21 @@ typedef struct {
     uint32_t handler_per_sec;
     uint32_t last_refresh_ms;
     uint32_t last_flush_ms;
+    uint32_t last_flush_pixels;
+    uint32_t max_flush_pixels_per_sec_window;
+    uint32_t last_flush_area_permille;
+    uint32_t max_flush_area_permille_per_sec_window;
+    uint32_t last_convert_ms;
+    uint32_t max_convert_ms_per_sec_window;
+    uint32_t last_flush_bytes;
+    uint32_t last_transfer_result;
+    uint32_t dma_flush_pending;
+    uint32_t blocking_count_per_sec;
+    uint32_t dma_count_per_sec;
+    uint32_t failed_count_per_sec;
+    uint32_t dma_fallback_count_per_sec;
+    uint32_t last_dma_wait_ms;
+    uint32_t max_dma_wait_ms_per_sec_window;
 } watch_lvgl_perf_snapshot_t;
 
 void watch_lvgl_port_init(void);

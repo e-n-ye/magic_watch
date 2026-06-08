@@ -30,7 +30,7 @@ static watch_lvgl_perf_snapshot_t s_perf_snapshot;
 static uint32_t s_last_perf_refresh_ms;
 static uint32_t s_last_fps_load_ms;
 static lv_coord_t s_fps_load_marker_x;
-static char s_label_text[224];
+static char s_label_text[320];
 static char s_fps_badge_text[32];
 
 static const char *intent_text(watch_input_intent_t intent)
@@ -93,12 +93,16 @@ static char *append_u32_x10(char *dst, uint32_t value_x10)
     return dst + 1;
 }
 
+static char *append_permille_as_percent_x10(char *dst, uint32_t value_permille)
+{
+    return append_u32_x10(dst, value_permille);
+}
+
 static void render_label(void)
 {
     char *cursor = s_label_text;
     char *badge_cursor = s_fps_badge_text;
     uint32_t full_per_sec_x10 = 0U;
-
     if ((s_status_label == 0) || (s_fps_badge_label == 0)) {
         return;
     }
@@ -122,6 +126,30 @@ static void render_label(void)
     cursor = append_u32_x10(cursor, full_per_sec_x10);
     cursor = append_text(cursor, "\npixels/s: ");
     cursor = append_u32(cursor, s_perf_snapshot.pixels_per_sec);
+    cursor = append_text(cursor, "\narea px: ");
+    cursor = append_u32(cursor, s_perf_snapshot.last_flush_pixels);
+    cursor = append_text(cursor, " max: ");
+    cursor = append_u32(cursor, s_perf_snapshot.max_flush_pixels_per_sec_window);
+    cursor = append_text(cursor, "\narea %: ");
+    cursor = append_permille_as_percent_x10(cursor, s_perf_snapshot.last_flush_area_permille);
+    cursor = append_text(cursor, " max: ");
+    cursor = append_permille_as_percent_x10(cursor, s_perf_snapshot.max_flush_area_permille_per_sec_window);
+    cursor = append_text(cursor, "\nconv ms: ");
+    cursor = append_u32(cursor, s_perf_snapshot.last_convert_ms);
+    cursor = append_text(cursor, " max: ");
+    cursor = append_u32(cursor, s_perf_snapshot.max_convert_ms_per_sec_window);
+    cursor = append_text(cursor, "\npath b/d/f: ");
+    cursor = append_u32(cursor, s_perf_snapshot.blocking_count_per_sec);
+    cursor = append_text(cursor, "/");
+    cursor = append_u32(cursor, s_perf_snapshot.dma_count_per_sec);
+    cursor = append_text(cursor, "/");
+    cursor = append_u32(cursor, s_perf_snapshot.failed_count_per_sec);
+    cursor = append_text(cursor, " fb: ");
+    cursor = append_u32(cursor, s_perf_snapshot.dma_fallback_count_per_sec);
+    cursor = append_text(cursor, "\ndma wait: ");
+    cursor = append_u32(cursor, s_perf_snapshot.last_dma_wait_ms);
+    cursor = append_text(cursor, " max: ");
+    cursor = append_u32(cursor, s_perf_snapshot.max_dma_wait_ms_per_sec_window);
     cursor = append_text(cursor, "\nlast ms: ");
     cursor = append_u32(cursor, s_perf_snapshot.last_flush_ms);
     cursor = append_text(cursor, "\nrefr ms: ");
