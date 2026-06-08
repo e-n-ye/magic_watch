@@ -96,7 +96,7 @@
 
 - 这是当前默认工程主线：XML 作为 UI 源，生成 C 入库，`watch_core` 作为纯 C 产品核心，PC SDL 与 F411 只在平台端口分叉。
 - 第一阶段只做主页健康四卡、PC 可交互闭环和 F411 显示链路验证，不迁 Zephyr、不绑定最终芯片、不接完整传感器业务。
-- 后续执行顺序以 `agent-queue.md` 为准：`LVGL-XML-Q1` -> `F411-Q3` -> `F411-XML-Q2`。
+- 后续执行顺序以 `agent-queue.md` 为准：`V0.0-F411-DMA-CLOSE` -> `V0.1-F411-REFRESH-DIAG` -> `V0.2-F411-REFRESH-OPT` -> `V0.3-F411-XML-PROBE`；`V0.4` F411 XML 真机闭环必须等 `V0.3-D` 结论允许继续后再规划。
 - 执行前如需要锁定 AI 边界，补读 [magicwatch_ai_collaboration_rules.md](/D:/MY_Desk/watch/magic_watch/docs/40_workflow/magicwatch_ai_collaboration_rules.md)。
 
 ### 我想知道当前重构到哪了
@@ -184,6 +184,7 @@
 - `agent-queue.md` 是目标模式执行入口；为空时回退到 `agent-progress.md` 当前批次和 `agent-plan.md`。
 - `agent-plan.md` 是内联卡片状态权威源；卡片文件中的卡片以对应文件为权威源；`agent-progress.md` 只记录当前批次、自动提交策略、不要重复做和会话历史。
 - 执行窗口只跑当前批次；并行规划窗口只能追加未来批次或写入 `agent-inbox.md`。
+- 当前 V0 执行队列已经按长期规划收敛为 DMA 收口、刷新诊断、无效刷新优化和 F411 XML 兼容性探针；旧 `F411-XML-Q2-1` 保留为历史卡片，但不得直接从队列执行。
 
 ### 我想让 AI 执行复杂任务前锁边界
 

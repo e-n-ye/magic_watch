@@ -539,3 +539,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 阻塞与待决：需要用户执行 Keil / MDK 编译并在真机上观察是否存在花屏、卡死或明显输入迟滞；若稳定，再进入 `F411-LVGL-DMA-3` 记录前后指标
 - 下一步：若编译和真机观察通过，进入 `F411-LVGL-DMA-3`，只做 DMA 前后性能与稳定性记录，不再继续改代码
 - 验收追加：用户已确认修正 `wait_cb` 后真机恢复正常显示；`F411-LVGL-DMA-2` 可视为已验收通过。当前体感帧率提升不大，属于下一张卡 `F411-LVGL-DMA-3` 的对比记录范围，不影响本卡“异步 DMA flush 已接通”的完成判定。
+
+### 会话 2026-06-07 V0 卡片重排
+
+- 本轮范围：工作流卡片清理与 V0 下一批任务规划
+- 完成：已按长期规划把当前队列从旧 `LVGL-XML-Q1` / `F411-Q3` / `F411-XML-Q2` 顺序调整为 `V0.0-F411-DMA-CLOSE` -> `V0.1-F411-REFRESH-DIAG` -> `V0.2-F411-REFRESH-OPT` -> `V0.3-F411-XML-PROBE`；已保守保留历史卡片文件；已将旧 `F411-XML-Q2-1` 标记为 BLOCKED，避免绕过兼容性探针直接上板
+- 修改文件：`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-plan.md`、`docs/40_workflow/agent_batch/cards/lvgl-xml-watch-core-q1.md`、`docs/40_workflow/agent_batch/cards/v0-f411-refresh-q4.md`、`docs/40_workflow/agent_batch/cards/v0-f411-xml-probe-q5.md`、`docs/00_current/current_decisions.md`、`docs/10_architecture/lvgl_xml_watch_core_architecture.md`、`docs/document_map.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：待本轮收尾执行 `git diff --check` 和实际改动中文 Markdown 乱码哨兵检查
+- 风险回应：本轮只整理文档和卡片入口，不修改 F411 C 代码，不宣称 Keil 编译或真机验证；`F411-LVGL-DMA-3` 等价于新路线 `V0.0-A` 的指标记录入口，仍需单独执行
+- 阻塞与待决：无
+- 下一步：先执行 `V0.0-F411-DMA-CLOSE`，记录 DMA 前后指标和稳定性；验收后进入 `V0.1-F411-REFRESH-DIAG`

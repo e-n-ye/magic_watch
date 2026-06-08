@@ -9,4 +9,4 @@
 
 ---
 
-当前没有内联卡片。阶段 9 真实硬件桥接代码卡片见 `docs/40_workflow/agent_batch/cards/h9-hardware-bridge-q2.md`，目标模式执行入口见 `agent-queue.md`。
+当前没有内联卡片。正式执行入口以 `agent-queue.md` 为准；较长任务卡片保存在 `docs/40_workflow/agent_batch/cards/`。

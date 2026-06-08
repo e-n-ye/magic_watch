@@ -6,31 +6,41 @@
 
 ## 当前队列
 
-### LVGL-XML-Q1 健康四卡 XML 与 PC 垂直闭环
-
-- 状态：DONE
-- 卡片来源：cards/lvgl-xml-watch-core-q1.md
-- 执行范围：卡片 `LVGL-XML-Q1-1` / `LVGL-XML-Q1-2` / `LVGL-XML-Q1-3` / `LVGL-XML-Q1-4` / `LVGL-XML-Q1-5`
-- 停止策略：每张卡后停止
-- 验收后处理：保留
-
-### F411-Q3 LVGL 性能基线与 SPI DMA 准备
+### V0.0-F411-DMA-CLOSE DMA 小闭环收口
 
 - 状态：IN_PROGRESS
 - 卡片来源：cards/f411-lvgl-perf-q3.md
-- 执行范围：卡片 `F411-LVGL-PERF-2` / `F411-LVGL-PERF-2B` / `F411-LVGL-DMA-PREP` / `F411-LVGL-DMA-1` / `F411-LVGL-DMA-2` / `F411-LVGL-DMA-3`
+- 执行范围：卡片 `F411-LVGL-DMA-3`
 - 停止策略：每张卡后停止
 - 验收后处理：保留
-- 执行前条件：`LVGL-XML-Q1` 已完成并验收；`F411-LVGL-PERF-1` 与 `F411-LVGL-PERF-1B` 已在卡片文件中记录为 DONE。
+- 执行前条件：`F411-LVGL-DMA-2` 已由用户真机确认正常显示；本队列项只记录 DMA 前后指标和稳定性，不继续修改 DMA 代码。
 
-### F411-XML-Q2 同一套 XML 生成 UI 上 F411
+### V0.1-F411-REFRESH-DIAG 刷新率诊断
 
 - 状态：TODO
-- 卡片来源：cards/lvgl-xml-watch-core-q1.md
-- 执行范围：卡片 `F411-XML-Q2-1`
+- 卡片来源：cards/v0-f411-refresh-q4.md
+- 执行范围：卡片 `V0.1-A` / `V0.1-B` / `V0.1-C` / `V0.1-D` / `V0.1-E`
 - 停止策略：每张卡后停止
 - 验收后处理：保留
-- 执行前条件：`LVGL-XML-Q1` 已完成并验收；`F411-Q3` 已完成并验收。
+- 执行前条件：`V0.0-F411-DMA-CLOSE` 完成并验收；本队列项只做观测和瓶颈分类，禁止优化和重构。
+
+### V0.2-F411-REFRESH-OPT 减少无效刷新
+
+- 状态：TODO
+- 卡片来源：cards/v0-f411-refresh-q4.md
+- 执行范围：卡片 `V0.2-A` / `V0.2-B` / `V0.2-C`
+- 停止策略：每张卡后停止
+- 验收后处理：保留
+- 执行前条件：`V0.1-F411-REFRESH-DIAG` 已输出可复现瓶颈判断；本队列项优先减少工作量，不追 DMA。
+
+### V0.3-F411-XML-PROBE F411 XML 兼容性探针
+
+- 状态：TODO
+- 卡片来源：cards/v0-f411-xml-probe-q5.md
+- 执行范围：卡片 `V0.3-A` / `V0.3-B` / `V0.3-C` / `V0.3-D`
+- 停止策略：每张卡后停止
+- 验收后处理：保留
+- 执行前条件：`V0.2-F411-REFRESH-OPT` 完成或明确无需继续优化；PC 健康四卡闭环已验收；F411 LVGL 基线已稳定。
 
 ## 队列项格式
 
