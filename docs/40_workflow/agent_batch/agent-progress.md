@@ -674,3 +674,12 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：当前文档结论只覆盖 debug screen 场景，不把 FPS probe 污染下的数字直接写成最终产品 UI 结论；但已经足够支持“不继续追 DMA，优先进入 V0.2 隔离 debug 负载”的判断
 - 阻塞与待决：无
 - 下一步：进入 `V0.2-F411-REFRESH-OPT`，优先执行 `V0.2-A` 隔离 debug FPS 负载和真实 UI 负载
+### 会话 2026-06-09 21:00
+
+- 本轮范围：队列项 `V0.3-F411-XML-PROBE`，卡片 `V0.3-A`
+- 完成：`V0.3-A`；已建立 F411 XML 兼容性探针文档初稿；队列项 `V0.3-F411-XML-PROBE` 已进入进行中
+- 修改文件：`docs/30_testing/f411_xml_compatibility_probe.md`、`docs/40_workflow/agent_batch/cards/v0-f411-xml-probe-q5.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：待提交前执行；重点检查 `git diff --check`、`git status --short -uall`、本轮实际改动中文文档乱码哨兵检查
+- 风险回应：本轮只记录从 `ui/lvgl_pro` 直接扫描到的 API、对象类型和 XML/图片入口，没有把“可扫描到”误写成“F411 可编译”；`LV_USE_XML`、`lv_xml_register_image(...)`、PNG 文件路径注册已单列为后续高风险项
+- 阻塞与待决：`V0.3-B` 尚未开始，仍需对照 F411 当前 LVGL 8.2 头文件核实 API 是否存在
+- 下一步：按停止策略停止，等待用户验收；如继续执行下一张卡，应进入 `V0.3-B`

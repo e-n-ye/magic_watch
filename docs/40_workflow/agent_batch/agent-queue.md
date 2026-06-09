@@ -35,7 +35,7 @@
 
 ### V0.3-F411-XML-PROBE F411 XML 兼容性探针
 
-- 状态：TODO
+- 状态：IN_PROGRESS
 - 卡片来源：cards/v0-f411-xml-probe-q5.md
 - 执行范围：卡片 `V0.3-A` / `V0.3-B` / `V0.3-C` / `V0.3-D`
 - 停止策略：每张卡后停止

@@ -9,7 +9,7 @@
 ## V0.3-A 列出生成 C 的 LVGL API 清单
 
 - 批次：V0.3-F411-XML-PROBE
-- 状态：TODO
+- 状态：DONE
 - 依赖：`V0.2-C`
 - 自检：`git status --short -uall`；`git diff --check`；本轮实际改动中文文档乱码哨兵检查
 - 建议提交信息：`docs: list lvgl pro generated api usage`
@@ -57,7 +57,11 @@ Forbidden changes:
 
 ### 执行记录
 
-- 待执行。
+- 已扫描 `ui/lvgl_pro` 生成 C / H 与手写桥接层，输出到 `docs/30_testing/f411_xml_compatibility_probe.md`。
+- 已确认生成代码显式依赖 `LV_USE_XML`、`lv_xml/lv_xml.h`、`lv_xml_register_image(...)`。
+- 已确认对象类型至少包含 `lv_obj`、`lv_button`、`lv_image`、`lv_label`，并使用 `lv_event_t` / `lv_event_get_user_data(...)` 回调入口。
+- 已确认图片入口是 `asset_path + images/*.png` 的字符串路径，而不是 C 数组资源。
+- 已把 `lv_button_*`、`lv_image_*` 这类高风险 API 命名记入后续 `V0.3-B` 的重点比对项。
 
 ---
 
