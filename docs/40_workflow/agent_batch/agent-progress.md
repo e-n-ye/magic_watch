@@ -259,6 +259,16 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 修改文件：`prototypes/twatch_s3_plus_bringup/src/main.cpp`、`prototypes/twatch_s3_plus_bringup/README.md`、`docs/70_hardware_reference/stage9_hardware_bridge_plan.md`、`docs/10_architecture/hardware_boundary.md`、`docs/40_workflow/agent_batch/cards/h9-hardware-bridge-q2.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
 - 自检：`git status --short -uall` 仅出现本轮允许文件；`C:\Users\13984\.platformio\penv\Scripts\pio.exe run -e twatch-s3 -j 1` 通过；`git diff --check` 通过（仅 LF/CRLF 提示，无 diff 格式错误）；本轮实际改动中文文档乱码哨兵检查通过
 
+### 会话 2026-06-09 11:10
+
+- 本轮范围：队列项 `V0.2-F411-REFRESH-OPT`，卡片 `V0.2-A`
+- 完成：`V0.2-A`；已为 F411 debug screen 的 FPS load probe 增加独立编译期开关；关闭 probe 后左侧文案会明确显示 `probe: off`；用户已完成 `probe off` 静态 60 秒真机观测
+- 修改文件：`try/my_watch_f411_v2.1/user/app/lvgl_demo/watch_lvgl_debug_screen.c`、`try/my_watch_f411_v2.1/README.md`、`docs/40_workflow/agent_batch/cards/v0-f411-refresh-q4.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`git status --short -uall` 仅出现本轮允许文件；`git diff --check` 通过（仅有 LF/CRLF 提示，无 diff 格式错误）；本轮实际改动中文文档乱码哨兵检查通过；Keil / MDK 编译未在当前会话内直接执行，由用户完成编译烧录与真机观测
+- 风险回应：本轮只增加 probe 开关和状态提示，不修改 flush / DMA / SPI 路径，也不改变任何输入语义；`probe off` 虽然显著降低了刷新频率和吞吐，但 `area px / area %` 仍偏大，这为 `V0.2-B`“收敛 overlay 自身刷新”提供了直接证据
+- 阻塞与待决：`probe on` 下“行为与当前一致”未单独口头补测；`last ms`、`refr ms`、`lvgl/s` 等部分 `probe off` 读数未完整抄录
+- 下一步：按停止策略停下，等待用户验收 `V0.2-A`；若继续，进入 `V0.2-B` 收敛 debug overlay 更新频率和刷新面积
+
 - 风险回应：当前 `Power_Task` 已以 1Hz 采样并驱动 `BatterySample -> BatteryPowerService -> DataCenter`，bring-up 页面和 `[bringup-pmu]` 日志也改为消费任务快照；但同步 `EventBus` 仍是同核简化边界，真正 BatteryChanged 串口观测和 `Power_Task` high water mark 验收继续留给 `H9-BRIDGE-2D`
 - 阻塞与待决：`pio` 不在 PATH，后续仍需显式使用 `C:\Users\13984\.platformio\penv\Scripts\pio.exe`
 - 下一步：按停止策略停止，等待用户验收；如继续执行下一张卡，应进入 `H9-Q2D` 串口 BatteryChanged 事件观测

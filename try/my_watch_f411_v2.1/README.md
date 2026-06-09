@@ -117,6 +117,7 @@ DMA 基线记录
 - `V0.1-D` 继续把传输路径接到现有 debug screen：`path b/d/f` 分别表示每秒阻塞完成次数、DMA 启动次数、失败次数，`fb` 表示最近 1 秒窗口内 DMA error 后转阻塞补发的次数；`dma wait` 表示最近一次 DMA pending 从 flush 发起到 `defaultTask` 完成收口的端到端等待耗时，后面的 `max` 表示最近 1 秒窗口峰值。这里不是纯 SPI 线上时间，包含调度与 wait_cb 消费。
 - 当前真机观察结果：静态场景 `path b/d/f 0/59/0`、`fb 0`、`dma wait 0 max 16`；输入压力场景 `path b/d/f 0/13/0`、`fb 0`、`dma wait 0 max 15`。这说明当前观察窗口内 flush 基本都走 DMA，没有看到失败或补发，后续应更关注调度节奏和整体刷新链路，而不是“DMA 是否生效”。
 - `V0.1` 诊断结论已整理到 `docs/30_testing/f411_lvgl_refresh_diagnostic.md`。当前最可能的问题不是 DMA 未生效、不是 RGB565 转换过重，也不是 dirty area 明显超预算；更值得优先处理的是 debug FPS probe、debug overlay 和整体刷新调度节奏。
+- `V0.2-A` 已为 FPS 负载探针增加独立开关：`watch_lvgl_debug_screen.c` 中的 `WATCH_DEBUG_ENABLE_FPS_LOAD_PROBE` 默认是 `1`，保持当前 bring-up 行为不变；将其改为 `0` 后可关闭黄色 probe，只保留颜色、字体、底部指标和右下角 `fps/ms` 徽标，用于观察更接近真实静态 UI 的刷新指标。debug screen 左侧会同步显示 `probe: on/off`，避免误判为刷新停止。
 
 ## LVGL 颜色和字体验收
 

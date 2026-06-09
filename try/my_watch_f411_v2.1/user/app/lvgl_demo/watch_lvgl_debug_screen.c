@@ -8,6 +8,7 @@
 
 #define WATCH_DEBUG_SCREEN_REFRESH_MS 500U
 #define WATCH_DEBUG_SCREEN_FULL_PIXELS ((uint32_t)WATCH_LCD_WIDTH * (uint32_t)WATCH_LCD_HEIGHT)
+#define WATCH_DEBUG_ENABLE_FPS_LOAD_PROBE 0U
 #define WATCH_DEBUG_FPS_LOAD_MS 33U
 #define WATCH_DEBUG_FPS_LOAD_X 10
 #define WATCH_DEBUG_FPS_LOAD_Y 100
@@ -32,6 +33,11 @@ static uint32_t s_last_fps_load_ms;
 static lv_coord_t s_fps_load_marker_x;
 static char s_label_text[320];
 static char s_fps_badge_text[32];
+
+static uint8_t is_fps_load_probe_enabled(void)
+{
+    return (uint8_t)(WATCH_DEBUG_ENABLE_FPS_LOAD_PROBE != 0U);
+}
 
 static const char *intent_text(watch_input_intent_t intent)
 {
@@ -114,6 +120,9 @@ static void render_label(void)
 
     cursor = append_text(cursor, "F411 LVGL\n");
     cursor = append_text(cursor, "debug screen\n");
+    cursor = append_text(cursor, "probe: ");
+    cursor = append_text(cursor, is_fps_load_probe_enabled() != 0U ? "on" : "off");
+    cursor = append_text(cursor, "\n");
     cursor = append_text(cursor, "events: ");
     cursor = append_u32(cursor, s_input_count);
     cursor = append_text(cursor, "\nlast: ");
@@ -215,6 +224,14 @@ static void create_color_and_font_checks(void)
 
 static void create_fps_load_probe(void)
 {
+    if (is_fps_load_probe_enabled() == 0U) {
+        s_fps_load_area = 0;
+        s_fps_load_marker = 0;
+        s_last_fps_load_ms = 0U;
+        s_fps_load_marker_x = 0;
+        return;
+    }
+
     s_fps_load_area = lv_obj_create(lv_scr_act());
     lv_obj_set_pos(s_fps_load_area, WATCH_DEBUG_FPS_LOAD_X, WATCH_DEBUG_FPS_LOAD_Y);
     lv_obj_set_size(s_fps_load_area, WATCH_DEBUG_FPS_LOAD_W, WATCH_DEBUG_FPS_LOAD_H);
@@ -238,6 +255,10 @@ static void create_fps_load_probe(void)
 
 static void update_fps_load_probe(void)
 {
+    if (is_fps_load_probe_enabled() == 0U) {
+        return;
+    }
+
     if ((s_fps_load_area == 0) || (s_fps_load_marker == 0)) {
         return;
     }

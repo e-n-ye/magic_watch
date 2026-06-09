@@ -324,7 +324,7 @@ Forbidden changes:
 ## V0.2-A 隔离 debug FPS 负载和真实 UI 负载
 
 - 批次：V0.2-F411-REFRESH-OPT
-- 状态：TODO
+- 状态：DONE
 - 依赖：`V0.1-E`
 - 自检：`git status --short -uall`；Keil / MDK 编译，或如本机无法编译则明确记录未执行原因；`git diff --check`；真机确认 FPS probe 可单独关闭；本轮实际改动中文文档乱码哨兵检查
 - 建议提交信息：`feat: gate f411 fps load probe`
@@ -373,7 +373,12 @@ Forbidden changes:
 
 ### 执行记录
 
-- 待执行。
+- 已完成：已在 `watch_lvgl_debug_screen.c` 中加入 `WATCH_DEBUG_ENABLE_FPS_LOAD_PROBE` 编译期开关，默认值为 `1`，保持当前 bring-up 行为不变；当其改为 `0` 时，不再创建或更新黄色 FPS probe，只保留颜色、字体、底部性能指标和右下角 `fps/ms` 徽标。
+- 已完成：debug screen 左侧新增 `probe: on/off` 状态行，避免关闭 probe 后把“负载隔离成功”误判成“界面停止刷新”。
+- 已完成：`README.md` 已补充 probe 开关口径和使用说明。
+- 真机观察：用户已确认 `probe off` 静态 60 秒场景可独立成立，屏幕左侧明确显示 `probe: off`；记录到的稳定读数为 `calls/s 11`、`full/s 0.8`、`pixels/s 54730`、`area px 4320 max 4800`、`area % 6.4 max 7.1`、右下角 `1fps 87ms`。
+- 诊断含义：关闭黄色 FPS probe 后，`calls/s`、`full/s`、`pixels/s` 和右下角 `fps` 都明显下降，说明 probe 确实是一个持续刷新负载源；但 `area px / area %` 仍停留在 `4320 / 6.4%`，没有回落到此前 `probe on` 静态场景下的 `660 / 0.9%`，说明当前静态 dirty area 更可能仍由 debug overlay 自身刷新驱动，而不是只由黄色 probe 决定。
+- 未验证项：本轮未单独补测 `probe on` 下“行为与当前一致”的口头复核，也未完整抄录 `last ms`、`refr ms`、`lvgl/s` 等其余读数；这些项在本卡中如实保留，不补猜。
 
 ---
 
