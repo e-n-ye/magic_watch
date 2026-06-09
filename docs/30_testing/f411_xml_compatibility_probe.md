@@ -5,7 +5,7 @@
 ## 当前结论状态
 
 - `V0.3-A`：已完成
-- `V0.3-B`：未开始
+- `V0.3-B`：已完成
 - `V0.3-C`：未开始
 - `V0.3-D`：未开始
 
@@ -99,3 +99,112 @@
   - XML 运行时依赖
   - PNG 文件路径图片依赖
 - 还不能据此判断 F411 可编译；版本兼容和资源预算要在后续卡片继续验证。
+
+## V0.3-B LVGL 9.6 到 8.2 不兼容点评估
+
+### 对照基线
+
+- F411 当前 LVGL 版本：`8.2.0`
+  - 证据：`try/my_watch_f411_v2.1/user/third_party/lvgl/lvgl/lvgl.h`
+- F411 当前关键配置：
+  - `LV_USE_BTN = 0`
+  - `LV_USE_IMG = 0`
+  - `LV_USE_LABEL = 1`
+  - `LV_USE_MENU = 0`
+  - `LV_USE_FS_STDIO = 0`
+  - `LV_USE_FS_POSIX = 0`
+  - `LV_USE_FS_WIN32 = 0`
+  - `LV_USE_FS_FATFS = 0`
+  - `LV_USE_PNG = 0`
+  - 证据：`try/my_watch_f411_v2.1/user/third_party/lvgl/lv_conf.h`
+
+### 兼容分类
+
+#### 同名存在，可视为低风险兼容
+
+- 类型/事件：
+  - `lv_event_t`
+  - `lv_event_get_user_data(...)`
+- 工具：
+  - `lv_snprintf(...)`
+  - `lv_pct(...)`
+  - `lv_color_hex(...)`
+- 对象基础：
+  - `lv_obj_create(...)`
+  - `lv_obj_get_child(...)`
+  - `lv_obj_set_x(...)`
+  - `lv_obj_set_y(...)`
+  - `lv_obj_set_width(...)`
+  - `lv_obj_set_height(...)`
+  - `lv_obj_set_align(...)`
+  - `lv_obj_add_style(...)`
+  - `lv_obj_remove_style_all(...)`
+  - `lv_obj_set_style_bg_color(...)`
+  - `lv_obj_set_style_text_color(...)`
+  - `lv_obj_set_style_radius(...)`
+- 样式：
+  - `lv_style_init(...)`
+  - `lv_style_set_width(...)`
+  - `lv_style_set_height(...)`
+  - `lv_style_set_pad_all(...)`
+  - `lv_style_set_radius(...)`
+  - `lv_style_set_bg_opa(...)`
+  - `lv_style_set_bg_color(...)`
+  - `lv_style_set_text_color(...)`
+- 文本：
+  - `lv_label_create(...)`
+  - `lv_label_set_text(...)`
+- 枚举/宏：
+  - `LV_OBJ_FLAG_SCROLLABLE`
+  - `LV_ALIGN_BOTTOM_LEFT`
+
+#### 可通过小 shim 或重命名过渡，但不是直接兼容
+
+- `lv_button_create(...)`
+  - F411 8.2 中对应旧名是 `lv_btn_create(...)`
+  - 额外风险：当前配置 `LV_USE_BTN = 0`，即使改成旧名也不会直接可用
+- `lv_image_create(...)`
+  - F411 8.2 中对应旧名是 `lv_img_create(...)`
+  - 额外风险：当前配置 `LV_USE_IMG = 0`
+- `lv_image_set_src(...)`
+  - F411 8.2 中对应旧名是 `lv_img_set_src(...)`
+  - 额外风险：当前配置 `LV_USE_IMG = 0`
+- `lv_obj_set_flag(obj, flag, false)`
+  - F411 8.2 没有同名三参入口，但有 `lv_obj_add_flag(...)` / `lv_obj_clear_flag(...)`
+  - 说明：语义可拆解，不是根本阻塞
+
+#### 当前 F411 8.2 中未发现直接对应入口，属于高风险不兼容
+
+- `LV_USE_XML`
+- `#include "lv_xml/lv_xml.h"`
+- `lv_xml_register_image(...)`
+- `lv_xml_create(...)`
+- `lv_obj_set_name_static(...)`
+- `lv_strdup(...)`
+- `LV_EDITOR_PREVIEW`
+
+### 当前判断
+
+- 这不是“只有少量 9.x 命名差异”的情况。
+- 主要缺口分三层：
+  - XML 运行时体系缺失：F411 当前 8.2 代码树中没有 `lv_xml/*` 入口。
+  - 控件命名和配置双重不匹配：生成代码用 `lv_button_*` / `lv_image_*`，而 F411 当前既是旧名 `lv_btn_*` / `lv_img_*`，又把 `BTN` / `IMG` 组件关掉了。
+  - 少量辅助 API 缺失：如 `lv_obj_set_name_static(...)`、`lv_strdup(...)`，理论上可单独补薄 shim，但它们不是当前最大问题。
+
+### 处理建议
+
+- `同名存在` 项：
+  - 可直接视为后续可复用基础，不构成主要阻塞。
+- `可 shim / 重命名` 项：
+  - 仅在确认整体路线仍值得继续后再评估，不建议现在为单个 API 提前补兼容宏。
+- `高风险不兼容` 项：
+  - 不建议靠手改生成 C 硬接到 F411 8.2。
+  - 若后续还想走 XML 生成路线，更合理的候选是：
+    - 重生成为更接近 LVGL 8.2 / 无 XML 运行时依赖的产物
+    - 或把 F411 目标改成纯 C 数组资源 + 手写轻量页面装配
+
+### V0.3-B 小结
+
+- 当前证据支持把 `XML 运行时依赖` 记为一级风险。
+- 当前证据支持把 `9.6 生成代码直接接 8.2` 记为不可直接假设成立。
+- 还不能在本卡直接下“必须止损”最终结论，因为 `V0.3-C` 还需要把图片、字体、Flash/RAM 成本一起纳入判断。

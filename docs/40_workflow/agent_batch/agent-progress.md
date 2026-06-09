@@ -683,3 +683,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：本轮只记录从 `ui/lvgl_pro` 直接扫描到的 API、对象类型和 XML/图片入口，没有把“可扫描到”误写成“F411 可编译”；`LV_USE_XML`、`lv_xml_register_image(...)`、PNG 文件路径注册已单列为后续高风险项
 - 阻塞与待决：`V0.3-B` 尚未开始，仍需对照 F411 当前 LVGL 8.2 头文件核实 API 是否存在
 - 下一步：按停止策略停止，等待用户验收；如继续执行下一张卡，应进入 `V0.3-B`
+
+### 会话 2026-06-09 21:20
+
+- 本轮范围：队列项 `V0.3-F411-XML-PROBE`，卡片 `V0.3-B`
+- 完成：`V0.3-B`；已完成 LVGL 9.6 生成代码到 F411 LVGL 8.2 的第一轮兼容分类
+- 修改文件：`docs/30_testing/f411_xml_compatibility_probe.md`、`docs/40_workflow/agent_batch/cards/v0-f411-xml-probe-q5.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：待提交前执行；重点检查 `git diff --check`、`git status --short -uall`、本轮实际改动中文文档乱码哨兵检查
+- 风险回应：本轮没有把“存在旧名近似 API”误写成“可直接编译”；文档已明确区分“同名存在”“可 shim/改名过渡”和“当前未发现直接入口”三类风险，尤其把 `LV_USE_XML` 缺失、`lv_button_*` / `lv_image_*` 命名差异和 `LV_USE_BTN/IMG = 0` 配置关闭列为高优先级问题
+- 阻塞与待决：`V0.3-C` 仍未开始，资源成本尚未纳入最终继续/止损判断
+- 下一步：按停止策略停止，等待用户验收；如继续执行下一张卡，应进入 `V0.3-C`

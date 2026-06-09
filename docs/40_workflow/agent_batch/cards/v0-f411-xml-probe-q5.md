@@ -68,7 +68,7 @@ Forbidden changes:
 ## V0.3-B 评估 LVGL 9.6 到 8.2 的不兼容点
 
 - 批次：V0.3-F411-XML-PROBE
-- 状态：TODO
+- 状态：DONE
 - 依赖：`V0.3-A`
 - 自检：`git status --short -uall`；`git diff --check`；本轮实际改动中文文档乱码哨兵检查
 - 建议提交信息：`docs: compare lvgl xml api compatibility`
@@ -115,7 +115,12 @@ Forbidden changes:
 
 ### 执行记录
 
-- 待执行。
+- 已对照 `try/my_watch_f411_v2.1/user/third_party/lvgl` 确认 F411 当前版本为 `LVGL 8.2.0`。
+- 已确认 `LV_USE_BTN = 0`、`LV_USE_IMG = 0`、`LV_USE_LABEL = 1`、`LV_USE_MENU = 0`，且 `LV_USE_FS_*` 与 `LV_USE_PNG` 当前均为 `0`。
+- 已确认 `lv_event_t`、`lv_event_get_user_data(...)`、`lv_obj_*` 基础定位/样式 API、`lv_label_*`、`lv_style_*`、`lv_pct(...)`、`lv_color_hex(...)` 在 8.2 中存在。
+- 已确认 `lv_button_*` / `lv_image_*` 在 F411 8.2 中不是同名 API，对应旧名为 `lv_btn_*` / `lv_img_*`，且当前配置还把 `BTN` / `IMG` 组件关掉了。
+- 已确认 F411 当前代码树中未发现 `LV_USE_XML`、`lv_xml/lv_xml.h`、`lv_xml_register_image(...)`、`lv_xml_create(...)`、`lv_obj_set_name_static(...)`、`lv_strdup(...)`。
+- 已把兼容、可 shim、高风险不兼容和未确认项收口到 `docs/30_testing/f411_xml_compatibility_probe.md`。
 
 ---
 
