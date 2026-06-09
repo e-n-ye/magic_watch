@@ -385,7 +385,7 @@ Forbidden changes:
 ## V0.2-B 收敛 debug overlay 更新频率和刷新面积
 
 - 批次：V0.2-F411-REFRESH-OPT
-- 状态：TODO
+- 状态：DONE
 - 依赖：`V0.2-A`
 - 自检：`git status --short -uall`；Keil / MDK 编译，或如本机无法编译则明确记录未执行原因；`git diff --check`；真机观察常规指标更新频率不超过 1Hz；本轮实际改动中文文档乱码哨兵检查
 - 建议提交信息：`perf: reduce f411 debug overlay refresh`
@@ -435,7 +435,12 @@ Forbidden changes:
 
 ### 执行记录
 
-- 待执行。
+- 已完成：已将 `watch_lvgl_debug_screen.c` 中的 `WATCH_DEBUG_SCREEN_REFRESH_MS` 从 `500ms` 收敛到 `1000ms`，把无输入时的常规指标轮询更新频率限制到 `<= 1Hz`。
+- 已完成：本轮未修改 probe 开关、dirty area 采样口径、flush / DMA / SPI 路径，也未引入新页面；目标仅是继续压低 debug overlay 自身制造的静态刷新负载。
+- 已完成：`README.md` 与 `docs/30_testing/f411_lvgl_refresh_diagnostic.md` 已补充 `V0.2-B` 的目标口径和与 `V0.2-A probe off` 证据之间的衔接。
+- 真机观察：用户在 `probe off` 静态 60 秒场景下记录到 `calls/s 6`、`full/s 0.4`、`pixels/s 27420`、`area px 4320 max 4800`、`area % 6.4 max 7.1`、右下角 `1fps 86ms`；未观察到花屏、卡死、停更。
+- 诊断含义：把 overlay 常规刷新周期从 `500ms` 放宽到 `1000ms` 后，`calls/s`、`full/s`、`pixels/s` 继续明显下降，说明静态周期性刷新次数已被成功压低；但 `area px / area %` 基本不变，说明当前主要问题不再是“刷新太频繁”，而是“每次 overlay 文本改写都会触发约 `4320 px / 6.4%` 的局部刷新面积”。
+- 下一步提示：`V0.2-C` 应把当前 draw buffer、刷新周期和静态刷新预算收口成明确判断，并如实记录“当前已证明可先压低刷新次数，但尚未缩小单次 overlay 刷新面积”。
 
 ---
 

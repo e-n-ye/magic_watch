@@ -151,6 +151,12 @@ DMA 后当前路径：
 - 继续改 DMA 完成链路
 - 在没有隔离 debug 负载前，直接把当前 debug screen 数字当成产品 UI 结论
 
+补充证据：
+
+- `V0.2-A` 的 `probe off` 静态 60 秒结果已经表明，关闭黄色 FPS probe 后，`calls/s`、`pixels/s` 和右下角 `fps` 明显下降，但 `area px 4320 / area % 6.4` 仍维持在较高水平。
+- 这说明黄色 probe 确实是持续负载源，但当前静态 dirty area 更可能仍主要由 debug overlay 自身的周期性文本刷新驱动。
+- 因此 `V0.2-B` 的首个最小动作应是把常规指标刷新频率收敛到 `<= 1Hz`，先看静态 `area px / area %` 是否明显回落，再决定是否需要继续拆更细的 overlay 区域刷新。
+
 ## 7. 结论
 
 `V0.1-F411-REFRESH-DIAG` 可以视为完成。

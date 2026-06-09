@@ -318,6 +318,16 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 本轮范围：`F411-Q1` 用户验收收口；规划 `F411-Q2` 最小 LVGL 移植闭环
 - 完成：根据用户确认 `F411-Q1 编译通过，真机回归通过`，已将 `F411-CORE-3` 标记为 DONE，并按验收后处理从队列移除 `F411-Q1`；已新增 `F411-Q2` 队列项与 `cards/f411-lvgl-q2.md`
 - 修改文件：`docs/40_workflow/agent_batch/cards/f411-core-q1.md`、`docs/40_workflow/agent_batch/cards/f411-lvgl-q2.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+
+### 会话 2026-06-09 11:40
+
+- 本轮范围：队列项 `V0.2-F411-REFRESH-OPT`，卡片 `V0.2-B`
+- 完成：`V0.2-B`；已把 F411 debug overlay 的常规指标刷新周期从 `500ms` 收敛到 `1000ms`；用户已完成 `probe off` 静态 60 秒真机观测
+- 修改文件：`try/my_watch_f411_v2.1/user/app/lvgl_demo/watch_lvgl_debug_screen.c`、`try/my_watch_f411_v2.1/README.md`、`docs/30_testing/f411_lvgl_refresh_diagnostic.md`、`docs/40_workflow/agent_batch/cards/v0-f411-refresh-q4.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`git status --short -uall` 仅出现本轮允许文件；`git diff --check` 通过（仅有 LF/CRLF 提示，无 diff 格式错误）；本轮实际改动中文文档乱码哨兵检查通过；Keil / MDK 编译未在当前会话内直接执行
+- 风险回应：本轮只收敛 overlay 常规刷新频率，不触碰 probe 开关、输入语义、DMA 阈值或 draw buffer；真机结果表明刷新次数和吞吐已明显下降，但 `area px / area %` 不变，因此后续焦点应转到“单次 overlay 刷新面积”而不是重新追 DMA
+- 阻塞与待决：本轮未完整补录 `last ms`、`refr ms`、`lvgl/s`，但已有 `calls/s`、`full/s`、`pixels/s`、`area px`、`area %` 与右下角 `fps/ms` 足以支撑 `V0.2-B` 结论
+- 下一步：按停止策略停下，等待用户验收 `V0.2-B`；若继续，进入 `V0.2-C` 收口 draw buffer、刷新周期和静态刷新预算判断
 - 自检：待提交前执行 `git diff --check` 与本轮中文文档乱码哨兵检查
 - 风险回应：`F411-Q2` 只规划最小 LVGL 编译、flush、tick/handler、encoder indev、label/debug screen；不搬模拟器页面、不接传感器、不做 USB/FATFS/蓝牙、不重写 FreeRTOS 结构
 - 阻塞与待决：`F411-Q2` 执行时每张卡后停止，避免一次性引入过多 LVGL 变量

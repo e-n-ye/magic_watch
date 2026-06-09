@@ -6,7 +6,7 @@
 #include "lvgl.h"
 #include "ui/lvgl_port/watch_lvgl_port.h"
 
-#define WATCH_DEBUG_SCREEN_REFRESH_MS 500U
+#define WATCH_DEBUG_SCREEN_REFRESH_MS 1000U
 #define WATCH_DEBUG_SCREEN_FULL_PIXELS ((uint32_t)WATCH_LCD_WIDTH * (uint32_t)WATCH_LCD_HEIGHT)
 #define WATCH_DEBUG_ENABLE_FPS_LOAD_PROBE 0U
 #define WATCH_DEBUG_FPS_LOAD_MS 33U

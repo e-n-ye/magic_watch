@@ -118,6 +118,7 @@ DMA 基线记录
 - 当前真机观察结果：静态场景 `path b/d/f 0/59/0`、`fb 0`、`dma wait 0 max 16`；输入压力场景 `path b/d/f 0/13/0`、`fb 0`、`dma wait 0 max 15`。这说明当前观察窗口内 flush 基本都走 DMA，没有看到失败或补发，后续应更关注调度节奏和整体刷新链路，而不是“DMA 是否生效”。
 - `V0.1` 诊断结论已整理到 `docs/30_testing/f411_lvgl_refresh_diagnostic.md`。当前最可能的问题不是 DMA 未生效、不是 RGB565 转换过重，也不是 dirty area 明显超预算；更值得优先处理的是 debug FPS probe、debug overlay 和整体刷新调度节奏。
 - `V0.2-A` 已为 FPS 负载探针增加独立开关：`watch_lvgl_debug_screen.c` 中的 `WATCH_DEBUG_ENABLE_FPS_LOAD_PROBE` 默认是 `1`，保持当前 bring-up 行为不变；将其改为 `0` 后可关闭黄色 probe，只保留颜色、字体、底部指标和右下角 `fps/ms` 徽标，用于观察更接近真实静态 UI 的刷新指标。debug screen 左侧会同步显示 `probe: on/off`，避免误判为刷新停止。
+- `V0.2-B` 把 debug overlay 的常规指标刷新周期从 `500ms` 收敛到 `1000ms`。输入事件仍会立即更新左侧状态文本，但无输入时的周期性指标刷新现在不超过 `1Hz`，用于继续压低 debug overlay 自身造成的静态 dirty area。
 
 ## LVGL 颜色和字体验收
 
