@@ -157,8 +157,67 @@ DMA 后当前路径：
 - 这说明黄色 probe 确实是持续负载源，但当前静态 dirty area 更可能仍主要由 debug overlay 自身的周期性文本刷新驱动。
 - 因此 `V0.2-B` 的首个最小动作应是把常规指标刷新频率收敛到 `<= 1Hz`，先看静态 `area px / area %` 是否明显回落，再决定是否需要继续拆更细的 overlay 区域刷新。
 
-## 7. 结论
+## 7. V0.2 收口判断
 
-`V0.1-F411-REFRESH-DIAG` 可以视为完成。
+### 7.1 当前 draw buffer 与 RAM
 
-当前最合理的下一步不是继续追 DMA，而是进入 `V0.2`，先减少 debug 负载对观测的污染，再判断真实 UI 负载下还剩多少刷新问题。
+代码事实：
+
+- `WATCH_LVGL_DRAW_BUF_LINES = 20`
+- 屏幕分辨率为 `240x280`
+- `LV_COLOR_DEPTH = 16`
+
+按当前口径折算：
+
+- 单块 draw buffer：`240 * 20 = 4800 px`，约占整屏 `7.1%`
+- 单块 draw buffer RAM：`240 * 20 * 2 = 9600B`
+- 双 draw buffer RAM：`19200B`
+- `s_flush_dma_bytes`：`9600B`
+- 当前显示相关静态缓冲总量约：`28800B`
+
+判断：
+
+- 这个 draw buffer 大小已经能覆盖当前静态 debug overlay 观测到的最大单次局部刷新面积 `4800 px`
+- 当前没有证据表明“draw buffer 太小导致静态场景必须频繁切块重刷”
+- 因此在没有新数据前，不支持调大 `WATCH_LVGL_DRAW_BUF_LINES`
+
+### 7.2 当前刷新周期与静态常刷
+
+代码事实：
+
+- `lv_timer_handler()` 由 `watch_lvgl_port_task()` 在 `defaultTask` 路径中持续驱动
+- 黄色 FPS probe 默认约每 `33ms` 主动刷新一次，可通过 `probe off` 单独关闭
+- `V0.2-B` 后，debug overlay 常规指标刷新周期已从 `500ms` 收敛到 `1000ms`
+
+真机证据：
+
+- `probe off` 且 overlay `500ms` 时：`calls/s 11`、`full/s 0.8`、`pixels/s 54730`、`area px 4320`、`area % 6.4`、右下角 `1fps 87ms`
+- `probe off` 且 overlay `1000ms` 时：`calls/s 6`、`full/s 0.4`、`pixels/s 27420`、`area px 4320`、`area % 6.4`、右下角 `1fps 86ms`
+- 稳定性：未观察到花屏、卡死、停更
+
+判断：
+
+- 当前已经证明“静态刷新次数”可以通过降低 overlay 更新频率显著压低
+- 但 `area px / area %` 基本不变，说明当前剩余问题主要不是“静态 UI 周期性全屏刷新”
+- 当前更像是“每次 overlay 文本改写都会触发约 `4320 px / 6.4%` 的局部刷新”
+- 因此，静态场景下没有观察到周期性全屏常刷
+
+### 7.3 是否继续优化 F411 刷新
+
+当前阶段建议：
+
+1. 不继续追 DMA
+2. 不无数据调大 draw buffer
+3. 不把当前 debug screen 的局部刷新面积直接当成最终产品 UI 结论
+
+如果后续还要继续榨 F411 刷新预算，优先级应是：
+
+1. 缩小 debug overlay 单次文本更新触发的局部刷新面积
+2. 在更接近真实产品 UI 的场景下重测面积与节奏
+3. 只有在出现“单次刷新区明显超过当前 draw buffer 能力”时，再重新评估 draw buffer 行数
+
+## 8. 结论
+
+`V0.1-F411-REFRESH-DIAG` 和 `V0.2-F411-REFRESH-OPT` 都可以视为完成。
+
+当前最合理的下一步不是继续追 DMA，也不是先调大 draw buffer，而是进入 `V0.3-F411-XML-PROBE`，验证 F411 端对 XML UI 的兼容性边界。

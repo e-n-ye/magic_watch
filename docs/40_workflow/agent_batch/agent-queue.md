@@ -26,7 +26,7 @@
 
 ### V0.2-F411-REFRESH-OPT 减少无效刷新
 
-- 状态：TODO
+- 状态：DONE
 - 卡片来源：cards/v0-f411-refresh-q4.md
 - 执行范围：卡片 `V0.2-A` / `V0.2-B` / `V0.2-C`
 - 停止策略：每张卡后停止

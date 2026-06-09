@@ -447,7 +447,7 @@ Forbidden changes:
 ## V0.2-C 评估 draw buffer 行数、刷新周期和静态 UI 常刷
 
 - 批次：V0.2-F411-REFRESH-OPT
-- 状态：TODO
+- 状态：DONE
 - 依赖：`V0.2-B`
 - 自检：`git status --short -uall`；`git diff --check`；本轮实际改动中文文档乱码哨兵检查
 - 建议提交信息：`docs: evaluate f411 lvgl refresh budget`
@@ -498,4 +498,8 @@ Forbidden changes:
 
 ### 执行记录
 
-- 待执行。
+- 已完成：基于 `watch_lvgl_port.c` 当前实现补齐 draw buffer 与刷新周期代码事实：`WATCH_LVGL_DRAW_BUF_LINES = 20`，在 `240x280` 屏幕下单个 draw buffer 为 `240*20=4800 px`，约占整屏 `7.1%`；当前配置下两块 `lv_color_t` draw buffer 合计 `19200B`，配套一块 `s_flush_dma_bytes` 为 `9600B`，共约 `28800B` 的静态显示相关缓冲占用。
+- 已完成：文档已明确当前 LVGL 颜色深度为 `16bit`，`lv_timer_handler()` 由 `watch_lvgl_port_task()` 在 `defaultTask` 路径中持续驱动；debug overlay 常规刷新周期当前已收敛到 `1000ms`，FPS probe 在 `probe off` 场景下可单独关闭。
+- 已完成：结合 `V0.2-A` 与 `V0.2-B` 真机结果，已如实记录“当前没有观察到静态 UI 周期性全屏刷新”；静态 `probe off` 场景下虽然仍有周期性局部刷新，但最近一次面积稳定在 `4320 px / 6.4%`，显著低于全屏，也低于当前单块 draw buffer 上限 `4800 px / 7.1%`。
+- 判断结论：现阶段没有数据支持继续调大 `WATCH_LVGL_DRAW_BUF_LINES`。当前更像是 debug overlay 文本更新触发了接近一块 draw buffer 大小的局部刷新，而不是 draw buffer 太小导致反复切块或静态场景存在周期性全屏常刷。
+- 路线结论：`V0.2-F411-REFRESH-OPT` 可以视为完成，并允许进入 `V0.3-F411-XML-PROBE`。若后续产品化阶段仍要继续挤 F411 刷新预算，优先级应放在“缩小 overlay 单次改写面积 / 迁出 debug 诊断 UI”，而不是先调大 draw buffer 或继续追 DMA。

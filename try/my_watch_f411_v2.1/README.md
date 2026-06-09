@@ -119,6 +119,7 @@ DMA 基线记录
 - `V0.1` 诊断结论已整理到 `docs/30_testing/f411_lvgl_refresh_diagnostic.md`。当前最可能的问题不是 DMA 未生效、不是 RGB565 转换过重，也不是 dirty area 明显超预算；更值得优先处理的是 debug FPS probe、debug overlay 和整体刷新调度节奏。
 - `V0.2-A` 已为 FPS 负载探针增加独立开关：`watch_lvgl_debug_screen.c` 中的 `WATCH_DEBUG_ENABLE_FPS_LOAD_PROBE` 默认是 `1`，保持当前 bring-up 行为不变；将其改为 `0` 后可关闭黄色 probe，只保留颜色、字体、底部指标和右下角 `fps/ms` 徽标，用于观察更接近真实静态 UI 的刷新指标。debug screen 左侧会同步显示 `probe: on/off`，避免误判为刷新停止。
 - `V0.2-B` 把 debug overlay 的常规指标刷新周期从 `500ms` 收敛到 `1000ms`。输入事件仍会立即更新左侧状态文本，但无输入时的周期性指标刷新现在不超过 `1Hz`，用于继续压低 debug overlay 自身造成的静态 dirty area。
+- `V0.2-C` 的收口结论是：当前 `WATCH_LVGL_DRAW_BUF_LINES = 20`，单块 draw buffer 为 `4800 px`（约整屏 `7.1%`），双 draw buffer 加配套 flush byte stream 合计约 `28800B` 静态显示缓冲。现有 `probe off` 静态证据不支持继续调大 draw buffer；当前更像是 debug overlay 每次文本改写会触发约 `4320 px / 6.4%` 的局部刷新，而不是静态场景存在周期性全屏常刷。
 
 ## LVGL 颜色和字体验收
 
