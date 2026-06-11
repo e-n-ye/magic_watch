@@ -4,7 +4,7 @@
 
 - ID：`V0.4R-B`
 - 标题：F411 编译接入 `watch_core` public contract
-- 状态：TODO
+- 状态：DONE
 - 依赖：`V0.3-D`
 
 ### Problem
@@ -73,7 +73,10 @@
 
 ### Execution record
 
-- 未开始。
+- 2026-06-11：已完成第一轮静态边界审计，`watch_core` 未扫出明显的 LVGL、SDL、heap、PNG 路径或 C++ 依赖。
+- 2026-06-11：已在 F411 工程内新增 `watch_core_bridge`，仅做 `watch_core_init()`、`watch_core_get_ui_snapshot()`、`watch_core_make_back_event()`、`watch_core_push_event()`、`watch_core_process_next_event()` 的最小合同级接线，不创建 UI、不接输入。
+- 2026-06-11：已更新 MDK 工程 include path，并把 `watch_core/src/watch_core.c` 纳入 F411 工程文件。
+- 2026-06-11：用户已确认 Keil / MDK 编译通过。本卡验收结论为：F411 已能接入 `watch_core` public contract，当前未暴露 PC-only 合同污染或基础工程接线错误。
 
 ### Stop policy
 

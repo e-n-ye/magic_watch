@@ -340,7 +340,7 @@
               <MiscControls>--locale=english</MiscControls>
               <Define>USE_HAL_DRIVER,STM32F411xE</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../Drivers/STM32F4xx_HAL_Driver/Inc;../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32F4xx/Include;../Drivers/CMSIS/Include;../USB_DEVICE/App;../USB_DEVICE/Target;../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;../Middlewares/ST/STM32_USB_Device_Library/Class/MSC/Inc;../FATFS/Target;../FATFS/App;../Middlewares/Third_Party/FatFs/src;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../user;../user/config;../user/board/display;../user/board/input;../user/board/storage;../user/services/input;../user/app;../user/third_party/lvgl;../user/third_party/lvgl/lvgl;../user/third_party/lvgl/lvgl/src</IncludePath>
+              <IncludePath>../Core/Inc;../Drivers/STM32F4xx_HAL_Driver/Inc;../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32F4xx/Include;../Drivers/CMSIS/Include;../USB_DEVICE/App;../USB_DEVICE/Target;../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;../Middlewares/ST/STM32_USB_Device_Library/Class/MSC/Inc;../FATFS/Target;../FATFS/App;../Middlewares/Third_Party/FatFs/src;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../user;../user/config;../user/board/display;../user/board/input;../user/board/storage;../user/services/input;../user/app;../user/third_party/lvgl;../user/third_party/lvgl/lvgl;../user/third_party/lvgl/lvgl/src;../../../watch_core/include</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -1197,6 +1197,21 @@
           </Files>
         </Group>
         <Group>
+          <GroupName>User/watch_core</GroupName>
+          <Files>
+            <File>
+              <FileName>watch_core.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\..\..\watch_core\src\watch_core.c</FilePath>
+            </File>
+            <File>
+              <FileName>watch_core.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\..\..\watch_core\include\watch_core\watch_core.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
           <GroupName>User/app</GroupName>
           <Files>
             <File>
@@ -1208,6 +1223,16 @@
               <FileName>watch_bringup.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\user\app\watch_bringup.h</FilePath>
+            </File>
+            <File>
+              <FileName>watch_core_bridge.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\user\app\watch_core_bridge.c</FilePath>
+            </File>
+            <File>
+              <FileName>watch_core_bridge.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\user\app\watch_core_bridge.h</FilePath>
             </File>
           </Files>
         </Group>

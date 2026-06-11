@@ -5,6 +5,7 @@
 #include "app/input/watch_input_intent.h"
 #include "app/lvgl_demo/watch_lvgl_debug_screen.h"
 #include "app/screen/watch_screen_manager.h"
+#include "app/watch_core_bridge.h"
 #include "board/display/watch_lcd.h"
 #include "core/event/watch_event_queue.h"
 #include "services/input/watch_input_service.h"
@@ -49,6 +50,7 @@ void watch_bringup_init(void)
 {
     watch_event_queue_init(&s_event_queue);
     watch_screen_manager_init(&s_screen_manager);
+    watch_core_bridge_init();
     watch_lcd_init();
     watch_lcd_backlight_on();
     watch_lvgl_port_init();
