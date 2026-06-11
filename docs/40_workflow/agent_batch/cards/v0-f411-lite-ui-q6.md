@@ -88,7 +88,7 @@
 
 - ID：`V0.4R-C`
 - 标题：F411 LVGL 8.2 四卡静态 Lite View
-- 状态：TODO
+- 状态：DONE
 - 依赖：`V0.4R-B`
 
 ### Problem
@@ -155,7 +155,10 @@
 
 ### Execution record
 
-- 未开始。
+- 2026-06-11：已复用现有 `watch_lvgl_debug_screen` 入口，将其临时切换为静态四卡 Lite View，避免新增复杂 bring-up 路由。
+- 2026-06-11：当前页面只使用 `lv_obj`、`lv_label`、色块和边框，未接入 `watch_core`、未接入输入语义、未启用 `LV_USE_IMG`。
+- 2026-06-11：`watch_lvgl_debug_screen_on_input_intent()` 和 `watch_lvgl_debug_screen_task()` 当前为 no-op，确保本卡只验证静态页面装配，不提前进入 `V0.4R-D`。
+- 2026-06-11：用户已确认可正常编译、烧录和显示四卡静态 Lite View。本卡验收结论为：F411 LVGL 8.2 静态四卡页面装配成立，当前 DMA 与 draw buffer 基线未被改动。
 
 ### Stop policy
 

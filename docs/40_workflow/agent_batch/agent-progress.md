@@ -733,3 +733,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：当前 bridge 只验证公共合同编译接线，不接 UI、不接输入、不改 DMA 或 LVGL 配置；因此本卡完成不等于真机语义闭环已成立，只能说明 F411 已站到共享 core 合同这一侧
 - 阻塞与待决：无
 - 下一步：按停止策略停止，等待用户审阅；若继续，先提交本卡，再进入 `V0.4R-C`
+
+### 会话 2026-06-11 19:35
+
+- 本轮范围：队列项 `V0.4R-F411-LITE-UI`，卡片 `V0.4R-C`
+- 完成：`V0.4R-C`；已将现有 `watch_lvgl_debug_screen` 入口切换为静态四卡 Lite View；当前只使用 `lv_obj`、`lv_label`、色块和边框，未接 `watch_core`、未接输入、未启用 `LV_USE_IMG`；用户已确认可正常编译、烧录和显示
+- 修改文件：`try/my_watch_f411_v2.1/user/app/lvgl_demo/watch_lvgl_debug_screen.c`、`docs/40_workflow/agent_batch/cards/v0-f411-lite-ui-q6.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`git status --short -uall` 通过；`git diff --check` 通过（仅有 CRLF 警告）；Keil / MDK 编译、烧录和真机静态显示由用户执行并确认通过
+- 风险回应：本轮复用现有 demo 入口是为了减少接线扰动；当前输入回调和周期任务均为空，故本卡不形成输入或语义闭环，只证明静态页面装配成立
+- 阻塞与待决：无
+- 下一步：按规则先提交 `V0.4R-C`，再进入 `V0.4R-D`
