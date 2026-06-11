@@ -9,7 +9,7 @@
 
 ## 1. 一句话结论
 
-MagicWatch 当前继续沿 `LVGL XML + watch_core + PC 验证主线` 推进；F411 侧暂停直接承接现有 `runtime XML + PNG 路径资源` 产物，需先重评真机 UI 生成路线。
+MagicWatch 当前继续沿 `LVGL XML + watch_core + PC 验证主线` 推进；原定义 `V0.4 F411 XML 真机最小闭环` 已被 `V0.4R F411 Lite UI 垂直闭环` 替代。
 
 V0 的短期目标不是追 60fps，也不是继续堆页面，而是把输入、事件、页面、电源、平台端口和显示链路做成可解释、可迁移、可回归的三平台闭环。
 
@@ -17,9 +17,9 @@ V0 的短期目标不是追 60fps，也不是继续堆页面，而是把输入�
 
 - F411 是资源约束训练场，不是最终产品性能目标。
 - V0 优先稳定、可解释、可迁移。
-- XML 是 UI 源，固件吃生成 C。
+- XML 是 PC UI 主线的 UI 源，不再要求 F411 吃同一份生成 C。
 - DMA 已接通，但后续不再把 DMA 当主优化方向。
-- F411 接 XML 前必须先做 LVGL 版本和资源兼容性探针。
+- F411 真机闭环固定共享语义合同，不固定 UI 技术实现。
 
 ---
 
@@ -31,7 +31,7 @@ V0 的短期目标不是追 60fps，也不是继续堆页面，而是把输入�
 - F411 当前 LVGL 是 `8.2.0`，PC XML 目标使用 LVGL `9.6.0-dev`。
 - PC 目标允许文件路径资源，F411 当前 `LV_USE_FS_*` 和 `LV_USE_PNG` 为 0。
 
-这些事实决定：DMA 收口、刷新诊断和 F411 XML 探针完成后，不应直接进入原定义 `V0.4 F411 XML 真机最小闭环`，而应先根据探针结论重评 F411 UI 生成路线。
+这些事实决定：DMA 收口、刷新诊断和 F411 XML 探针完成后，不应直接进入原定义 `V0.4 F411 XML 真机最小闭环`，而应改走 `V0.4R F411 Lite UI 垂直闭环`。
 
 ---
 
@@ -43,8 +43,7 @@ flowchart TD
     B --> C["V0.2 F411 刷新优化<br/>减少无效刷新"]
     A --> D["V0.3 F411 XML 探针<br/>LVGL8.2 / 资源兼容性"]
     C --> D
-    D -->|少量 shim / 资源替换可接受| E["V0.4 F411 真机 UI 闭环<br/>四卡 UI + watch_core 真机"]
-    D -->|需 runtime XML / PNG-FS / 大改生成代码| X["停止并重评 UI 生成路线"]
+    D -->|已确认直连路线不成立| E["V0.4R F411 Lite UI 垂直闭环<br/>Lite View + Adapter + 真机验收"]
     E --> F["V0.5 Core 主链路<br/>Intent / Event / Screen / Power / Coordinator"]
     F --> G["V0.6 三平台闭环<br/>PC + F411 + LILYGO"]
     G --> H["V0.7 V0 收口<br/>回归基线"]
@@ -64,7 +63,7 @@ flowchart TD
 | V0.1 | 拆分刷新瓶颈 | V0.0 完成 | 绘制 / 转换 / 传输 / 调度分类 | 禁止优化和重构 | 能判断慢在哪一段 | 指标不可复现 | 学会数据化性能分析 |
 | V0.2 | 减少无效刷新 | V0.1 有结论 | 刷新面积和频率下降 | 禁止追 DMA | 同场景无退化 | 需要大改 LVGL / 驱动 | 学会 MCU UI 少干活 |
 | V0.3 | F411 XML 探针 | PC 四卡验收、F411 基线 | `compatibility_probe.md` | 禁止手改生成文件、升级 LVGL | 能判断继续或止损 | 需 runtime XML / PNG-FS / 大改生成代码 | 学会兼容性探针 |
-| V0.4 | F411 真机最小 UI 闭环 | V0.3 可继续且已重评生成路线 | 四卡 UI + core 快照上板 | 禁止平台解释业务 | F411 编译和真机显示通过 | Flash / RAM 或 API 成本超预算 | 学会 UI / bridge / core 分离 |
+| V0.4R | F411 Lite UI 垂直闭环 | `V0.3-D` 已止损原路线并确认替代边界 | Lite View + Adapter + 四卡语义闭环上板 | 禁止复制业务状态机、禁止要求 F411 接同一份生成 C | F411 编译和真机语义闭环通过 | core 语义被平台改写或 Lite View 越界持有业务 | 学会共享语义、分叉实现 |
 | V0.5 | Core 主链路 | V0.4 稳定 | Intent / Event / Screen / Power / Coordinator | 禁止一次性生成完整 core | Core 边界检查通过 | 职责说不清 | 学会状态所有权 |
 | V0.6 | 三平台闭环 | V0.5 稳定 | PC / F411 / LILYGO 共用核心语义 | 禁止绑定最终芯片 | 抬腕亮屏、息屏、唤醒闭环 | platform 开始拥有业务 | 学会平台抽象 |
 | V0.7 | V0 收口 | 三平台闭环完成 | 回归基线和阶段总结 | 禁止继续加功能拖延 | 能回答 V0 十个架构问题 | 新需求不影响 V0 定义 | 学会阶段验收 |
@@ -121,6 +120,14 @@ flowchart TD
 - 不直接进入原定义 `V0.4 F411 XML 真机最小闭环`。
 - 后续若继续 F411 UI 真机方向，应先规划替代 `V0.4`，目标改为 F411 可消费的轻量 UI 产物，而不是直接消费当前 XML runtime 产物。
 
+### V0.4R F411 Lite UI 垂直闭环
+
+- `V0.4R-B`：F411 编译接入 `watch_core` public contract。
+- `V0.4R-C`：F411 LVGL 8.2 四卡静态 Lite View。
+- `V0.4R-D`：`F411UiAdapter` 语义闭环。
+- `V0.4R-E`：真机验收与指标收口。
+- `V0.4R-C2`：可选 32x32 C 数组图标探针，不阻塞主链。
+
 ### V0.5 Core 主链路
 
 - `V0.5-A`：只定义 `ScreenId`、`PowerState`、`InputIntent`。
@@ -154,7 +161,7 @@ V0 稳定复用：
 - `ScreenManager` 契约
 - `PowerController` API
 - `UiEvent` / `PageIntent`
-- platform port 边界
+- 平台端口与共享语义合同边界
 
 V1 可迭代：
 

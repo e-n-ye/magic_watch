@@ -1,6 +1,6 @@
 # Magic Watch Current Decisions
 
-日期：2026-06-07
+日期：2026-06-11
 
 本文件只保留当前仍有效、会影响下一轮开发的决策。历史原因查 `docs/decision_log.md`；它继续保留 docs 根目录作为稳定历史检索路径，但不再作为默认阅读文档。
 
@@ -8,9 +8,9 @@
 
 当前优先目标不是继续新增旧模拟器页面，而是用 LVGL XML 生成 UI、用纯 C `watch_core` 管理产品状态和事件，再分别通过 PC SDL 与 F411 平台端口验证。
 
-## D002: XML 只作为 UI 源文件，固件只吃导出的 C
+## D002: XML 是 PC UI 主线的 UI 源，不再要求 F411 消费同一份生成 C
 
-`ui/lvgl_pro` 中的 XML 是人维护的 UI 蓝图。进入 PC 和 F411 构建的是 LVGL Pro 导出的 C 文件。XML 与生成 C 都必须入库，避免构建依赖每台机器现场运行同版本 Editor。
+`ui/lvgl_pro` 中的 XML 是人维护的 UI 蓝图。PC 主线继续编译 LVGL Pro 导出的 C 文件；XML 与生成 C 都必须入库，避免构建依赖每台机器现场运行同版本 Editor。F411 不再要求直接消费 PC 当前这份 LVGL 9.6 生成 C，而是固定共享语义合同、允许 UI View 技术实现分叉。
 
 ## D003: `watch_core` 是纯 C 产品核心
 
@@ -48,9 +48,9 @@ PC 端需要一个独立目标运行 SDL + LVGL + XML 生成 C + `watch_core`。
 
 F411-Q3 的颜色、字体、flush、DMA 性能基线仍是主线的一部分，但当前只剩 DMA 前后指标和稳定性记录需要收口。DMA 已接通后不再作为主要优化方向，后续优先进入 V0.1 刷新率诊断和 V0.2 无效刷新优化。
 
-## D012: 平台分叉只发生在 display/input/tick/fs 等 port 层
+## D012: 平台必须共享 core 语义合同，但 UI View、LVGL 主版本和资源实现允许分叉
 
-PC SDL 与 F411 LCD/Touch 的差异应收敛在平台端口。`watch_core`、模型快照、`UiEvent`、页面意图和 XML 生成 C 不应感知具体平台。
+PC SDL 与 F411 LCD/Touch 的平台差异仍应尽量收敛在 display/input/tick/fs 等 port 层；但当前已确认 UI View、LVGL 主版本、generated C 和图片资源形式允许按目标平台分叉。必须固定共享的是 `UiEvent`、Coordinator、`PageIntent`、`UiModelSnapshot` 和行为语义，而不是强行共享同一份 UI 技术产物。
 
 ## D013: Action/Event 必须适合嵌入式环境
 
@@ -72,10 +72,10 @@ PC SDL 与 F411 LCD/Touch 的差异应收敛在平台端口。`watch_core`、模
 
 新增 screen、component、surface、overlay 或详情页前，必须判断它属于 XML UI 资产、UI Adapter、`watch_core`、PC port、F411 port 还是旧 sim 参考，不得因为注册方便而塞进旧页面系统。
 
-## D018: F411 XML 上板前必须先完成 V0.0-V0.3
+## D018: `V0.3` 已触发停止条件，原定义 `V0.4` 被 `V0.4R` 替代
 
-旧 `F411-XML-Q2-1` 直接上板路线暂停。新的执行顺序是 `V0.0` DMA 收口、`V0.1` 刷新率诊断、`V0.2` 减少无效刷新、`V0.3` F411 XML 兼容性探针；只有 `V0.3-D` 明确可继续后，才规划新的 `V0.4` 真机最小闭环卡片。
+旧 `F411-XML-Q2-1` 直接上板路线已停止。`V0.3-D` 已确认命中 `runtime XML / PNG-FS / 大改生成代码` 停止条件，因此原定义 `V0.4 F411 XML 真机最小闭环` 不再直接执行，替代路线改为 `V0.4R F411 Lite UI 垂直闭环`。
 
-## D019: F411 XML 兼容性探针允许止损
+## D019: `V0.4R` 的固定边界是“共享语义合同，不固定 UI 技术实现”
 
-如果探针显示需要 runtime XML、PNG/FS 主路径、升级 LVGL 或大面积手改生成代码，应停止并重评 UI 生成路线。停止不是失败，而是避免把资源和版本问题拖进实现阶段。
+`V0.4R` 保留 PC `LVGL 9.6 + XML` 主线，保留 F411 `LVGL 8.2 + DMA flush + 20 行 draw buffer + 当前显示基线`。F411 侧采用手写 LVGL 8.2 Lite View + `F411UiAdapter`，Lite View 只负责显示，不复制业务状态机、导航逻辑或状态源。暂缓的路线包括：F411 升级 LVGL 9.6、XML -> Lite IR/Generator、W25Q128 + LVGL FS + PNG 主链。

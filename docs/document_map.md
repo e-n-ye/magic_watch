@@ -94,9 +94,9 @@
 
 说明：
 
-- 这是当前默认工程主线：XML 作为 UI 源，生成 C 入库，`watch_core` 作为纯 C 产品核心，PC SDL 与 F411 只在平台端口分叉。
+- 这是当前默认工程主线：XML 作为 PC UI 源，`watch_core` 作为纯 C 产品核心，PC 与 F411 固定共享语义合同，但允许 UI View、LVGL 主版本和资源实现分叉。
 - 第一阶段只做主页健康四卡、PC 可交互闭环和 F411 显示链路验证，不迁 Zephyr、不绑定最终芯片、不接完整传感器业务。
-- 后续执行顺序以 `agent-queue.md` 为准：`V0.0-F411-DMA-CLOSE` -> `V0.1-F411-REFRESH-DIAG` -> `V0.2-F411-REFRESH-OPT` -> `V0.3-F411-XML-PROBE`；`V0.4` F411 XML 真机闭环必须等 `V0.3-D` 结论允许继续后再规划。
+- 后续执行顺序以 `agent-queue.md` 为准：`V0.0-F411-DMA-CLOSE` -> `V0.1-F411-REFRESH-DIAG` -> `V0.2-F411-REFRESH-OPT` -> `V0.3-F411-XML-PROBE` -> `V0.4R-F411-LITE-UI`；原定义 `V0.4` 已被 `V0.4R` 替代。
 - 执行前如需要锁定 AI 边界，补读 [magicwatch_ai_collaboration_rules.md](/D:/MY_Desk/watch/magic_watch/docs/40_workflow/magicwatch_ai_collaboration_rules.md)。
 
 ### 我想知道当前重构到哪了

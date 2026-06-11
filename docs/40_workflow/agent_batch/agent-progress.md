@@ -713,3 +713,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：本轮没有把“当前直连 F411 路线止损”写成“放弃 XML 主线”；文档已明确区分“否定现有 runtime XML + PNG 路径资源上板方式”和“继续保留 XML 作为 PC/UI 源”这两件事
 - 阻塞与待决：原定义 `V0.4 F411 XML 真机最小闭环` 不应直接启动；后续应先重评 F411 UI 生成路线，再决定是否新建替代 `V0.4` 卡片
 - 下一步：按停止策略停止，等待用户验收；若继续，应先提交 `V0.3-D`，再单开一轮规划替代 `V0.4`
+
+### 会话 2026-06-11 18:40
+
+- 本轮范围：`V0.4R-A` 路线决策与执行卡收口
+- 完成：已将原定义 `V0.4` 替换为 `V0.4R F411 Lite UI 垂直闭环`；已更新当前入口、决策、路线图和架构文档中的过期口径；已新增后续执行卡文件 `v0-f411-lite-ui-q6.md`；已把默认队列入口切换为从 `V0.4R-B` 开始
+- 修改文件：`docs/00_current/project_brief.md`、`docs/00_current/current_decisions.md`、`docs/00_current/magicwatch_long_term_roadmap.md`、`docs/10_architecture/lvgl_xml_watch_core_architecture.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`、`docs/40_workflow/agent_batch/cards/v0-f411-lite-ui-q6.md`、`docs/document_map.md`
+- 自检：待本轮收尾执行 `git diff --check`、`git status --short -uall` 和本轮实际改动中文文档乱码哨兵检查；本轮不执行代码构建或真机验证
+- 风险回应：本轮只做路线收口，不提前实现 `V0.4R-B/C/D/E`，也不把计划写成已完成事实；`V0.4R-C2` 已保留为可选探针，不进入默认主队列
+- 阻塞与待决：等待用户审阅 `V0.4R` 文档边界与卡片拆分；当前不进入 `V0.4R-B`
+- 下一步：若本轮通过审阅，先提交 `docs: plan f411 lite ui vertical slice`，再按队列从 `V0.4R-B` 单卡执行

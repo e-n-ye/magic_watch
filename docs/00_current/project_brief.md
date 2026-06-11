@@ -1,6 +1,6 @@
 # Magic Watch Current Project Brief
 
-日期：2026-06-06
+日期：2026-06-11
 
 ## 当前定位
 
@@ -10,10 +10,10 @@ Magic Watch 当前不是以继续堆智能手表页面为目标，也不是立�
 
 ```text
 LVGL XML UI 源
--> 生成 C 入库
+-> PC 侧生成 C 入库并验证
 -> watch_core 纯 C 产品核心
 -> PC SDL 可交互验证
--> F411 真实显示链路验证
+-> F411 Lite UI 真机闭环验证
 ```
 
 v0 的成功标准不是页面数量，而是：
@@ -35,7 +35,7 @@ v0 的成功标准不是页面数量，而是：
 
 本阶段优先证明一件事：
 
-即使不搬当前 C++ 模拟器页面代码，也能用 LVGL XML 生成 UI，并通过纯 C `watch_core` 在 PC 与 F411 两端复用同一套产品状态和事件边界。
+即使不搬当前 C++ 模拟器页面代码，也能保留 XML 作为 PC UI 主线，并通过纯 C `watch_core` 在 PC 与 F411 两端复用同一套产品状态和事件边界。
 
 当前蓝图入口：
 
@@ -57,7 +57,7 @@ F411 C-first 蓝图仍保留为真机落地参考：
 4. 接 `watch_core`：模型快照、`UiEvent`、UI Adapter。
 5. PC 验收：四卡可点，进入占位详情页，可返回，事件链可追踪。
 6. F411-Q3：颜色、字体、flush、DMA 性能基线。
-7. F411 接 XML UI：同一套生成 C 上真机。
+7. `V0.4R`：F411 保留 LVGL 8.2 和当前显示基线，用手写 Lite View + `F411UiAdapter` 落真机语义闭环。
 
 ## 当前不做
 
@@ -69,6 +69,7 @@ F411 C-first 蓝图仍保留为真机落地参考：
 - 不让 LVGL Subject 成为业务状态源。
 - 不把 F411 当最终硬件选型结论。
 - 不迁 Zephyr，不绑定最终 RTOS。
+- 不要求 F411 消费 PC 当前这份 LVGL 9.6 生成 C。
 - 不接真实传感器、BLE、OTA、TinyML 或双芯片/AON 域。
 - 不跳过 PC 可交互闭环直接做 F411 XML 真机迁移。
 
@@ -79,7 +80,7 @@ F411 C-first 蓝图仍保留为真机落地参考：
 3. 把产品核心放入 `watch_core`，保持纯 C、固定容量、无堆分配。
 4. 新增 `magic_watch_xml_sim`，复用 PC SDL/LVGL 端口，但不拉旧 C++ 业务页。
 5. 用主页健康四卡完成第一条垂直闭环。
-6. PC 闭环后继续 F411-Q3，再迁移同一套 XML 生成 UI 到 F411。
+6. PC 闭环后继续维护 F411 显示基线，并按 `V0.4R` 落地共享语义合同下的 Lite UI 真机闭环。
 
 ## 本阶段完成标准
 
@@ -90,4 +91,4 @@ F411 C-first 蓝图仍保留为真机落地参考：
 3. 能用 `UiModelSnapshot` 和 `UiEvent` 解释模型更新与点击跳页。
 4. 能判断一个新功能应该进入 XML、UI Adapter、`watch_core`、PC port、F411 port 还是真实服务。
 5. 每轮开发都有明确 Scope Lock，实际 diff 不越过本轮允许文件。
-6. 后续第一批 XML、PC、`watch_core`、F411 模块按卡片小步生长，而不是一次性生成完整工程。
+6. 后续第一批 XML、PC、`watch_core`、F411 Lite UI 模块按卡片小步生长，而不是一次性生成完整工程。
