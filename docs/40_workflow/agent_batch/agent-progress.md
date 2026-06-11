@@ -703,3 +703,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：本轮没有把“PNG 头读到的像素尺寸”误写成“压缩后文件大小”或“已在 F411 真实解码通过”；文档已明确保留压缩后字节数、启用 PNG/FS 后峰值 RAM、最终链接 Flash 余量为未验证项，同时已经足够支持“图片路径依赖和 256x256 资源层级比字体更早成为停止条件”的判断
 - 阻塞与待决：`V0.3-D` 尚未开始，最终继续/止损结论仍待把版本兼容与资源预算合并
 - 下一步：按停止策略停止，等待用户验收；如继续执行下一张卡，应进入 `V0.3-D`
+
+### 会话 2026-06-11 10:15
+
+- 本轮范围：队列项 `V0.3-F411-XML-PROBE`，卡片 `V0.3-D`
+- 完成：`V0.3-D`；已完成 F411 XML 探针的继续 / 止损结论收口
+- 修改文件：`docs/30_testing/f411_xml_compatibility_probe.md`、`docs/00_current/magicwatch_long_term_roadmap.md`、`docs/40_workflow/agent_batch/cards/v0-f411-xml-probe-q5.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：待提交前执行；重点检查 `git diff --check`、`git status --short -uall`、本轮实际改动中文文档乱码哨兵检查
+- 风险回应：本轮没有把“当前直连 F411 路线止损”写成“放弃 XML 主线”；文档已明确区分“否定现有 runtime XML + PNG 路径资源上板方式”和“继续保留 XML 作为 PC/UI 源”这两件事
+- 阻塞与待决：原定义 `V0.4 F411 XML 真机最小闭环` 不应直接启动；后续应先重评 F411 UI 生成路线，再决定是否新建替代 `V0.4` 卡片
+- 下一步：按停止策略停止，等待用户验收；若继续，应先提交 `V0.3-D`，再单开一轮规划替代 `V0.4`

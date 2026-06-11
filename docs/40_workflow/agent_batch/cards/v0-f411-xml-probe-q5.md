@@ -189,7 +189,7 @@ Forbidden changes:
 ## V0.3-D 输出继续 / 止损结论
 
 - 批次：V0.3-F411-XML-PROBE
-- 状态：TODO
+- 状态：DONE
 - 依赖：`V0.3-C`
 - 自检：`git status --short -uall`；`git diff --check`；本轮实际改动中文文档乱码哨兵检查
 - 建议提交信息：`docs: conclude f411 xml compatibility probe`
@@ -242,4 +242,12 @@ Forbidden changes:
 
 ### 执行记录
 
-- 待执行。
+- 已汇总 `V0.3-A` 到 `V0.3-C` 的版本兼容、运行时依赖和资源预算证据。
+- 已确认当前结论应为“停止当前 `LVGL 9.6 runtime XML + 文件路径 PNG 资源` 直接进入 F411 8.2”的实现路线，而不是继续进入原定义 `V0.4`。
+- 已明确这次止损只针对 F411 直接上板路线，不否定 `LVGL XML + watch_core + PC` 主线，也不否定 XML 继续作为 UI 源。
+- 已把停止条件收口为三类一级风险同时成立：
+  - `runtime XML` 依赖缺口
+  - `PNG/FS` 文件路径资源缺口
+  - `9.6 -> 8.2` 生成代码和组件配置不匹配
+- 已在 `docs/30_testing/f411_xml_compatibility_probe.md` 中保留未验证项，包括压缩后 PNG 字节数、强开 PNG/FS 后峰值 RAM、最终链接 Flash 余量，以及“是否可通过重生成得到 F411 可接受产物”。
+- 已把下一步收口为“先重评 F411 UI 生成路线，再决定是否新建替代 `V0.4` 卡片”，本卡不生成上板实现任务。
