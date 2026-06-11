@@ -127,7 +127,7 @@ Forbidden changes:
 ## V0.3-C 评估图片、字体、Flash/RAM 资源成本
 
 - 批次：V0.3-F411-XML-PROBE
-- 状态：TODO
+- 状态：DONE
 - 依赖：`V0.3-B`
 - 自检：`git status --short -uall`；`git diff --check`；本轮实际改动中文文档乱码哨兵检查
 - 建议提交信息：`docs: assess f411 xml resource budget`
@@ -176,7 +176,13 @@ Forbidden changes:
 
 ### 执行记录
 
-- 待执行。
+- 已确认 `globals.xml` 当前登记 12 张图片资源，`<fonts>` 区块为空。
+- 已确认生成代码当前通过 `asset_path + images/*.png` 组装文件路径，再调用 `lv_xml_register_image(...)` 注册，不是 C 数组资源。
+- 已通过 PNG 头只读检查确认资源尺寸模式：无后缀版本为 `256x256`，`_64` 为 `64x64`，`_36` 为 `36x36`。
+- 已按 RGB565 `2 bytes/pixel` 估算：单张 `256x256` 约 `128KB`，当前 12 张图片若全部转成原始像素数据约 `554KB`。
+- 已确认 F411 当前 `LV_MEM_SIZE = 32KB`、`LV_IMG_CACHE_DEF_SIZE = 0`、`LV_USE_FS_* = 0`、`LV_USE_PNG/BMP/SJPG/GIF/FREETYPE = 0`。
+- 已确认 F411 当前显示缓冲基线仍是 `WATCH_LVGL_DRAW_BUF_LINES = 20`，双 draw buffer 加 flush byte stream 静态显示缓冲约 `28800B`。
+- 已把“图片路径依赖和大尺寸 PNG 资源比字体更早成为停止条件”的判断收口到 `docs/30_testing/f411_xml_compatibility_probe.md`。
 
 ---
 
