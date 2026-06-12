@@ -8,7 +8,7 @@
 typedef struct {
     WatchCore core;
     WatchCoreUiModelSnapshot snapshot;
-    WatchCorePageIntent current_page;
+    WatchCorePageState current_page;
     WatchCorePageIntent last_intent;
     WatchCoreUiEvent last_event;
     uint8_t initialized;
@@ -21,16 +21,37 @@ static void f411_ui_adapter_sync_snapshot(void)
     watch_core_get_ui_snapshot(&s_state.core, &s_state.snapshot);
 }
 
+static WatchCorePageIntent f411_ui_adapter_page_state_to_intent(WatchCorePageState page_state)
+{
+    WatchCorePageIntent intent;
+
+    if (page_state.type == WATCH_CORE_PAGE_HEALTH_DETAIL) {
+        intent.type = WATCH_CORE_PAGE_INTENT_LOAD_HEALTH_DETAIL;
+        intent.feature = page_state.feature;
+        return intent;
+    }
+
+    intent.type = WATCH_CORE_PAGE_INTENT_LOAD_HEALTH_SHORTCUTS;
+    intent.feature = WATCH_CORE_HEALTH_FEATURE_INVALID;
+    return intent;
+}
+
+static void f411_ui_adapter_sync_page_state(void)
+{
+    watch_core_get_current_page_state(&s_state.core, &s_state.current_page);
+}
+
 static void f411_ui_adapter_sync_view(void)
 {
-    watch_lite_view_apply_page_intent(&s_state.current_page);
+    WatchCorePageIntent page_intent;
+
+    page_intent = f411_ui_adapter_page_state_to_intent(s_state.current_page);
+    watch_lite_view_apply_page_intent(&page_intent);
     watch_lite_view_apply_snapshot(&s_state.snapshot);
 }
 
 static bool f411_ui_adapter_dispatch_event(WatchCoreUiEvent event)
 {
-    WatchCorePageIntent intent;
-
     if (s_state.initialized == 0U) {
         return false;
     }
@@ -40,12 +61,8 @@ static bool f411_ui_adapter_dispatch_event(WatchCoreUiEvent event)
         return false;
     }
 
-    intent = watch_core_process_next_event(&s_state.core);
-    s_state.last_intent = intent;
-    if (intent.type != WATCH_CORE_PAGE_INTENT_NONE) {
-        s_state.current_page = intent;
-    }
-
+    s_state.last_intent = watch_core_process_pending_events(&s_state.core);
+    f411_ui_adapter_sync_page_state();
     f411_ui_adapter_sync_snapshot();
     f411_ui_adapter_sync_view();
     return true;
@@ -75,8 +92,7 @@ void f411_ui_adapter_init(void)
     memset(&s_state, 0, sizeof(s_state));
 
     watch_core_init(&s_state.core);
-    s_state.current_page.type = WATCH_CORE_PAGE_INTENT_LOAD_HEALTH_SHORTCUTS;
-    s_state.current_page.feature = WATCH_CORE_HEALTH_FEATURE_INVALID;
+    f411_ui_adapter_sync_page_state();
     s_state.last_intent.type = WATCH_CORE_PAGE_INTENT_NONE;
     s_state.last_intent.feature = WATCH_CORE_HEALTH_FEATURE_INVALID;
     s_state.last_event.type = WATCH_CORE_UI_EVENT_NONE;
@@ -104,7 +120,7 @@ void f411_ui_adapter_task(void)
         return;
     }
 
-    if (s_state.current_page.type == WATCH_CORE_PAGE_INTENT_LOAD_HEALTH_DETAIL) {
+    if (s_state.current_page.type == WATCH_CORE_PAGE_HEALTH_DETAIL) {
         watch_lite_view_update_swipe_hint(watch_lvgl_port_left_edge_swipe_back_progress());
     } else {
         watch_lite_view_update_swipe_hint(0U);
@@ -112,7 +128,7 @@ void f411_ui_adapter_task(void)
 
     swipe_commit = watch_lvgl_port_take_left_edge_swipe_back();
     if (swipe_commit &&
-        (s_state.current_page.type == WATCH_CORE_PAGE_INTENT_LOAD_HEALTH_DETAIL)) {
+        (s_state.current_page.type == WATCH_CORE_PAGE_HEALTH_DETAIL)) {
         watch_lite_view_update_swipe_hint(0U);
         f411_ui_adapter_back();
     }

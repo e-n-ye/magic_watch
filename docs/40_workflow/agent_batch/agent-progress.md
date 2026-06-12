@@ -868,3 +868,14 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：本轮没有修改 PC/F411 Adapter，因此若后续平台对齐出现问题，定位范围可以明确留在 `P1-C`；本轮也没有把 `PageIntent` 直接删掉，而是以兼容方式先补状态读取和 drain 护栏
 - 阻塞与待决：`P1-C` 尚未开始；PC/F411 仍在消费旧的逐条 `process_next_event()` 路径，需下一卡统一到新合同
 - 下一步：按停止策略停止，等待用户确认；若继续，再进入 `V0.5-P1-C`
+
+### 会话 2026-06-12 V0.5-P1-C
+
+- 本轮范围：队列项 `V0.5-P1-NAV-CONTRACT`，执行卡片 `V0.5-P1-C`
+- 完成：已将 PC/F411 Adapter 都切换到同一消费合同：单次输入后统一 `watch_core_process_pending_events()`，再读取 snapshot 和公开页面状态；PC 不再在初始化阶段直接猜首页，F411 不再把 `PageIntent` 作为权威当前页面来源
+- 修改文件：`sim/lv_port_pc_vscode/src/XmlUi/watch_core_ui_adapter.c`、`try/my_watch_f411_v2.1/user/app/f411_ui_adapter.c`、`docs/40_workflow/agent_batch/cards/v0-navigation-contract-q8.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`git status --short -uall` 仅包含本卡允许文件；`git diff --check` 通过（仅 CRLF 警告）；`cmake --build sim/lv_port_pc_vscode/build --config Debug` 通过；`sim/lv_port_pc_vscode/build/out/magic_watch_core_contract_test.exe` 运行通过并输出 `watch_core contract tests passed.`；本轮文档乱码哨兵待收尾统一执行
+- 风险回应：本轮没有改 `watch_core`、Lite View、Input Port 或触摸阈值；因此如果后续出现回归，优先检查 Adapter 对齐而不是 Core 或输入算法
+- 阻塞与待决：当时 PC UI 手工回归和 F411 Keil / MDK 编译、真机 12 项验收仍需用户回填；在回填前本卡不得标记为 `DONE`
+- 下一步：停止等待用户执行人工验收；若通过，再收口 `P1-C` 并提交
+- 验收追加：用户已确认 PC 四卡首页、详情进入、`Back` 返回均正常；同时明确“当前 PC 端没有左边缘右滑退出语义”，该项不属于本卡既有验收边界。用户也已确认 F411 编译通过、四卡/详情/Back/表冠原闭环正常、原 12 项真机验收继续通过，且无花屏、卡死、停更。基于以上回填，`P1-C` 可收口为 `DONE`。

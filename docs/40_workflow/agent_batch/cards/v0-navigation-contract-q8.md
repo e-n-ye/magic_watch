@@ -212,7 +212,7 @@
 
 - ID：`V0.5-P1-C`
 - 标题：PC/F411 Adapter 合同对齐
-- 状态：TODO
+- 状态：DONE
 - 依赖：`V0.5-P1-B`
 
 ### Problem
@@ -288,7 +288,21 @@
 
 ### Execution record
 
-- 待执行。
+- 2026-06-12：已将 PC Adapter 改为统一消费新合同：单次 `UiEvent` 入队后调用 `watch_core_process_pending_events()`，随后读取 `watch_core_get_current_page_state()` 和 snapshot，再按最终页面状态加载 shortcuts/detail。
+- 2026-06-12：已移除 PC 初始化阶段“直接假设首页并 load shortcuts”的旧路径，改为初始化后立刻从 Core 读取默认页面状态并同步到 View。
+- 2026-06-12：已将 F411 Adapter 改为统一消费新合同：单次事件后调用 `watch_core_process_pending_events()`，再读取 `watch_core_get_current_page_state()` 和 snapshot；`current_page` 本地缓存已改为 `WatchCorePageState`，不再把 `PageIntent` 当权威当前页面来源。
+- 2026-06-12：F411 侧仍保留 `last_intent` 作为最近一次页面动作缓存，但页面显示和 swipe-back 判定已改为基于公开页面状态。
+- 2026-06-12：`cmake --build sim/lv_port_pc_vscode/build --config Debug` 通过；`sim/lv_port_pc_vscode/build/out/magic_watch_core_contract_test.exe` 运行通过并输出 `watch_core contract tests passed.`。
+- 2026-06-12：用户已回填人工验收：
+  - PC 四卡首页正常显示
+  - PC 点击任意卡片可进入对应详情
+  - PC 详情页 `Back` 可返回四卡
+  - 当前 PC 端仍未提供左边缘右滑退出语义；该项不属于本卡既有验收边界，也未被写成通过
+  - F411 编译通过
+  - F411 四卡、详情、Back、表冠原闭环正常
+  - F411 原 12 项真机验收继续通过
+  - 未出现花屏、卡死、停更
+- 2026-06-12：基于上述回填，本卡状态收口为 `DONE`。
 
 ### Stop policy
 

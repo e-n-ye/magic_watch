@@ -63,7 +63,7 @@
 
 ### V0.5-P1-NAV-CONTRACT 共享导航合同澄清
 
-- 状态：IN_PROGRESS
+- 状态：DONE
 - 卡片来源：cards/v0-navigation-contract-q8.md
 - 执行范围：卡片 `V0.5-P1-A` / `V0.5-P1-B` / `V0.5-P1-C`
 - 停止策略：每张卡后停止

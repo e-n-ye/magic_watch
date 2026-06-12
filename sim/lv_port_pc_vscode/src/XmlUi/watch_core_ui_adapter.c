@@ -38,8 +38,8 @@ static void click_guard_handle_event(WatchCoreUiClickGuardState * guard, lv_even
 static bool click_guard_allows(WatchCoreUiClickGuardState * guard);
 static void apply_snapshot_to_subjects(WatchCoreUiAdapter * adapter);
 static void dispatch_event(WatchCoreUiAdapter * adapter, WatchCoreUiEvent event);
-static void drain_core_events(WatchCoreUiAdapter * adapter);
-static void handle_page_intent(WatchCoreUiAdapter * adapter, WatchCorePageIntent intent);
+static void sync_core_to_view(WatchCoreUiAdapter * adapter, WatchCorePageIntent last_intent);
+static void apply_page_state(WatchCoreUiAdapter * adapter, WatchCorePageState page_state);
 static void load_health_detail(WatchCoreUiAdapter * adapter, WatchCoreHealthFeature feature);
 static void load_screen(WatchCoreUiAdapter * adapter, lv_obj_t * screen);
 static WatchCoreHealthFeature feature_from_card_id(const char * card_id);
@@ -68,8 +68,13 @@ bool watch_core_ui_adapter_init(WatchCoreUiAdapter * adapter, WatchCore * core)
 
     adapter->subjects_initialized = true;
     magic_watch_ui_set_health_card_event_handler(health_card_handler, adapter);
-
-    return watch_core_ui_adapter_load_health_shortcuts(adapter);
+    {
+        WatchCorePageIntent initial_intent;
+        initial_intent.type = WATCH_CORE_PAGE_INTENT_NONE;
+        initial_intent.feature = WATCH_CORE_HEALTH_FEATURE_INVALID;
+        sync_core_to_view(adapter, initial_intent);
+    }
+    return adapter->active_screen != NULL;
 }
 
 bool watch_core_ui_adapter_load_health_shortcuts(WatchCoreUiAdapter * adapter)
@@ -288,6 +293,8 @@ static void apply_snapshot_to_subjects(WatchCoreUiAdapter * adapter)
 
 static void dispatch_event(WatchCoreUiAdapter * adapter, WatchCoreUiEvent event)
 {
+    WatchCorePageIntent last_intent;
+
     LV_LOG_USER("UiEvent %s feature=%s",
                 watch_core_ui_event_name(event.type),
                 watch_core_health_feature_name(event.feature));
@@ -297,34 +304,36 @@ static void dispatch_event(WatchCoreUiAdapter * adapter, WatchCoreUiEvent event)
         return;
     }
 
-    drain_core_events(adapter);
+    last_intent = watch_core_process_pending_events(adapter->core);
+    sync_core_to_view(adapter, last_intent);
 }
 
-static void drain_core_events(WatchCoreUiAdapter * adapter)
+static void sync_core_to_view(WatchCoreUiAdapter * adapter, WatchCorePageIntent last_intent)
 {
-    while (true) {
-        WatchCorePageIntent intent = watch_core_process_next_event(adapter->core);
-        if (intent.type == WATCH_CORE_PAGE_INTENT_NONE) {
-            break;
-        }
-        handle_page_intent(adapter, intent);
-    }
+    WatchCorePageState page_state;
+
+    apply_snapshot_to_subjects(adapter);
+    watch_core_get_current_page_state(adapter->core, &page_state);
+
+    LV_LOG_USER("PageIntent(last) %s feature=%s",
+                watch_core_page_intent_name(last_intent.type),
+                watch_core_health_feature_name(last_intent.feature));
+    LV_LOG_USER("PageState(current) %s feature=%s",
+                watch_core_page_name(page_state.type),
+                watch_core_health_feature_name(page_state.feature));
+
+    apply_page_state(adapter, page_state);
 }
 
-static void handle_page_intent(WatchCoreUiAdapter * adapter, WatchCorePageIntent intent)
+static void apply_page_state(WatchCoreUiAdapter * adapter, WatchCorePageState page_state)
 {
-    LV_LOG_USER("PageIntent %s feature=%s",
-                watch_core_page_intent_name(intent.type),
-                watch_core_health_feature_name(intent.feature));
-
-    switch (intent.type) {
-        case WATCH_CORE_PAGE_INTENT_LOAD_HEALTH_SHORTCUTS:
+    switch (page_state.type) {
+        case WATCH_CORE_PAGE_HEALTH_SHORTCUTS:
             (void)watch_core_ui_adapter_load_health_shortcuts(adapter);
             break;
-        case WATCH_CORE_PAGE_INTENT_LOAD_HEALTH_DETAIL:
-            load_health_detail(adapter, intent.feature);
+        case WATCH_CORE_PAGE_HEALTH_DETAIL:
+            load_health_detail(adapter, page_state.feature);
             break;
-        case WATCH_CORE_PAGE_INTENT_NONE:
         default:
             break;
     }
