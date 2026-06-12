@@ -129,7 +129,7 @@ EventQueue 的权威实现是哪一套：
 
 - 当前运行主链实际使用的是 `watch_core` 内部固定容量队列。
 - `P0-B` 后证据：`f411_ui_adapter_dispatch_event()` 调用 `watch_core_push_event()` 和 `watch_core_process_next_event()`。
-- 旧 `user/core/event/watch_event_queue.*` 仍被编译，但没有进入当前运行主链。
+- `P0-B` 时旧 `user/core/event/watch_event_queue.*` 仍被编译，但没有进入当前运行主链。
 
 当前页面状态分别存在哪些位置：
 
@@ -154,7 +154,8 @@ Snapshot 在哪里应用到 View：
 
 旧 `watch_event_queue` 和 `watch_screen_manager` 是否仍被编译：
 
-- 是。`my_watch_f411.uvprojx` 仍登记了两者。
+- `P0-B` 时是。`my_watch_f411.uvprojx` 当时仍登记了两者。
+- `P0-C` 后否。当前 MDK target 已移除这两组旧文件登记，但源码文件仍保留在仓库里。
 
 它们是否仍进入当前运行主链：
 
@@ -190,8 +191,8 @@ Snapshot 在哪里应用到 View：
 | `watch_input_intent` | 是 | 否（纯函数） | 是 | 是 |
 | `watch_core_bridge` | 否，已从当前 MDK target 移出 | 否 | 否 | 否 |
 | `watch_lvgl_debug_screen` | 否，已从当前 MDK target 移出 | 否 | 否 | 否 |
-| 旧 `watch_event_queue` | 是 | 否 | 否 | 否 |
-| 旧 `watch_screen_manager` | 是 | 否 | 否 | 否 |
+| 旧 `watch_event_queue` | 否，已从当前 MDK target 移出 | 否 | 否 | 否 |
+| 旧 `watch_screen_manager` | 否，已从当前 MDK target 移出 | 否 | 否 | 否 |
 
 补充说明：
 
@@ -199,8 +200,8 @@ Snapshot 在哪里应用到 View：
 - `watch_lite_view`：被编译、初始化、调用，且当前主链使用。
 - `watch_core_bridge`：已从当前 MDK 目标和活跃路径移出。
 - `watch_lvgl_debug_screen`：已从当前 MDK 目标和活跃路径移出。
-- 旧 `watch_event_queue`：仍被编译，但未初始化、未调用、不在主链。
-- 旧 `watch_screen_manager`：仍被编译，但未初始化、未调用、不在主链。
+- 旧 `watch_event_queue`：源码仍保留，但当前 MDK target 不再编译；未初始化、未调用、不在主链。
+- 旧 `watch_screen_manager`：源码仍保留，但当前 MDK target 不再编译；未初始化、未调用、不在主链。
 
 ## 5. `P0-B` 收口结论
 
@@ -235,7 +236,7 @@ Snapshot 在哪里应用到 View：
 
 1. `V0.5-P0-A`：共享合同测试与 F411 所有权审计
 2. `V0.5-P0-B`：抽取真正的 `F411UiAdapter`
-3. `V0.5-P0-C`：基于抽取后的边界，再评估是否需要单独隔离旧 `watch_screen_manager` / `watch_event_queue`
+3. `V0.5-P0-C`：从当前 MDK target 中隔离旧 `watch_screen_manager` / `watch_event_queue` 编译登记，同时保留源码作为历史预研资产
 4. `V0.5-P1-*`：仅对当前代码里确实缺失的 `ScreenId`、电源语义和三平台共用边界继续拆卡
 
 这表示 V0.5 的核心已经从“空白造 core 模块”转成“给现有共享合同装护栏，并把 F411 当前所有权收口到可扩展边界”。

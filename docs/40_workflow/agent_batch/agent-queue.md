@@ -54,12 +54,12 @@
 
 ### V0.5-WATCH-CORE-GUARDRAILS 共享合同护栏与 F411 所有权收口
 
-- 状态：DONE
+- 状态：IN_PROGRESS
 - 卡片来源：cards/v0-watch-core-q7.md
-- 执行范围：卡片 `V0.5-P0-A` / `V0.5-P0-B`
+- 执行范围：卡片 `V0.5-P0-A` / `V0.5-P0-B` / `V0.5-P0-C`
 - 停止策略：每张卡后停止
 - 验收后处理：保留
-- 执行前条件：`V0.4R-F411-LITE-UI` 已完成；本队列项先补共享合同测试和 F411 所有权审计，再决定第二卡，不得把现有 `watch_core` EventQueue / Coordinator / Snapshot 当成空白模块重造。
+- 执行前条件：`V0.4R-F411-LITE-UI` 已完成；`V0.5-P0-A` 与 `V0.5-P0-B` 已分别建立共享合同护栏并收口 `F411UiAdapter`，当前只允许继续隔离旧 `watch_event_queue` / `watch_screen_manager` 的 MDK 编译登记，不得进入 `V0.5-P1-*`。
 
 ## 队列项格式
 

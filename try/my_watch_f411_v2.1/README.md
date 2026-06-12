@@ -6,6 +6,7 @@
 
 - 本 README 仍保留早期 LVGL 刷新诊断和 DMA 观测记录，属于历史 bring-up 证据，不等于当前 Lite UI 主链仍显示这些调试项。
 - 当前 F411 活跃 UI 已切换到 `f411_ui_adapter + watch_lite_view`。旧 debug overlay 已不在主链显示，本轮不会恢复性能探针。
+- 旧 `watch_event_queue.*` 与 `watch_screen_manager.*` 源码当前作为历史预研资产保留，但已不再进入当前 MDK target 的编译主链。
 - 因为当前屏上没有性能 overlay，`calls/s`、`full/s`、`pixels/s`、`area px`、`area %`、`fps/ms` 这组数字在 Lite UI 主链下都应视为未验证。
 - 不得把“overlay 已移除”写成“性能指标已通过”；如果后续需要这些数值，必须新开独立观测卡恢复或新增专门入口。
 

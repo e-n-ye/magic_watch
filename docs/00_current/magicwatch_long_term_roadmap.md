@@ -132,7 +132,7 @@ flowchart TD
 
 - `V0.5-P0-A`：为现有 `watch_core` 建立纯 PC 共享合同测试，并只读审计 F411 当前新旧主链的状态所有权。
 - `V0.5-P0-B`：优先抽取真正的 `F411UiAdapter`，把 typed `UiEvent` 派发、Snapshot 应用、`PageIntent` 执行和 view lifecycle 收口到单点边界；硬件读取、indev 注册、tap-only、防误触、左边缘右滑与手感阈值继续留在 `watch_lvgl_port`，Lite View 继续只持有 LVGL 对象和具体视觉更新。
-- `V0.5-P0-C`：在新边界稳定后，再评估旧 `watch_screen_manager` / `watch_event_queue` 是否需要独立隔离。
+- `V0.5-P0-C`：在新边界稳定后，把旧 `watch_screen_manager` / `watch_event_queue` 从当前 MDK target 编译登记中隔离，保留源码作为历史预研资产。
 - `V0.5-P1-*`：只对当前代码里确实缺失的共享语义继续拆卡，例如 `ScreenId`、电源语义和三平台共用边界；不得把现有 `watch_core` 的 EventQueue / Coordinator / Snapshot 再当成空白模块重造。
 
 V0.5 是个人能力分水岭，不允许 AI 一次性生成完整 core。

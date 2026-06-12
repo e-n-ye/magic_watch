@@ -828,3 +828,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：本轮只收口 F411 当前 UI/Core 装配边界；未修改 `watch_core`、PC XML Adapter、DMA、触摸算法或阈值；旧 `watch_screen_manager` / `watch_event_queue` 仍保持原状且未在本卡清理
 - 阻塞与待决：Keil / MDK 构建与真机验证仍需用户执行并回填
 - 下一步：按停止策略停止，等待用户验收；不进入 `V0.5-P0-C`
+
+### 会话 2026-06-12 V0.5-P0-B 收口与 V0.5-P0-C
+
+- 本轮范围：先收口并提交已验收 `V0.5-P0-B`，再执行卡片 `V0.5-P0-C`
+- 完成：已补齐 `P0-B` 审计文档前后态区分、README 当前状态提醒和 12 项真机验收记录；`V0.5-P0-B` 已单独提交为 `45e4a78`；已确认旧 `watch_event_queue.*` / `watch_screen_manager.*` 只剩源码自身、MDK 工程登记和历史文档命中；已从当前 MDK target 移除两组旧文件登记；`V0.5-P0-C` 当前停在等待用户回填 Keil / MDK 结果
+- 修改文件：`try/my_watch_f411_v2.1/MDK-ARM/my_watch_f411.uvprojx`、`try/my_watch_f411_v2.1/README.md`、`docs/30_testing/v0_5_watch_core_contract_and_f411_ownership_audit.md`、`docs/00_current/magicwatch_long_term_roadmap.md`、`docs/40_workflow/agent_batch/cards/v0-watch-core-q7.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`git status --short -uall` 在 `P0-B` 提交后为空；`git diff --check` 通过（仅 CRLF 警告）；`cmake --build sim/lv_port_pc_vscode/build --config Debug` 通过；`D:/MY_Desk/watch/magic_watch/sim/lv_port_pc_vscode/build/out/magic_watch_core_contract_test.exe` 运行通过并输出 `watch_core contract tests passed.`；`rg -n "watch_event_queue.c|watch_event_queue.h|watch_screen_manager.c|watch_screen_manager.h" try/my_watch_f411_v2.1/MDK-ARM/my_watch_f411.uvprojx` 当前预期无命中；本轮实际改动中文文档乱码哨兵检查通过
+- 风险回应：`P0-C` 只隔离当前 MDK target 的旧编译登记，没有删除源码、没有修改旧模块实现，也没有反向牵连 Adapter、Lite View、Input Port 或 `watch_core`
+- 阻塞与待决：Keil / MDK 编译与真机回归仍需用户执行并回填；在用户回填前不得把 `P0-C` 写成 DONE
+- 下一步：停止等待用户确认 `P0-C` 的 Keil / MDK 结果；若通过，再决定是否提交 `P0-C`

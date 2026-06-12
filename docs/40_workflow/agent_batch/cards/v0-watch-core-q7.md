@@ -203,3 +203,95 @@ Lite View 继续负责：
 ### Stop policy
 
 - 若必须同时修改 `watch_core` 合同、电源语义或旧工程残留清理才能前进，立即停止并重新拆卡。
+
+---
+
+## 卡片 V0.5-P0-C 旧主链构建隔离
+
+- ID：`V0.5-P0-C`
+- 标题：旧主链构建隔离
+- 状态：IN_PROGRESS
+- 依赖：`V0.5-P0-B`
+
+### Problem
+
+`P0-B` 已经把 F411 活跃链路收口到 `Input Port -> F411UiAdapter -> watch_core -> F411UiAdapter -> Lite View`，但旧 `watch_event_queue.*` 和 `watch_screen_manager.*` 仍保留在当前 MDK target 的文件登记里。这会制造“双 EventQueue / 双 ScreenManager 仍被当前目标编译”的架构歧义。
+
+### Implementation plan
+
+1. 审计旧 `watch_event_queue.*` 和 `watch_screen_manager.*` 是否仍被 MDK target 登记。
+2. 审计它们是否被任何当前活跃代码 include、初始化或调用。
+3. 在证据确认无活跃依赖后，只从 `my_watch_f411.uvprojx` 中移除旧文件登记。
+4. 保留旧源码文件不删，并更新审计文档、路线图、队列和进度记录。
+
+### Allowed files
+
+- `try/my_watch_f411_v2.1/MDK-ARM/my_watch_f411.uvprojx`
+- `try/my_watch_f411_v2.1/README.md`
+- `docs/30_testing/v0_5_watch_core_contract_and_f411_ownership_audit.md`
+- `docs/00_current/magicwatch_long_term_roadmap.md`
+- `docs/40_workflow/agent_batch/cards/v0-watch-core-q7.md`
+- `docs/40_workflow/agent_batch/agent-queue.md`
+- `docs/40_workflow/agent_batch/agent-progress.md`
+
+### Read-only files
+
+- `try/my_watch_f411_v2.1/user/core/event/watch_event_queue.*`
+- `try/my_watch_f411_v2.1/user/app/screen/watch_screen_manager.*`
+- `try/my_watch_f411_v2.1/user/app/f411_ui_adapter.*`
+- `try/my_watch_f411_v2.1/user/app/lvgl_demo/watch_lite_view.*`
+- `try/my_watch_f411_v2.1/user/ui/lvgl_port/**`
+- `watch_core/**`
+- `sim/**`
+
+### Forbidden changes
+
+- 不删除旧源码文件。
+- 不修改旧模块实现。
+- 不修改 `watch_core`。
+- 不修改 Adapter、Lite View 或 Input Port。
+- 不修改 DMA、flush、draw buffer、触摸算法和阈值。
+- 不新增页面、功能或电源状态。
+- 不做目录清理或批量删除。
+- 不进入 `V0.5-P1-*`。
+
+### Self-check
+
+- `git status --short -uall`
+- `git diff --check`
+- `cmake --build sim/lv_port_pc_vscode/build --config Debug`
+- `D:/MY_Desk/watch/magic_watch/sim/lv_port_pc_vscode/build/out/magic_watch_core_contract_test.exe`
+- `rg -n "watch_event_queue.c|watch_event_queue.h|watch_screen_manager.c|watch_screen_manager.h" try/my_watch_f411_v2.1/MDK-ARM/my_watch_f411.uvprojx`
+
+### Acceptance checklist
+
+- 旧 `watch_event_queue` 和 `watch_screen_manager` 不再被当前 MDK target 编译。
+- 旧源码仍保留。
+- 当前活跃链路仍只有 `Input Port -> F411UiAdapter -> watch_core -> F411UiAdapter -> Lite View`。
+- PC 构建和合同测试保持通过。
+- 未执行的 Keil / MDK 与真机项保留为未验证。
+
+### Risks
+
+- 若旧模块其实仍有隐藏依赖，机械移出 target 会把问题推迟到 Keil 编译阶段才暴露。
+- 若把“停止编译”误写成“删除源码”或“历史功能已不存在”，会丢失预研资产的可追溯性。
+
+### Doc Impact
+
+`required`
+
+### Suggested commit message
+
+`f411: isolate legacy queue and screen manager build entries`
+
+### Execution record
+
+- 2026-06-12：已用 `rg -n "watch_event_queue|watch_screen_manager|watch_screen_id|watch_app_event" try/my_watch_f411_v2.1` 复核，命中只剩旧模块自身声明/实现、MDK 工程登记和审计文档历史文字，未发现活跃链路 include、初始化或函数调用。
+- 2026-06-12：已确认 `my_watch_f411.uvprojx` 在 `User/core/event` 与 `User/app/screen` 组下仍登记旧 `watch_event_queue.*` / `watch_screen_manager.*`，这是当前唯一需要隔离的构建残留。
+- 2026-06-12：已仅从当前 MDK target 移除上述旧文件登记，源码文件继续保留，不删除、不改实现。
+- 2026-06-12：Keil / MDK 编译与真机回归仍待用户回填；在回填前，本卡状态保持 `IN_PROGRESS`。
+
+### Stop policy
+
+- 若发现活跃代码仍 include 或调用旧模块，立即停止，不机械移除。
+- 若移除旧模块需要修改 Adapter、Lite View、Input Port 或 `watch_core`，立即停止并重新拆卡。
