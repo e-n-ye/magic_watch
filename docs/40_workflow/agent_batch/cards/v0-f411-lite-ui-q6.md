@@ -170,7 +170,7 @@
 
 - ID：`V0.4R-D`
 - 标题：`F411UiAdapter` 语义闭环
-- 状态：TODO
+- 状态：DONE
 - 依赖：`V0.4R-C`
 
 ### Problem
@@ -239,7 +239,10 @@
 
 ### Execution record
 
-- 未开始。
+- 2026-06-11：已把旧 `screen_manager + app_event_queue` 从当前 Lite UI 路线旁路，避免与共享 `watch_core` 页面意图并行决策。
+- 2026-06-11：已在现有四卡 Lite View 上接入 `watch_core_bridge`，开始应用 `UiModelSnapshot`、分发 typed `UiEvent`、响应 `PageIntent`。
+- 2026-06-12：根据用户确认，本卡当前先收敛到“表冠旋转选卡 + 短按进入 / 短按 Back 按钮返回”的最小闭环；物理 `Back` 键和左边缘右滑返回留到后续独立触摸输入卡，不在本卡内扩 scope。
+- 2026-06-12：用户已确认 Keil / MDK 编译通过；表冠旋转选卡、短按进入详情、详情页短按屏上 `Back` 返回均正常；未观察到花屏、卡死或停更。本卡验收结论为：F411 当前已形成基于共享 `watch_core` 合同的表冠最小语义闭环。
 
 ### Stop policy
 

@@ -743,3 +743,14 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：本轮复用现有 demo 入口是为了减少接线扰动；当前输入回调和周期任务均为空，故本卡不形成输入或语义闭环，只证明静态页面装配成立
 - 阻塞与待决：无
 - 下一步：按规则先提交 `V0.4R-C`，再进入 `V0.4R-D`
+
+### 会话 2026-06-11 20:05
+
+- 本轮范围：队列项 `V0.4R-F411-LITE-UI`，卡片 `V0.4R-D`
+- 完成：`V0.4R-D`；已形成“表冠旋转选卡 + 短按进入详情 + 详情页短按屏上 Back 返回”的最小语义闭环；用户已确认编译与真机行为通过
+- 修改文件：`try/my_watch_f411_v2.1/user/app/lvgl_demo/watch_lvgl_debug_screen.c`、`try/my_watch_f411_v2.1/user/app/watch_bringup.c`、`try/my_watch_f411_v2.1/user/app/watch_core_bridge.c`、`try/my_watch_f411_v2.1/user/app/watch_core_bridge.h`、`try/my_watch_f411_v2.1/user/ui/lvgl_port/watch_lvgl_port.c`、`try/my_watch_f411_v2.1/user/ui/lvgl_port/watch_lvgl_port.h`、`docs/40_workflow/agent_batch/cards/v0-f411-lite-ui-q6.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：启动前 `git status --short -uall` 为空；`V0.4R-C` 已先独立提交为 `db99f78`；本轮 `git diff --check` 通过（仅有 CRLF 警告）；本轮改动中文运行文件乱码哨兵检查通过；用户已确认 Keil / MDK 编译通过且真机无花屏、卡死、停更
+- 风险回应：本轮会先旁路旧 `screen_manager` 导航路径，再接入 `watch_core` 语义合同，避免平台侧保留第二套页面决策逻辑
+- 阻塞与待决：无
+- 下一步：按规则先单独提交 `V0.4R-D`，再为 touch pointer / 左边缘右滑 Back 新卡建立边界并进入实现准备
+- 口径调整：根据 2026-06-12 用户确认，本卡先收敛到“表冠旋转选卡 + 短按进入 / 短按 Back 按钮返回”的最小闭环；物理 `Back` 键和左边缘右滑返回不并入本轮

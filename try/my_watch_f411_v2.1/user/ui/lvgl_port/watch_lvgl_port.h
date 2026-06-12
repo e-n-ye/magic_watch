@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "app/input/watch_input_intent.h"
+#include "lvgl.h"
 
 typedef struct {
     uint32_t refresh_per_sec;
@@ -31,6 +32,7 @@ typedef struct {
 
 void watch_lvgl_port_init(void);
 void watch_lvgl_port_feed_input_intent(watch_input_intent_t intent);
+void watch_lvgl_port_set_group(lv_group_t *group);
 void watch_lvgl_port_task(void);
 void watch_lvgl_port_get_perf_snapshot(watch_lvgl_perf_snapshot_t *snapshot);
 

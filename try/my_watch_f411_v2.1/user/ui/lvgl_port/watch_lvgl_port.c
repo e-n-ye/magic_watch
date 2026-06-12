@@ -17,6 +17,7 @@ static uint8_t s_flush_dma_bytes[WATCH_LVGL_DMA_BUF_BYTES];
 static lv_disp_draw_buf_t s_draw_buf;
 static lv_disp_drv_t s_disp_drv;
 static lv_indev_drv_t s_encoder_drv;
+static lv_indev_t *s_encoder_indev;
 static int16_t s_encoder_diff;
 static uint8_t s_encoder_press_pulse;
 static uint8_t s_lvgl_port_initialized;
@@ -337,7 +338,7 @@ void watch_lvgl_port_init(void)
     lv_indev_drv_init(&s_encoder_drv);
     s_encoder_drv.type = LV_INDEV_TYPE_ENCODER;
     s_encoder_drv.read_cb = watch_lvgl_encoder_read;
-    (void)lv_indev_drv_register(&s_encoder_drv);
+    s_encoder_indev = lv_indev_drv_register(&s_encoder_drv);
 
     s_perf_window_start_ms = lv_tick_get();
     s_lvgl_port_initialized = 1U;
@@ -357,12 +358,20 @@ void watch_lvgl_port_feed_input_intent(watch_input_intent_t intent)
         }
         break;
     case WATCH_INPUT_INTENT_CONFIRM:
-    case WATCH_INPUT_INTENT_LONG_PRESS:
         s_encoder_press_pulse = 1U;
         break;
     default:
         break;
     }
+}
+
+void watch_lvgl_port_set_group(lv_group_t *group)
+{
+    if (s_encoder_indev == 0) {
+        return;
+    }
+
+    lv_indev_set_group(s_encoder_indev, group);
 }
 
 void watch_lvgl_port_task(void)
