@@ -754,3 +754,25 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 阻塞与待决：无
 - 下一步：按规则先单独提交 `V0.4R-D`，再为 touch pointer / 左边缘右滑 Back 新卡建立边界并进入实现准备
 - 口径调整：根据 2026-06-12 用户确认，本卡先收敛到“表冠旋转选卡 + 短按进入 / 短按 Back 按钮返回”的最小闭环；物理 `Back` 键和左边缘右滑返回不并入本轮
+
+### 会话 2026-06-12 00:20
+
+- 本轮范围：已验收卡片 `V0.4R-D` 收口提交；新卡 `V0.4R-D2` / `V0.4R-D3` 建边界并启动 `V0.4R-D2`
+- 完成：`V0.4R-D` 已单独提交为 `6f1de85`；已确认当前工程存在 `TP_RST/TP_SDA/TP_SCL`、`MX_I2C1`、旧 `third_party/lvgl/porting/lv_port_indev.c` 以及 `old_watch` 中 `CST816` 触摸 BSP 来源；已把触摸链拆成 `V0.4R-D2` pointer 接入和 `V0.4R-D3` 左边缘右滑 Back 两张独立卡
+- 修改文件：`docs/40_workflow/agent_batch/cards/v0-f411-lite-ui-q6.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：提交前 `V0.4R-D` 已通过 `git diff --check` 与中文乱码哨兵；提交后 `git status --short -uall` 为空；本轮新文档修改待后续实现收尾时再次执行 `git diff --check` 与乱码哨兵
+- 风险回应：基于现有证据，touch 上板和左边缘右滑不能再混成一轮，否则一旦失败无法区分是 `CST816` BSP、pointer 注册还是 back 手势语义的问题
+- 阻塞与待决：`V0.4R-D2` 仍需决定是最小下放 `bsp_touch` / `hal_i2c_bus`，还是在当前工程内重写更小的 touch 读取层
+- 下一步：继续执行 `V0.4R-D2`，先确定最小触摸 BSP 接入路径，再进入 pointer 注册与卡片点击
+- 进展追加：已确定采用“当前工程内重写更小的 `watch_touch_hw` 读链”方案，并开始把 `LV_INDEV_TYPE_POINTER` 增量并入现有 `watch_lvgl_port`，不引入旧工程整套触摸包装层。
+
+### 会话 2026-06-12 01:05
+
+- 本轮范围：已接通 `V0.4R-D2` 的验收回填；新增 `V0.4R-D2B` 并启动防误触收口
+- 完成：用户已确认 `V0.4R-D2` 编译通过、touch 进入详情 / `Back` 返回 / 表冠原闭环均正常；已确认新的真实问题是“按下后滑动再松手仍触发激活”；已将该问题独立拆为 `V0.4R-D2B`
+- 修改文件：`try/my_watch_f411_v2.1/user/ui/lvgl_port/watch_lvgl_port.h`、`try/my_watch_f411_v2.1/user/ui/lvgl_port/watch_lvgl_port.c`、`try/my_watch_f411_v2.1/user/app/lvgl_demo/watch_lvgl_debug_screen.c`、`docs/40_workflow/agent_batch/cards/v0-f411-lite-ui-q6.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：待本轮收尾统一执行 `git diff --check`、`git status --short -uall` 和本轮实际改动中文文档乱码哨兵检查
+- 风险回应：该问题属于“pointer 激活语义”而不是“左边缘右滑 Back”本身；若现在直接进入 `D3`，会把 tap 判定和 swipe 判定混成一个故障域
+- 阻塞与待决：仍需用户回填当前阈值下的“轻触有效 / 滑动无效”真机结果
+- 下一步：继续完成 `V0.4R-D2B`，先收口 tap-only，再决定是否进入 `V0.4R-D3`
+- 验收追加：用户已确认 `D2B` 该测内容全部通过；当前 tap-only 防误触已成立，可按规则先单独提交 `V0.4R-D2` + `V0.4R-D2B` 这一组当前工作，再进入 `V0.4R-D3`

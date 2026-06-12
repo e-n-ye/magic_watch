@@ -2,6 +2,7 @@
 #define WATCH_LVGL_PORT_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "app/input/watch_input_intent.h"
 #include "lvgl.h"
@@ -35,5 +36,6 @@ void watch_lvgl_port_feed_input_intent(watch_input_intent_t intent);
 void watch_lvgl_port_set_group(lv_group_t *group);
 void watch_lvgl_port_task(void);
 void watch_lvgl_port_get_perf_snapshot(watch_lvgl_perf_snapshot_t *snapshot);
+bool watch_lvgl_port_accept_activation_event(lv_event_t *event);
 
 #endif /* WATCH_LVGL_PORT_H */

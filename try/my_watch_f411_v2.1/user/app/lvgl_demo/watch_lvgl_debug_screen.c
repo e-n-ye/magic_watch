@@ -151,13 +151,20 @@ static void on_card_clicked(lv_event_t *event)
 {
     WatchCoreHealthFeature feature;
 
+    if (!watch_lvgl_port_accept_activation_event(event)) {
+        return;
+    }
+
     feature = (WatchCoreHealthFeature)(uintptr_t)lv_event_get_user_data(event);
     dispatch_ui_event(watch_core_make_health_card_clicked_event(feature));
 }
 
 static void on_back_clicked(lv_event_t *event)
 {
-    (void)event;
+    if (!watch_lvgl_port_accept_activation_event(event)) {
+        return;
+    }
+
     dispatch_ui_event(watch_core_make_back_event());
 }
 

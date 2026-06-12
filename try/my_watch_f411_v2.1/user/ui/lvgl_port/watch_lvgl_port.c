@@ -1,13 +1,16 @@
 #include "watch_lvgl_port.h"
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "board/display/watch_lcd.h"
+#include "board/input/watch_touch_hw.h"
 #include "config/user_config.h"
 #include "lvgl.h"
 
 #define WATCH_LVGL_DRAW_BUF_LINES 20U
 #define WATCH_LVGL_DMA_BUF_BYTES (WATCH_LCD_WIDTH * WATCH_LVGL_DRAW_BUF_LINES * 2U)
+#define WATCH_TOUCH_TAP_MOVE_THRESHOLD 12U
 
 static lv_color_t s_draw_buf_1[WATCH_LCD_WIDTH * WATCH_LVGL_DRAW_BUF_LINES];
 static lv_color_t s_draw_buf_2[WATCH_LCD_WIDTH * WATCH_LVGL_DRAW_BUF_LINES];
@@ -17,10 +20,17 @@ static uint8_t s_flush_dma_bytes[WATCH_LVGL_DMA_BUF_BYTES];
 static lv_disp_draw_buf_t s_draw_buf;
 static lv_disp_drv_t s_disp_drv;
 static lv_indev_drv_t s_encoder_drv;
+static lv_indev_drv_t s_touch_drv;
 static lv_indev_t *s_encoder_indev;
+static lv_indev_t *s_touch_indev;
 static int16_t s_encoder_diff;
 static uint8_t s_encoder_press_pulse;
 static uint8_t s_lvgl_port_initialized;
+static uint8_t s_touch_press_active;
+static uint8_t s_touch_dragged;
+static uint8_t s_touch_tap_ready;
+static uint16_t s_touch_press_start_x;
+static uint16_t s_touch_press_start_y;
 static uint8_t s_flush_waiting_dma;
 static uint32_t s_perf_window_start_ms;
 static uint32_t s_refresh_count_accum;
@@ -313,6 +323,60 @@ static void watch_lvgl_encoder_read(lv_indev_drv_t *indev_drv, lv_indev_data_t *
     }
 }
 
+static void watch_lvgl_touch_read(lv_indev_drv_t *indev_drv, lv_indev_data_t *data)
+{
+    static lv_coord_t s_last_x;
+    static lv_coord_t s_last_y;
+    watch_touch_sample_t sample;
+    uint16_t dx;
+    uint16_t dy;
+
+    (void)indev_drv;
+
+    if ((watch_touch_hw_read(&sample) == 0U) && (sample.finger_num > 0U)) {
+        if (sample.x >= WATCH_LCD_WIDTH) {
+            sample.x = (uint16_t)(WATCH_LCD_WIDTH - 1U);
+        }
+        if (sample.y >= WATCH_LCD_HEIGHT) {
+            sample.y = (uint16_t)(WATCH_LCD_HEIGHT - 1U);
+        }
+
+        s_last_x = (lv_coord_t)sample.x;
+        s_last_y = (lv_coord_t)sample.y;
+
+        if (s_touch_press_active == 0U) {
+            s_touch_press_active = 1U;
+            s_touch_dragged = 0U;
+            s_touch_tap_ready = 0U;
+            s_touch_press_start_x = sample.x;
+            s_touch_press_start_y = sample.y;
+        } else if (s_touch_dragged == 0U) {
+            dx = (sample.x > s_touch_press_start_x)
+                ? (uint16_t)(sample.x - s_touch_press_start_x)
+                : (uint16_t)(s_touch_press_start_x - sample.x);
+            dy = (sample.y > s_touch_press_start_y)
+                ? (uint16_t)(sample.y - s_touch_press_start_y)
+                : (uint16_t)(s_touch_press_start_y - sample.y);
+
+            if ((dx > WATCH_TOUCH_TAP_MOVE_THRESHOLD) || (dy > WATCH_TOUCH_TAP_MOVE_THRESHOLD)) {
+                s_touch_dragged = 1U;
+            }
+        }
+
+        data->state = (s_touch_dragged != 0U) ? LV_INDEV_STATE_REL : LV_INDEV_STATE_PR;
+    } else {
+        if (s_touch_press_active != 0U) {
+            s_touch_tap_ready = (s_touch_dragged == 0U) ? 1U : 0U;
+            s_touch_press_active = 0U;
+            s_touch_dragged = 0U;
+        }
+        data->state = LV_INDEV_STATE_REL;
+    }
+
+    data->point.x = s_last_x;
+    data->point.y = s_last_y;
+}
+
 void watch_lvgl_port_init(void)
 {
     if (s_lvgl_port_initialized != 0U) {
@@ -334,6 +398,12 @@ void watch_lvgl_port_init(void)
     s_disp_drv.monitor_cb = watch_lvgl_monitor;
     s_disp_drv.draw_buf = &s_draw_buf;
     (void)lv_disp_drv_register(&s_disp_drv);
+
+    watch_touch_hw_init();
+    lv_indev_drv_init(&s_touch_drv);
+    s_touch_drv.type = LV_INDEV_TYPE_POINTER;
+    s_touch_drv.read_cb = watch_lvgl_touch_read;
+    s_touch_indev = lv_indev_drv_register(&s_touch_drv);
 
     lv_indev_drv_init(&s_encoder_drv);
     s_encoder_drv.type = LV_INDEV_TYPE_ENCODER;
@@ -426,4 +496,33 @@ void watch_lvgl_port_get_perf_snapshot(watch_lvgl_perf_snapshot_t *snapshot)
     }
 
     *snapshot = s_perf_snapshot;
+}
+
+bool watch_lvgl_port_accept_activation_event(lv_event_t *event)
+{
+    lv_indev_t *indev;
+
+    if (event == 0) {
+        return false;
+    }
+
+    indev = lv_event_get_indev(event);
+    if (indev == 0) {
+        return true;
+    }
+
+    if (lv_indev_get_type(indev) != LV_INDEV_TYPE_POINTER) {
+        return true;
+    }
+
+    if (indev != s_touch_indev) {
+        return true;
+    }
+
+    if (s_touch_tap_ready != 0U) {
+        s_touch_tap_ready = 0U;
+        return true;
+    }
+
+    return false;
 }

@@ -47,7 +47,7 @@
 
 - 状态：IN_PROGRESS
 - 卡片来源：cards/v0-f411-lite-ui-q6.md
-- 执行范围：卡片 `V0.4R-B` / `V0.4R-C` / `V0.4R-D` / `V0.4R-E`
+- 执行范围：卡片 `V0.4R-B` / `V0.4R-C` / `V0.4R-D` / `V0.4R-D2` / `V0.4R-D2B` / `V0.4R-D3` / `V0.4R-E`
 - 停止策略：每张卡后停止
 - 验收后处理：保留
 - 执行前条件：`V0.3-F411-XML-PROBE` 已完成并确认原定义 `V0.4` 被 `V0.4R` 替代；本队列项固定共享 `UiEvent`、Coordinator、`PageIntent`、`UiModelSnapshot` 和行为语义，不要求 F411 消费 PC 当前这份 LVGL 9.6 生成 C。

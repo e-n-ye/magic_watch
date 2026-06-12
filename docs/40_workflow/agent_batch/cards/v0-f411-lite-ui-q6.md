@@ -250,12 +250,250 @@
 
 ---
 
+## 卡片 V0.4R-D2 F411 touch pointer 接入
+
+- ID：`V0.4R-D2`
+- 标题：F411 touch pointer 接入
+- 状态：DONE
+- 依赖：`V0.4R-D`
+
+### Problem
+
+当前 `V0.4R` 主链只有 encoder 输入，没有把 F411 现有触摸屏接到 Lite UI 语义闭环上。需要先证明当前工程能以最小改动接入 `CST816` 触摸 BSP 和 `LV_INDEV_TYPE_POINTER`，并让触摸点击卡片进入详情，而不把左边缘右滑 Back、手势歧义处理或更多 UI 行为揉进同一轮。
+
+### Implementation plan
+
+1. 审计当前 F411 工程中已有的 `TP_RST/TP_SDA/TP_SCL`、`MX_I2C1`、GPIO 配置和可复用旧代码来源。
+2. 从 `old_watch` 借鉴最小 `bsp_touch` / `lv_port_indev` 方案，只下放本轮必需的触摸读取与 pointer 注册能力。
+3. 将 touch pointer 接到当前 Lite UI 主链，使触摸点击四卡可进入详情。
+4. 保持表冠最小闭环不被破坏，不在本卡实现左边缘右滑 Back。
+
+### Allowed files
+
+- `try/my_watch_f411_v2.1/**`
+- `docs/40_workflow/agent_batch/cards/v0-f411-lite-ui-q6.md`
+- `docs/40_workflow/agent_batch/agent-queue.md`
+- `docs/40_workflow/agent_batch/agent-progress.md`
+- `docs/30_testing/**`，仅在需要记录 touch pointer 观察口径时允许新增或更新
+
+### Read-only files
+
+- `watch_core/**`
+- `ui/**`
+- `sim/**`
+- `docs/10_architecture/lvgl_xml_watch_core_architecture.md`
+- `D:/MY_Desk/watch/old_watch/my_watch_f411_v2.1/User/**`
+
+### Forbidden changes
+
+- 不实现左边缘右滑 Back。
+- 不修改 DMA、flush、draw buffer、PNG、FS 主链。
+- 不新增第二套业务状态机或页面决策逻辑。
+- 不整搬 `old_watch` 全量 BSP/APP/Power 体系。
+
+### Self-check
+
+- `git status --short -uall`
+- `git diff --check`
+- `rg -n "TP_RST|TP_SDA|TP_SCL|MX_I2C1|bsp_touch|LV_INDEV_TYPE_POINTER" try/my_watch_f411_v2.1`
+- Keil / MDK 编译结果由用户执行并回填
+- 真机 touch 点击观察由用户执行并回填
+
+### Acceptance checklist
+
+- 当前工程已接入最小 `CST816` 触摸读取链路。
+- 当前工程已注册 `LV_INDEV_TYPE_POINTER`。
+- 触摸点击四卡可进入详情。
+- 表冠旋转/短按最小闭环未被破坏。
+- 未执行的真机项保留为未验证。
+
+### Risks
+
+- `bsp_touch` 依赖旧 `hal_i2c_bus` / `hal_delay`，若直接搬运可能把无关层级一并引入。
+- 当前板级触摸引脚虽然已在 `main.h` / `gpio.c` 中出现，但真实连线、极性和轮询时序仍可能与旧工程不同。
+
+### Doc Impact
+
+`required`
+
+### Suggested commit message
+
+`f411: add touch pointer ingress for lite ui`
+
+### Execution record
+
+- 2026-06-12：已确认当前工程存在 `TP_RST/TP_SDA/TP_SCL` 引脚定义与 GPIO 初始化，且 `old_watch` 中有 `CST816` 的 `bsp_touch` 与 `LV_INDEV_TYPE_POINTER` 旧实现可供最小借鉴。
+- 2026-06-12：已明确本卡只接 touch pointer 和点击进入详情，不把左边缘右滑 Back 混入同一轮。
+- 2026-06-12：当前实现路径收敛为“现工程内新增最小 `watch_touch_hw` 读链 + 在既有 `watch_lvgl_port` 上增量注册 `LV_INDEV_TYPE_POINTER`”，避免引入旧工程整套 input / power / HAL 包装层。
+- 2026-06-12：用户已确认编译通过；触摸四卡可进入详情、触摸 `Back` 可返回四卡、表冠原有闭环保持正常，且未观察到花屏、卡死、停更。
+- 2026-06-12：验收中暴露新的全局语义缺口：按住后滑动再松手仍可能触发卡片进入或 `Back` 返回。该问题已拆到独立卡 `V0.4R-D2B`，不回滚本卡“pointer 已接通”的结论。
+
+### Stop policy
+
+- 若必须整搬旧工程的 APP / Power / 全量 HAL 包装层才能读到触摸，立即停止并把触摸 BSP 依赖拆成新的更小卡。
+
+---
+
+## 卡片 V0.4R-D2B F411 tap-only 防误触语义
+
+- ID：`V0.4R-D2B`
+- 标题：F411 tap-only 防误触语义
+- 状态：DONE
+- 依赖：`V0.4R-D2`
+
+### Problem
+
+`V0.4R-D2` 已证明 F411 touch pointer 可以接通，但用户实测发现“按下后滑动再松手”仍会误触发卡片进入详情和 `Back` 返回。这说明当前系统还没有形成稳定的 tap-only 语义，不能直接进入左边缘右滑 Back。
+
+### Implementation plan
+
+1. 在当前 F411 touch pointer 主链上记录一次触摸是否超过 tap 位移阈值。
+2. 让四卡进入详情和详情页 `Back` 只接受“合法 tap”触发的 pointer 激活事件。
+3. 保持表冠点击语义不受影响。
+4. 不在本卡内实现左边缘右滑 Back，只把 swipe 与 tap 的边界先收清楚。
+
+### Allowed files
+
+- `try/my_watch_f411_v2.1/**`
+- `docs/40_workflow/agent_batch/cards/v0-f411-lite-ui-q6.md`
+- `docs/40_workflow/agent_batch/agent-queue.md`
+- `docs/40_workflow/agent_batch/agent-progress.md`
+
+### Read-only files
+
+- `watch_core/**`
+- `sim/**`
+- `ui/**`
+
+### Forbidden changes
+
+- 不提前实现 `V0.4R-D3` 左边缘右滑 Back。
+- 不修改 DMA、flush、draw buffer。
+- 不把防误触逻辑下沉为新的业务状态机。
+- 不引入 PC 专用输入假设。
+
+### Self-check
+
+- `git status --short -uall`
+- `git diff --check`
+- Keil / MDK 编译结果由用户执行并回填
+- 真机 tap / slide 行为由用户执行并回填
+
+### Acceptance checklist
+
+- 轻触卡片可进入详情。
+- 按住卡片后滑动再松手，不进入详情。
+- 轻触 `Back` 可返回四卡。
+- 按住 `Back` 后滑动再松手，不返回四卡。
+- 表冠原有闭环不回退。
+- 未执行的真机项保留为未验证。
+
+### Risks
+
+- 若阈值过小，正常轻触会被误判成 slide。
+- 若阈值过大，防误触收益会不足。
+
+### Doc Impact
+
+`small`
+
+### Suggested commit message
+
+`f411: guard lite ui activations behind tap-only touch`
+
+### Execution record
+
+- 2026-06-12：根据用户真机反馈新增本卡；问题不是“touch 不通”，而是“touch 语义未收口”，因此应独立于 `V0.4R-D2` 和 `V0.4R-D3` 验收。
+- 2026-06-12：已开始在 F411 当前 pointer 输入层加入 tap 位移阈值与 activation 过滤，目标是让卡片和 `Back` 只接受合法 tap，不影响 encoder 激活链。
+- 2026-06-12：用户已确认 `D2B` 该测内容全部通过：轻触卡片可进入详情，按住后滑动再松手不会误入详情；轻触 `Back` 可返回四卡，按住后滑动再松手不会误返回；表冠原闭环正常，未观察到花屏、卡死或停更。
+
+### Stop policy
+
+- 若必须提前把 swipe back 一起实现才能验证 tap-only，立即停止并重新拆卡。
+
+---
+
+## 卡片 V0.4R-D3 F411 左边缘右滑 Back
+
+- ID：`V0.4R-D3`
+- 标题：F411 左边缘右滑 Back
+- 状态：TODO
+- 依赖：`V0.4R-D2B`
+
+### Problem
+
+在 touch pointer 稳定后，需要把你定义的“左边缘右滑返回”接到当前共享 `watch_core` 语义上。但这一步既涉及 `CST816` 手势寄存器，又涉及“左边缘约束”的产品语义，必须和 touch pointer 上板分开验收。
+
+### Implementation plan
+
+1. 审计 `CST816` 当前可提供的是离散 gesture、坐标，还是同时可可靠表达“左边缘起手”。
+2. 在不破坏点击和表冠闭环的前提下，实现左边缘右滑触发 `Back`。
+3. 若硬件 gesture 语义不足，再做最小软件补充判定；但不得把复杂触摸状态机扩进平台层。
+
+### Allowed files
+
+- `try/my_watch_f411_v2.1/**`
+- `docs/40_workflow/agent_batch/cards/v0-f411-lite-ui-q6.md`
+- `docs/40_workflow/agent_batch/agent-queue.md`
+- `docs/40_workflow/agent_batch/agent-progress.md`
+- `docs/30_testing/**`，仅在需要记录手势观察口径时允许新增或更新
+
+### Read-only files
+
+- `watch_core/**`
+- `ui/**`
+- `sim/**`
+- `D:/MY_Desk/watch/old_watch/my_watch_f411_v2.1/User/**`
+
+### Forbidden changes
+
+- 不为了手势回退到物理 `Back` 键主链。
+- 不修改 DMA、flush、draw buffer、PNG、FS 主链。
+- 不把手势判定升级成通用复杂触摸状态机框架。
+
+### Self-check
+
+- `git status --short -uall`
+- `git diff --check`
+- Keil / MDK 编译结果由用户执行并回填
+- 真机左边缘右滑观察由用户执行并回填
+
+### Acceptance checklist
+
+- 左边缘右滑可触发 `Back`。
+- 触摸点击进入详情仍可用。
+- 表冠最小闭环仍可用。
+- 未执行的真机项保留为未验证。
+
+### Risks
+
+- `CST816` 给出的 gesture 可能只有“向右滑”而没有足够稳定的“左边缘起手”语义。
+- 若软件补判定过重，容易把平台层变成手势业务状态机。
+
+### Doc Impact
+
+`required`
+
+### Suggested commit message
+
+`f411: add lite ui swipe back semantics`
+
+### Execution record
+
+- 未开始。
+
+### Stop policy
+
+- 若无法在当前硬件/驱动能力下可靠判定“左边缘右滑”，立即停止并把结果写成能力缺口，不伪造通过。
+
+---
+
 ## 卡片 V0.4R-E 真机验收与指标收口
 
 - ID：`V0.4R-E`
 - 标题：真机验收与指标收口
 - 状态：TODO
-- 依赖：`V0.4R-D`
+- 依赖：`V0.4R-D3`
 
 ### Problem
 

@@ -1149,6 +1149,16 @@
               <FileType>5</FileType>
               <FilePath>..\user\board\input\watch_encoder_hw.h</FilePath>
             </File>
+            <File>
+              <FileName>watch_touch_hw.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\user\board\input\watch_touch_hw.c</FilePath>
+            </File>
+            <File>
+              <FileName>watch_touch_hw.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\user\board\input\watch_touch_hw.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
