@@ -52,6 +52,15 @@
 - 验收后处理：保留
 - 执行前条件：`V0.3-F411-XML-PROBE` 已完成并确认原定义 `V0.4` 被 `V0.4R` 替代；本队列项固定共享 `UiEvent`、Coordinator、`PageIntent`、`UiModelSnapshot` 和行为语义，不要求 F411 消费 PC 当前这份 LVGL 9.6 生成 C。
 
+### V0.5-WATCH-CORE-GUARDRAILS 共享合同护栏与 F411 所有权收口
+
+- 状态：IN_PROGRESS
+- 卡片来源：cards/v0-watch-core-q7.md
+- 执行范围：卡片 `V0.5-P0-A` / `V0.5-P0-B`
+- 停止策略：每张卡后停止
+- 验收后处理：保留
+- 执行前条件：`V0.4R-F411-LITE-UI` 已完成；本队列项先补共享合同测试和 F411 所有权审计，再决定第二卡，不得把现有 `watch_core` EventQueue / Coordinator / Snapshot 当成空白模块重造。
+
 ## 队列项格式
 
 ```text

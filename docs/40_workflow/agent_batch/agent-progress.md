@@ -807,3 +807,14 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：本轮没有把“未观测到调试项”误写成“刷新指标通过”。由于当前 Lite UI 屏幕已无任何调试字段显示，`静态 60 秒` 与 `输入压力 120 秒` 的 `calls/s`、`full/s`、`pixels/s`、`area px`、`area %`、`fps/ms` 等数值项只能如实记为未验证；这属于观测入口缺失，不属于功能或稳定性失败。
 - 阻塞与待决：`V0.4R` 主链已收口，但如果后续仍想补齐刷新增量数字，需要新开独立观测卡恢复或新增专门指标入口，不能在本卡回写成已测。
 - 下一步：单独提交 `V0.4R-E` 文档收口；`V0.4R-F411-LITE-UI` 主队列可标记完成。
+
+### 会话 2026-06-12 V0.5-P0-A
+
+- 本轮范围：队列项 `V0.5-WATCH-CORE-GUARDRAILS`，卡片 `V0.5-P0-A`
+- 完成：已新增纯 PC `watch_core` 合同测试目标 `magic_watch_core_contract_test`；已完成 F411 当前新旧主链所有权审计；已把 V0.5 路线从“空白实现 EventQueue / Coordinator / ScreenManager”修正为“先做共享合同护栏，再收口 F411 Adapter 边界”
+- 修改文件：`watch_core/tests/watch_core_contract_test.c`、`sim/lv_port_pc_vscode/CMakeLists.txt`、`docs/30_testing/v0_5_watch_core_contract_and_f411_ownership_audit.md`、`docs/00_current/magicwatch_long_term_roadmap.md`、`docs/40_workflow/agent_batch/cards/v0-watch-core-q7.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`cmake --build sim/lv_port_pc_vscode/build --config Debug` 通过；`build/out/magic_watch_core_contract_test.exe` 运行通过并输出 `watch_core contract tests passed.`；`git diff --check` 通过（仅有 LF/CRLF 警告，无 diff 格式错误）；`git status --short -uall` 仅包含本卡允许文件；`rg -n "lvgl|SDL|HAL|CubeMX|malloc|free|new|delete|std::" watch_core` 仅命中新增测试文件中的自然语言描述字符串，不涉及 `watch_core` 运行实现；本轮实际改动中文文档乱码哨兵检查通过
+- 风险回应：本轮只给 `watch_core` 加护栏测试并做只读审计，没有修改 `watch_core` 运行实现、F411 代码或 PC XML adapter；第二张卡建议已由代码证据驱动，不按命名整洁做空泛抽象
+- 阻塞与待决：`V0.5-P0-B` 尚未开始；需在用户确认本轮审计与路线修正后，再进入“抽取真正的 `F411UiAdapter`”
+- 下一步：按停止策略停止，等待用户审阅；若继续，进入 `V0.5-P0-B`
+- 验收后修正：根据用户“有条件通过”的要求，已把合同测试从直接读取 `WatchCore.current_page` 改为只通过公开行为证明默认页面语义；并已进一步写紧 `V0.5-P0-B` 的 Adapter / Input Port / Lite View 三方边界，本轮仍不进入 `V0.5-P0-B` 实现。

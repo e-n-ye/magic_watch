@@ -64,7 +64,7 @@ flowchart TD
 | V0.2 | 减少无效刷新 | V0.1 有结论 | 刷新面积和频率下降 | 禁止追 DMA | 同场景无退化 | 需要大改 LVGL / 驱动 | 学会 MCU UI 少干活 |
 | V0.3 | F411 XML 探针 | PC 四卡验收、F411 基线 | `compatibility_probe.md` | 禁止手改生成文件、升级 LVGL | 能判断继续或止损 | 需 runtime XML / PNG-FS / 大改生成代码 | 学会兼容性探针 |
 | V0.4R | F411 Lite UI 垂直闭环 | `V0.3-D` 已止损原路线并确认替代边界 | Lite View + Adapter + 四卡语义闭环上板 | 禁止复制业务状态机、禁止要求 F411 接同一份生成 C | F411 编译和真机语义闭环通过 | core 语义被平台改写或 Lite View 越界持有业务 | 学会共享语义、分叉实现 |
-| V0.5 | Core 主链路 | V0.4 稳定 | Intent / Event / Screen / Power / Coordinator | 禁止一次性生成完整 core | Core 边界检查通过 | 职责说不清 | 学会状态所有权 |
+| V0.5 | Core 主链路 | V0.4 稳定 | 共享合同护栏、F411 所有权收口、Adapter 边界清晰 | 禁止把已存在模块当空白重造 | Core 合同测试通过且 F411 所有权可解释 | 职责说不清或平台重新拥有业务 | 学会状态所有权 |
 | V0.6 | 三平台闭环 | V0.5 稳定 | PC / F411 / LILYGO 共用核心语义 | 禁止绑定最终芯片 | 抬腕亮屏、息屏、唤醒闭环 | platform 开始拥有业务 | 学会平台抽象 |
 | V0.7 | V0 收口 | 三平台闭环完成 | 回归基线和阶段总结 | 禁止继续加功能拖延 | 能回答 V0 十个架构问题 | 新需求不影响 V0 定义 | 学会阶段验收 |
 
@@ -130,13 +130,10 @@ flowchart TD
 
 ### V0.5 Core 主链路
 
-- `V0.5-A`：只定义 `ScreenId`、`PowerState`、`InputIntent`。
-- `V0.5-B`：只定义 `SystemEvent`。
-- `V0.5-C`：实现固定环形 `EventQueue`。
-- `V0.5-D`：实现最小 `ScreenManager`。
-- `V0.5-E`：实现表驱动 `PowerController`。
-- `V0.5-F`：实现 `Coordinator` 分发。
-- `V0.5-G`：写架构边界检查文档。
+- `V0.5-P0-A`：为现有 `watch_core` 建立纯 PC 共享合同测试，并只读审计 F411 当前新旧主链的状态所有权。
+- `V0.5-P0-B`：优先抽取真正的 `F411UiAdapter`，把 typed `UiEvent` 派发、Snapshot 应用、`PageIntent` 执行和 view lifecycle 收口到单点边界；硬件读取、indev 注册、tap-only、防误触、左边缘右滑与手感阈值继续留在 `watch_lvgl_port`，Lite View 继续只持有 LVGL 对象和具体视觉更新。
+- `V0.5-P0-C`：在新边界稳定后，再评估旧 `watch_screen_manager` / `watch_event_queue` 是否需要独立隔离。
+- `V0.5-P1-*`：只对当前代码里确实缺失的共享语义继续拆卡，例如 `ScreenId`、电源语义和三平台共用边界；不得把现有 `watch_core` 的 EventQueue / Coordinator / Snapshot 再当成空白模块重造。
 
 V0.5 是个人能力分水岭，不允许 AI 一次性生成完整 core。
 

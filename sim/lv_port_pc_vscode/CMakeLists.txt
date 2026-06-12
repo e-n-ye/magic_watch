@@ -223,6 +223,13 @@ if(EXISTS "${MAGIC_WATCH_CORE_DIR}/src/watch_core.c")
     target_include_directories(magic_watch_core PUBLIC
         ${MAGIC_WATCH_CORE_DIR}/include
     )
+
+    add_executable(magic_watch_core_contract_test
+        ${MAGIC_WATCH_CORE_DIR}/tests/watch_core_contract_test.c
+    )
+    target_link_libraries(magic_watch_core_contract_test
+        magic_watch_core
+    )
 endif()
 
 if(EXISTS "${MAGIC_WATCH_XML_UI_DIR}/CMakeLists.txt")
