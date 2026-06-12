@@ -883,9 +883,9 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 ### 会话 2026-06-12 V0.5-P2-A / V0.5-P2-B
 
 - 本轮范围：队列项 `V0.5-P2-EVENT-DRAIN`；先执行 `V0.5-P2-A` 修正 pending drain 完成语义，再视验证结果决定是否同轮收口 `V0.5-P2-B`
-- 完成：已新增 `cards/v0-event-drain-q9.md`，把 P2 固定拆成“Core 缺陷修正”与“第三 Adapter 接入核验”两张卡；已将队列入口和路线图同步为事件处理完成语义主线，不再泛写为后续待定主题
-- 修改文件：`docs/40_workflow/agent_batch/cards/v0-event-drain-q9.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent-progress.md`、`docs/00_current/magicwatch_long_term_roadmap.md`、`watch_core/src/watch_core.c`、`watch_core/tests/watch_core_contract_test.c`
-- 自检：待本轮收尾统一执行 `git status --short -uall`、`git diff --check`、PC 构建、合同测试与本轮中文文档乱码哨兵检查
-- 风险回应：本轮只修正 `watch_core` 内部 drain 终止条件并补测试，不改公共 API、Adapter、View、输入与电源代码；`P2-B` 也只允许文档核验，不允许跨进实现
-- 阻塞与待决：`P2-A` 的构建和合同测试尚未执行；`P2-B` 仍需以 `P2-A` 实际结果为证据收口
-- 下一步：先跑 PC 构建与合同测试；若 `P2-A` 通过，再只读核验并收口 `P2-B`
+- 完成：`V0.5-P2-A` 已完成并单独提交；已修正 `watch_core_process_pending_events()` 的完成判定，使 drain 以“队列空”为准而不是以最近事件是否产生 `PageIntent` 为准；已补齐 `首页 Back -> 合法点击` 与 `非法 feature -> 合法点击` 两类盲区测试；`V0.5-P2-B` 也已基于实际代码证据完成，明确第三 Adapter 接入检查表与 `V0.5` 退出结论
+- 修改文件：`watch_core/src/watch_core.c`、`watch_core/tests/watch_core_contract_test.c`、`docs/30_testing/v0_5_watch_core_contract_and_f411_ownership_audit.md`、`docs/40_workflow/agent_batch/cards/v0-event-drain-q9.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent-progress.md`、`docs/00_current/magicwatch_long_term_roadmap.md`
+- 自检：`git status --short -uall` 已用于范围核对；`git diff --check` 与 `cmake --build sim/lv_port_pc_vscode/build --config Debug`、`sim/lv_port_pc_vscode/build/out/magic_watch_core_contract_test.exe` 已在 `P2-A` 收口时通过；本轮中文文档乱码哨兵待收尾统一执行
+- 风险回应：本轮没有修改公共 API、PC/F411 Adapter、Lite View、Input Port 或任何 Power 代码；`P2-B` 的 View 失败策略只收口为最小合同，不冒进抽象新 API
+- 阻塞与待决：F411 Keil 编译和真机冒烟本轮未执行，只能保持未验证；PC 当前仍无左边缘右滑退出语义，但这不是本队列项的共享合同缺口
+- 下一步：按停止策略停止，等待用户确认；下一窗口可进入 Power / Wake / Screen On 语义规划

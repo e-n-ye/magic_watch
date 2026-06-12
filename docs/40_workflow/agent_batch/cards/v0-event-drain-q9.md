@@ -94,7 +94,7 @@
 
 - ID：`V0.5-P2-B`
 - 标题：第三 Adapter 接入合同核验与 V0.5 退出门
-- 状态：TODO
+- 状态：DONE
 - 依赖：`V0.5-P2-A`
 
 ### Problem
@@ -169,6 +169,11 @@
 ### Execution record
 
 - 2026-06-12：卡片已创建，待 `V0.5-P2-A` 完成后按实际代码结果核验，不提前写成通过。
+- 2026-06-12：已基于 `P2-A` 后的实际代码复核 PC/F411 Adapter：
+  - PC `dispatch_event()` 在 `watch_core_push_event()` 失败时直接记录警告并返回；成功后统一 `watch_core_process_pending_events()`，随后读取最终 `PageState` 同步 View。
+  - F411 `f411_ui_adapter_dispatch_event()` 在 `watch_core_push_event()` 失败时直接返回 `false`；成功后统一 `watch_core_process_pending_events()`，随后读取最终 `PageState` 和 snapshot 再同步 Lite View。
+- 2026-06-12：已明确第三 Adapter 最小接入检查表：`push_event()` 失败不得继续 drain 或伪造导航；drain 必须直到队列空；View 只能按最终 `PageState` 和 snapshot 同步；本地页面缓存不是权威源。
+- 2026-06-12：已给出 `V0.5` 退出判断：当前没有新的、已被代码证实的共享合同断裂点；下一阶段应进入 Power / Wake / Screen On 语义规划，而不是继续追加共享合同实现卡。
 
 ### Stop policy
 

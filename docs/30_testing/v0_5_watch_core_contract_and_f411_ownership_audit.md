@@ -248,3 +248,78 @@ Snapshot 在哪里应用到 View：
 4. `V0.5-P1-*`：先澄清“页面状态 / `PageIntent` / Adapter 消费规则”合同；若需要新增公开路由类型，也应是能表达页面种类与详情 feature 的页面状态结构，而不是先机械补一个平面 `ScreenId`
 
 这表示 V0.5 的核心已经从“空白造 core 模块”转成“给现有共享合同装护栏，并把 F411 当前所有权收口到可扩展边界”。
+
+## 7. `V0.5-P2` 追加结论：第三 Adapter 接入合同与退出门
+
+### 7.1 `P2-A` 修正后的共享事件完成语义
+
+`watch_core_process_pending_events()` 现在以“队列已空”为终止条件，而不是以“最近一个事件是否产生 `PageIntent`”为终止条件。
+
+这意味着以下三件事已被正式拆开：
+
+- 事件是否已被消费
+- 事件是否产生页面动作
+- 队列是否已经空
+
+纯 PC 合同测试已补齐并通过：
+
+- `首页 Back -> 合法卡片点击`
+- `非法 feature -> 合法卡片点击`
+- `卡片点击 -> Back`
+- drain 后队列为空
+
+因此，`P1` 里“单次外部输入后 drain 到稳定态”的共享合同现在才算真正实现成立。
+
+### 7.2 第三 Adapter 最小接入检查表
+
+1. Adapter 只接收已经形成的 typed `UiEvent`，不把原始硬件事件直接塞给 `watch_core`。
+2. Adapter 调用 `watch_core_push_event()` 失败时：
+   - 不得继续调用 drain。
+   - 不得伪造 `PageIntent`。
+   - 不得自行改写本地页面缓存或 View。
+   - 应记录日志或返回失败，让平台调度层决定是否重试或丢弃。
+3. Adapter 在单次外部输入后，必须调用 `watch_core_process_pending_events()` 直到队列空；不能因为最近一个事件返回 `NONE` 就提前停下。
+4. drain 完成后，Adapter 只能基于最终 `WatchCorePageState` 和最终 `UiModelSnapshot` 同步 View，不得在中途事件上做导航裁决。
+5. 本地页面缓存只允许作为“最后一次已应用结果”的镜像，不是权威源；权威源始终是 `watch_core_get_current_page_state()`。
+6. 平台 View 可以保留自己的对象、focus、panel hidden 状态和手势动画状态，但这些状态不得反向决定产品导航。
+
+### 7.3 代码证据
+
+PC Adapter：
+
+- `dispatch_event()` 中，若 `watch_core_push_event()` 失败，直接 `LV_LOG_WARN(...)` 后 `return`，不会继续 drain，也不会伪造页面切换。
+- 成功入队后，调用 `watch_core_process_pending_events()`，随后在 `sync_core_to_view()` 中读取当前 `PageState` 并同步 View。
+
+F411 Adapter：
+
+- `f411_ui_adapter_dispatch_event()` 中，若 `watch_core_push_event()` 失败，直接返回 `false`，不会继续同步页面缓存、snapshot 或 View。
+- 成功入队后，调用 `watch_core_process_pending_events()`，再通过 `watch_core_get_current_page_state()` 和 `watch_core_get_ui_snapshot()` 拉取最终状态，然后统一同步 Lite View。
+
+共享结论：
+
+- 两个平台现在都遵守“push 成功后再 drain，到空为止；最后按最终状态同步 View”的主合同。
+- PC 与 F411 的差异仅剩 View 技术栈、输入算法和具体视觉更新，不再体现在 Core 事件消费语义上。
+
+### 7.4 View 创建 / 应用失败的最小策略
+
+当前代码尚未把“View 创建或应用失败后的平台返回路径”抽成统一 API，但基于现有实现可以收敛出最小策略：
+
+1. View 失败不能回写 `watch_core` 状态，也不能额外生成补偿导航事件。
+2. 平台可以保留上一次可见页面，或仅记录日志后保持当前显示；但不得因为 View 失败而把本地缓存提升为权威源。
+3. 这属于平台健壮性问题，不是当前共享合同的继续缺口。只有在后续实际引入复杂页面或异步资源加载时，才需要单独提升为新的实现卡。
+
+### 7.5 `V0.5` 退出判断
+
+结论：`V0.5` 共享合同主线现在可以退出到下一阶段规划，下一轮应进入 Power / Wake / Screen On 语义规划，而不是继续补一个新的共享合同实现卡。
+
+理由：
+
+- 已有纯 PC 合同测试护栏。
+- `PageState` / `PageIntent` / 默认页归属 / Adapter drain 语义已一致。
+- PC / F411 当前都按同一消费合同运行。
+- 本轮没有发现新的、已被代码证实的共享合同断裂点。
+
+保留项：
+
+- F411 Lite View 仍以页面动作类型承载自己的局部视图切换入口，这属于平台内实现细节，不构成共享权威状态泄漏。
+- View 创建失败后的平台恢复路径仍偏轻量，但当前没有证据表明它已阻碍 Power 语义规划。

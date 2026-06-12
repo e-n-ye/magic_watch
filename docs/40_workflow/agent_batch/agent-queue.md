@@ -72,7 +72,7 @@
 
 ### V0.5-P2-EVENT-DRAIN 共享事件处理完成语义
 
-- 状态：IN_PROGRESS
+- 状态：DONE
 - 卡片来源：cards/v0-event-drain-q9.md
 - 执行范围：卡片 `V0.5-P2-A` / `V0.5-P2-B`
 - 停止策略：当前队列连续执行
