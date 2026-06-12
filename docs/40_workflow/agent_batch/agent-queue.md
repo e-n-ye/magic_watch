@@ -45,7 +45,7 @@
 
 ### V0.4R-F411-LITE-UI F411 Lite UI 垂直闭环
 
-- 状态：IN_PROGRESS
+- 状态：DONE
 - 卡片来源：cards/v0-f411-lite-ui-q6.md
 - 执行范围：卡片 `V0.4R-B` / `V0.4R-C` / `V0.4R-D` / `V0.4R-D2` / `V0.4R-D2B` / `V0.4R-D3` / `V0.4R-E`
 - 停止策略：每张卡后停止
