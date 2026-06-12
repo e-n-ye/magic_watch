@@ -70,6 +70,15 @@
 - 验收后处理：保留
 - 执行前条件：`V0.5-WATCH-CORE-GUARDRAILS` 已完成；进入本队列项时，必须先解决“当前页面状态、页面跳转意图、Adapter 消费规则”三者的共享合同，再决定是否需要 `ScreenId` 或其他后续语义。
 
+### V0.5-P2-EVENT-DRAIN 共享事件处理完成语义
+
+- 状态：IN_PROGRESS
+- 卡片来源：cards/v0-event-drain-q9.md
+- 执行范围：卡片 `V0.5-P2-A` / `V0.5-P2-B`
+- 停止策略：当前队列连续执行
+- 验收后处理：保留
+- 执行前条件：`V0.5-P1-NAV-CONTRACT` 已完成；进入本队列项时，必须先修正 pending drain 的完成判定，再决定 V0.5 是否可以退出到 Power 语义规划。
+
 ## 队列项格式
 
 ```text

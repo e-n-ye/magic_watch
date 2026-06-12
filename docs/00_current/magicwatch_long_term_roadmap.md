@@ -138,7 +138,8 @@ flowchart TD
 - `V0.5-P1-B`：按 `P1-A` 的结论，只在 `watch_core` 与纯 PC 合同测试层加最小导航护栏。
 - `V0.5-P1-B` 当前结论：已新增独立页面状态读取合同和 pending-events drain 接口；下一步只需要让 PC / F411 Adapter 对齐消费，不必再回头争论默认页归属。
 - `V0.5-P1-C`：最后再让 PC / F411 Adapter 对齐到同一消费合同，不改各自 View 技术栈和输入算法。
-- `V0.5-P2-*`：只有在导航合同稳定后，才继续判断是否需要电源语义、第三平台接入边界等后续主题；不得把现有 `watch_core` 的 EventQueue / Coordinator / Snapshot 再当成空白模块重造。
+- `V0.5-P2-A`：先修正 `watch_core_process_pending_events()` 的完成语义，明确“事件被消费”“产生页面动作”“队列已空”三者不是同一件事，并用纯 PC 合同测试补齐 `no-op 后仍有合法事件` 的 drain 覆盖。
+- `V0.5-P2-B`：在 `P2-A` 通过后，只读核验第三 Adapter 接入检查表和 V0.5 退出门；明确 `push_event()` 失败、drain 到队列空、最终 `PageState` + snapshot 应用和本地页面缓存非权威源等规则，再决定是否进入 Power 语义规划。
 
 V0.5 是个人能力分水岭，不允许 AI 一次性生成完整 core。
 

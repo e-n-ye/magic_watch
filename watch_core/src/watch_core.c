@@ -172,12 +172,15 @@ WatchCorePageIntent watch_core_process_pending_events(WatchCore * core)
 {
     WatchCorePageIntent last_intent = watch_core_make_none_intent();
 
-    while (true) {
+    if (core == NULL) {
+        return last_intent;
+    }
+
+    while (core->queue_count > 0U) {
         WatchCorePageIntent intent = watch_core_process_next_event(core);
-        if (intent.type == WATCH_CORE_PAGE_INTENT_NONE) {
-            break;
+        if (intent.type != WATCH_CORE_PAGE_INTENT_NONE) {
+            last_intent = intent;
         }
-        last_intent = intent;
     }
 
     return last_intent;

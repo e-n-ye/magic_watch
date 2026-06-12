@@ -371,6 +371,75 @@ static void test_process_pending_events_drains_to_stable_state(void)
                   "after pending drain no extra events should remain");
 }
 
+static void test_pending_drain_continues_after_shortcut_back_no_op(void)
+{
+    WatchCore core;
+    WatchCorePageIntent last_intent;
+    WatchCorePageState page_state;
+
+    watch_core_init(&core);
+    expect_true(watch_core_push_event(&core, watch_core_make_back_event()),
+                "shortcut back enqueue should succeed before valid click");
+    expect_true(
+        watch_core_push_event(
+            &core,
+            watch_core_make_health_card_clicked_event(WATCH_CORE_HEALTH_FEATURE_SPO2)),
+        "valid click enqueue should succeed after shortcut back no-op");
+
+    last_intent = watch_core_process_pending_events(&core);
+    watch_core_get_current_page_state(&core, &page_state);
+
+    expect_int_eq(last_intent.type,
+                  WATCH_CORE_PAGE_INTENT_LOAD_HEALTH_DETAIL,
+                  "pending drain should continue after shortcut back no-op and report later detail action");
+    expect_int_eq(last_intent.feature,
+                  WATCH_CORE_HEALTH_FEATURE_SPO2,
+                  "pending drain should keep the later valid detail feature");
+    expect_page_state_eq(page_state,
+                         WATCH_CORE_PAGE_HEALTH_DETAIL,
+                         WATCH_CORE_HEALTH_FEATURE_SPO2,
+                         "pending drain should end on the later valid detail page");
+    expect_int_eq(watch_core_process_next_event(&core).type,
+                  WATCH_CORE_PAGE_INTENT_NONE,
+                  "pending drain after shortcut back no-op should still leave queue empty");
+}
+
+static void test_pending_drain_continues_after_invalid_feature_no_op(void)
+{
+    WatchCore core;
+    WatchCorePageIntent last_intent;
+    WatchCorePageState page_state;
+
+    watch_core_init(&core);
+    expect_true(
+        watch_core_push_event(&core,
+                              watch_core_make_health_card_clicked_event(
+                                  WATCH_CORE_HEALTH_FEATURE_INVALID)),
+        "invalid feature enqueue should succeed before valid click");
+    expect_true(
+        watch_core_push_event(
+            &core,
+            watch_core_make_health_card_clicked_event(WATCH_CORE_HEALTH_FEATURE_BREATHE)),
+        "valid click enqueue should succeed after invalid feature no-op");
+
+    last_intent = watch_core_process_pending_events(&core);
+    watch_core_get_current_page_state(&core, &page_state);
+
+    expect_int_eq(last_intent.type,
+                  WATCH_CORE_PAGE_INTENT_LOAD_HEALTH_DETAIL,
+                  "pending drain should continue after invalid feature no-op");
+    expect_int_eq(last_intent.feature,
+                  WATCH_CORE_HEALTH_FEATURE_BREATHE,
+                  "pending drain should report the later valid feature after invalid no-op");
+    expect_page_state_eq(page_state,
+                         WATCH_CORE_PAGE_HEALTH_DETAIL,
+                         WATCH_CORE_HEALTH_FEATURE_BREATHE,
+                         "pending drain should end on the later valid detail after invalid no-op");
+    expect_int_eq(watch_core_process_next_event(&core).type,
+                  WATCH_CORE_PAGE_INTENT_NONE,
+                  "pending drain after invalid feature no-op should still leave queue empty");
+}
+
 int main(void)
 {
     test_default_page_semantics_are_proven_by_public_behavior();
@@ -386,6 +455,8 @@ int main(void)
     test_snapshot_updates_are_readable();
     test_metric_text_is_safely_truncated();
     test_process_pending_events_drains_to_stable_state();
+    test_pending_drain_continues_after_shortcut_back_no_op();
+    test_pending_drain_continues_after_invalid_feature_no_op();
 
     if (s_failures != 0) {
         fprintf(stderr, "%d contract test(s) failed.\n", s_failures);

@@ -879,3 +879,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 阻塞与待决：当时 PC UI 手工回归和 F411 Keil / MDK 编译、真机 12 项验收仍需用户回填；在回填前本卡不得标记为 `DONE`
 - 下一步：停止等待用户执行人工验收；若通过，再收口 `P1-C` 并提交
 - 验收追加：用户已确认 PC 四卡首页、详情进入、`Back` 返回均正常；同时明确“当前 PC 端没有左边缘右滑退出语义”，该项不属于本卡既有验收边界。用户也已确认 F411 编译通过、四卡/详情/Back/表冠原闭环正常、原 12 项真机验收继续通过，且无花屏、卡死、停更。基于以上回填，`P1-C` 可收口为 `DONE`。
+
+### 会话 2026-06-12 V0.5-P2-A / V0.5-P2-B
+
+- 本轮范围：队列项 `V0.5-P2-EVENT-DRAIN`；先执行 `V0.5-P2-A` 修正 pending drain 完成语义，再视验证结果决定是否同轮收口 `V0.5-P2-B`
+- 完成：已新增 `cards/v0-event-drain-q9.md`，把 P2 固定拆成“Core 缺陷修正”与“第三 Adapter 接入核验”两张卡；已将队列入口和路线图同步为事件处理完成语义主线，不再泛写为后续待定主题
+- 修改文件：`docs/40_workflow/agent_batch/cards/v0-event-drain-q9.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent-progress.md`、`docs/00_current/magicwatch_long_term_roadmap.md`、`watch_core/src/watch_core.c`、`watch_core/tests/watch_core_contract_test.c`
+- 自检：待本轮收尾统一执行 `git status --short -uall`、`git diff --check`、PC 构建、合同测试与本轮中文文档乱码哨兵检查
+- 风险回应：本轮只修正 `watch_core` 内部 drain 终止条件并补测试，不改公共 API、Adapter、View、输入与电源代码；`P2-B` 也只允许文档核验，不允许跨进实现
+- 阻塞与待决：`P2-A` 的构建和合同测试尚未执行；`P2-B` 仍需以 `P2-A` 实际结果为证据收口
+- 下一步：先跑 PC 构建与合同测试；若 `P2-A` 通过，再只读核验并收口 `P2-B`
