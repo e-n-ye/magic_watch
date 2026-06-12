@@ -54,12 +54,21 @@
 
 ### V0.5-WATCH-CORE-GUARDRAILS 共享合同护栏与 F411 所有权收口
 
-- 状态：IN_PROGRESS
+- 状态：DONE
 - 卡片来源：cards/v0-watch-core-q7.md
 - 执行范围：卡片 `V0.5-P0-A` / `V0.5-P0-B` / `V0.5-P0-C`
 - 停止策略：每张卡后停止
 - 验收后处理：保留
-- 执行前条件：`V0.4R-F411-LITE-UI` 已完成；`V0.5-P0-A` 与 `V0.5-P0-B` 已分别建立共享合同护栏并收口 `F411UiAdapter`，当前只允许继续隔离旧 `watch_event_queue` / `watch_screen_manager` 的 MDK 编译登记，不得进入 `V0.5-P1-*`。
+- 执行前条件：`V0.4R-F411-LITE-UI` 已完成；`V0.5-P0-A`、`V0.5-P0-B`、`V0.5-P0-C` 均已完成并各自验收；当前阶段结束于“共享合同护栏建立 + F411 所有权收口 + 旧主链退出当前 target”。
+
+### V0.5-P1-NAV-CONTRACT 共享导航合同澄清
+
+- 状态：TODO
+- 卡片来源：cards/v0-navigation-contract-q8.md
+- 执行范围：卡片 `V0.5-P1-A` / `V0.5-P1-B` / `V0.5-P1-C`
+- 停止策略：每张卡后停止
+- 验收后处理：保留
+- 执行前条件：`V0.5-WATCH-CORE-GUARDRAILS` 已完成；进入本队列项时，必须先解决“当前页面状态、页面跳转意图、Adapter 消费规则”三者的共享合同，再决定是否需要 `ScreenId` 或其他后续语义。
 
 ## 队列项格式
 

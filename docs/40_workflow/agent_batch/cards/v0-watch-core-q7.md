@@ -210,7 +210,7 @@ Lite View 继续负责：
 
 - ID：`V0.5-P0-C`
 - 标题：旧主链构建隔离
-- 状态：IN_PROGRESS
+- 状态：DONE
 - 依赖：`V0.5-P0-B`
 
 ### Problem
@@ -289,7 +289,7 @@ Lite View 继续负责：
 - 2026-06-12：已用 `rg -n "watch_event_queue|watch_screen_manager|watch_screen_id|watch_app_event" try/my_watch_f411_v2.1` 复核，命中只剩旧模块自身声明/实现、MDK 工程登记和审计文档历史文字，未发现活跃链路 include、初始化或函数调用。
 - 2026-06-12：已确认 `my_watch_f411.uvprojx` 在 `User/core/event` 与 `User/app/screen` 组下仍登记旧 `watch_event_queue.*` / `watch_screen_manager.*`，这是当前唯一需要隔离的构建残留。
 - 2026-06-12：已仅从当前 MDK target 移除上述旧文件登记，源码文件继续保留，不删除、不改实现。
-- 2026-06-12：Keil / MDK 编译与真机回归仍待用户回填；在回填前，本卡状态保持 `IN_PROGRESS`。
+- 2026-06-12：Keil / MDK 编译与真机回归已由用户回填“编译通过”；本卡状态收口为 `DONE`。
 
 ### Stop policy
 

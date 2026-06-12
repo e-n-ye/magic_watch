@@ -838,3 +838,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：`P0-C` 只隔离当前 MDK target 的旧编译登记，没有删除源码、没有修改旧模块实现，也没有反向牵连 Adapter、Lite View、Input Port 或 `watch_core`
 - 阻塞与待决：Keil / MDK 编译与真机回归仍需用户执行并回填；在用户回填前不得把 `P0-C` 写成 DONE
 - 下一步：停止等待用户确认 `P0-C` 的 Keil / MDK 结果；若通过，再决定是否提交 `P0-C`
+
+### 会话 2026-06-12 V0.5-P1 卡片落地
+
+- 本轮范围：不进入实现；只把 `P0-C` 完成态同步到运行文档，并把 `V0.5-P1-A` / `V0.5-P1-B` / `V0.5-P1-C` 正式落成卡片与队列入口
+- 完成：已将 `V0.5-WATCH-CORE-GUARDRAILS` 队列项与卡片 `V0.5-P0-C` 收口为 `DONE`；已新增 `cards/v0-navigation-contract-q8.md`，把下一阶段拆成“契约决策 -> core 护栏 -> Adapter 对齐”三个独立闭环；已同步路线图，不再把 `P1` 仅泛写为可能存在的 `ScreenId`
+- 修改文件：`docs/40_workflow/agent_batch/cards/v0-watch-core-q7.md`、`docs/40_workflow/agent_batch/cards/v0-navigation-contract-q8.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`、`docs/00_current/magicwatch_long_term_roadmap.md`
+- 自检：待本轮文档修改完成后统一执行 `git diff --check`、`git status --short -uall` 与中文乱码哨兵检查
+- 风险回应：本轮只固化规划和运行状态，不修改 `watch_core`、PC/F411 Adapter、Lite View、Input Port 或任何真机参数
+- 阻塞与待决：`V0.5-P1-A` 仍是 TODO，尚未形成正式契约结论
+- 下一步：等待用户确认后，按队列进入 `V0.5-P1-A`
