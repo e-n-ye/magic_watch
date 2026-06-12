@@ -776,3 +776,24 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 阻塞与待决：仍需用户回填当前阈值下的“轻触有效 / 滑动无效”真机结果
 - 下一步：继续完成 `V0.4R-D2B`，先收口 tap-only，再决定是否进入 `V0.4R-D3`
 - 验收追加：用户已确认 `D2B` 该测内容全部通过；当前 tap-only 防误触已成立，可按规则先单独提交 `V0.4R-D2` + `V0.4R-D2B` 这一组当前工作，再进入 `V0.4R-D3`
+
+### 会话 2026-06-12 01:35
+
+- 本轮范围：队列项 `V0.4R-F411-LITE-UI`，卡片 `V0.4R-D3`
+- 完成：已启动 `V0.4R-D3`；当前实现路径为“touch 输入层判定左边缘起手右滑 -> detail 页任务消费为 `Back` 语义”
+- 修改文件：`try/my_watch_f411_v2.1/user/ui/lvgl_port/watch_lvgl_port.h`、`try/my_watch_f411_v2.1/user/ui/lvgl_port/watch_lvgl_port.c`、`try/my_watch_f411_v2.1/user/app/lvgl_demo/watch_lvgl_debug_screen.c`、`docs/40_workflow/agent_batch/cards/v0-f411-lite-ui-q6.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：待本轮收尾统一执行 `git diff --check`、`git status --short -uall` 和本轮实际改动中文文档乱码哨兵检查
+- 风险回应：由于 `D2B` 已把拖动 touch 从 pointer click 链路中剥离，`D3` 不能再依赖 LVGL 内建 gesture 事件；因此本轮选择在现有输入层内最小补充“左边缘起手 + 右滑”判定，避免为了 back 手势回退已通过的 tap-only 语义
+- 阻塞与待决：仍需用户回填当前阈值下的 detail 页左边缘右滑返回结果，以及四卡首页是否未被误触发返回
+- 下一步：等待用户编译烧录并回填 `D3` 真机结果；若通过，再单独提交 `D3`
+- 调优追加：用户确认当前 `D3` 语义已成立，但仍希望进一步缩短返回所需水平行程；本轮已仅下调提交距离阈值，保持左边缘起手约束与其它闭环不变，继续收口手感而不扩 scope
+
+### 会话 2026-06-12 02:10
+
+- 本轮范围：收口 `V0.4R-D3`，切换进入 `V0.4R-E`
+- 完成：用户已确认 `D3` 当前编译通过；详情页左边缘右滑可见临时提示与轻微跟手位移；拇指弧线右滑较上一版更易触发返回；左边缘右滑可正常返回四卡；中间起手右滑不会误返回；四卡首页左边缘右滑不会异常返回或异常跳转；轻触进入详情、轻触 `Back`、tap-only 防误触与表冠原闭环均保持正常；未观察到花屏、卡死、停更。已按用户手调值收口 `WATCH_TOUCH_SWIPE_BACK_COMMIT_DISTANCE = 36U`。
+- 修改文件：`try/my_watch_f411_v2.1/user/ui/lvgl_port/watch_lvgl_port.h`、`try/my_watch_f411_v2.1/user/ui/lvgl_port/watch_lvgl_port.c`、`try/my_watch_f411_v2.1/user/app/lvgl_demo/watch_lvgl_debug_screen.c`、`docs/40_workflow/agent_batch/cards/v0-f411-lite-ui-q6.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：本轮收尾执行 `git diff --check`、`git status --short -uall` 和本轮实际改动中文文档乱码哨兵检查
+- 风险回应：`D3` 当前结论只说明“Lite UI 路线下的左边缘右滑 Back 语义成立”，不等于已完成最终真机收口；`V0.4R-E` 仍需把编译结果、Flash/RAM、刷新区域与 flush、静态稳定性、输入压力和人工验收分开记录，未测项不得写成通过。
+- 阻塞与待决：`V0.4R-E` 需要用户继续回填本轮真机观测数据；本机不能代跑 Keil / MDK 与真机。
+- 下一步：先单独提交 `V0.4R-D3`，然后仅启动 `V0.4R-E` 的验收记录，不提前修改代码或宣称通过。

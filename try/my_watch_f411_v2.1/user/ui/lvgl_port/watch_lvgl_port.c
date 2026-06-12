@@ -11,6 +11,11 @@
 #define WATCH_LVGL_DRAW_BUF_LINES 20U
 #define WATCH_LVGL_DMA_BUF_BYTES (WATCH_LCD_WIDTH * WATCH_LVGL_DRAW_BUF_LINES * 2U)
 #define WATCH_TOUCH_TAP_MOVE_THRESHOLD 12U
+#define WATCH_TOUCH_LEFT_EDGE_THRESHOLD 28U
+#define WATCH_TOUCH_SWIPE_BACK_PROGRESS_THRESHOLD 8U
+#define WATCH_TOUCH_SWIPE_BACK_COMMIT_DISTANCE 36U
+#define WATCH_TOUCH_SWIPE_BACK_CANCEL_DX (-18)
+#define WATCH_TOUCH_SWIPE_BACK_MAX_VERTICAL_DRIFT 120U
 
 static lv_color_t s_draw_buf_1[WATCH_LCD_WIDTH * WATCH_LVGL_DRAW_BUF_LINES];
 static lv_color_t s_draw_buf_2[WATCH_LCD_WIDTH * WATCH_LVGL_DRAW_BUF_LINES];
@@ -29,6 +34,11 @@ static uint8_t s_lvgl_port_initialized;
 static uint8_t s_touch_press_active;
 static uint8_t s_touch_dragged;
 static uint8_t s_touch_tap_ready;
+static uint8_t s_touch_swipe_back_candidate;
+static uint8_t s_touch_swipe_back_ready;
+static uint16_t s_touch_swipe_back_progress;
+static uint16_t s_touch_last_x;
+static uint16_t s_touch_last_y;
 static uint16_t s_touch_press_start_x;
 static uint16_t s_touch_press_start_y;
 static uint8_t s_flush_waiting_dma;
@@ -330,6 +340,7 @@ static void watch_lvgl_touch_read(lv_indev_drv_t *indev_drv, lv_indev_data_t *da
     watch_touch_sample_t sample;
     uint16_t dx;
     uint16_t dy;
+    int16_t signed_dx;
 
     (void)indev_drv;
 
@@ -341,6 +352,8 @@ static void watch_lvgl_touch_read(lv_indev_drv_t *indev_drv, lv_indev_data_t *da
             sample.y = (uint16_t)(WATCH_LCD_HEIGHT - 1U);
         }
 
+        s_touch_last_x = sample.x;
+        s_touch_last_y = sample.y;
         s_last_x = (lv_coord_t)sample.x;
         s_last_y = (lv_coord_t)sample.y;
 
@@ -348,9 +361,12 @@ static void watch_lvgl_touch_read(lv_indev_drv_t *indev_drv, lv_indev_data_t *da
             s_touch_press_active = 1U;
             s_touch_dragged = 0U;
             s_touch_tap_ready = 0U;
+            s_touch_swipe_back_candidate =
+                (sample.x <= WATCH_TOUCH_LEFT_EDGE_THRESHOLD) ? 1U : 0U;
+            s_touch_swipe_back_progress = 0U;
             s_touch_press_start_x = sample.x;
             s_touch_press_start_y = sample.y;
-        } else if (s_touch_dragged == 0U) {
+        } else {
             dx = (sample.x > s_touch_press_start_x)
                 ? (uint16_t)(sample.x - s_touch_press_start_x)
                 : (uint16_t)(s_touch_press_start_x - sample.x);
@@ -358,8 +374,19 @@ static void watch_lvgl_touch_read(lv_indev_drv_t *indev_drv, lv_indev_data_t *da
                 ? (uint16_t)(sample.y - s_touch_press_start_y)
                 : (uint16_t)(s_touch_press_start_y - sample.y);
 
-            if ((dx > WATCH_TOUCH_TAP_MOVE_THRESHOLD) || (dy > WATCH_TOUCH_TAP_MOVE_THRESHOLD)) {
+            if ((s_touch_dragged == 0U) &&
+                ((dx > WATCH_TOUCH_TAP_MOVE_THRESHOLD) || (dy > WATCH_TOUCH_TAP_MOVE_THRESHOLD))) {
                 s_touch_dragged = 1U;
+            }
+
+            signed_dx = (int16_t)sample.x - (int16_t)s_touch_press_start_x;
+            if (s_touch_swipe_back_candidate != 0U) {
+                if (signed_dx <= WATCH_TOUCH_SWIPE_BACK_CANCEL_DX) {
+                    s_touch_swipe_back_candidate = 0U;
+                    s_touch_swipe_back_progress = 0U;
+                } else if (signed_dx >= WATCH_TOUCH_SWIPE_BACK_PROGRESS_THRESHOLD) {
+                    s_touch_swipe_back_progress = (uint16_t)signed_dx;
+                }
             }
         }
 
@@ -367,8 +394,22 @@ static void watch_lvgl_touch_read(lv_indev_drv_t *indev_drv, lv_indev_data_t *da
     } else {
         if (s_touch_press_active != 0U) {
             s_touch_tap_ready = (s_touch_dragged == 0U) ? 1U : 0U;
+            dx = (s_touch_last_x > s_touch_press_start_x)
+                ? (uint16_t)(s_touch_last_x - s_touch_press_start_x)
+                : 0U;
+            dy = (s_touch_last_y > s_touch_press_start_y)
+                ? (uint16_t)(s_touch_last_y - s_touch_press_start_y)
+                : (uint16_t)(s_touch_press_start_y - s_touch_last_y);
+            if ((s_touch_swipe_back_candidate != 0U) &&
+                (dx >= WATCH_TOUCH_SWIPE_BACK_COMMIT_DISTANCE) &&
+                (dy <= WATCH_TOUCH_SWIPE_BACK_MAX_VERTICAL_DRIFT) &&
+                ((uint32_t)dx * 2U >= (uint32_t)dy)) {
+                s_touch_swipe_back_ready = 1U;
+            }
             s_touch_press_active = 0U;
             s_touch_dragged = 0U;
+            s_touch_swipe_back_candidate = 0U;
+            s_touch_swipe_back_progress = 0U;
         }
         data->state = LV_INDEV_STATE_REL;
     }
@@ -525,4 +566,19 @@ bool watch_lvgl_port_accept_activation_event(lv_event_t *event)
     }
 
     return false;
+}
+
+bool watch_lvgl_port_take_left_edge_swipe_back(void)
+{
+    if (s_touch_swipe_back_ready == 0U) {
+        return false;
+    }
+
+    s_touch_swipe_back_ready = 0U;
+    return true;
+}
+
+uint16_t watch_lvgl_port_left_edge_swipe_back_progress(void)
+{
+    return s_touch_swipe_back_progress;
 }

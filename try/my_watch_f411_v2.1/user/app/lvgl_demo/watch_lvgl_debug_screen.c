@@ -32,6 +32,8 @@ static lv_obj_t *s_detail_title_label;
 static lv_obj_t *s_detail_metric_label;
 static lv_obj_t *s_detail_hint_label;
 static lv_obj_t *s_detail_back_button;
+static lv_obj_t *s_swipe_back_hint;
+static lv_obj_t *s_swipe_back_hint_arrow;
 
 static uint32_t feature_index(WatchCoreHealthFeature feature)
 {
@@ -145,6 +147,56 @@ static void dispatch_ui_event(WatchCoreUiEvent event)
     if (watch_core_bridge_dispatch_event(event)) {
         sync_view_from_core();
     }
+}
+
+static void set_detail_translate_x(lv_coord_t offset)
+{
+    lv_obj_set_style_translate_x(s_header_title, offset, LV_PART_MAIN);
+    lv_obj_set_style_translate_x(s_header_subtitle, offset, LV_PART_MAIN);
+    lv_obj_set_style_translate_x(s_detail_panel, offset, LV_PART_MAIN);
+}
+
+static void update_swipe_back_hint(const watch_core_bridge_state_t *state)
+{
+    uint16_t progress;
+    lv_coord_t hint_width;
+    lv_coord_t translate_x;
+    lv_opa_t bg_opa;
+    lv_opa_t arrow_opa;
+
+    if ((state == 0) || (s_swipe_back_hint == 0) || (s_swipe_back_hint_arrow == 0)) {
+        return;
+    }
+
+    if (state->current_page.type != WATCH_CORE_PAGE_INTENT_LOAD_HEALTH_DETAIL) {
+        lv_obj_add_flag(s_swipe_back_hint, LV_OBJ_FLAG_HIDDEN);
+        set_detail_translate_x(0);
+        return;
+    }
+
+    progress = watch_lvgl_port_left_edge_swipe_back_progress();
+    if (progress == 0U) {
+        lv_obj_add_flag(s_swipe_back_hint, LV_OBJ_FLAG_HIDDEN);
+        set_detail_translate_x(0);
+        return;
+    }
+
+    hint_width = (lv_coord_t)(6U + (progress / 3U));
+    if (hint_width > 34) {
+        hint_width = 34;
+    }
+    translate_x = (lv_coord_t)(progress / 4U);
+    if (translate_x > 18) {
+        translate_x = 18;
+    }
+    bg_opa = (lv_opa_t)(((progress > 84U ? 84U : progress) * LV_OPA_70) / 84U);
+    arrow_opa = (lv_opa_t)(((progress > 84U ? 84U : progress) * LV_OPA_80) / 84U);
+
+    lv_obj_clear_flag(s_swipe_back_hint, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_set_width(s_swipe_back_hint, hint_width);
+    lv_obj_set_style_bg_opa(s_swipe_back_hint, bg_opa, LV_PART_MAIN);
+    lv_obj_set_style_opa(s_swipe_back_hint_arrow, arrow_opa, LV_PART_MAIN);
+    set_detail_translate_x(translate_x);
 }
 
 static void on_card_clicked(lv_event_t *event)
@@ -284,6 +336,23 @@ static void create_detail_view(void)
     lv_obj_center(back_label);
     lv_obj_set_style_text_font(back_label, &lv_font_montserrat_14, LV_PART_MAIN);
     lv_obj_set_style_text_color(back_label, lv_color_hex(0xE2E8F0), LV_PART_MAIN);
+
+    s_swipe_back_hint = lv_obj_create(s_root);
+    lv_obj_set_pos(s_swipe_back_hint, 0, 120);
+    lv_obj_set_size(s_swipe_back_hint, 6, 34);
+    lv_obj_set_style_radius(s_swipe_back_hint, 0, LV_PART_MAIN);
+    lv_obj_set_style_border_width(s_swipe_back_hint, 0, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(s_swipe_back_hint, lv_color_hex(0x94A3B8), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(s_swipe_back_hint, LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_clear_flag(s_swipe_back_hint, LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_flag(s_swipe_back_hint, LV_OBJ_FLAG_HIDDEN);
+
+    s_swipe_back_hint_arrow = lv_label_create(s_swipe_back_hint);
+    lv_label_set_text(s_swipe_back_hint_arrow, LV_SYMBOL_LEFT);
+    lv_obj_center(s_swipe_back_hint_arrow);
+    lv_obj_set_style_text_font(s_swipe_back_hint_arrow, &lv_font_montserrat_14, LV_PART_MAIN);
+    lv_obj_set_style_text_color(s_swipe_back_hint_arrow, lv_color_hex(0xF8FAFC), LV_PART_MAIN);
+    lv_obj_set_style_opa(s_swipe_back_hint_arrow, LV_OPA_TRANSP, LV_PART_MAIN);
 }
 
 void watch_lvgl_debug_screen_init(void)
@@ -321,4 +390,21 @@ void watch_lvgl_debug_screen_on_input_intent(watch_input_intent_t intent)
 
 void watch_lvgl_debug_screen_task(void)
 {
+    const watch_core_bridge_state_t *state;
+    bool swipe_commit;
+
+    state = watch_core_bridge_state();
+    if (state == 0) {
+        return;
+    }
+
+    update_swipe_back_hint(state);
+
+    swipe_commit = watch_lvgl_port_take_left_edge_swipe_back();
+    if (swipe_commit &&
+        (state->current_page.type == WATCH_CORE_PAGE_INTENT_LOAD_HEALTH_DETAIL)) {
+        lv_obj_add_flag(s_swipe_back_hint, LV_OBJ_FLAG_HIDDEN);
+        set_detail_translate_x(0);
+        dispatch_ui_event(watch_core_make_back_event());
+    }
 }

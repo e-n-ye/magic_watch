@@ -37,5 +37,7 @@ void watch_lvgl_port_set_group(lv_group_t *group);
 void watch_lvgl_port_task(void);
 void watch_lvgl_port_get_perf_snapshot(watch_lvgl_perf_snapshot_t *snapshot);
 bool watch_lvgl_port_accept_activation_event(lv_event_t *event);
+bool watch_lvgl_port_take_left_edge_swipe_back(void);
+uint16_t watch_lvgl_port_left_edge_swipe_back_progress(void);
 
 #endif /* WATCH_LVGL_PORT_H */
