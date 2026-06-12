@@ -848,3 +848,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：本轮只固化规划和运行状态，不修改 `watch_core`、PC/F411 Adapter、Lite View、Input Port 或任何真机参数
 - 阻塞与待决：`V0.5-P1-A` 仍是 TODO，尚未形成正式契约结论
 - 下一步：等待用户确认后，按队列进入 `V0.5-P1-A`
+
+### 会话 2026-06-12 V0.5-P1-A
+
+- 本轮范围：队列项 `V0.5-P1-NAV-CONTRACT`，只执行卡片 `V0.5-P1-A`
+- 完成：已基于 `watch_core`、PC Adapter、F411 Adapter 和 Lite View 的当前代码证据，明确本阶段首要缺口是“持久页面状态 / 瞬时页面动作 / Adapter 消费规则”合同，而不是先机械增加 `ScreenId`；已确定 `P1-B` 方向应为“公开页面状态合同 + 保留 `PageIntent` 为动作”，并要求 Adapter 在单次外部输入后统一 drain 到稳定态
+- 修改文件：`docs/40_workflow/agent_batch/cards/v0-navigation-contract-q8.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`、`docs/00_current/magicwatch_long_term_roadmap.md`、`docs/30_testing/v0_5_watch_core_contract_and_f411_ownership_audit.md`
+- 自检：待本轮收尾统一执行 `git diff --check`、`git status --short -uall`、契约关键词检索和本轮中文文档乱码哨兵检查
+- 风险回应：本轮只形成契约决策，不改 `watch_core`、PC/F411 Adapter、Lite View、Input Port 或 MDK 工程；因此不会把规划误写成已实现
+- 阻塞与待决：`P1-B` 尚未开始；公开页面状态类型的具体命名与 API 仍留待下一卡在代码层最小实现
+- 下一步：按停止策略停止，等待用户确认；若继续，再进入 `V0.5-P1-B`

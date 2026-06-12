@@ -4,7 +4,7 @@
 
 - ID：`V0.5-P1-A`
 - 标题：页面状态与 Adapter 消费契约决策
-- 状态：TODO
+- 状态：DONE
 - 依赖：`V0.5-P0-C`
 
 ### Problem
@@ -88,7 +88,28 @@
 
 ### Execution record
 
-- 待执行。
+- 2026-06-12：已核对 `watch_core` 当前事实：`watch_core_init()` 会把 `WatchCore.current_page` 初始化为健康四卡；`watch_core_process_next_event()` 既更新 `current_page`，又把同一个 `WatchCorePageIntent` 作为返回值吐给 Adapter。
+- 2026-06-12：已核对 PC Adapter 当前事实：`watch_core_ui_adapter_init()` 初始化后直接 `watch_core_ui_adapter_load_health_shortcuts()`；事件处理采用 `drain_core_events()` 循环消费直到 `WATCH_CORE_PAGE_INTENT_NONE`。
+- 2026-06-12：已核对 F411 当前事实：`f411_ui_adapter_init()` 在 `watch_core_init()` 之后手工把 `s_state.current_page` 设为健康四卡；`f411_ui_adapter_dispatch_event()` 每次只调用一次 `watch_core_process_next_event()`；`watch_lite_view.c` 还保留一份 `s_current_page` 作为视图展开状态。
+- 2026-06-12：已确认真正缺口不是单纯增加 `ScreenId`，而是把“持久页面状态”“瞬时页面动作”“平台侧视图状态”三者合同拆清。仅加 `ScreenId` 会在 `current_page + PageIntent + Adapter/View 镜像` 之外再增加第四份命名状态，不能解决默认路由和消费策略分裂。
+- 2026-06-12：本卡选定方案如下：
+  1. 共享合同中拆分“页面状态”和“页面动作”。
+  2. `PageIntent` 只保留为瞬时页面动作，不再承担长期权威状态语义。
+  3. 下一卡 `P1-B` 应为 `watch_core` 增加独立的公开页面状态读取合同；该状态至少要能表达“当前页种类 + 详情 feature”，因此不是只加一个平面的 `ScreenId`，而应采用等价于 `PageState/PageRoute` 的结构。
+  4. 默认页面来源归 `watch_core` 所有。Adapter 初始化后必须从 Core 读取公开页面状态，不得自行假设首页。
+  5. 共享消费规则统一为“单次外部输入派发后，将 Core 队列 drain 到稳定态”。也就是 Adapter 推入一个 typed `UiEvent` 后，应持续调用处理接口直到返回 no-op，再统一应用 snapshot 和最终页面状态；平台若未来需要节流，只能在调度层做，不得改写语义。
+  6. Adapter 可以保留“最后已应用页面状态”的本地缓存用于 view diff、focus 或动画，但该缓存不是权威源；Lite View 内部的展开/hidden 状态也只属于视图实现，不得反向决定产品导航。
+- 2026-06-12：已否决的候选方案：
+  - 仅增加 `ScreenId`：不足以承载详情 feature，且会制造重复状态命名。
+  - 保留现有类型不拆分，只补当前路由 getter：仍会把 `PageIntent` 同时当作状态和动作，语义继续混叠。
+  - 让 Core 初始化时直接吐出首个 `PageIntent`：虽然能去掉 Adapter 猜首页，但仍未解决“动作类型兼任长期状态”的混叠，收益不如先拆状态合同。
+- 2026-06-12：已形成第三 Adapter 最小接入检查表：
+  1. 只把平台输入翻译成 typed `UiEvent`。
+  2. 初始化后先读取 Core 的公开页面状态和 snapshot，不自行猜默认页。
+  3. 单次输入后 drain Core 到稳定态。
+  4. 把 `PageIntent` 当动作消费，把公开页面状态当权威源读取。
+  5. 本地页面镜像只做缓存，不做导航裁决。
+  6. View 对象状态、动画、focus、screen/panel 切换都属于平台实现，不回写 Core 语义。
 
 ### Stop policy
 
