@@ -35,6 +35,21 @@ static void expect_int_eq(int actual, int expected, const char *message)
     }
 }
 
+static void expect_page_state_eq(
+    WatchCorePageState actual, WatchCorePageType expected_type, WatchCoreHealthFeature expected_feature, const char *message)
+{
+    if ((actual.type != expected_type) || (actual.feature != expected_feature)) {
+        ++s_failures;
+        fprintf(stderr,
+                "FAIL: %s (expected page=%s feature=%d, got page=%s feature=%d)\n",
+                message,
+                watch_core_page_name(expected_type),
+                (int)expected_feature,
+                watch_core_page_name(actual.type),
+                (int)actual.feature);
+    }
+}
+
 static void test_default_page_semantics_are_proven_by_public_behavior(void)
 {
     WatchCore core;
@@ -69,6 +84,20 @@ static void test_default_page_semantics_are_proven_by_public_behavior(void)
     expect_int_eq(intent.feature,
                   WATCH_CORE_HEALTH_FEATURE_INVALID,
                   "shortcut return intent should clear feature");
+}
+
+static void test_public_page_state_reports_default_route(void)
+{
+    WatchCore core;
+    WatchCorePageState page_state;
+
+    watch_core_init(&core);
+    watch_core_get_current_page_state(&core, &page_state);
+
+    expect_page_state_eq(page_state,
+                         WATCH_CORE_PAGE_HEALTH_SHORTCUTS,
+                         WATCH_CORE_HEALTH_FEATURE_INVALID,
+                         "public page state after init should be health shortcuts");
 }
 
 static void test_health_card_events_map_to_detail_intents(void)
@@ -121,6 +150,33 @@ static void test_back_from_detail_returns_to_shortcuts(void)
     expect_int_eq(intent.feature,
                   WATCH_CORE_HEALTH_FEATURE_INVALID,
                   "shortcut intent should clear feature");
+}
+
+static void test_public_page_state_tracks_navigation_result(void)
+{
+    WatchCore core;
+    WatchCorePageState page_state;
+
+    watch_core_init(&core);
+    expect_true(watch_core_push_event(
+                    &core,
+                    watch_core_make_health_card_clicked_event(WATCH_CORE_HEALTH_FEATURE_STRESS)),
+                "detail navigation enqueue should succeed for page state tracking");
+    (void)watch_core_process_next_event(&core);
+    watch_core_get_current_page_state(&core, &page_state);
+    expect_page_state_eq(page_state,
+                         WATCH_CORE_PAGE_HEALTH_DETAIL,
+                         WATCH_CORE_HEALTH_FEATURE_STRESS,
+                         "public page state should reflect entered detail");
+
+    expect_true(watch_core_push_event(&core, watch_core_make_back_event()),
+                "back enqueue should succeed for page state tracking");
+    (void)watch_core_process_next_event(&core);
+    watch_core_get_current_page_state(&core, &page_state);
+    expect_page_state_eq(page_state,
+                         WATCH_CORE_PAGE_HEALTH_SHORTCUTS,
+                         WATCH_CORE_HEALTH_FEATURE_INVALID,
+                         "public page state should reflect shortcut return");
 }
 
 static void test_back_on_shortcuts_is_no_op(void)
@@ -282,11 +338,46 @@ static void test_metric_text_is_safely_truncated(void)
                 "truncated metric text must stay NUL-terminated");
 }
 
+static void test_process_pending_events_drains_to_stable_state(void)
+{
+    WatchCore core;
+    WatchCorePageIntent last_intent;
+    WatchCorePageState page_state;
+
+    watch_core_init(&core);
+    expect_true(
+        watch_core_push_event(
+            &core,
+            watch_core_make_health_card_clicked_event(WATCH_CORE_HEALTH_FEATURE_HEART_RATE)),
+        "first pending event enqueue should succeed");
+    expect_true(watch_core_push_event(&core, watch_core_make_back_event()),
+                "second pending event enqueue should succeed");
+
+    last_intent = watch_core_process_pending_events(&core);
+    watch_core_get_current_page_state(&core, &page_state);
+
+    expect_int_eq(last_intent.type,
+                  WATCH_CORE_PAGE_INTENT_LOAD_HEALTH_SHORTCUTS,
+                  "pending drain should report last non-none navigation action");
+    expect_int_eq(last_intent.feature,
+                  WATCH_CORE_HEALTH_FEATURE_INVALID,
+                  "pending drain final shortcut action should clear feature");
+    expect_page_state_eq(page_state,
+                         WATCH_CORE_PAGE_HEALTH_SHORTCUTS,
+                         WATCH_CORE_HEALTH_FEATURE_INVALID,
+                         "pending drain should leave final stable shortcut state");
+    expect_int_eq(watch_core_process_next_event(&core).type,
+                  WATCH_CORE_PAGE_INTENT_NONE,
+                  "after pending drain no extra events should remain");
+}
+
 int main(void)
 {
     test_default_page_semantics_are_proven_by_public_behavior();
+    test_public_page_state_reports_default_route();
     test_health_card_events_map_to_detail_intents();
     test_back_from_detail_returns_to_shortcuts();
+    test_public_page_state_tracks_navigation_result();
     test_back_on_shortcuts_is_no_op();
     test_invalid_feature_does_not_jump();
     test_empty_queue_returns_no_op();
@@ -294,6 +385,7 @@ int main(void)
     test_ring_buffer_full_rejects_new_event_without_reordering();
     test_snapshot_updates_are_readable();
     test_metric_text_is_safely_truncated();
+    test_process_pending_events_drains_to_stable_state();
 
     if (s_failures != 0) {
         fprintf(stderr, "%d contract test(s) failed.\n", s_failures);

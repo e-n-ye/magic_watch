@@ -136,6 +136,7 @@ flowchart TD
 - `V0.5-P1-A`：先做“页面状态、页面跳转意图、Adapter 消费规则”三者的契约决策，不直接实现，不预设 `ScreenId` 一定存在。
 - `V0.5-P1-A` 当前结论：不先引入平面 `ScreenId`；应把“持久页面状态”和“瞬时 `PageIntent` 动作”拆开，默认页面归 `watch_core` 所有，Adapter 在单次输入后统一 drain 到稳定态。
 - `V0.5-P1-B`：按 `P1-A` 的结论，只在 `watch_core` 与纯 PC 合同测试层加最小导航护栏。
+- `V0.5-P1-B` 当前结论：已新增独立页面状态读取合同和 pending-events drain 接口；下一步只需要让 PC / F411 Adapter 对齐消费，不必再回头争论默认页归属。
 - `V0.5-P1-C`：最后再让 PC / F411 Adapter 对齐到同一消费合同，不改各自 View 技术栈和输入算法。
 - `V0.5-P2-*`：只有在导航合同稳定后，才继续判断是否需要电源语义、第三平台接入边界等后续主题；不得把现有 `watch_core` 的 EventQueue / Coordinator / Snapshot 再当成空白模块重造。
 

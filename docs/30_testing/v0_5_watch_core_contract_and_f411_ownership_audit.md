@@ -47,6 +47,8 @@
 - 非法 feature 不得触发页面跳转。
 - Snapshot 必须可读、可更新、可安全截断。
 - 事件队列必须 FIFO，满队列拒绝新事件但不得打乱旧顺序。
+- 当前页面状态应通过公开页面状态合同读取，而不是通过 `PageIntent` 动作或内部字段猜测。
+- 单次外部输入后的共享处理规则应是“drain 到稳定态”，而不是由各平台各自定义处理到第几个事件为止。
 
 当前实现细节，不应直接固化成长期合同：
 
@@ -55,6 +57,12 @@
 - 目前 `current_page` 存在于 `WatchCore` 本体并被 F411 bridge 镜像。
 - F411 当前用“两块 panel hidden/unhidden”表达页面切换，而不是独立 LVGL screen create/load。
 - 表冠输入先进入 LVGL encoder indev，再由 focused clickable 控件回调间接生成 typed `UiEvent`；这是一条当前实现路径，不是长期唯一语义合同。
+
+`P1-B` 新增的公共护栏：
+
+- `WatchCorePageState`：用于表达权威当前页面状态。
+- `watch_core_get_current_page_state()`：用于公开读取默认页和导航后状态。
+- `watch_core_process_pending_events()`：用于固化“单次输入后 drain 到稳定态”的共享消费规则。
 
 ## 3. F411 新旧主链所有权审计
 

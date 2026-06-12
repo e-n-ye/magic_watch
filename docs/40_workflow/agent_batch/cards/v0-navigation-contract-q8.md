@@ -121,7 +121,7 @@
 
 - ID：`V0.5-P1-B`
 - 标题：`watch_core` 导航合同护栏
-- 状态：TODO
+- 状态：DONE
 - 依赖：`V0.5-P1-A`
 
 ### Problem
@@ -192,7 +192,15 @@
 
 ### Execution record
 
-- 待执行。
+- 2026-06-12：已在 `watch_core` 公共合同中新增独立页面状态类型 `WatchCorePageState`，把“当前页面状态”从 `PageIntent` 动作语义中拆出。
+- 2026-06-12：已新增公开 getter `watch_core_get_current_page_state()`，用于读取权威默认页和导航后页面状态，不再要求 Adapter 通过猜测首页或依赖内部字段获取当前路由。
+- 2026-06-12：已新增 `watch_core_process_pending_events()`，把“单次外部输入后 drain 到稳定态”的共享消费规则固化为公共处理接口；现有 `watch_core_process_next_event()` 保留，供后续 Adapter 对齐前兼容使用。
+- 2026-06-12：已扩充纯 PC 合同测试，新增覆盖：
+  - 初始化后公开页面状态为健康四卡
+  - 导航后公开页面状态可读
+  - `process_pending_events()` 会 drain 到稳定态，并返回最后一个非 no-op 页面动作
+- 2026-06-12：`cmake --build sim/lv_port_pc_vscode/build --config Debug` 通过；`sim/lv_port_pc_vscode/build/out/magic_watch_core_contract_test.exe` 运行通过并输出 `watch_core contract tests passed.`。
+- 2026-06-12：本卡未修改 PC/F411 Adapter、Lite View、Input Port 或真机代码；现有 simulator 构建保持通过，说明下一卡可在不扩大 scope 的前提下进入 `P1-C`。
 
 ### Stop policy
 

@@ -32,6 +32,34 @@ static bool pop_event(WatchCore * core, WatchCoreUiEvent * out_event)
     return true;
 }
 
+static WatchCorePageIntent watch_core_make_none_intent(void)
+{
+    WatchCorePageIntent none;
+
+    none.type = WATCH_CORE_PAGE_INTENT_NONE;
+    none.feature = WATCH_CORE_HEALTH_FEATURE_INVALID;
+    return none;
+}
+
+static WatchCorePageIntent watch_core_make_intent_from_state(const WatchCorePageState * page_state)
+{
+    WatchCorePageIntent intent;
+
+    if (page_state == NULL) {
+        return watch_core_make_none_intent();
+    }
+
+    if (page_state->type == WATCH_CORE_PAGE_HEALTH_DETAIL) {
+        intent.type = WATCH_CORE_PAGE_INTENT_LOAD_HEALTH_DETAIL;
+        intent.feature = page_state->feature;
+        return intent;
+    }
+
+    intent.type = WATCH_CORE_PAGE_INTENT_LOAD_HEALTH_SHORTCUTS;
+    intent.feature = WATCH_CORE_HEALTH_FEATURE_INVALID;
+    return intent;
+}
+
 void watch_core_init(WatchCore * core)
 {
     if (core == NULL) {
@@ -45,7 +73,7 @@ void watch_core_init(WatchCore * core)
     copy_metric_text(core->model.health_metric_text[WATCH_CORE_HEALTH_FEATURE_BREATHE], "18");
     copy_metric_text(core->model.health_metric_text[WATCH_CORE_HEALTH_FEATURE_STRESS], "34");
 
-    core->current_page.type = WATCH_CORE_PAGE_INTENT_LOAD_HEALTH_SHORTCUTS;
+    core->current_page.type = WATCH_CORE_PAGE_HEALTH_SHORTCUTS;
     core->current_page.feature = WATCH_CORE_HEALTH_FEATURE_INVALID;
 }
 
@@ -56,6 +84,15 @@ void watch_core_get_ui_snapshot(const WatchCore * core, WatchCoreUiModelSnapshot
     }
 
     *out_snapshot = core->model;
+}
+
+void watch_core_get_current_page_state(const WatchCore * core, WatchCorePageState * out_page_state)
+{
+    if (core == NULL || out_page_state == NULL) {
+        return;
+    }
+
+    *out_page_state = core->current_page;
 }
 
 bool watch_core_set_health_metric(
@@ -103,9 +140,7 @@ bool watch_core_push_event(WatchCore * core, WatchCoreUiEvent event)
 
 WatchCorePageIntent watch_core_process_next_event(WatchCore * core)
 {
-    WatchCorePageIntent none;
-    none.type = WATCH_CORE_PAGE_INTENT_NONE;
-    none.feature = WATCH_CORE_HEALTH_FEATURE_INVALID;
+    WatchCorePageIntent none = watch_core_make_none_intent();
 
     WatchCoreUiEvent event;
     if (core == NULL || !pop_event(core, &event)) {
@@ -117,20 +152,35 @@ WatchCorePageIntent watch_core_process_next_event(WatchCore * core)
             return none;
         }
 
-        core->current_page.type = WATCH_CORE_PAGE_INTENT_LOAD_HEALTH_DETAIL;
+        core->current_page.type = WATCH_CORE_PAGE_HEALTH_DETAIL;
         core->current_page.feature = event.feature;
-        return core->current_page;
+        return watch_core_make_intent_from_state(&core->current_page);
     }
 
     if (event.type == WATCH_CORE_UI_EVENT_BACK) {
-        if (core->current_page.type == WATCH_CORE_PAGE_INTENT_LOAD_HEALTH_DETAIL) {
-            core->current_page.type = WATCH_CORE_PAGE_INTENT_LOAD_HEALTH_SHORTCUTS;
+        if (core->current_page.type == WATCH_CORE_PAGE_HEALTH_DETAIL) {
+            core->current_page.type = WATCH_CORE_PAGE_HEALTH_SHORTCUTS;
             core->current_page.feature = WATCH_CORE_HEALTH_FEATURE_INVALID;
-            return core->current_page;
+            return watch_core_make_intent_from_state(&core->current_page);
         }
     }
 
     return none;
+}
+
+WatchCorePageIntent watch_core_process_pending_events(WatchCore * core)
+{
+    WatchCorePageIntent last_intent = watch_core_make_none_intent();
+
+    while (true) {
+        WatchCorePageIntent intent = watch_core_process_next_event(core);
+        if (intent.type == WATCH_CORE_PAGE_INTENT_NONE) {
+            break;
+        }
+        last_intent = intent;
+    }
+
+    return last_intent;
 }
 
 const char * watch_core_health_feature_name(WatchCoreHealthFeature feature)
@@ -172,6 +222,17 @@ const char * watch_core_page_intent_name(WatchCorePageIntentType type)
         case WATCH_CORE_PAGE_INTENT_NONE:
         default:
             return "NONE";
+    }
+}
+
+const char * watch_core_page_name(WatchCorePageType type)
+{
+    switch (type) {
+        case WATCH_CORE_PAGE_HEALTH_DETAIL:
+            return "HEALTH_DETAIL";
+        case WATCH_CORE_PAGE_HEALTH_SHORTCUTS:
+        default:
+            return "HEALTH_SHORTCUTS";
     }
 }
 

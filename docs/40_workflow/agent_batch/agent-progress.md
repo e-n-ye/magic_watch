@@ -858,3 +858,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：本轮只形成契约决策，不改 `watch_core`、PC/F411 Adapter、Lite View、Input Port 或 MDK 工程；因此不会把规划误写成已实现
 - 阻塞与待决：`P1-B` 尚未开始；公开页面状态类型的具体命名与 API 仍留待下一卡在代码层最小实现
 - 下一步：按停止策略停止，等待用户确认；若继续，再进入 `V0.5-P1-B`
+
+### 会话 2026-06-12 V0.5-P1-B
+
+- 本轮范围：队列项 `V0.5-P1-NAV-CONTRACT`，只执行卡片 `V0.5-P1-B`
+- 完成：已在 `watch_core` 中新增独立页面状态类型 `WatchCorePageState`、公开 getter `watch_core_get_current_page_state()` 和公共 drain 接口 `watch_core_process_pending_events()`；已把“默认页面归 Core 所有、单次输入后 drain 到稳定态”两条共享合同固化到纯 PC 层
+- 修改文件：`watch_core/include/watch_core/watch_core.h`、`watch_core/src/watch_core.c`、`watch_core/tests/watch_core_contract_test.c`、`docs/40_workflow/agent_batch/cards/v0-navigation-contract-q8.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`git status --short -uall` 仅包含本卡允许文件；`git diff --check` 通过（仅 CRLF 警告）；`cmake --build sim/lv_port_pc_vscode/build --config Debug` 通过；`sim/lv_port_pc_vscode/build/out/magic_watch_core_contract_test.exe` 运行通过并输出 `watch_core contract tests passed.`；`rg -n "lvgl|SDL|HAL|CubeMX|malloc|free|new|delete|std::" watch_core` 仅命中新测试自然语言字符串，不涉及运行实现
+- 风险回应：本轮没有修改 PC/F411 Adapter，因此若后续平台对齐出现问题，定位范围可以明确留在 `P1-C`；本轮也没有把 `PageIntent` 直接删掉，而是以兼容方式先补状态读取和 drain 护栏
+- 阻塞与待决：`P1-C` 尚未开始；PC/F411 仍在消费旧的逐条 `process_next_event()` 路径，需下一卡统一到新合同
+- 下一步：按停止策略停止，等待用户确认；若继续，再进入 `V0.5-P1-C`
