@@ -2,6 +2,13 @@
 
 这是 STM32F411 手表项目的新基线工程。当前目标不是一次性移植完整 Magic Watch，而是先建立一个自己可掌控、可逐步生长的 FreeRTOS + C-first 硬件骨架。
 
+## 当前状态提醒（2026-06-12）
+
+- 本 README 仍保留早期 LVGL 刷新诊断和 DMA 观测记录，属于历史 bring-up 证据，不等于当前 Lite UI 主链仍显示这些调试项。
+- 当前 F411 活跃 UI 已切换到 `f411_ui_adapter + watch_lite_view`。旧 debug overlay 已不在主链显示，本轮不会恢复性能探针。
+- 因为当前屏上没有性能 overlay，`calls/s`、`full/s`、`pixels/s`、`area px`、`area %`、`fps/ms` 这组数字在 Lite UI 主链下都应视为未验证。
+- 不得把“overlay 已移除”写成“性能指标已通过”；如果后续需要这些数值，必须新开独立观测卡恢复或新增专门入口。
+
 ## 当前硬件验收
 
 - 屏幕背光正常，启动后进入最小 Home 屏幕。
@@ -25,7 +32,7 @@
 - MDK 工程文件已收窄到当前 bring-up 所需的最小用户代码和必要外设。
 - 应用层事件入口使用固定数组 `EventQueue-lite`，当前只承载输入语义事件，不使用 heap 或复杂订阅机制。
 - 当前已存在最小 `ScreenManager`，保留 LCD 直绘 Debug Screen 骨架；LVGL 已作为当前可见 UI bring-up 链路接入。
-- LVGL 已按最小 label bring-up 目标收窄配置并登记到 MDK 工程；当前已有项目自有 display flush port，flush 会先把 `lv_color_t` 裁剪并转换成 RGB565 高字节优先 byte stream，再优先走 `watch_lcd_draw_rgb565_bytes()` 的 SPI DMA fallback 接口；DMA 真正完成后不在中断里直接调用 LVGL，而是由 FreeRTOS `defaultTask` 中的 LVGL `wait_cb` / `watch_bringup_task()` 路径消费完成状态并调用 `lv_disp_flush_ready()`；若 DMA error callback 触发，则由 `defaultTask` 用同一份 byte stream 做一次阻塞补发后再结束 flush；LVGL encoder indev 只消费编码器 intent；当前显示一个最小 LVGL debug label，用于验证输入计数、最后一次输入语义和当前 flush 性能基线。
+- LVGL 已按最小 label bring-up 目标收窄配置并登记到 MDK 工程；当前已有项目自有 display flush port，flush 会先把 `lv_color_t` 裁剪并转换成 RGB565 高字节优先 byte stream，再优先走 `watch_lcd_draw_rgb565_bytes()` 的 SPI DMA fallback 接口；DMA 真正完成后不在中断里直接调用 LVGL，而是由 FreeRTOS `defaultTask` 中的 LVGL `wait_cb` / `watch_bringup_task()` 路径消费完成状态并调用 `lv_disp_flush_ready()`；若 DMA error callback 触发，则由 `defaultTask` 用同一份 byte stream 做一次阻塞补发后再结束 flush；LVGL encoder indev 只消费编码器 intent。早期曾显示最小 LVGL debug overlay 用于验证输入计数、最后一次输入语义和 flush 性能基线，但当前 Lite UI 主链已不再显示该 overlay。
 - LVGL debug label 中的 `pulse` 是无输入时的可控刷新源；`calls/s` 是 flush 调用次数，不等于 FPS；`full/s` 是按全屏像素量折算出的等效全屏刷新率；`pixels/s` 是实际刷出的像素吞吐；`last ms` 是最近一次 flush 耗时；`lvgl/s` 是 `lv_timer_handler()` 调用频率。
 - LVGL debug screen 顶部显示红、绿、蓝、白、黑 5 个色块，中部显示 `font 10`、`font 14`、`font 20` 三组英文样例，用于在接入 XML UI 前验证 RGB565 字节序和字体显示质量。
 - `font 20` 下方的细条是 FPS 负载探针：黄色 marker 约每 33ms 移动一次，并主动刷新大于 5000 像素的区域，用于形成稳定可观察的刷新负载。
@@ -34,7 +41,7 @@
 
 下一轮不急着移植模拟器 UI。建议先在真机上继续观察当前异步 DMA flush 的稳定性和性能，再记录 DMA 前后对比结果，然后才考虑把更复杂的 UI 迁移进来。
 
-## 后续优化记录
+## 历史刷新诊断记录
 
 - 当前 LCD flush 已接到 `watch_lcd` 的 SPI DMA fallback 接口：LVGL 侧会先处理部分越界区域裁剪，并把像素转换成 LCD 需要的 RGB565 高字节优先 byte stream；大块 byte stream 优先尝试 DMA，小块或 DMA 不可用时仍走阻塞路径；DMA 完成只更新底层 busy 状态，`lv_disp_flush_ready()` 统一留给 `defaultTask` 消费，避免在中断上下文直接调用 LVGL；若 DMA 中途出错，则由 `defaultTask` 复用同一份 byte stream 做阻塞补发，保证本次 flush 最终仍有完整像素落屏。
 - 右下角 `fps / ms` 徽标来自 LVGL display `monitor_cb`：`fps` 是按 1 秒墙钟窗口统计的有效刷新周期数，`ms` 是最近一次 LVGL 刷新周期耗时；`calls/s`、`full/s`、`pixels/s`、`last ms` 仍是底层 flush 诊断指标，不能互相替代。
@@ -117,7 +124,7 @@ DMA 基线记录
 - `V0.1-D` 继续把传输路径接到现有 debug screen：`path b/d/f` 分别表示每秒阻塞完成次数、DMA 启动次数、失败次数，`fb` 表示最近 1 秒窗口内 DMA error 后转阻塞补发的次数；`dma wait` 表示最近一次 DMA pending 从 flush 发起到 `defaultTask` 完成收口的端到端等待耗时，后面的 `max` 表示最近 1 秒窗口峰值。这里不是纯 SPI 线上时间，包含调度与 wait_cb 消费。
 - 当前真机观察结果：静态场景 `path b/d/f 0/59/0`、`fb 0`、`dma wait 0 max 16`；输入压力场景 `path b/d/f 0/13/0`、`fb 0`、`dma wait 0 max 15`。这说明当前观察窗口内 flush 基本都走 DMA，没有看到失败或补发，后续应更关注调度节奏和整体刷新链路，而不是“DMA 是否生效”。
 - `V0.1` 诊断结论已整理到 `docs/30_testing/f411_lvgl_refresh_diagnostic.md`。当前最可能的问题不是 DMA 未生效、不是 RGB565 转换过重，也不是 dirty area 明显超预算；更值得优先处理的是 debug FPS probe、debug overlay 和整体刷新调度节奏。
-- `V0.2-A` 已为 FPS 负载探针增加独立开关：`watch_lvgl_debug_screen.c` 中的 `WATCH_DEBUG_ENABLE_FPS_LOAD_PROBE` 默认是 `1`，保持当前 bring-up 行为不变；将其改为 `0` 后可关闭黄色 probe，只保留颜色、字体、底部指标和右下角 `fps/ms` 徽标，用于观察更接近真实静态 UI 的刷新指标。debug screen 左侧会同步显示 `probe: on/off`，避免误判为刷新停止。
+- 历史上 `V0.2-A` 曾为旧 debug overlay 增加 FPS 负载探针开关，用于在静态 screen 上区分 `probe on/off` 的刷新增量；该入口当前已不在 Lite UI 主链显示，本轮不恢复。
 - `V0.2-B` 把 debug overlay 的常规指标刷新周期从 `500ms` 收敛到 `1000ms`。输入事件仍会立即更新左侧状态文本，但无输入时的周期性指标刷新现在不超过 `1Hz`，用于继续压低 debug overlay 自身造成的静态 dirty area。
 - `V0.2-C` 的收口结论是：当前 `WATCH_LVGL_DRAW_BUF_LINES = 20`，单块 draw buffer 为 `4800 px`（约整屏 `7.1%`），双 draw buffer 加配套 flush byte stream 合计约 `28800B` 静态显示缓冲。现有 `probe off` 静态证据不支持继续调大 draw buffer；当前更像是 debug overlay 每次文本改写会触发约 `4320 px / 6.4%` 的局部刷新，而不是静态场景存在周期性全屏常刷。
 

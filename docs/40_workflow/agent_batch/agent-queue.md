@@ -54,7 +54,7 @@
 
 ### V0.5-WATCH-CORE-GUARDRAILS 共享合同护栏与 F411 所有权收口
 
-- 状态：IN_PROGRESS
+- 状态：DONE
 - 卡片来源：cards/v0-watch-core-q7.md
 - 执行范围：卡片 `V0.5-P0-A` / `V0.5-P0-B`
 - 停止策略：每张卡后停止

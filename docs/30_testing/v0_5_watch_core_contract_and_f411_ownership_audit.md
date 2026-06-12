@@ -58,7 +58,7 @@
 
 ## 3. F411 新旧主链所有权审计
 
-### 3.1 当前运行主链
+### 3.1 `P0-B` 前运行主链
 
 当前主链是：
 
@@ -76,7 +76,37 @@
 -> watch_lvgl_debug_screen apply_snapshot_to_view / apply_page_to_view
 ```
 
-### 3.2 逐项所有权结论
+### 3.2 `P0-B` 迁移表
+
+| 当前职责 | `P0-B` 前位置 | `P0-B` 后归属 |
+|---|---|---|
+| Core 生命周期 | `watch_core_bridge.c` | `f411_ui_adapter.c` |
+| typed `UiEvent` 创建和派发 | `watch_lvgl_debug_screen.c`、`watch_core_bridge.c` | `f411_ui_adapter.c` |
+| Snapshot 获取 | `watch_core_bridge.c` | `f411_ui_adapter.c` |
+| Snapshot 写入 LVGL | `watch_lvgl_debug_screen.c` | `watch_lite_view.c` |
+| `PageIntent` 消费和调度 | `watch_core_bridge.c`、`watch_lvgl_debug_screen.c` | `f411_ui_adapter.c` |
+| 页面视觉切换 | `watch_lvgl_debug_screen.c` | `watch_lite_view.c` |
+| LVGL 对象创建 | `watch_lvgl_debug_screen.c` | `watch_lite_view.c` |
+| 表冠/触摸硬件与 indev | `watch_lvgl_port.c` | `watch_lvgl_port.c`（保持不变） |
+| tap-only、swipe 判定、手感阈值 | `watch_lvgl_port.c` | `watch_lvgl_port.c`（保持不变） |
+
+### 3.3 `P0-B` 后当前运行主链
+
+当前主链收口为：
+
+```text
+编码器硬件 / 触摸硬件
+-> watch_input_service_scan_10ms / watch_input_service_get_event
+-> watch_input_intent_from_event
+-> watch_lvgl_port_feed_input_intent / LVGL pointer indev
+-> watch_lite_view LVGL 点击回调 / swipe commit 可读信号
+-> f411_ui_adapter
+-> watch_core_push_event / watch_core_process_next_event
+-> f411_ui_adapter
+-> watch_lite_view_apply_page_intent / watch_lite_view_apply_snapshot
+```
+
+### 3.4 `P0-B` 后逐项所有权结论
 
 原始表冠输入由谁读取：
 
@@ -90,21 +120,22 @@
 
 typed `UiEvent` 在哪里生成：
 
-- 当前由 `watch_lvgl_debug_screen.c` 在卡片点击、屏上 `Back` 点击和左边缘右滑返回提交处生成：
+- `P0-B` 前由 `watch_lvgl_debug_screen.c` 在卡片点击、屏上 `Back` 点击和左边缘右滑返回提交处生成。
+- `P0-B` 后集中到 `f411_ui_adapter.c`：
   - `watch_core_make_health_card_clicked_event(...)`
   - `watch_core_make_back_event()`
 
 EventQueue 的权威实现是哪一套：
 
 - 当前运行主链实际使用的是 `watch_core` 内部固定容量队列。
-- 证据：`watch_core_bridge_dispatch_event()` 调用 `watch_core_push_event()` 和 `watch_core_process_next_event()`。
+- `P0-B` 后证据：`f411_ui_adapter_dispatch_event()` 调用 `watch_core_push_event()` 和 `watch_core_process_next_event()`。
 - 旧 `user/core/event/watch_event_queue.*` 仍被编译，但没有进入当前运行主链。
 
 当前页面状态分别存在哪些位置：
 
 - 权威页面语义状态：`WatchCore.current_page`
-- F411 当前镜像状态：`watch_core_bridge_state_t.current_page`
-- F411 当前视图展开状态：`watch_lvgl_debug_screen.c` 里 `s_shortcuts_panel / s_detail_panel` 的 hidden/visible
+- `P0-B` 后 F411 当前装配状态：`f411_ui_adapter_state_t.current_page`
+- F411 当前视图展开状态：`watch_lite_view.c` 里 `s_shortcuts_panel / s_detail_panel` 的 hidden/visible
 
 Coordinator 决策在哪里发生：
 
@@ -113,13 +144,13 @@ Coordinator 决策在哪里发生：
 
 Snapshot 在哪里应用到 View：
 
-- `watch_core_bridge_sync_state()` 从 `watch_core` 拉取 snapshot。
-- `watch_lvgl_debug_screen.c` 的 `apply_snapshot_to_view()` 把 snapshot 写到 LVGL label。
+- `f411_ui_adapter_sync_snapshot()` 从 `watch_core` 拉取 snapshot。
+- `watch_lite_view.c` 的 `watch_lite_view_apply_snapshot()` 把 snapshot 写到 LVGL label。
 
 `PageIntent` 在哪里转换成 LVGL 页面变化：
 
-- `watch_core_bridge_dispatch_event()` 保存 `last_intent` 和 `current_page`。
-- `watch_lvgl_debug_screen.c` 的 `apply_page_to_view()` 再把 `current_page` 转成 header 文案、detail/shortcut 面板切换和 focus group 重建。
+- `f411_ui_adapter_dispatch_event()` 保存 `last_intent` 和 `current_page`。
+- `watch_lite_view.c` 的 `watch_lite_view_apply_page_intent()` 再把 `current_page` 转成 header 文案、detail/shortcut 面板切换和 focus group 重建。
 
 旧 `watch_event_queue` 和 `watch_screen_manager` 是否仍被编译：
 
@@ -130,51 +161,71 @@ Snapshot 在哪里应用到 View：
 - 否。仓库内搜索未发现 `watch_event_queue_*` 或 `watch_screen_manager_*` 在 bring-up、task、LVGL port 或当前 Lite UI 路径中被调用。
 - 这两套当前属于“被编译，但未初始化、未调用、未掌权”。
 
-当前是否已经存在事实上的 `F411UiAdapter` 职责组合：
+`P0-B` 前是否已经存在事实上的 `F411UiAdapter` 职责组合：
 
-- 已经存在，但职责分散在三个文件：
-  - `watch_core_bridge.c`：core 生命周期、事件派发、intent/snapshot 镜像
-  - `watch_lvgl_debug_screen.c`：View 构建、snapshot 应用、page intent 执行、LVGL 回调到 typed `UiEvent`
+- `P0-A` 时已经存在，但分散在三个文件：
+  - `watch_core_bridge.c`
+  - `watch_lvgl_debug_screen.c`
+  - `watch_lvgl_port.c`
+- `P0-B` 后已经收口为明确边界：
+  - `f411_ui_adapter.c`：core 生命周期、typed `UiEvent` 派发、snapshot 获取、`PageIntent` 消费、view 同步
+  - `watch_lite_view.c`：View 构建、snapshot 应用、页面视觉切换、LVGL 点击转 Adapter 调用
   - `watch_lvgl_port.c`：encoder/pointer 输入语义、tap-only、防误触、左边缘右滑状态
 
-这些职责是否已出现会阻碍下一功能的重复或泄漏：
+这些职责在 `P0-B` 前是否已出现会阻碍下一功能的重复或泄漏：
 
 - 是。
 - 当前“typed event 入口、snapshot 应用、page intent 执行、视图生命周期”没有单一装配点。
 - 旧 `watch_screen_manager` 虽然仍在工程里，但它并未拥有当前运行链路；继续先隔离它，只会降低工程噪音，不会解决当前真正的扩展障碍。
 
-## 4. 编译 / 初始化 / 调用 / 运行状态区分
+## 4. `P0-B` 后编译 / 初始化 / 调用 / 运行状态区分
 
 | 模块 | 被编译 | 被初始化 | 被调用 | 当前运行主链实际使用 |
 |---|---|---|---|---|
 | `watch_core` | 是 | 是 | 是 | 是 |
-| `watch_core_bridge` | 是 | 是 | 是 | 是 |
-| `watch_lvgl_debug_screen` | 是 | 是 | 是 | 是 |
+| `f411_ui_adapter` | 是 | 是 | 是 | 是 |
+| `watch_lite_view` | 是 | 是 | 是 | 是 |
 | `watch_lvgl_port` | 是 | 是 | 是 | 是 |
 | `watch_input_service` | 是 | 是 | 是 | 是 |
 | `watch_input_intent` | 是 | 否（纯函数） | 是 | 是 |
+| `watch_core_bridge` | 否，已从当前 MDK target 移出 | 否 | 否 | 否 |
+| `watch_lvgl_debug_screen` | 否，已从当前 MDK target 移出 | 否 | 否 | 否 |
 | 旧 `watch_event_queue` | 是 | 否 | 否 | 否 |
 | 旧 `watch_screen_manager` | 是 | 否 | 否 | 否 |
 
-## 5. 第二张卡建议
+补充说明：
 
-建议选择：
+- `f411_ui_adapter`：被编译、初始化、调用，且当前主链使用。
+- `watch_lite_view`：被编译、初始化、调用，且当前主链使用。
+- `watch_core_bridge`：已从当前 MDK 目标和活跃路径移出。
+- `watch_lvgl_debug_screen`：已从当前 MDK 目标和活跃路径移出。
+- 旧 `watch_event_queue`：仍被编译，但未初始化、未调用、不在主链。
+- 旧 `watch_screen_manager`：仍被编译，但未初始化、未调用、不在主链。
 
-**抽取真正的 `F411UiAdapter`**
+## 5. `P0-B` 收口结论
 
-理由：
+`P0-B` 已把 `typed UiEvent` 派发、Snapshot 获取、`PageIntent` 消费和视图同步收口到单点装配边界。当前 F411 活跃链路已经不再依赖 `watch_core_bridge` 或 `watch_lvgl_debug_screen`。
 
-1. 当前真正阻碍下一功能的不是旧 `ScreenManager` 仍掌权，而是它已经不掌权了，但新的 Adapter 职责散落在 bridge / debug screen / lvgl port 三处。
-2. Snapshot 应用和 `PageIntent` 执行现在分裂在 `watch_core_bridge.c` 与 `watch_lvgl_debug_screen.c`，后续一旦继续扩详情页、更多输入语义或多页面生命周期，容易再次复制逻辑。
-3. `watch_event_queue` 和 `watch_screen_manager` 目前虽然还在 MDK 工程里，但只是“被编译的旧残留”，并未进入当前运行主链；单独优先隔离它们的收益主要是清噪音，不是解除当前架构阻塞。
+`P0-B` 已落实的边界：
 
-建议下一张卡聚焦：
+- 已形成单点 `F411UiAdapter` 装配边界。
+- `watch_lvgl_port` 继续保留硬件读取、indev 注册、原始坐标、tap-only、防误触、左边缘右滑和 `WATCH_TOUCH_SWIPE_BACK_COMMIT_DISTANCE = 36U` 这类手感阈值。
+- Lite View 继续只持有 LVGL 对象和具体视觉更新，不直接决定产品导航。
 
-- 明确一个 F411 侧单点 Adapter 装配边界
-- Adapter 负责接收已经形成的输入结果、将 UI 激活或 Back 语义转换成 typed `UiEvent`、驱动 `watch_core`、获取并应用 `UiModelSnapshot`、消费 `PageIntent` 并协调 Lite View 页面表现
-- `watch_lvgl_port` 继续保留硬件读取、indev 注册、原始坐标、tap-only、防误触、左边缘右滑和 `WATCH_TOUCH_SWIPE_BACK_COMMIT_DISTANCE = 36U` 这类手感阈值
-- Lite View 继续保留 LVGL 对象创建和具体视觉更新，不持有业务状态，不直接决定产品导航
-- 不在该卡顺手扩页面、改 DMA、改输入驱动或清理旧工程残留
+`P0-B` 已回填的真机验收结果：
+
+1. Keil / MDK 编译通过。
+2. 四卡首页正常显示。
+3. 表冠旋转切卡正常。
+4. 表冠短按进入详情正常。
+5. 触摸点击卡片进入详情正常。
+6. 触摸点击屏上 Back 返回正常。
+7. tap-only 防误触正常。
+8. 左边缘右滑 Back 正常。
+9. 中间起手右滑不会误返回。
+10. 首页左边缘右滑不会异常跳转。
+11. 无花屏、卡死、停更。
+12. `WATCH_TOUCH_SWIPE_BACK_COMMIT_DISTANCE` 仍为 `36U`。
 
 ## 6. 对 V0.5 后续拆分的修正
 

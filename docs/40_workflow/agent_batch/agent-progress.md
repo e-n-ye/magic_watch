@@ -818,3 +818,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 阻塞与待决：`V0.5-P0-B` 尚未开始；需在用户确认本轮审计与路线修正后，再进入“抽取真正的 `F411UiAdapter`”
 - 下一步：按停止策略停止，等待用户审阅；若继续，进入 `V0.5-P0-B`
 - 验收后修正：根据用户“有条件通过”的要求，已把合同测试从直接读取 `WatchCore.current_page` 改为只通过公开行为证明默认页面语义；并已进一步写紧 `V0.5-P0-B` 的 Adapter / Input Port / Lite View 三方边界，本轮仍不进入 `V0.5-P0-B` 实现。
+
+### 会话 2026-06-12 V0.5-P0-B
+
+- 本轮范围：先提交已验收 `V0.5-P0-A`，再执行卡片 `V0.5-P0-B`
+- 完成：`V0.5-P0-A` 已单独提交为 `b47a5bc`；`V0.5-P0-B` 已完成；当前 F411 活跃主链已收口为 `Input Port -> F411UiAdapter -> watch_core -> F411UiAdapter -> Lite View`
+- 修改文件：`try/my_watch_f411_v2.1/user/app/f411_ui_adapter.c`、`try/my_watch_f411_v2.1/user/app/f411_ui_adapter.h`、`try/my_watch_f411_v2.1/user/app/lvgl_demo/watch_lite_view.c`、`try/my_watch_f411_v2.1/user/app/lvgl_demo/watch_lite_view.h`、`try/my_watch_f411_v2.1/user/app/watch_bringup.c`、`try/my_watch_f411_v2.1/MDK-ARM/my_watch_f411.uvprojx`、`docs/30_testing/v0_5_watch_core_contract_and_f411_ownership_audit.md`、`docs/40_workflow/agent_batch/cards/v0-watch-core-q7.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`git status --short -uall` 已确认修改面仅落在本卡允许文件；`git diff --check` 通过（仅 CRLF 警告）；`cmake --build sim/lv_port_pc_vscode/build --config Debug` 通过；边界扫描已确认 typed `UiEvent` 创建与派发只落在 `f411_ui_adapter.c`，Adapter 未出现 `CST816/TAP/SWIPE/COMMIT_DISTANCE/TP_` 命中，Lite View 对 `watch_core` 的直接耦合仅剩类型头引用；本轮中文文档乱码哨兵检查通过；`magic_watch_core_contract_test.exe` 本轮未能重跑，原因是本地提权额度限制导致执行申请被拒
+- 风险回应：本轮只收口 F411 当前 UI/Core 装配边界；未修改 `watch_core`、PC XML Adapter、DMA、触摸算法或阈值；旧 `watch_screen_manager` / `watch_event_queue` 仍保持原状且未在本卡清理
+- 阻塞与待决：Keil / MDK 构建与真机验证仍需用户执行并回填
+- 下一步：按停止策略停止，等待用户验收；不进入 `V0.5-P0-C`

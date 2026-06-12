@@ -1235,14 +1235,14 @@
               <FilePath>..\user\app\watch_bringup.h</FilePath>
             </File>
             <File>
-              <FileName>watch_core_bridge.c</FileName>
+              <FileName>f411_ui_adapter.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\user\app\watch_core_bridge.c</FilePath>
+              <FilePath>..\user\app\f411_ui_adapter.c</FilePath>
             </File>
             <File>
-              <FileName>watch_core_bridge.h</FileName>
+              <FileName>f411_ui_adapter.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\user\app\watch_core_bridge.h</FilePath>
+              <FilePath>..\user\app\f411_ui_adapter.h</FilePath>
             </File>
           </Files>
         </Group>
@@ -1250,14 +1250,14 @@
           <GroupName>User/app/lvgl_demo</GroupName>
           <Files>
             <File>
-              <FileName>watch_lvgl_debug_screen.c</FileName>
+              <FileName>watch_lite_view.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\user\app\lvgl_demo\watch_lvgl_debug_screen.c</FilePath>
+              <FilePath>..\user\app\lvgl_demo\watch_lite_view.c</FilePath>
             </File>
             <File>
-              <FileName>watch_lvgl_debug_screen.h</FileName>
+              <FileName>watch_lite_view.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\user\app\lvgl_demo\watch_lvgl_debug_screen.h</FilePath>
+              <FilePath>..\user\app\lvgl_demo\watch_lite_view.h</FilePath>
             </File>
           </Files>
         </Group>

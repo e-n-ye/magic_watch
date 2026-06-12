@@ -97,7 +97,7 @@
 
 - ID：`V0.5-P0-B`
 - 标题：抽取真正的 `F411UiAdapter`
-- 状态：TODO
+- 状态：DONE
 - 依赖：`V0.5-P0-A`
 
 ### Problem
@@ -193,7 +193,12 @@ Lite View 继续负责：
 
 ### Execution record
 
-- 未开始。
+- 2026-06-12：先依据 `P0-A` 审计把迁移表固定为“`watch_core_bridge/watch_lvgl_debug_screen` -> `f411_ui_adapter/watch_lite_view`，`watch_lvgl_port` 保持不变”，避免把输入端口和 Lite View 一起粗暴吞进 Adapter。
+- 2026-06-12：新增 `try/my_watch_f411_v2.1/user/app/f411_ui_adapter.c/.h`，由 Adapter 统一持有 `WatchCore`、创建并派发 typed `UiEvent`、拉取 snapshot、消费 `PageIntent`，并以单点方式驱动 Lite View。
+- 2026-06-12：新增 `try/my_watch_f411_v2.1/user/app/lvgl_demo/watch_lite_view.c/.h`，由 Lite View 统一持有 LVGL 对象、应用 snapshot、执行页面视觉切换，并把 LVGL 点击转换成无业务决策的 Adapter 调用。
+- 2026-06-12：`watch_bringup.c` 当前只装配 `watch_lvgl_port + f411_ui_adapter`；旧 `watch_core_bridge.*` 和 `watch_lvgl_debug_screen.*` 已从当前活跃路径与 MDK 工程登记移出，不再保留第二套活跃 UI/Core 装配链。
+- 2026-06-12：`watch_lvgl_port.c` 未迁入任何 `CST816`、原始坐标、tap-only、swipe 判定或阈值逻辑到 Adapter；`WATCH_TOUCH_SWIPE_BACK_COMMIT_DISTANCE` 仍保持 `36U`。
+- 2026-06-12：用户已完成人工验收并确认以下 12 项全部通过：Keil / MDK 编译通过；四卡首页正常显示；表冠旋转切卡正常；表冠短按进入详情正常；触摸点击卡片进入详情正常；触摸点击屏上 Back 返回正常；tap-only 防误触正常；左边缘右滑 Back 正常；中间起手右滑不会误返回；首页左边缘右滑不会异常跳转；无花屏、卡死、停更；`WATCH_TOUCH_SWIPE_BACK_COMMIT_DISTANCE` 仍为 `36U`。
 
 ### Stop policy
 
