@@ -323,3 +323,54 @@ F411 Adapter：
 
 - F411 Lite View 仍以页面动作类型承载自己的局部视图切换入口，这属于平台内实现细节，不构成共享权威状态泄漏。
 - View 创建失败后的平台恢复路径仍偏轻量，但当前没有证据表明它已阻碍 Power 语义规划。
+
+## 8. `V0.5-P3-A` Power 共享语义决策
+
+### 8.1 当前代码证据
+
+- 新主线 `WatchCore` 当前只持有模型、页面状态和 UI 事件队列，没有 Power 状态。
+- PC/F411 Adapter 当前只同步最终 `PageState` 和 snapshot，没有平台 Power executor。
+- F411 `watch_input_intent_from_event()` 只把表冠旋转、短按和长按转换成上层 Intent；底层 Wake 键事件没有进入当前上层主链。
+- F411 当前把表冠 Intent 直接喂给 LVGL encoder；未来接 Power 后，熄屏输入必须在该喂入动作之前被共享状态门控。
+- F411 已有 `watch_lcd_backlight_set(percent)`，可把占空比设为 0，但当前接口没有执行成功/失败返回合同。
+- 旧 PC `PowerController` 已证明“Controller 返回固定大小 Action、不直接操作 UI”的边界有价值；旧 `AppStateMachine` 也只在页面/显示执行成功后标记 Running 或 ScreenOff。
+
+### 8.2 决策
+
+V0.5 首个共享 Power 合同只定义 `SCREEN_ON` / `SCREEN_OFF`。
+
+```text
+PowerRequest
+-> PowerController 只做状态表决策
+-> PowerAction
+-> Platform 执行
+-> commit(success/failure)
+-> PowerState
+```
+
+请求阶段不修改持久状态。平台失败时保持原状态。Power 状态与 `WatchCorePageState` 独立，息屏/唤醒不产生 `PageIntent`，也不清空或恢复页面栈。
+
+F411 当前输入规则固定为：
+
+- 亮屏时表冠旋转和短按继续走现有 UI 语义。
+- 熄屏时表冠旋转忽略。
+- 熄屏时表冠短按只请求唤醒，首个按下不继续确认。
+- 历史 Wake 键不进入当前产品合同。
+
+### 8.3 下一实现边界
+
+下一卡只在 `watch_core` 内实现独立、固定大小、无堆、表驱动的 `WatchCorePowerController` 和纯 PC 合同测试。
+
+本轮及下一卡都不接 PC/F411 Adapter，不控制真实背光，不新增 `ScreenOff` 页面、`SystemEvent`、timer、抬腕/触摸/通知唤醒或 LILYGO 代码。
+
+V0.5 负责把 Power 决策合同做成可解释、可测试的 Core 事实；V0.6 才负责三平台 Action executor、F411 表冠门控和真实亮灭屏/唤醒闭环。
+
+### 8.4 学习结论
+
+V0.5 的学习验收不是“拥有一个叫 PowerController 的文件”，而是能解释：
+
+- 页面状态与 Power 状态为什么是两个状态机。
+- Request、Action、平台执行和 commit 为什么不能合成一次调用。
+- Controller 为什么不需要成为任务。
+- 平台为什么只能执行动作，不能拥有产品策略。
+- 为什么真实低功耗仍需要外设、电源域、唤醒源和测量闭环，不能用一次背光关闭代替。

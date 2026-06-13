@@ -81,7 +81,7 @@
 
 ### V0.5-P3-POWER-SEMANTICS Power / Wake / Screen On 共享语义决策
 
-- 状态：TODO
+- 状态：DONE
 - 卡片来源：cards/v0-power-semantics-q10.md
 - 执行范围：卡片 `V0.5-P3-A`
 - 停止策略：队列项完成后停止

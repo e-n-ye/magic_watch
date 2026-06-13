@@ -900,3 +900,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 阻塞与待决：`P2-A` 的 F411 Keil 编译冒烟仍未执行，继续保留为未验证；它不阻塞纯文档 `P3-A`，但首张 Power 实现卡开始前应补齐
 - 历史记录说明：上一会话“修改文件”中的 `docs/40_workflow/agent-progress.md` 应理解为 `docs/40_workflow/agent_batch/agent-progress.md`；按历史会话只读规则不回改旧块
 - 下一步：等待用户确认后执行 `V0.5-P3-A`；完成后停止，不自动创建或执行 `V0.5-P3-B`
+
+### 会话 2026-06-13 V0.5-P3-A 执行
+
+- 本轮范围：队列项 `V0.5-P3-POWER-SEMANTICS`，只执行 `V0.5-P3-A`
+- 完成：`V0.5-P3-A`；已形成 `SCREEN_ON / SCREEN_OFF` 双状态、`Request -> Action -> Platform apply -> commit` 两阶段合同、F411 表冠输入规则、所有权表、被否决方案、`P3-B` 唯一建议以及 V0.5 学习/退出门
+- 修改文件：`docs/40_workflow/agent_batch/cards/v0-power-semantics-q10.md`、`docs/30_testing/v0_5_watch_core_contract_and_f411_ownership_audit.md`、`docs/00_current/magicwatch_long_term_roadmap.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`git diff --check` 通过（仅 CRLF 提示）；`git status --short -uall` 只包含本卡五个允许文档；卡片关键词和状态表检查通过；本轮实际修改中文文档乱码哨兵检查无命中
+- 风险回应：没有把旧 PC 全量 Power 功能搬进新 Core；没有把 `ScreenOff` 建模成页面；没有把历史 Wake 键写成当前输入；没有提前接 Adapter、背光、LILYGO 或 V0.6
+- 阻塞与待决：`P2-A` 以来的 F411 Keil 编译冒烟仍未执行；要求在 `P3-B` 完成前补齐。Power 代码、平台执行和真机 Power 行为均未实现、未验证
+- 下一步：按停止策略等待用户验收；随后单独规划整个 V0.5 剩余工作，不自动创建或执行 `V0.5-P3-B`
