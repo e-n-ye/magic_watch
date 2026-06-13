@@ -88,6 +88,33 @@
 - 验收后处理：保留
 - 执行前条件：`V0.5-P2-EVENT-DRAIN` 已完成并经用户验收；本队列项只形成 Power 共享语义决策和下一实现卡边界，不修改代码，不进入 V0.6 平台执行。
 
+### V0.5-P3-POWER-CONTRACT 共享 Power 合同实现
+
+- 状态：TODO
+- 卡片来源：cards/v0-power-contract-close-q11.md
+- 执行范围：卡片 `V0.5-P3-B`
+- 停止策略：每张卡后停止
+- 验收后处理：保留
+- 执行前条件：`V0.5-P3-POWER-SEMANTICS` 已完成并验收；本队列项只实现 `watch_core` 内的最小 Power 决策合同与纯 PC 测试，不接 Adapter、背光、输入门控或 V0.6 平台执行。
+
+### V0.5-P3-CORE-AUDIT Core 所有权复核与退出门
+
+- 状态：TODO
+- 卡片来源：cards/v0-power-contract-close-q11.md
+- 执行范围：卡片 `V0.5-P3-C`
+- 停止策略：每张卡后停止
+- 验收后处理：保留
+- 执行前条件：`V0.5-P3-POWER-CONTRACT` 已完成并经用户回填 F411 编译与原 UI 冒烟；本队列项只做审计与退出门判断，不修改代码。
+
+### V0.5-P4-LEARNING-CLOSE 学习沉淀与 V0.6 交接
+
+- 状态：TODO
+- 卡片来源：cards/v0-power-contract-close-q11.md
+- 执行范围：卡片 `V0.5-P4-A`
+- 停止策略：每张卡后停止
+- 验收后处理：保留
+- 执行前条件：`V0.5-P3-CORE-AUDIT` 已完成并验收；本队列项只收口学习沉淀、路线修正与 V0.6 交界，不进入实现。
+
 ## 队列项格式
 
 ```text
