@@ -79,6 +79,15 @@
 - 验收后处理：保留
 - 执行前条件：`V0.5-P1-NAV-CONTRACT` 已完成；进入本队列项时，必须先修正 pending drain 的完成判定，再决定 V0.5 是否可以退出到 Power 语义规划。
 
+### V0.5-P3-POWER-SEMANTICS Power / Wake / Screen On 共享语义决策
+
+- 状态：TODO
+- 卡片来源：cards/v0-power-semantics-q10.md
+- 执行范围：卡片 `V0.5-P3-A`
+- 停止策略：队列项完成后停止
+- 验收后处理：保留
+- 执行前条件：`V0.5-P2-EVENT-DRAIN` 已完成并经用户验收；本队列项只形成 Power 共享语义决策和下一实现卡边界，不修改代码，不进入 V0.6 平台执行。
+
 ## 队列项格式
 
 ```text

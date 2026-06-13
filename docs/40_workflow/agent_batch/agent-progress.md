@@ -889,3 +889,14 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：本轮没有修改公共 API、PC/F411 Adapter、Lite View、Input Port 或任何 Power 代码；`P2-B` 的 View 失败策略只收口为最小合同，不冒进抽象新 API
 - 阻塞与待决：F411 Keil 编译和真机冒烟本轮未执行，只能保持未验证；PC 当前仍无左边缘右滑退出语义，但这不是本队列项的共享合同缺口
 - 下一步：按停止策略停止，等待用户确认；下一窗口可进入 Power / Wake / Screen On 语义规划
+
+### 会话 2026-06-13 V0.5-P3-A 卡片落地
+
+- 本轮范围：验收 `V0.5-P2-A` / `V0.5-P2-B`，只把 Power 语义规划落成正式卡片和队列入口，不执行 `V0.5-P3-A`
+- 完成：确认 `P2-A` drain 修正与新增盲区测试符合既有合同；确认 `P2-B` 第三 Adapter 接入门与 PC/F411 当前代码一致；新增 `cards/v0-power-semantics-q10.md` 和 TODO 队列项 `V0.5-P3-POWER-SEMANTICS`
+- 修改文件：`docs/40_workflow/agent_batch/cards/v0-power-semantics-q10.md`、`docs/00_current/magicwatch_long_term_roadmap.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`git diff --check` 通过（仅 CRLF 提示）；`git status --short -uall` 只包含本轮四个允许文档；卡片必需字段检查通过；本轮实际修改中文文档乱码哨兵检查无命中
+- 风险回应：F411 当前只采用表冠语义；底层 `WATCH_INPUT_WAKE_SHORT` / `WATCH_INPUT_WAKE_LONG` 已明确为历史遗留，不进入 Power 合同；旧 PC `PowerController` 只作为行为证据
+- 阻塞与待决：`P2-A` 的 F411 Keil 编译冒烟仍未执行，继续保留为未验证；它不阻塞纯文档 `P3-A`，但首张 Power 实现卡开始前应补齐
+- 历史记录说明：上一会话“修改文件”中的 `docs/40_workflow/agent-progress.md` 应理解为 `docs/40_workflow/agent_batch/agent-progress.md`；按历史会话只读规则不回改旧块
+- 下一步：等待用户确认后执行 `V0.5-P3-A`；完成后停止，不自动创建或执行 `V0.5-P3-B`
