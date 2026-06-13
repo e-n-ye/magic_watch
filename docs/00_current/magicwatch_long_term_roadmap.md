@@ -1,7 +1,7 @@
 # MagicWatch V0-V3 执行路线图
 
 > 状态：Current Draft  
-> 更新日期：2026-06-11
+> 更新日期：2026-06-13
 > 路由类型：按需当前计划  
 > 适用场景：规划 V0-V3、拆分执行卡、判断当前阶段是否该继续或停止
 
@@ -148,7 +148,8 @@ flowchart TD
 - `V0.5-P3-C`：在 `P3-B` 后只读复核 `Input / UiEvent / PageState / PageIntent / PowerState / PowerAction / Adapter / Platform Port` 的所有权矩阵，并用用户回填的 F411 编译与原 UI 冒烟结果判断 `V0.5` 是否还存在新的共享合同断裂点。
 - `V0.5-P3-C` 当前结论：`P3-B` 的 F411 编译与原 UI 冒烟已回填通过；当前没有新的、已被代码证实的共享合同断裂点，因此不继续新增 `SystemEvent`、总线或新 Coordinator，直接进入 `V0.5-P4-A`。
 - `V0.5-P4-A`：单独收口学习沉淀与 `V0.6` 交界，明确为什么旧 `V0.5-A~G` 路线已过时、当前 `V0.5` 真正完成了什么，以及 `V0.6` 从平台 Action executor 而不是继续补 Core 名词开始。
-- `V0.5` 后续只剩“Power 合同实现 -> Core 组合/边界复核 -> 学习与退出总结”；PC/F411/LILYGO Action executor、表冠门控和真实亮灭屏/唤醒闭环属于 `V0.6`。
+- `V0.5-P4-A` 当前结论：`V0.5` 已完成共享合同护栏、导航状态合同、事件 drain 语义、最小 Power 决策合同、PC/F411 Adapter 对齐和学习收口；旧 `V0.5-A~G` 已降为历史学习假设，不再作为执行路线。
+- `V0.5` 到此收口为“共享合同阶段完成”；PC/F411/LILYGO Action executor、表冠门控和真实亮灭屏/唤醒闭环属于 `V0.6`。
 
 V0.5 是个人能力分水岭，不允许 AI 一次性生成完整 core。
 

@@ -108,7 +108,7 @@
 
 ### V0.5-P4-LEARNING-CLOSE 学习沉淀与 V0.6 交接
 
-- 状态：TODO
+- 状态：DONE
 - 卡片来源：cards/v0-power-contract-close-q11.md
 - 执行范围：卡片 `V0.5-P4-A`
 - 停止策略：每张卡后停止

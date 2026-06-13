@@ -79,3 +79,11 @@ PC SDL 与 F411 LCD/Touch 的平台差异仍应尽量收敛在 display/input/tic
 ## D019: `V0.4R` 的固定边界是“共享语义合同，不固定 UI 技术实现”
 
 `V0.4R` 保留 PC `LVGL 9.6 + XML` 主线，保留 F411 `LVGL 8.2 + DMA flush + 20 行 draw buffer + 当前显示基线`。F411 侧采用手写 LVGL 8.2 Lite View + `F411UiAdapter`，Lite View 只负责显示，不复制业务状态机、导航逻辑或状态源。暂缓的路线包括：F411 升级 LVGL 9.6、XML -> Lite IR/Generator、W25Q128 + LVGL FS + PNG 主链。
+
+## D020: 页面状态和页面动作必须分离
+
+`WatchCorePageState` 是权威当前页面状态读取合同，`PageIntent` 只表示瞬时页面动作。Adapter 在单次输入后统一 drain 到稳定态，再按最终 `PageState + UiModelSnapshot` 同步 View，不得把本地页面缓存或一次 `PageIntent` 当权威当前页。
+
+## D021: Power 合同止于 Core 决策，`V0.6` 从平台执行开始
+
+`watch_core` 当前只拥有最小 `PowerState / PowerRequest / PowerAction / commit` 合同。它负责给出决策，但不直接执行背光、亮灭屏或真实唤醒动作。后续 `V0.6` 的起点是平台 Action executor 和执行回路对齐，而不是继续新增 `SystemEvent`、新 Coordinator 或更多 Core 名词。

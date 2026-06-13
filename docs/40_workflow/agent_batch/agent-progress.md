@@ -930,3 +930,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：本轮保持纯审计闭环，没有顺手改代码、没有提前进入 `P4-A`，也没有把平台执行问题误判成新的 Core 缺口
 - 阻塞与待决：无
 - 下一步：通过自检后单独提交 `V0.5-P3-C`，并停止等待用户决定是否进入 `V0.5-P4-A`
+
+### 会话 2026-06-13 V0.5-P4-A
+
+- 本轮范围：队列项 `V0.5-P4-LEARNING-CLOSE`，只执行卡片 `V0.5-P4-A`
+- 完成：`V0.5-P4-A`
+- 修改文件：`docs/50_stage_records/v0_5_core_contract_learning_closure.md`、`docs/20_guides/magicwatch_personal_growth_plan.md`、`docs/document_map.md`、`docs/00_current/current_decisions.md`、`docs/00_current/magicwatch_long_term_roadmap.md`、`docs/40_workflow/agent_batch/cards/v0-power-contract-close-q11.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`git status --short -uall` 只包含本卡允许文件；`git diff --check` 通过（仅 LF/CRLF 提示）；`rg -n "V0\\.5-A|V0\\.5-B|V0\\.5-C|V0\\.5-D|V0\\.5-E|V0\\.5-F|V0\\.5-G" ...` 结果仅保留在新阶段记录、路线图和成长计划中的历史解释文本，不再作为执行路线存在；本轮实际改动中文文档乱码哨兵检查无命中
+- 风险回应：本轮只收口学习沉淀、路线修正和 `V0.6` 交界，不修改代码、不提前开始 `V0.6` 平台实现
+- 阻塞与待决：无
+- 下一步：单独提交 `V0.5-P4-A`，然后停止，等待用户确认整个 `V0.5` 收口结论

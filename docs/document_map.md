@@ -277,6 +277,7 @@
 先读：
 
 - [v0_scope.md](/D:/MY_Desk/watch/magic_watch/docs/50_stage_records/v0_scope.md)
+- [v0_5_core_contract_learning_closure.md](/D:/MY_Desk/watch/magic_watch/docs/50_stage_records/v0_5_core_contract_learning_closure.md)，仅在需要理解为什么旧 `V0.5-A~G` 已过时、当前 `V0.5` 真正完成了什么、以及 `V0.6` 从哪里开始时补读。
 - [50_stage_records/](/D:/MY_Desk/watch/magic_watch/docs/50_stage_records)
 
 说明：
