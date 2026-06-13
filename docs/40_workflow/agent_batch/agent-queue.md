@@ -115,6 +115,16 @@
 - 验收后处理：保留
 - 执行前条件：`V0.5-P3-CORE-AUDIT` 已完成并验收；本队列项只收口学习沉淀、路线修正与 V0.6 交界，不进入实现。
 
+### ARCH-CONTROL-LEARNING 架构掌控力恢复学习轮
+
+- 状态：PAUSED
+- 卡片来源：cards/architecture-control-learning-q12.md
+- 执行范围：卡片 `LEARN-A` / `LEARN-B` / `LEARN-C` / `LEARN-D`
+- 停止策略：每张卡后停止
+- 验收后处理：保留
+- 暂停原因：逐函数学习最终架构不能提供“需求压力 -> 方案选择 -> 代价观察”的完整经验，当前方向改为独立 PC 架构冲突实验场。
+- 执行门：不得继续自动执行 `LEARN-A~D`；后续只允许先按 `docs/20_guides/watch_arch_learning_lab.md` 单独规划 Stage 00，且不得提前创建后续 Stage。
+
 ## 队列项格式
 
 ```text

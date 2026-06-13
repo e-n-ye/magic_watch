@@ -328,6 +328,8 @@
 先读：
 
 - [magicwatch_personal_growth_plan.md](/D:/MY_Desk/watch/magic_watch/docs/20_guides/magicwatch_personal_growth_plan.md)
+- [watch_arch_learning_lab.md](/D:/MY_Desk/watch/magic_watch/docs/20_guides/watch_arch_learning_lab.md)，仅在规划或执行独立 PC 架构冲突实验场时读取。
+- [architecture_control_learning_workbook.md](/D:/MY_Desk/watch/magic_watch/docs/20_guides/architecture_control_learning_workbook.md)，历史学习现场；只在具体实验暴露 LVGL、FreeRTOS 或当前主链知识缺口时按需回看。
 - [cpp_minimal_glossary.md](/D:/MY_Desk/watch/magic_watch/docs/20_guides/cpp_minimal_glossary.md)
 - [learning_plan.md](/D:/MY_Desk/watch/magic_watch/docs/20_guides/learning_plan.md)
 - [simulator_reading_guide.md](/D:/MY_Desk/watch/magic_watch/docs/20_guides/simulator_reading_guide.md)
@@ -336,6 +338,8 @@
 
 - 这些文档属于按需阅读的开发指南，不回到默认新会话入口。
 - `magicwatch_personal_growth_plan.md` 把 V0-V3 工程阶段映射到 C 工程化、LVGL 生命周期、性能分析、状态机、FreeRTOS、低功耗和 C++ 阅读能力。
+- `watch_arch_learning_lab.md` 定义需求压力先于抽象、Stage 启停门、产品隔离和 Stage 00 边界；暂定冲突地图不是自动执行路线。
+- `architecture_control_learning_workbook.md` 保留此前逐链阅读、用户作答和 Agent 纠偏，不再作为当前学习路线或队列入口。
 - 其余三份分别服务于 C++ 代码阅读补盲、学习路径规划和模拟器主线代码导读。
 
 ## 文档维护规则

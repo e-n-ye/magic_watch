@@ -940,3 +940,32 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：本轮只收口学习沉淀、路线修正和 `V0.6` 交界，不修改代码、不提前开始 `V0.6` 平台实现
 - 阻塞与待决：无
 - 下一步：单独提交 `V0.5-P4-A`，然后停止，等待用户确认整个 `V0.5` 收口结论
+
+### 会话 2026-06-13 架构掌控力恢复学习轮
+
+- 本轮范围：正式落卡 `LEARN-A` / `LEARN-B` / `LEARN-C` / `LEARN-D`，只启动 `LEARN-A`
+- 完成：已创建四张逐卡验收的学习卡；已建立按需学习工作簿和阅读函数锚点；`LEARN-A` 当前等待用户首次作答
+- 修改文件：`docs/20_guides/architecture_control_learning_workbook.md`、`docs/document_map.md`、`docs/40_workflow/agent_batch/cards/architecture-control-learning-q12.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：待本轮文档落地后执行 `git status --short -uall`、`git diff --check`、卡片字段检查和中文乱码哨兵检查
+- 风险回应：没有替用户填写链路答案，没有修改运行代码，也没有提前新增 Core 追踪程序或进入 V0.6
+- 阻塞与待决：`LEARN-A` 的首次链路表、判断题和口述验收必须由用户完成
+- 下一步：用户填写工作簿中的 `LEARN-A` 区域后，由 Agent 做事实审查；验收前不进入 `LEARN-B`
+
+### 会话 2026-06-13 LEARN-A 学习方式修正
+
+- 本轮范围：根据用户第一次真实阅读反馈，修正 `LEARN-A` 的教学方式，并准备 encoder 到 LVGL click 的下一认知结
+- 完成：保留用户全部自由阅读批注；暂停整链大表；新增认知结 3 的最小地图、七个代码锚点、时间线推演区和六个问题
+- 修改文件：`docs/20_guides/architecture_control_learning_workbook.md`、`docs/40_workflow/agent_batch/cards/architecture-control-learning-q12.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：待修改完成后执行 `git status --short -uall`、`git diff --check` 和本轮中文文档乱码哨兵检查
+- 风险回应：不再把学习设计成先通读再考试；不删除用户批注，不修改运行代码，不提前进入下一卡
+- 阻塞与待决：用户需要完成认知结 3 的时间线推演和六个问题
+- 下一步：审查 `CONFIRM -> encoder read_cb -> focus -> LV_EVENT_CLICKED` 的用户理解
+
+### 会话 2026-06-13 架构冲突实验场路线切换
+
+- 本轮范围：把学习主线从“追踪当前最终架构”切换为“通过独立 PC 工程观察需求压力、方案选择和代价”的架构冲突实验场
+- 完成：新增实验场总纲；定义 Anti-goals、产品隔离、固定实验流程、Stage 启停门、暂定冲突地图和 Stage 00 边界；暂停并保留原 `LEARN-A~D` 与工作簿
+- 修改文件：`docs/20_guides/watch_arch_learning_lab.md`、`docs/20_guides/architecture_control_learning_workbook.md`、`docs/document_map.md`、`docs/40_workflow/agent_batch/cards/architecture-control-learning-q12.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 风险回应：复盘默认限制为 500～1000 字；暂定 Stage 不得自动执行；Stage 00 未暴露真实压力时只能继续朴素实现；实验场与 Magic Watch 禁止直接复制实现
+- 阻塞与待决：尚未决定独立实验工程的最终目录和 runtime 复用方式，这些只在 Stage 00 规划时决定
+- 下一步：停止在章程层；下一轮只规划 Stage 00，不创建 Stage 01 或后续卡片
