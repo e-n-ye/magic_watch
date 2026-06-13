@@ -374,3 +374,65 @@ V0.5 的学习验收不是“拥有一个叫 PowerController 的文件”，而�
 - Controller 为什么不需要成为任务。
 - 平台为什么只能执行动作，不能拥有产品策略。
 - 为什么真实低功耗仍需要外设、电源域、唤醒源和测量闭环，不能用一次背光关闭代替。
+
+## 9. `V0.5-P3-B` 当前代码事实
+
+### 9.1 已成立的 Core Power 合同
+
+`watch_core` 现在已经公开持有最小 Power 合同：
+
+- `WatchCorePowerState`
+- `WatchCorePowerRequest`
+- `WatchCorePowerActionType`
+- `WatchCorePowerAction`
+- `WatchCorePowerController`
+- `watch_core_get_power_state()`
+- `watch_core_request_power_action()`
+- `watch_core_commit_power_action()`
+
+当前实现保持了 `P3-A` 约束：
+
+- 初始状态固定为 `SCREEN_ON`
+- request 阶段不修改持久 Power 状态
+- commit 是唯一状态迁移入口
+- `TURN_SCREEN_OFF` 与 `WAKE_SCREEN` 都携带 `source_state` / `target_state`
+- commit 只有在 Action 形状合法且 `source_state` 与当前状态匹配时才接受
+- `platform_applied = false` 时，表示“平台执行失败但 commit 形状合法”，状态保持不变
+- `NONE` Action、非法 Action 或状态不匹配 Action 会被拒绝
+
+这意味着当前“陈旧 Action”的最小定义已经收口为：
+
+- 当前状态不匹配的 Action
+
+还没有引入异步 token、generation 或跨线程完成事件；这些仍留给未来真的出现异步平台 executor 时再设计。
+
+### 9.2 纯 PC 合同测试结果
+
+当前 `watch_core` 合同测试已扩展并通过以下 Power 场景：
+
+1. 初始化默认 `SCREEN_ON`
+2. `SCREEN_ON + REQUEST_SCREEN_OFF` 只返回 `TURN_SCREEN_OFF`，请求阶段状态不变
+3. 息屏失败 commit 后保持 `SCREEN_ON`
+4. 息屏成功 commit 后进入 `SCREEN_OFF`
+5. `SCREEN_OFF + REQUEST_WAKE` 只返回 `WAKE_SCREEN`，请求阶段状态不变
+6. 唤醒失败保持 `SCREEN_OFF`
+7. 唤醒成功回到 `SCREEN_ON`
+8. 重复息屏、重复唤醒返回 `NONE`
+9. `NONE` Action、非法 Action、状态不匹配 Action 被拒绝
+10. Power 往返不改变页面状态、snapshot 和现有 UI 队列合同
+11. 原有全部导航 / 队列 / snapshot 合同测试继续通过
+
+### 9.3 仍未验证项
+
+本轮尚未执行：
+
+- F411 Keil / MDK 编译
+- 一次原 UI 冒烟：四卡、详情、Back、表冠原闭环
+
+因此，`P3-B` 当前只能视为：
+
+- 纯 PC 合同与代码事实成立
+
+还不能写成：
+
+- F411 平台回归已通过

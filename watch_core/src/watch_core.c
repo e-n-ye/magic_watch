@@ -60,6 +60,46 @@ static WatchCorePageIntent watch_core_make_intent_from_state(const WatchCorePage
     return intent;
 }
 
+static bool watch_core_power_state_is_valid(WatchCorePowerState state)
+{
+    return state == WATCH_CORE_POWER_STATE_SCREEN_ON ||
+           state == WATCH_CORE_POWER_STATE_SCREEN_OFF;
+}
+
+static WatchCorePowerAction watch_core_make_none_power_action(WatchCorePowerState state)
+{
+    WatchCorePowerAction action;
+
+    action.type = WATCH_CORE_POWER_ACTION_NONE;
+    action.source_state = state;
+    action.target_state = state;
+    return action;
+}
+
+static bool watch_core_power_action_is_valid(WatchCorePowerAction action)
+{
+    if (!watch_core_power_state_is_valid(action.source_state) ||
+        !watch_core_power_state_is_valid(action.target_state)) {
+        return false;
+    }
+
+    if (action.type == WATCH_CORE_POWER_ACTION_NONE) {
+        return action.source_state == action.target_state;
+    }
+
+    if (action.type == WATCH_CORE_POWER_ACTION_TURN_SCREEN_OFF) {
+        return action.source_state == WATCH_CORE_POWER_STATE_SCREEN_ON &&
+               action.target_state == WATCH_CORE_POWER_STATE_SCREEN_OFF;
+    }
+
+    if (action.type == WATCH_CORE_POWER_ACTION_WAKE_SCREEN) {
+        return action.source_state == WATCH_CORE_POWER_STATE_SCREEN_OFF &&
+               action.target_state == WATCH_CORE_POWER_STATE_SCREEN_ON;
+    }
+
+    return false;
+}
+
 void watch_core_init(WatchCore * core)
 {
     if (core == NULL) {
@@ -75,6 +115,7 @@ void watch_core_init(WatchCore * core)
 
     core->current_page.type = WATCH_CORE_PAGE_HEALTH_SHORTCUTS;
     core->current_page.feature = WATCH_CORE_HEALTH_FEATURE_INVALID;
+    core->power_controller.current_state = WATCH_CORE_POWER_STATE_SCREEN_ON;
 }
 
 void watch_core_get_ui_snapshot(const WatchCore * core, WatchCoreUiModelSnapshot * out_snapshot)
@@ -93,6 +134,15 @@ void watch_core_get_current_page_state(const WatchCore * core, WatchCorePageStat
     }
 
     *out_page_state = core->current_page;
+}
+
+void watch_core_get_power_state(const WatchCore * core, WatchCorePowerState * out_power_state)
+{
+    if (core == NULL || out_power_state == NULL) {
+        return;
+    }
+
+    *out_power_state = core->power_controller.current_state;
 }
 
 bool watch_core_set_health_metric(
@@ -184,6 +234,58 @@ WatchCorePageIntent watch_core_process_pending_events(WatchCore * core)
     }
 
     return last_intent;
+}
+
+WatchCorePowerAction watch_core_request_power_action(const WatchCore * core, WatchCorePowerRequest request)
+{
+    WatchCorePowerState current_state;
+
+    if (core == NULL) {
+        return watch_core_make_none_power_action(WATCH_CORE_POWER_STATE_SCREEN_ON);
+    }
+
+    current_state = core->power_controller.current_state;
+
+    if (request == WATCH_CORE_POWER_REQUEST_SCREEN_OFF &&
+        current_state == WATCH_CORE_POWER_STATE_SCREEN_ON) {
+        WatchCorePowerAction action;
+
+        action.type = WATCH_CORE_POWER_ACTION_TURN_SCREEN_OFF;
+        action.source_state = WATCH_CORE_POWER_STATE_SCREEN_ON;
+        action.target_state = WATCH_CORE_POWER_STATE_SCREEN_OFF;
+        return action;
+    }
+
+    if (request == WATCH_CORE_POWER_REQUEST_WAKE &&
+        current_state == WATCH_CORE_POWER_STATE_SCREEN_OFF) {
+        WatchCorePowerAction action;
+
+        action.type = WATCH_CORE_POWER_ACTION_WAKE_SCREEN;
+        action.source_state = WATCH_CORE_POWER_STATE_SCREEN_OFF;
+        action.target_state = WATCH_CORE_POWER_STATE_SCREEN_ON;
+        return action;
+    }
+
+    return watch_core_make_none_power_action(current_state);
+}
+
+bool watch_core_commit_power_action(
+    WatchCore * core,
+    WatchCorePowerAction action,
+    bool platform_applied)
+{
+    if (core == NULL ||
+        !watch_core_power_action_is_valid(action) ||
+        action.type == WATCH_CORE_POWER_ACTION_NONE ||
+        core->power_controller.current_state != action.source_state) {
+        return false;
+    }
+
+    if (platform_applied) {
+        core->power_controller.current_state = action.target_state;
+    }
+
+    return true;
 }
 
 const char * watch_core_health_feature_name(WatchCoreHealthFeature feature)

@@ -48,6 +48,29 @@ typedef struct {
 } WatchCorePageIntent;
 
 typedef enum {
+    WATCH_CORE_POWER_STATE_SCREEN_ON = 0,
+    WATCH_CORE_POWER_STATE_SCREEN_OFF = 1
+} WatchCorePowerState;
+
+typedef enum {
+    WATCH_CORE_POWER_REQUEST_NONE = 0,
+    WATCH_CORE_POWER_REQUEST_SCREEN_OFF = 1,
+    WATCH_CORE_POWER_REQUEST_WAKE = 2
+} WatchCorePowerRequest;
+
+typedef enum {
+    WATCH_CORE_POWER_ACTION_NONE = 0,
+    WATCH_CORE_POWER_ACTION_TURN_SCREEN_OFF = 1,
+    WATCH_CORE_POWER_ACTION_WAKE_SCREEN = 2
+} WatchCorePowerActionType;
+
+typedef struct {
+    WatchCorePowerActionType type;
+    WatchCorePowerState source_state;
+    WatchCorePowerState target_state;
+} WatchCorePowerAction;
+
+typedef enum {
     WATCH_CORE_PAGE_HEALTH_SHORTCUTS = 0,
     WATCH_CORE_PAGE_HEALTH_DETAIL = 1
 } WatchCorePageType;
@@ -58,8 +81,13 @@ typedef struct {
 } WatchCorePageState;
 
 typedef struct {
+    WatchCorePowerState current_state;
+} WatchCorePowerController;
+
+typedef struct {
     WatchCoreUiModelSnapshot model;
     WatchCorePageState current_page;
+    WatchCorePowerController power_controller;
     WatchCoreUiEvent event_queue[WATCH_CORE_EVENT_QUEUE_CAPACITY];
     uint8_t queue_head;
     uint8_t queue_tail;
@@ -71,6 +99,8 @@ void watch_core_init(WatchCore * core);
 void watch_core_get_ui_snapshot(const WatchCore * core, WatchCoreUiModelSnapshot * out_snapshot);
 
 void watch_core_get_current_page_state(const WatchCore * core, WatchCorePageState * out_page_state);
+
+void watch_core_get_power_state(const WatchCore * core, WatchCorePowerState * out_power_state);
 
 bool watch_core_set_health_metric(
     WatchCore * core,
@@ -86,6 +116,13 @@ bool watch_core_push_event(WatchCore * core, WatchCoreUiEvent event);
 WatchCorePageIntent watch_core_process_next_event(WatchCore * core);
 
 WatchCorePageIntent watch_core_process_pending_events(WatchCore * core);
+
+WatchCorePowerAction watch_core_request_power_action(const WatchCore * core, WatchCorePowerRequest request);
+
+bool watch_core_commit_power_action(
+    WatchCore * core,
+    WatchCorePowerAction action,
+    bool platform_applied);
 
 const char * watch_core_health_feature_name(WatchCoreHealthFeature feature);
 

@@ -5,7 +5,7 @@
 - ID：`V0.5-P3-B`
 - 标题：纯 C PowerController 决策合同与测试
 - 批次：V0.5 P3
-- 状态：TODO
+- 状态：DONE
 - 依赖：`V0.5-P3-A`
 
 ### 问题定位
@@ -116,6 +116,9 @@ Forbidden changes
 ### 执行记录
 
 - 2026-06-13：卡片创建，待执行。
+- 2026-06-13：开始执行；本轮只实现 `watch_core` 内的最小 Power 合同与纯 PC 测试，不接平台执行器。
+- 2026-06-13：已在 `watch_core` 内新增最小 `PowerState / PowerRequest / PowerAction / commit` 合同；`cmake --build sim/lv_port_pc_vscode/build --config Debug` 通过；`magic_watch_core_contract_test.exe` 通过。
+- 2026-06-13：用户已回填 F411 Keil / MDK 编译通过；四卡首页、表冠切卡、表冠短按详情、触摸进详情、触摸 Back、tap-only、防误触、左边缘右滑 Back、中间起手不误返回、首页左边缘不误跳转均正常；未出现花屏、卡死、停更。
 
 ### Stop policy
 

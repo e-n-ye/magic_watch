@@ -50,6 +50,42 @@ static void expect_page_state_eq(
     }
 }
 
+static void expect_power_state_eq(
+    WatchCorePowerState actual, WatchCorePowerState expected, const char *message)
+{
+    if (actual != expected) {
+        ++s_failures;
+        fprintf(stderr,
+                "FAIL: %s (expected power_state=%d actual=%d)\n",
+                message,
+                (int)expected,
+                (int)actual);
+    }
+}
+
+static void expect_power_action_eq(
+    WatchCorePowerAction actual,
+    WatchCorePowerActionType expected_type,
+    WatchCorePowerState expected_source_state,
+    WatchCorePowerState expected_target_state,
+    const char *message)
+{
+    if (actual.type != expected_type ||
+        actual.source_state != expected_source_state ||
+        actual.target_state != expected_target_state) {
+        ++s_failures;
+        fprintf(stderr,
+                "FAIL: %s (expected action=%d source=%d target=%d, actual action=%d source=%d target=%d)\n",
+                message,
+                (int)expected_type,
+                (int)expected_source_state,
+                (int)expected_target_state,
+                (int)actual.type,
+                (int)actual.source_state,
+                (int)actual.target_state);
+    }
+}
+
 static void test_default_page_semantics_are_proven_by_public_behavior(void)
 {
     WatchCore core;
@@ -440,6 +476,230 @@ static void test_pending_drain_continues_after_invalid_feature_no_op(void)
                   "pending drain after invalid feature no-op should still leave queue empty");
 }
 
+static void test_power_state_defaults_to_screen_on(void)
+{
+    WatchCore core;
+    WatchCorePowerState power_state;
+
+    watch_core_init(&core);
+    watch_core_get_power_state(&core, &power_state);
+
+    expect_power_state_eq(power_state,
+                          WATCH_CORE_POWER_STATE_SCREEN_ON,
+                          "power state after init should default to screen on");
+}
+
+static void test_power_request_screen_off_does_not_mutate_state_before_commit(void)
+{
+    WatchCore core;
+    WatchCorePowerState power_state;
+    WatchCorePowerAction action;
+
+    watch_core_init(&core);
+    action = watch_core_request_power_action(&core, WATCH_CORE_POWER_REQUEST_SCREEN_OFF);
+    watch_core_get_power_state(&core, &power_state);
+
+    expect_power_action_eq(action,
+                           WATCH_CORE_POWER_ACTION_TURN_SCREEN_OFF,
+                           WATCH_CORE_POWER_STATE_SCREEN_ON,
+                           WATCH_CORE_POWER_STATE_SCREEN_OFF,
+                           "screen off request should create turn-screen-off action");
+    expect_power_state_eq(power_state,
+                          WATCH_CORE_POWER_STATE_SCREEN_ON,
+                          "screen off request should not mutate state before commit");
+}
+
+static void test_power_failed_screen_off_commit_keeps_screen_on(void)
+{
+    WatchCore core;
+    WatchCorePowerState power_state;
+    WatchCorePowerAction action;
+
+    watch_core_init(&core);
+    action = watch_core_request_power_action(&core, WATCH_CORE_POWER_REQUEST_SCREEN_OFF);
+
+    expect_true(watch_core_commit_power_action(&core, action, false),
+                "failed screen off apply should still be accepted as a valid commit attempt");
+    watch_core_get_power_state(&core, &power_state);
+    expect_power_state_eq(power_state,
+                          WATCH_CORE_POWER_STATE_SCREEN_ON,
+                          "failed screen off apply should keep screen on");
+}
+
+static void test_power_successful_screen_off_commit_moves_to_screen_off(void)
+{
+    WatchCore core;
+    WatchCorePowerState power_state;
+    WatchCorePowerAction action;
+
+    watch_core_init(&core);
+    action = watch_core_request_power_action(&core, WATCH_CORE_POWER_REQUEST_SCREEN_OFF);
+
+    expect_true(watch_core_commit_power_action(&core, action, true),
+                "successful screen off apply should commit");
+    watch_core_get_power_state(&core, &power_state);
+    expect_power_state_eq(power_state,
+                          WATCH_CORE_POWER_STATE_SCREEN_OFF,
+                          "successful screen off apply should move to screen off");
+}
+
+static void test_power_request_wake_does_not_mutate_state_before_commit(void)
+{
+    WatchCore core;
+    WatchCorePowerState power_state;
+    WatchCorePowerAction action;
+
+    watch_core_init(&core);
+    action = watch_core_request_power_action(&core, WATCH_CORE_POWER_REQUEST_SCREEN_OFF);
+    expect_true(watch_core_commit_power_action(&core, action, true),
+                "setup screen off commit should succeed before wake request");
+
+    action = watch_core_request_power_action(&core, WATCH_CORE_POWER_REQUEST_WAKE);
+    watch_core_get_power_state(&core, &power_state);
+
+    expect_power_action_eq(action,
+                           WATCH_CORE_POWER_ACTION_WAKE_SCREEN,
+                           WATCH_CORE_POWER_STATE_SCREEN_OFF,
+                           WATCH_CORE_POWER_STATE_SCREEN_ON,
+                           "wake request should create wake-screen action");
+    expect_power_state_eq(power_state,
+                          WATCH_CORE_POWER_STATE_SCREEN_OFF,
+                          "wake request should not mutate state before commit");
+}
+
+static void test_power_failed_wake_commit_keeps_screen_off(void)
+{
+    WatchCore core;
+    WatchCorePowerState power_state;
+    WatchCorePowerAction action;
+
+    watch_core_init(&core);
+    action = watch_core_request_power_action(&core, WATCH_CORE_POWER_REQUEST_SCREEN_OFF);
+    expect_true(watch_core_commit_power_action(&core, action, true),
+                "setup screen off commit should succeed before failed wake");
+
+    action = watch_core_request_power_action(&core, WATCH_CORE_POWER_REQUEST_WAKE);
+    expect_true(watch_core_commit_power_action(&core, action, false),
+                "failed wake apply should still be accepted as a valid commit attempt");
+    watch_core_get_power_state(&core, &power_state);
+    expect_power_state_eq(power_state,
+                          WATCH_CORE_POWER_STATE_SCREEN_OFF,
+                          "failed wake apply should keep screen off");
+}
+
+static void test_power_successful_wake_commit_moves_to_screen_on(void)
+{
+    WatchCore core;
+    WatchCorePowerState power_state;
+    WatchCorePowerAction action;
+
+    watch_core_init(&core);
+    action = watch_core_request_power_action(&core, WATCH_CORE_POWER_REQUEST_SCREEN_OFF);
+    expect_true(watch_core_commit_power_action(&core, action, true),
+                "setup screen off commit should succeed before wake");
+
+    action = watch_core_request_power_action(&core, WATCH_CORE_POWER_REQUEST_WAKE);
+    expect_true(watch_core_commit_power_action(&core, action, true),
+                "successful wake apply should commit");
+    watch_core_get_power_state(&core, &power_state);
+    expect_power_state_eq(power_state,
+                          WATCH_CORE_POWER_STATE_SCREEN_ON,
+                          "successful wake apply should move to screen on");
+}
+
+static void test_power_duplicate_requests_return_none(void)
+{
+    WatchCore core;
+    WatchCorePowerAction action;
+
+    watch_core_init(&core);
+    action = watch_core_request_power_action(&core, WATCH_CORE_POWER_REQUEST_WAKE);
+    expect_power_action_eq(action,
+                           WATCH_CORE_POWER_ACTION_NONE,
+                           WATCH_CORE_POWER_STATE_SCREEN_ON,
+                           WATCH_CORE_POWER_STATE_SCREEN_ON,
+                           "wake request while already on should be a no-op");
+
+    action = watch_core_request_power_action(&core, WATCH_CORE_POWER_REQUEST_SCREEN_OFF);
+    expect_true(watch_core_commit_power_action(&core, action, true),
+                "setup screen off commit should succeed before duplicate screen off request");
+
+    action = watch_core_request_power_action(&core, WATCH_CORE_POWER_REQUEST_SCREEN_OFF);
+    expect_power_action_eq(action,
+                           WATCH_CORE_POWER_ACTION_NONE,
+                           WATCH_CORE_POWER_STATE_SCREEN_OFF,
+                           WATCH_CORE_POWER_STATE_SCREEN_OFF,
+                           "screen off request while already off should be a no-op");
+}
+
+static void test_power_invalid_or_mismatched_commit_is_rejected(void)
+{
+    WatchCore core;
+    WatchCorePowerState power_state;
+    WatchCorePowerAction action;
+
+    watch_core_init(&core);
+    action.type = WATCH_CORE_POWER_ACTION_NONE;
+    action.source_state = WATCH_CORE_POWER_STATE_SCREEN_ON;
+    action.target_state = WATCH_CORE_POWER_STATE_SCREEN_ON;
+    expect_true(!watch_core_commit_power_action(&core, action, true),
+                "committing a none action should be rejected");
+
+    action.type = WATCH_CORE_POWER_ACTION_WAKE_SCREEN;
+    action.source_state = WATCH_CORE_POWER_STATE_SCREEN_ON;
+    action.target_state = WATCH_CORE_POWER_STATE_SCREEN_ON;
+    expect_true(!watch_core_commit_power_action(&core, action, true),
+                "committing an invalid wake action shape should be rejected");
+
+    action = watch_core_request_power_action(&core, WATCH_CORE_POWER_REQUEST_SCREEN_OFF);
+    expect_true(watch_core_commit_power_action(&core, action, true),
+                "setup screen off commit should succeed before mismatch check");
+    expect_true(!watch_core_commit_power_action(&core, action, true),
+                "committing an action whose source state no longer matches should be rejected");
+
+    watch_core_get_power_state(&core, &power_state);
+    expect_power_state_eq(power_state,
+                          WATCH_CORE_POWER_STATE_SCREEN_OFF,
+                          "rejected mismatched commit should not change power state");
+}
+
+static void test_power_round_trip_preserves_page_state_snapshot_and_queue_contract(void)
+{
+    WatchCore core;
+    WatchCoreUiModelSnapshot before_snapshot;
+    WatchCoreUiModelSnapshot after_snapshot;
+    WatchCorePageState before_page_state;
+    WatchCorePageState after_page_state;
+    WatchCorePowerAction action;
+
+    watch_core_init(&core);
+    expect_true(watch_core_set_health_metric(&core, WATCH_CORE_HEALTH_FEATURE_STRESS, "42"),
+                "snapshot setup should succeed before power round trip");
+    watch_core_get_ui_snapshot(&core, &before_snapshot);
+    watch_core_get_current_page_state(&core, &before_page_state);
+
+    action = watch_core_request_power_action(&core, WATCH_CORE_POWER_REQUEST_SCREEN_OFF);
+    expect_true(watch_core_commit_power_action(&core, action, true),
+                "screen off commit should succeed during round trip");
+    action = watch_core_request_power_action(&core, WATCH_CORE_POWER_REQUEST_WAKE);
+    expect_true(watch_core_commit_power_action(&core, action, true),
+                "wake commit should succeed during round trip");
+
+    watch_core_get_ui_snapshot(&core, &after_snapshot);
+    watch_core_get_current_page_state(&core, &after_page_state);
+
+    expect_page_state_eq(after_page_state,
+                         before_page_state.type,
+                         before_page_state.feature,
+                         "power round trip should preserve page state");
+    expect_string_eq(after_snapshot.health_metric_text[WATCH_CORE_HEALTH_FEATURE_STRESS],
+                     before_snapshot.health_metric_text[WATCH_CORE_HEALTH_FEATURE_STRESS],
+                     "power round trip should preserve snapshot text");
+    expect_int_eq(watch_core_process_next_event(&core).type,
+                  WATCH_CORE_PAGE_INTENT_NONE,
+                  "power round trip should not enqueue UI navigation events");
+}
+
 int main(void)
 {
     test_default_page_semantics_are_proven_by_public_behavior();
@@ -457,6 +717,16 @@ int main(void)
     test_process_pending_events_drains_to_stable_state();
     test_pending_drain_continues_after_shortcut_back_no_op();
     test_pending_drain_continues_after_invalid_feature_no_op();
+    test_power_state_defaults_to_screen_on();
+    test_power_request_screen_off_does_not_mutate_state_before_commit();
+    test_power_failed_screen_off_commit_keeps_screen_on();
+    test_power_successful_screen_off_commit_moves_to_screen_off();
+    test_power_request_wake_does_not_mutate_state_before_commit();
+    test_power_failed_wake_commit_keeps_screen_off();
+    test_power_successful_wake_commit_moves_to_screen_on();
+    test_power_duplicate_requests_return_none();
+    test_power_invalid_or_mismatched_commit_is_rejected();
+    test_power_round_trip_preserves_page_state_snapshot_and_queue_contract();
 
     if (s_failures != 0) {
         fprintf(stderr, "%d contract test(s) failed.\n", s_failures);

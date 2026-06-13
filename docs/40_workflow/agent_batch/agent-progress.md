@@ -914,9 +914,9 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 ### 会话 2026-06-13 任务执行
 
 - 本轮范围：先把 `V0.5-P3-B` / `V0.5-P3-C` / `V0.5-P4-A` 正式落卡并接入队列，再执行 `V0.5-P3-B`
-- 完成：进行中
-- 修改文件：
-- 自检：
-- 风险回应：
-- 阻塞与待决：
-- 下一步：先单独提交卡片与队列入口，再执行 `V0.5-P3-B`
+- 完成：已正式新增 `V0.5-P3-B` / `V0.5-P3-C` / `V0.5-P4-A` 卡片与三个独立队列项；规划提交 `c97aaf4` 已完成；当前进入 `V0.5-P3-B`
+- 修改文件：`docs/40_workflow/agent_batch/cards/v0-power-contract-close-q11.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/00_current/magicwatch_long_term_roadmap.md`、`docs/40_workflow/agent_batch/agent-progress.md`、`docs/30_testing/v0_5_watch_core_contract_and_f411_ownership_audit.md`、`watch_core/include/watch_core/watch_core.h`、`watch_core/src/watch_core.c`、`watch_core/tests/watch_core_contract_test.c`
+- 自检：落卡阶段已通过 `git status --short -uall`、`git diff --check` 与中文乱码哨兵检查；`cmake --build sim/lv_port_pc_vscode/build --config Debug` 通过；`sim/lv_port_pc_vscode/build/out/magic_watch_core_contract_test.exe` 通过；`rg -n "lvgl|SDL|HAL|CubeMX|malloc|free|new|delete|std::" watch_core` 仅命中新测试中的自然语言字符串
+- 风险回应：保持“request 不改状态、commit 才迁移”的最小实现，没有把 Power 混进现有 UI 事件队列，也没有触碰 PC/F411 Adapter
+- 阻塞与待决：无；用户已回填 F411 Keil / MDK 编译与一次原 UI 冒烟，`P3-B` 可以收口并单独提交
+- 下一步：单独提交 `V0.5-P3-B`，然后停止，等待是否进入 `V0.5-P3-C`

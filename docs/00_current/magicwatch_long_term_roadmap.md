@@ -144,6 +144,7 @@ flowchart TD
 - `V0.5-P3-A` 已锁定的输入前提：F411 当前只采用表冠语义；熄屏时表冠按下只请求唤醒且不同时确认，熄屏时表冠旋转忽略；底层历史 Wake 键不进入当前产品合同。
 - `V0.5-P3-A` 当前结论：最小 Power 状态只取 `SCREEN_ON / SCREEN_OFF`；采用 `Request -> Action -> Platform apply -> commit` 两阶段合同，平台失败不提交状态，Power 往返不修改页面状态。
 - `V0.5-P3-B` 推荐方向：只在 `watch_core` 内实现固定大小、无堆、表驱动的独立 PowerController 与纯 PC 合同测试，不接 Adapter、背光和真实唤醒。
+- `V0.5-P3-B` 当前代码事实：`watch_core` 已公开 `PowerState / PowerRequest / PowerAction / commit` 最小合同，纯 PC 构建与合同测试通过；F411 编译与原 UI 冒烟仍待用户回填，故本卡尚未平台验收完成。
 - `V0.5-P3-C`：在 `P3-B` 后只读复核 `Input / UiEvent / PageState / PageIntent / PowerState / PowerAction / Adapter / Platform Port` 的所有权矩阵，并用用户回填的 F411 编译与原 UI 冒烟结果判断 `V0.5` 是否还存在新的共享合同断裂点。
 - `V0.5-P4-A`：单独收口学习沉淀与 `V0.6` 交界，明确为什么旧 `V0.5-A~G` 路线已过时、当前 `V0.5` 真正完成了什么，以及 `V0.6` 从平台 Action executor 而不是继续补 Core 名词开始。
 - `V0.5` 后续只剩“Power 合同实现 -> Core 组合/边界复核 -> 学习与退出总结”；PC/F411/LILYGO Action executor、表冠门控和真实亮灭屏/唤醒闭环属于 `V0.6`。
