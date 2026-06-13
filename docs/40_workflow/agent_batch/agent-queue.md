@@ -125,6 +125,15 @@
 - 暂停原因：逐函数学习最终架构不能提供“需求压力 -> 方案选择 -> 代价观察”的完整经验，当前方向改为独立 PC 架构冲突实验场。
 - 执行门：不得继续自动执行 `LEARN-A~D`；后续只允许先按 `docs/20_guides/watch_arch_learning_lab.md` 单独规划 Stage 00，且不得提前创建后续 Stage。
 
+### WATCH-ARCH-LAB-STAGE-00 直接调用基线
+
+- 状态：DONE
+- 卡片来源：cards/watch-arch-learning-stage00-q13.md
+- 执行范围：卡片 `ARCH-LAB-00`
+- 停止策略：队列项完成后停止
+- 验收后处理：冻结并保留
+- 执行前条件：实验场总纲已由提交 `cfca90c` 收口；只允许创建 Stage 00，不得自动推进后续 Stage。
+
 ## 队列项格式
 
 ```text

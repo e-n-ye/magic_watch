@@ -969,3 +969,27 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：复盘默认限制为 500～1000 字；暂定 Stage 不得自动执行；Stage 00 未暴露真实压力时只能继续朴素实现；实验场与 Magic Watch 禁止直接复制实现
 - 阻塞与待决：尚未决定独立实验工程的最终目录和 runtime 复用方式，这些只在 Stage 00 规划时决定
 - 下一步：停止在章程层；下一轮只规划 Stage 00，不创建 Stage 01 或后续卡片
+
+### 会话 2026-06-13 Stage 00 基础框架
+
+- 本轮范围：提交已验收实验章程，并只创建独立 `watch_arch_learning` runtime 与 Stage 00 直接调用基础框架
+- 当前决定：实验场位于 Magic Watch 仓库内但与产品目标隔离；只复用第三方 LVGL 9.6 源和 `lv_conf.h`，不复用 Magic Watch HAL、Core、Adapter 或 View
+- 用户练习点：填写 Stage README 事前预测，并亲自实现 `show_home()`、`show_detail()` 和 Heart、Steps、Back 三个 callback
+- 风险回应：Stage 00 没有事件、队列、Coordinator、Adapter、页面合同或后续 Stage 预留；基础 UI 可以先构建，但交互在用户接通前保持未完成
+- 验证：`cmake --preset mingw-debug` 与 `cmake --build --preset mingw-debug` 通过；可执行文件短暂启动三秒并保持运行；未执行点击行为验收
+- 实际观察：完整 PC `lv_conf.h` 会把 FS、ThorVG、examples 和 demos 带入实验场并造成无关构建失败，因此 runtime 改用只启用 SDL 与基础控件的独立最小配置
+- 用户验证：Heart、Steps、Back 均正常；用户发现 pointer 按下后拖离再松开仍可能触发 `CLICKED`，这是当前第一个真实交互缺陷
+- 判断训练：当前误触先归类为输入激活策略问题，不把它写成导航、Core 或事件队列压力；Stage README 已加入三个不同抽象半径的候选方案，等待用户先选择
+- 用户选择：基于当前单 View、三个按钮的规模采用局部 tap guard；先修复可复现缺陷，不建立共享输入策略层
+- 当前结果：用户发现首版按控件分配三份状态与单 pointer 并发事实不匹配；已保留 View 局部边界并收敛为一份当前 pointer 会话状态。阈值为实验参数，不声明为跨平台合同
+- 下一步：等待用户人工验证正常轻点、轻微抖动、按钮内明显拖动和拖出按钮四类行为，再决定是否冻结 Stage 00
+
+### 会话 2026-06-13 Stage 00 冻结
+
+- 本轮范围：队列项 `WATCH-ARCH-LAB-STAGE-00`，收口卡片 `ARCH-LAB-00`
+- 完成：用户已确认 Heart、Steps、Back 正常轻点有效，少量移动不影响正常点击，明显拖动和拖出松开均不再误触；Stage 00 已完成复盘并冻结
+- 修改文件：`watch_arch_learning/stage_00_direct/README.md`、`docs/40_workflow/agent_batch/cards/watch-arch-learning-stage00-q13.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`cmake --preset mingw-debug` 通过；`cmake --build --preset mingw-debug` 通过；`git diff --check` 通过，仅有 LF/CRLF 提示；实验代码禁用抽象关键词扫描无命中；本轮中文文档乱码哨兵检查无命中；工作区仅包含本卡允许文件
+- 风险回应：tap guard 已解决当前缺陷，但 callback 仍可能漏接过滤入口，不把它写成最终通用模块；显式 PageState、`current_feature` 和 Input Port 仍延迟，不因用户当前缺少 UI 蓝图而提前灌入最终架构
+- 阻塞与待决：用户尚未形成完整 UI 系统蓝图；这是后续实验需要逐步建立的学习目标，不阻塞 Stage 00 冻结
+- 下一步：提交并停止；不得自动创建 Stage 01，下一轮先选择一个明确需求压力并记录事前预测
