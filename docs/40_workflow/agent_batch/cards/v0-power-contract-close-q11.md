@@ -129,7 +129,7 @@ Forbidden changes
 - ID：`V0.5-P3-C`
 - 标题：Core 所有权复核与 V0.5 退出门
 - 批次：V0.5 P3
-- 状态：TODO
+- 状态：DONE
 - 依赖：`V0.5-P3-B`
 
 ### 问题定位
@@ -208,6 +208,8 @@ Forbidden changes
 ### 执行记录
 
 - 2026-06-13：卡片创建，待执行。
+- 2026-06-13：已基于 `watch_core`、PC Adapter、F411 Adapter 和审计文档形成最终所有权矩阵；确认页面状态与 Power 状态是两个独立状态机，Power 未进入 UI 事件队列，当前没有新的共享合同断裂点。
+- 2026-06-13：已把 `P3-B` 的 F411 编译与原 UI 冒烟回填同步进审计结论；本卡收口后直接进入 `V0.5-P4-A`，不新增 `SystemEvent`、总线或新 Coordinator。
 
 ### Stop policy
 

@@ -424,15 +424,87 @@ V0.5 的学习验收不是“拥有一个叫 PowerController 的文件”，而�
 
 ### 9.3 仍未验证项
 
-本轮尚未执行：
+用户后续已回填：
 
-- F411 Keil / MDK 编译
-- 一次原 UI 冒烟：四卡、详情、Back、表冠原闭环
+- F411 Keil / MDK 编译通过
+- 一次原 UI 冒烟通过：四卡首页、表冠切卡、表冠短按详情、触摸进详情、触摸 Back、tap-only、防误触、左边缘右滑 Back、中间起手不误返回、首页左边缘不误跳转均正常
+- 未出现花屏、卡死、停更
 
-因此，`P3-B` 当前只能视为：
+因此，`P3-B` 现在可以视为：
 
-- 纯 PC 合同与代码事实成立
+- 纯 PC 合同成立
+- F411 既有 UI 闭环在 Core 扩展后未出现回归
 
-还不能写成：
+但仍不能写成：
 
-- F411 平台回归已通过
+- 真实平台 Power executor、表冠熄屏门控或背光闭环已经实现
+
+## 10. `V0.5-P3-C` Core 所有权复核与退出门
+
+### 10.1 最终所有权矩阵
+
+| 层 / 语义 | 权威源 | 当前持有位置 | 其它层允许做什么 | 不允许做什么 |
+|---|---|---|---|---|
+| 原始输入事实 | 平台输入链 | F411 `watch_input_service`、`watch_input_intent`、`watch_lvgl_port`；PC SDL / LVGL 输入 | 转成 typed `UiEvent` 或未来 Power request 的上游条件 | 直接改 `watch_core` 状态、直接决定页面或 Power 策略 |
+| `UiEvent` | `watch_core` 公共合同 | `watch_core.h` 定义，PC/F411 Adapter 创建并入队 | 作为 typed UI 导航输入进入 Core | 承担 Power 平台执行结果或替代 SystemEvent 总线 |
+| UI EventQueue | `watch_core` | `WatchCore.event_queue` 与 `watch_core_push_event()` | 缓冲 UI 导航事件，按 FIFO 消费 | 存 Power Action、平台完成事件或 View 恢复策略 |
+| `PageState` | `watch_core` | `WatchCore.current_page` 与 `watch_core_get_current_page_state()` | 作为当前页面权威状态被 Adapter 读取 | 被 Adapter、View 或 Power 逻辑本地猜测并反向改写 |
+| `PageIntent` | `watch_core` 导航输出 | `watch_core_process_next_event()` / `watch_core_process_pending_events()` 返回值 | 表达瞬时页面动作，供 Adapter 应用 View 切换 | 充当持久页面状态或承载 Power 动作 |
+| `UiModelSnapshot` | `watch_core` | `WatchCore.model` 与 `watch_core_get_ui_snapshot()` | 被 Adapter 拉取并同步到 View | 成为业务状态权威源之外的第二来源 |
+| `PowerState` | `watch_core` | `WatchCore.power_controller.current_state` 与 `watch_core_get_power_state()` | 作为当前逻辑显示状态被未来平台执行层读取 | 被 Adapter、View 或平台驱动单方面拥有 |
+| `PowerRequest` | `watch_core` 公共合同 | `watch_core_request_power_action()` 的输入 | 表达“请求息屏 / 请求唤醒” | 携带具体 GPIO/PWM/LCD 命令 |
+| `PowerAction` | `watch_core` 决策输出 | `watch_core_request_power_action()` 返回值 | 交给未来平台执行层 apply，再 commit 回 Core | 被塞进 UI EventQueue，或直接当页面动作消费 |
+| Power commit 结果 | `watch_core` | `watch_core_commit_power_action()` | 根据平台成功/失败更新或保持 PowerState | 在平台失败时提前迁移状态 |
+| Adapter | PC/F411 当前装配边界 | `watch_core_ui_adapter.c`、`f411_ui_adapter.c` | 入队 `UiEvent`，drain 到稳定态，按最终 `PageState + Snapshot` 同步 View | 拥有 Power 策略、猜默认页、把本地缓存升为权威源 |
+| View | 平台 UI 实现 | XML UI / Lite View | 创建对象、hidden/focus/文本更新、局部视觉切换 | 直接决定业务导航或 Power 状态 |
+| Platform Port | 平台执行层 | 当前仅输入、显示、背光等底层 port | 执行具体硬件动作，未来承接 Power Action executor | 决定何时息屏、什么输入能唤醒、伪造平台成功 |
+
+### 10.2 `P3-C` 关键判断
+
+已确认成立：
+
+- 页面状态与 Power 状态是两个独立状态机。
+- Power 没有进入现有 UI 事件队列。
+- PC/F411 Adapter 当前都只消费最终 `PageState + Snapshot`，没有拥有 Power 策略。
+- Platform 当前仍只拥有输入与显示执行事实，没有反向拥有产品策略。
+- 现阶段没有代码证据证明必须新增 `SystemEvent`、总线或新的总 Coordinator。
+
+代码证据：
+
+- `watch_core` 对 UI 导航仍是 `watch_core_push_event() -> watch_core_process_pending_events()` 主链。
+- `watch_core` 的 Power 主链是 `watch_core_request_power_action() -> watch_core_commit_power_action()`，与 UI 队列分离。
+- PC Adapter 当前仍是“push 成功后 drain 到稳定态，再读取 `PageState` / snapshot 同步 View”。
+- F411 Adapter 当前仍是同一消费规则，没有引入额外的 Power 本地状态机。
+- Lite View 与 PC XML View 仍只处理对象创建和视觉应用，没有提升为导航或 Power 权威源。
+
+### 10.3 保留项与为何现在不继续扩
+
+当前仍保留但不构成 `V0.5` 继续扩张理由的点：
+
+- F411 未来接入 Power 后，表冠熄屏门控必须放在 LVGL 喂入之前。
+- 真实背光 / 显示执行结果目前还没有统一 executor 合同。
+- View 创建失败后的恢复策略仍是平台内轻量处理。
+
+这些都属于 `V0.6` 平台执行问题，而不是新的共享 Core 合同断裂点。若在 `P3-C` 继续推进，只会把“共享决策合同”与“平台执行闭环”重新揉成一轮。
+
+### 10.4 `V0.5` 当前退出门结论
+
+结论：当前没有新的、已被代码证实的共享合同断裂点。
+
+因此 `V0.5` 现在可以从 Core 合同实现阶段退出到：
+
+- `V0.5-P4-A` 学习沉淀与 `V0.6` 交接
+
+而不需要再插入新的共享合同实现卡。
+
+`V0.6` 的起点继续保持为：
+
+- PC/F411/LILYGO 各自 Power Action executor
+- F411 熄屏前表冠门控
+- 真实背光与亮灭屏闭环
+
+而不是：
+
+- 再补一个 `SystemEvent`
+- 再造一套总事件总线
+- 再造一个新的总 Coordinator

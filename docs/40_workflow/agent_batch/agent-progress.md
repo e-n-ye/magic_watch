@@ -920,3 +920,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：保持“request 不改状态、commit 才迁移”的最小实现，没有把 Power 混进现有 UI 事件队列，也没有触碰 PC/F411 Adapter
 - 阻塞与待决：无；用户已回填 F411 Keil / MDK 编译与一次原 UI 冒烟，`P3-B` 可以收口并单独提交
 - 下一步：单独提交 `V0.5-P3-B`，然后停止，等待是否进入 `V0.5-P3-C`
+
+### 会话 2026-06-13 V0.5-P3-C
+
+- 本轮范围：队列项 `V0.5-P3-CORE-AUDIT`，只执行卡片 `V0.5-P3-C`
+- 完成：已形成最终所有权矩阵；已确认 `P3-B` 之后页面状态与 Power 状态仍是两个独立状态机，Power 未进入 UI 事件队列，PC/F411 Adapter 未重新拥有 Power 策略；已明确当前没有新的共享合同断裂点，`V0.5` 可直接进入 `P4-A`
+- 修改文件：`docs/30_testing/v0_5_watch_core_contract_and_f411_ownership_audit.md`、`docs/00_current/magicwatch_long_term_roadmap.md`、`docs/40_workflow/agent_batch/cards/v0-power-contract-close-q11.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：待本轮收尾统一执行 `git status --short -uall`、`git diff --check`、`rg -n "SystemEvent|PowerAction|PowerState|PageState|PageIntent|UiEvent" watch_core docs/30_testing/v0_5_watch_core_contract_and_f411_ownership_audit.md docs/00_current/magicwatch_long_term_roadmap.md` 与中文乱码哨兵检查
+- 风险回应：本轮保持纯审计闭环，没有顺手改代码、没有提前进入 `P4-A`，也没有把平台执行问题误判成新的 Core 缺口
+- 阻塞与待决：无
+- 下一步：通过自检后单独提交 `V0.5-P3-C`，并停止等待用户决定是否进入 `V0.5-P4-A`
