@@ -11,14 +11,19 @@
 - `stage_01_console_direct/`：已冻结的无 LVGL 终端直接调用基线。
 - `stage_02_context_menu/`：已冻结的上下文相关菜单导航实验。
 - `stage_03_multi_input_direct/`：正在验证第二种输入表示的直接翻译方案。
+- `stage_04_command_language_pressure/`：已冻结的命令字符串压力实验。
 
 Stage 01 与 Stage 02 已完成并冻结。Stage 02 的规划与复盘见：
 
 - `docs/40_workflow/agent_batch/cards/watch-arch-learning-stage02-q15.md`
 
-Stage 03 已按用户选择的方案 B 建立第一版，等待人工运行和复盘：
+Stage 03 已冻结，复盘见：
 
 - `docs/40_workflow/agent_batch/cards/watch-arch-learning-stage03-q16.md`
+
+Stage 04 已完成第一版并冻结，复盘见：
+
+- `docs/40_workflow/agent_batch/cards/watch-arch-learning-stage04-q17.md`
 
 ## 构建
 
@@ -53,4 +58,11 @@ Stage 03 也使用 Console-only preset：
 ```powershell
 cmake --build --preset console-debug --target watch_arch_stage_03_multi_input_direct
 watch_arch_learning/build/console-debug/out/watch_arch_stage_03_multi_input_direct.exe
+```
+
+Stage 04 同样使用 Console-only preset：
+
+```powershell
+cmake --build --preset console-debug --target watch_arch_stage_04_command_language_pressure
+watch_arch_learning/build/console-debug/out/watch_arch_stage_04_command_language_pressure.exe
 ```
