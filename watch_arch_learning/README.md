@@ -15,6 +15,10 @@ Stage 01 与 Stage 02 已完成并冻结。Stage 02 的规划与复盘见：
 
 - `docs/40_workflow/agent_batch/cards/watch-arch-learning-stage02-q15.md`
 
+Stage 03 当前只规划第二种输入表示，尚未创建代码目录：
+
+- `docs/40_workflow/agent_batch/cards/watch-arch-learning-stage03-q16.md`
+
 ## 构建
 
 ```powershell

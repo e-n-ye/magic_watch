@@ -152,6 +152,15 @@
 - 验收后处理：冻结并保留
 - 执行前条件：`ARCH-LAB-01` 已由提交 `6ce2806` 冻结；先完成状态与导航预测，不得直接创建 Stage 02 代码。
 
+### WATCH-ARCH-LAB-STAGE-03 第二种输入表示
+
+- 状态：TODO
+- 卡片来源：cards/watch-arch-learning-stage03-q16.md
+- 执行范围：卡片 `ARCH-LAB-03`
+- 停止策略：用户事前预测前停止
+- 验收后处理：冻结并保留
+- 执行前条件：`ARCH-LAB-02` 已由提交 `ee08027` 冻结；先比较两种直接接法，不得提前引入 Intent、Input Adapter 或 EventQueue。
+
 ## 队列项格式
 
 ```text
