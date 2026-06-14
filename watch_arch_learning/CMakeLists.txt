@@ -7,31 +7,37 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 set(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/out")
 
-get_filename_component(MAGIC_WATCH_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/.." ABSOLUTE)
-set(MAGIC_WATCH_SIM_ROOT "${MAGIC_WATCH_ROOT}/sim/lv_port_pc_vscode")
+option(WATCH_ARCH_ENABLE_LVGL "Build LVGL-based learning stages" ON)
 
-find_package(SDL2 REQUIRED)
+if(WATCH_ARCH_ENABLE_LVGL)
+    get_filename_component(MAGIC_WATCH_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/.." ABSOLUTE)
+    set(MAGIC_WATCH_SIM_ROOT "${MAGIC_WATCH_ROOT}/sim/lv_port_pc_vscode")
 
-set(CONFIG_LV_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-set(CONFIG_LV_BUILD_DEMOS OFF CACHE BOOL "" FORCE)
-set(CONFIG_LV_USE_THORVG_INTERNAL OFF CACHE BOOL "" FORCE)
-set(
-    LV_BUILD_CONF_PATH
-    "${CMAKE_CURRENT_SOURCE_DIR}/lv_conf.h"
-    CACHE PATH
-    "Watch architecture lab LVGL configuration"
-    FORCE
-)
+    find_package(SDL2 REQUIRED)
 
-add_subdirectory(
-    "${MAGIC_WATCH_SIM_ROOT}/lvgl"
-    "${CMAKE_BINARY_DIR}/lvgl"
-)
+    set(CONFIG_LV_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(CONFIG_LV_BUILD_DEMOS OFF CACHE BOOL "" FORCE)
+    set(CONFIG_LV_USE_THORVG_INTERNAL OFF CACHE BOOL "" FORCE)
+    set(
+        LV_BUILD_CONF_PATH
+        "${CMAKE_CURRENT_SOURCE_DIR}/lv_conf.h"
+        CACHE PATH
+        "Watch architecture lab LVGL configuration"
+        FORCE
+    )
 
-target_include_directories(lvgl PUBLIC
-    "${MAGIC_WATCH_SIM_ROOT}"
-    ${SDL2_INCLUDE_DIRS}
-)
+    add_subdirectory(
+        "${MAGIC_WATCH_SIM_ROOT}/lvgl"
+        "${CMAKE_BINARY_DIR}/lvgl"
+    )
 
-add_subdirectory(runtime)
-add_subdirectory(stage_00_direct)
+    target_include_directories(lvgl PUBLIC
+        "${MAGIC_WATCH_SIM_ROOT}"
+        ${SDL2_INCLUDE_DIRS}
+    )
+
+    add_subdirectory(runtime)
+    add_subdirectory(stage_00_direct)
+endif()
+
+add_subdirectory(stage_01_console_direct)

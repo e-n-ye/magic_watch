@@ -12,12 +12,28 @@
         "CMAKE_MAKE_PROGRAM": "D:/msys64/ucrt64/bin/mingw32-make.exe",
         "SDL2_DIR": "D:/msys64/ucrt64/lib/cmake/SDL2"
       }
+    },
+    {
+      "name": "console-debug",
+      "displayName": "Console-only MinGW Debug",
+      "generator": "MinGW Makefiles",
+      "binaryDir": "${sourceDir}/build/console-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_COMPILER": "D:/msys64/ucrt64/bin/gcc.exe",
+        "CMAKE_MAKE_PROGRAM": "D:/msys64/ucrt64/bin/mingw32-make.exe",
+        "WATCH_ARCH_ENABLE_LVGL": "OFF"
+      }
     }
   ],
   "buildPresets": [
     {
       "name": "mingw-debug",
       "configurePreset": "mingw-debug"
+    },
+    {
+      "name": "console-debug",
+      "configurePreset": "console-debug"
     }
   ]
 }

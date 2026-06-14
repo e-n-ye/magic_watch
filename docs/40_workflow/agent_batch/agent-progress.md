@@ -993,3 +993,21 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：tap guard 已解决当前缺陷，但 callback 仍可能漏接过滤入口，不把它写成最终通用模块；显式 PageState、`current_feature` 和 Input Port 仍延迟，不因用户当前缺少 UI 蓝图而提前灌入最终架构
 - 阻塞与待决：用户尚未形成完整 UI 系统蓝图；这是后续实验需要逐步建立的学习目标，不阻塞 Stage 00 冻结
 - 下一步：提交并停止；不得自动创建 Stage 01，下一轮先选择一个明确需求压力并记录事前预测
+
+### 会话 2026-06-14 Stage 01 Console 骨架
+
+- 本轮范围：队列项 `WATCH-ARCH-LAB-STAGE-01`，只建立卡片 `ARCH-LAB-01` 的 Console 直接调用骨架
+- 当前决定：保留 Stage 00 作为 LVGL 对照样本；Stage 01 使用 PC 标准输入输出模拟串口，不接真实 COM 口，不依赖 LVGL/SDL
+- 用户练习点：填写 Stage 01 事前预测，并亲自完成 `page_t`、`handle_command()`、`render_current_page()`
+- 风险回应：没有提前建立 InputAdapter、Intent、Core、Renderer、EventQueue、PageManager 或生命周期；Console 结果不能外推为最终产品无需 View
+- 自检：`cmake --preset console-debug` 通过；`cmake --build --preset console-debug` 通过且只构建 Stage 01；短运行 `help -> heart -> quit` 通过，`heart` 正确进入未实现练习占位；Stage 01 的 LVGL/SDL/预设系统抽象扫描无命中；`git diff --check` 通过；本轮中文 Markdown 乱码哨兵检查无命中
+- 下一步：骨架验证后停止，等待用户完成练习，不自动进入 Stage 02
+
+### 会话 2026-06-14 Stage 01 冻结
+
+- 本轮范围：验收并冻结队列项 `WATCH-ARCH-LAB-STAGE-01`，随后只规划 Stage 02 的需求压力
+- 完成：用户已完成显式 `page_t`、命令处理和页面渲染；Heart、Steps、Back、Show 与非法命令运行正常；首页 Back 已明确为合法 no-op
+- 实际观察：`s_current_page` 是唯一页面状态；首次实现中的 `show` 曾复制页面输出规则，现已统一到 `render_current_page()`；`handle_command()` 当前同时承担字符串识别、导航判断、状态修改和渲染时机
+- 风险回应：没有因为看到职责集中就提前拆 Intent/Core/Renderer；先冻结这份直接实现，再用单一新增需求攻击它
+- 自检：`cmake --build --preset console-debug` 通过；最终命令回归覆盖 Show、首页 Back、非法命令、Heart、Steps 与 Back；Stage 01 的 LVGL/SDL/预设系统抽象扫描无命中；`git diff --check` 通过；本轮中文 Markdown 乱码哨兵检查无命中
+- 下一步：Stage 01 单独提交；Stage 02 只规划“上下文相关菜单导航”，不在本轮实现

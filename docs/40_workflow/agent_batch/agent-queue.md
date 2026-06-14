@@ -134,6 +134,15 @@
 - 验收后处理：冻结并保留
 - 执行前条件：实验场总纲已由提交 `cfca90c` 收口；只允许创建 Stage 00，不得自动推进后续 Stage。
 
+### WATCH-ARCH-LAB-STAGE-01 Console 直接调用基线
+
+- 状态：DONE
+- 卡片来源：cards/watch-arch-learning-stage01-q14.md
+- 执行范围：卡片 `ARCH-LAB-01`
+- 停止策略：队列项完成后停止
+- 验收后处理：冻结并保留
+- 执行前条件：`ARCH-LAB-00` 已由提交 `c32957b` 冻结；本卡只建立 Console 直接调用骨架，不得自动引入系统抽象或推进 Stage 02。
+
 ## 队列项格式
 
 ```text
