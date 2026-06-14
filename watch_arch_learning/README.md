@@ -25,6 +25,10 @@ Stage 04 已完成第一版并冻结，复盘见：
 
 - `docs/40_workflow/agent_batch/cards/watch-arch-learning-stage04-q17.md`
 
+Stage 05 当前只完成规划，不创建代码目录：
+
+- `docs/40_workflow/agent_batch/cards/watch-arch-learning-stage05-q18.md`
+
 ## 构建
 
 ```powershell
