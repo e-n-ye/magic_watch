@@ -13,6 +13,7 @@
 - `stage_03_multi_input_direct/`：正在验证第二种输入表示的直接翻译方案。
 - `stage_04_command_language_pressure/`：已冻结的命令字符串压力实验。
 - `stage_05_shared_action_semantics/`：已冻结的最小共享动作语义实验。
+- `stage_06_system_event_pressure/`：尚未创建代码目录；当前只有纯规划卡。
 
 Stage 01 与 Stage 02 已完成并冻结。Stage 02 的规划与复盘见：
 
@@ -29,6 +30,10 @@ Stage 04 已完成第一版并冻结，复盘见：
 Stage 05 已完成第一版并冻结，复盘见：
 
 - `docs/40_workflow/agent_batch/cards/watch-arch-learning-stage05-q18.md`
+
+Stage 06 当前只完成规划，尚未进入实现，规划卡见：
+
+- `docs/40_workflow/agent_batch/cards/watch-arch-learning-stage06-q19.md`
 
 ## 构建
 

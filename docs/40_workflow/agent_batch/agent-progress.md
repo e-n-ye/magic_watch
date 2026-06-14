@@ -1115,3 +1115,12 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：没有把更高层目标拆分误判成新的产品语义层；也没有把下一阶段直接推成目标导航层
 - 阻塞与待决：Stage 06 尚未正式落卡；如果继续推进，更真实的压力将是时间维度、系统事件和 dirty render
 - 下一步：等待用户决定是否进入 Stage 06 规划
+
+### 会话 2026-06-14 Stage 06 规划
+
+- 本轮范围：只规划 `WATCH-ARCH-LAB-STAGE-06`
+- 完成：已新增 Stage 06 纯规划卡；已把下一压力收敛为“时间维度、系统事件与 dirty render”；已明确排除 `GO_TO_*` 目标导航层和代码实现
+- 修改文件：`docs/20_guides/watch_arch_learning_lab.md`、`watch_arch_learning/README.md`、`docs/40_workflow/agent_batch/cards/watch-arch-learning-stage06-q19.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 风险回应：没有提前创建 Stage 06 代码目录，没有把系统事件塞进 `shared_action_t`，也没有把 replay/test helper 倒写成产品结构
+- 阻塞与待决：用户仍需先完成 Stage 06 事前预测；尚未进入实现
+- 下一步：等待用户确认这张规划卡；如果继续，下一轮只允许进入 Stage 06 最小实现卡

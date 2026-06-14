@@ -2,7 +2,7 @@
 
 > 状态：方向基线，允许根据实验结果持续修订  
 > 路由类型：按需开发指南  
-> 当前边界：Stage 00、Stage 01、Stage 02、Stage 03、Stage 04 与 Stage 05 已冻结
+> 当前边界：Stage 00、Stage 01、Stage 02、Stage 03、Stage 04 与 Stage 05 已冻结；Stage 06 仅完成规划
 
 ## 1. 目的
 
@@ -251,3 +251,16 @@ Stage 05 已进一步证明：
 - 时间维度
 - 非用户系统事件
 - 状态修改与显示刷新的分离
+
+Stage 06 现在只规划这一个问题：
+
+- `shared_action_t` 继续只承载用户动作
+- tick、idle timeout、电量变化这类事实是否需要更外层事件承接
+- sleep/wake 是否开始要求最小电源状态语义
+- 状态修改后是否应先标记 dirty，再统一 render
+
+当前已明确排除：
+
+- 不把 `GO_TO_ABOUT`、`GO_TO_STEPS` 一类目标导航层写入产品共享语义
+- 不因为出现时间维度就立刻引入线程、队列或完整 PowerController
+- 不让 replay/test helper 倒逼产品结构
