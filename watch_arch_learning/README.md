@@ -12,6 +12,7 @@
 - `stage_02_context_menu/`：已冻结的上下文相关菜单导航实验。
 - `stage_03_multi_input_direct/`：正在验证第二种输入表示的直接翻译方案。
 - `stage_04_command_language_pressure/`：已冻结的命令字符串压力实验。
+- `stage_05_shared_action_semantics/`：已冻结的最小共享动作语义实验。
 
 Stage 01 与 Stage 02 已完成并冻结。Stage 02 的规划与复盘见：
 
@@ -25,7 +26,7 @@ Stage 04 已完成第一版并冻结，复盘见：
 
 - `docs/40_workflow/agent_batch/cards/watch-arch-learning-stage04-q17.md`
 
-Stage 05 当前只完成规划，不创建代码目录：
+Stage 05 已完成第一版并冻结，复盘见：
 
 - `docs/40_workflow/agent_batch/cards/watch-arch-learning-stage05-q18.md`
 
@@ -69,4 +70,11 @@ Stage 04 同样使用 Console-only preset：
 ```powershell
 cmake --build --preset console-debug --target watch_arch_stage_04_command_language_pressure
 watch_arch_learning/build/console-debug/out/watch_arch_stage_04_command_language_pressure.exe
+```
+
+Stage 05 同样使用 Console-only preset：
+
+```powershell
+cmake --build --preset console-debug --target watch_arch_stage_05_shared_action_semantics
+watch_arch_learning/build/console-debug/out/watch_arch_stage_05_shared_action_semantics.exe
 ```
