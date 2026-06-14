@@ -1011,3 +1011,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：没有因为看到职责集中就提前拆 Intent/Core/Renderer；先冻结这份直接实现，再用单一新增需求攻击它
 - 自检：`cmake --build --preset console-debug` 通过；最终命令回归覆盖 Show、首页 Back、非法命令、Heart、Steps 与 Back；Stage 01 的 LVGL/SDL/预设系统抽象扫描无命中；`git diff --check` 通过；本轮中文 Markdown 乱码哨兵检查无命中
 - 下一步：Stage 01 单独提交；Stage 02 只规划“上下文相关菜单导航”，不在本轮实现
+
+### 会话 2026-06-14 Stage 02 规划
+
+- 本轮范围：只规划 `ARCH-LAB-02`，不创建 Stage 02 代码目录
+- 当前缺口：Stage 01 的命令全局有效，尚未观察“同一命令依赖当前页面”和“同一详情存在不同返回目标”的组合压力
+- 新增需求：App Menu、菜单选择、`next/prev/enter`、Home 快捷入口与两种详情 Back 路径
+- 拆分理由：本 Stage 只攻击上下文导航；第二输入、异步事件、动态设置和生命周期会引入新的故障域，必须留到后续独立实验
+- 用户练习点：实现前先判断页面状态、菜单选择和进入来源是否需要分别保存，并填写完整导航表
+- 自检：`git diff --check` 通过；Stage 02 代码目录不存在；规划卡只包含上下文导航压力；本轮中文 Markdown 乱码哨兵检查无命中
+- 下一步：规划提交后停止，等待用户填写 `watch-arch-learning-stage02-q15.md` 中的事前预测

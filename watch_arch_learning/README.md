@@ -10,7 +10,9 @@
 - `stage_00_direct/`：两张卡、详情区域和 Back 的直接调用实验。
 - `stage_01_console_direct/`：无 LVGL 的终端直接调用练习骨架，等待用户接通页面状态与命令行为。
 
-Stage 00 已冻结。Stage 01 当前只建立 Console 练习骨架，不提前引入 Intent、Core 或 Renderer。
+Stage 01 已完成并冻结。Stage 02 当前只规划“上下文相关菜单导航”，尚未创建代码目录；规划见：
+
+- `docs/40_workflow/agent_batch/cards/watch-arch-learning-stage02-q15.md`
 
 ## 构建
 
