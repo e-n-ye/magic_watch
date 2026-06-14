@@ -10,12 +10,13 @@
 - `stage_00_direct/`：两张卡、详情区域和 Back 的直接调用实验。
 - `stage_01_console_direct/`：已冻结的无 LVGL 终端直接调用基线。
 - `stage_02_context_menu/`：已冻结的上下文相关菜单导航实验。
+- `stage_03_multi_input_direct/`：正在验证第二种输入表示的直接翻译方案。
 
 Stage 01 与 Stage 02 已完成并冻结。Stage 02 的规划与复盘见：
 
 - `docs/40_workflow/agent_batch/cards/watch-arch-learning-stage02-q15.md`
 
-Stage 03 当前只规划第二种输入表示，尚未创建代码目录：
+Stage 03 已按用户选择的方案 B 建立第一版，等待人工运行和复盘：
 
 - `docs/40_workflow/agent_batch/cards/watch-arch-learning-stage03-q16.md`
 
@@ -45,4 +46,11 @@ Stage 02 使用同一 Console-only preset：
 ```powershell
 cmake --build --preset console-debug --target watch_arch_stage_02_context_menu
 watch_arch_learning/build/console-debug/out/watch_arch_stage_02_context_menu.exe
+```
+
+Stage 03 也使用 Console-only preset：
+
+```powershell
+cmake --build --preset console-debug --target watch_arch_stage_03_multi_input_direct
+watch_arch_learning/build/console-debug/out/watch_arch_stage_03_multi_input_direct.exe
 ```

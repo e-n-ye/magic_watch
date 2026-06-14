@@ -42,3 +42,4 @@ endif()
 
 add_subdirectory(stage_01_console_direct)
 add_subdirectory(stage_02_context_menu)
+add_subdirectory(stage_03_multi_input_direct)

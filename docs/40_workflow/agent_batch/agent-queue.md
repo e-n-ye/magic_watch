@@ -154,12 +154,21 @@
 
 ### WATCH-ARCH-LAB-STAGE-03 第二种输入表示
 
-- 状态：TODO
+- 状态：DONE
 - 卡片来源：cards/watch-arch-learning-stage03-q16.md
 - 执行范围：卡片 `ARCH-LAB-03`
-- 停止策略：用户事前预测前停止
+- 停止策略：第一版实现后等待用户运行与复盘
 - 验收后处理：冻结并保留
 - 执行前条件：`ARCH-LAB-02` 已由提交 `ee08027` 冻结；先比较两种直接接法，不得提前引入 Intent、Input Adapter 或 EventQueue。
+
+### WATCH-ARCH-LAB-STAGE-04 命令字符串压力
+
+- 状态：TODO
+- 卡片来源：cards/watch-arch-learning-stage04-q17.md
+- 执行范围：卡片 `ARCH-LAB-04`
+- 停止策略：规划提交后停止
+- 验收后处理：保留
+- 执行前条件：`ARCH-LAB-03` 已冻结；本轮只规划“命令字符串是否已变成隐式内部合同”，不得创建 Stage 04 代码目录。
 
 ## 队列项格式
 
