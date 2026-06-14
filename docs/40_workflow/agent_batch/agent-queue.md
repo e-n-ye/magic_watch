@@ -145,10 +145,10 @@
 
 ### WATCH-ARCH-LAB-STAGE-02 上下文相关菜单导航
 
-- 状态：TODO
+- 状态：DONE
 - 卡片来源：cards/watch-arch-learning-stage02-q15.md
 - 执行范围：卡片 `ARCH-LAB-02`
-- 停止策略：用户事前预测前停止
+- 停止策略：队列项完成后停止
 - 验收后处理：冻结并保留
 - 执行前条件：`ARCH-LAB-01` 已由提交 `6ce2806` 冻结；先完成状态与导航预测，不得直接创建 Stage 02 代码。
 

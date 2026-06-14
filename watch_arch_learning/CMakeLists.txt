@@ -41,3 +41,4 @@ if(WATCH_ARCH_ENABLE_LVGL)
 endif()
 
 add_subdirectory(stage_01_console_direct)
+add_subdirectory(stage_02_context_menu)
