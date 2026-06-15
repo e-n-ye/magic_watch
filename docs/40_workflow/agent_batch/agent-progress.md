@@ -1124,3 +1124,22 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：没有提前创建 Stage 06 代码目录，没有把系统事件塞进 `shared_action_t`，也没有把 replay/test helper 倒写成产品结构
 - 阻塞与待决：用户仍需先完成 Stage 06 事前预测；尚未进入实现
 - 下一步：等待用户确认这张规划卡；如果继续，下一轮只允许进入 Stage 06 最小实现卡
+
+### 会话 2026-06-14 Stage 06 第一版实现
+
+- 本轮范围：队列项 `WATCH-ARCH-LAB-STAGE-06`，执行 `ARCH-LAB-06` 第一版
+- 完成：已新增独立 `stage_06_system_event_pressure`；已把 `shared_action_t` 保持为用户动作语义，并在其外侧加上最小 `app_event_t`；已接通 `ACTIVE` / `SLEEP` 两态与 dirty render
+- 修改文件：`watch_arch_learning/CMakeLists.txt`、`watch_arch_learning/README.md`、`watch_arch_learning/stage_06_system_event_pressure/CMakeLists.txt`、`watch_arch_learning/stage_06_system_event_pressure/main.c`、`watch_arch_learning/stage_06_system_event_pressure/README.md`、`docs/20_guides/watch_arch_learning_lab.md`、`docs/40_workflow/agent_batch/cards/watch-arch-learning-stage06-q19.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`cmake --preset console-debug` 通过；`cmake --build --preset console-debug --target watch_arch_stage_06_system_event_pressure` 通过；`git diff --check` 通过，仅有 LF/CRLF 提示；脚本验证已覆盖 `tick 10` 合并 render 与 sleep 下 `key_select` 第一拍只唤醒
+- 风险回应：没有引入 EventQueue、线程、RTOS、更多页面或 `GO_TO_*` 目标导航层；系统事件仍未污染 `shared_action_t`
+- 阻塞与待决：用户尚未完成人工运行与五个复盘问题；Stage 06 还不能冻结
+- 下一步：停止在第一版实现，等待用户亲自运行 Stage 06 矩阵并做复盘
+
+### 会话 2026-06-15 Stage 06 路线收口
+
+- 本轮范围：收口 `WATCH-ARCH-LAB-STAGE-06`，停止继续扩建纯架构实验场
+- 完成：Stage 06 以“成功暴露时间片、事件队列和周期 render 压力”收口；保留第一版代码作为同步解释器过渡样本；队列项与卡片标记 DONE
+- 修改文件：`watch_arch_learning/**`、`docs/20_guides/watch_arch_learning_lab.md`、`docs/40_workflow/agent_batch/cards/watch-arch-learning-stage06-q19.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 风险回应：没有把当前 Stage 06 写成完整时间片系统；明确记录其阻塞输入、直接 dispatch 和主动 render 限制；不继续创建 Stage 06B
+- 阻塞与待决：无；后续学习转入真实 PC 模拟器架构地图与必要性审查
+- 下一步：单独提交 Stage 06 收口，再创建真实工程审查卡

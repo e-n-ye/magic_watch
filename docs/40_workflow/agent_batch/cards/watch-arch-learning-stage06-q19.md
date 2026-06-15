@@ -1,11 +1,11 @@
 # Watch Architecture Learning Stage 06
 
-## 卡片 ARCH-LAB-06 时间维度、系统事件与 dirty render 压力规划
+## 卡片 ARCH-LAB-06 时间维度、系统事件与 dirty render 压力
 
 - ID：`ARCH-LAB-06`
-- 标题：时间维度、系统事件与 dirty render 压力规划
+- 标题：时间维度、系统事件与 dirty render 压力
 - 批次：架构冲突实验场
-- 状态：TODO
+- 状态：DONE
 - 依赖：`ARCH-LAB-05` DONE
 
 ### 问题定位
@@ -58,15 +58,15 @@ Stage 05 已经证明：
    - 不是“抽象更优雅”
    - 而是“时间与系统事件进入后，旧直连写法是否开始出现真实压力”
 
-### 结论边界
+### 本轮实现边界
 
-本卡是纯规划卡，只允许形成 Stage 06 的实现边界，不进入代码。
+本轮现在进入最小实现，只允许验证 Stage 06 的第一版压力。
 
-本卡必须明确：
+本轮必须继续明确：
 
 - Stage 06 不引入 `GO_TO_ABOUT`、`NAVIGATE_TO_*` 一类目标导航层。
 - `shared_action_t` 继续只代表用户动作，不承载 tick、电量变化、idle timeout。
-- 如果需要更外层事件，只能把它写成“候选实现边界”，不能写成已证明唯一正确答案。
+- 如果需要更外层事件，只能把它写成“当前这轮最小实现下成立的边界”，不能写成已证明唯一正确答案。
 - replay/test helper 允许继续存在，但不能反过来驱动产品结构。
 
 ### 用户事前预测
@@ -74,14 +74,24 @@ Stage 05 已经证明：
 进入实现轮前，用户需要先回答：
 
 1. 你认为哪些输入或变化已经不属于 `shared_action_t`，而应该单独视为系统事件？
+非用户输入，系统级行为，被动，可能有稳定时钟周期
+
 2. 如果系统处于 sleep，第一拍用户输入应当只负责唤醒，还是唤醒并继续执行原动作？
+第一拍用户输入应当只负责唤醒
+
 3. 你觉得 render 延后之后，最容易暴露的 bug 会是什么：漏刷新、重复刷新，还是状态和显示不同步？
+render延后过后，可能会带来同步问题，在刷新之前数据变动了两次？
+不过我觉得保存相对固定的刷新周期问题不大
+
 4. 你预期 Stage 06 的最小实现更像“事件外壳”，还是“脏标记刷新”？
+他应该更像是事件外壳，系统级事件，用户事件，脏区刷新本质上也是一个事件
+
 5. 出现什么证据时，你会判断“Stage 06 这次抽象还不值得引入”？
+不知道，我几乎肯定，引入系统级事件，这种抽象几乎是必然的
 
 ### 下一实现卡的预设边界
 
-如果用户确认进入实现轮，下一张卡应只做一个最小闭环：
+本轮实现只做一个最小闭环：
 
 - 新建独立 `stage_06_system_event_pressure/`
 - 保留 Stage 05 的页面数量与导航规模
@@ -99,11 +109,29 @@ Stage 05 已经证明：
 - 第二 View
 - 直接复刻 Magic Watch 的 Core、Adapter、PowerController
 
+### 实施方案
+
+- 复制 Stage 05 为独立 `stage_06_system_event_pressure/`
+- 保留 `shared_action_t` 作为用户动作语义
+- 新增最小 `app_event_t`，只承接：
+  - 用户动作
+  - `tick`
+  - `idle timeout`
+  - `battery changed`
+- 新增最小 `power_state_t`，只区分 `ACTIVE` / `SLEEP`
+- 引入 dirty render：
+  - 事件只负责修改状态并置 dirty
+  - 顶层循环统一决定何时 render
+- 保留当前页面规模，不新增页面
+- 用最小命令入口模拟系统事件，不引入线程、异步循环或真实定时器
+
 ### 涉及位置
 
 Allowed files
 
+- `watch_arch_learning/CMakeLists.txt`
 - `watch_arch_learning/README.md`
+- `watch_arch_learning/stage_06_system_event_pressure/**`
 - `docs/20_guides/watch_arch_learning_lab.md`
 - `docs/40_workflow/agent_batch/cards/watch-arch-learning-stage06-q19.md`
 - `docs/40_workflow/agent_batch/agent-queue.md`
@@ -116,11 +144,10 @@ Read-only files
 
 Forbidden changes
 
-- 不创建 `stage_06_system_event_pressure/` 代码目录。
 - 不修改 Stage 00~05 任何实现代码。
-- 不把 Stage 06 规划写成已实现事实。
 - 不引入 `GO_TO_*` 目标导航层。
 - 不把系统事件塞进 `shared_action_t`。
+- 不引入 EventQueue、多线程、RTOS 或真实后台定时器。
 
 ### 风险
 
@@ -131,17 +158,19 @@ Forbidden changes
 ### 自检
 
 - `git diff --check`
-- 检查 Stage 06 卡片仍是纯规划，不包含实现完成表述
-- 检查规划明确排除了 `GO_TO_*` 目标导航层
-- 检查 `shared_action_t` 与系统事件的边界已写清
+- `cmake --build --preset console-debug --target watch_arch_stage_06_system_event_pressure`
+- 人工命令矩阵覆盖：sleep、wake、battery、tick、用户动作
+- 检查 Stage 06 仍未引入 `GO_TO_*` 目标导航层
+- 检查 `shared_action_t` 与系统事件的边界仍然清楚
 - 中文 Markdown 乱码哨兵检查
 
 ### 验收标准
 
-- 能明确说明为什么 Stage 06 不该做目标导航层
-- 能明确说明下一压力是“时间维度 + 系统事件 + dirty render”
-- 能给出下一实现卡的最小边界和禁止项
-- 没有把实现轮和规划轮混在一起
+- `stage_06_system_event_pressure` 可独立构建运行
+- `shared_action_t` 仍只承载用户动作，系统事件通过 `app_event_t` 进入
+- sleep 下第一拍用户输入只负责唤醒，不执行原动作
+- 状态修改与 render 已分离，至少能观察到“一次顶层命令触发多个状态变化，但只 render 一次”
+- 没有把 EventQueue、线程、更多页面或目标导航层混入同一轮
 
 ### Doc Impact
 
@@ -149,13 +178,18 @@ Forbidden changes
 
 ### 建议提交信息
 
-规划：`docs: plan stage 06 system event pressure`
+实现：`learn: add system event pressure stage`
 
 ### 执行记录
 
 - 2026-06-14：Stage 05 已冻结；用户明确否决 `GO_TO_ABOUT` 一类目标导航层，认为它更像测试便利而非真实产品输入语义。
 - 2026-06-14：本卡只落成 Stage 06 纯规划卡，把下一压力收敛为“时间维度、系统事件与 dirty render”，不创建代码目录，不进入实现。
+- 2026-06-14：用户已完成 Stage 06 事前预测，卡片转入最小实现轮；本轮只允许创建 `stage_06_system_event_pressure/`，验证 `app_event_t`、最小 `power_state_t` 与 dirty render。
+- 2026-06-14：第一版实现已接通；新增 `stage_06_system_event_pressure/`、`app_event_t`、最小 `power_state_t` 和 dirty render。`cmake --preset console-debug` 与 `cmake --build --preset console-debug --target watch_arch_stage_06_system_event_pressure` 通过。
+- 2026-06-14：脚本验证已覆盖 `tick 10 -> idle timeout -> sleep` 与 `sleep -> key_select -> wake only -> key_select -> open menu`；说明“多次状态变化只 render 一次”和“第一拍输入只唤醒”都已成立。
+- 2026-06-15：用户复核后指出当前 `fgets()` 仍阻塞主循环，事件仍以直接调用传递，dirty render 仍由输入处理路径主动触发。结论是 Stage 06 已成功暴露“事件对象化不等于时间片系统”的真实压力，但不继续在实验场实现队列与调度。
+- 2026-06-15：本卡按阶段性实验完成收口。保留代码作为过渡样本，不宣称它已经实现自动 tick、事件队列或周期 render task。
 
 ### Stop policy
 
-- 规划提交后停止，等待用户先完成事前预测，再决定是否进入 Stage 06 最小实现卡。
+- 已冻结；架构冲突实验场暂停，后续转入真实 PC 模拟器架构审查。
