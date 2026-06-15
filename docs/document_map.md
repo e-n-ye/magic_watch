@@ -72,13 +72,15 @@
 
 先读：
 
+- [magicwatch_capability_growth_roadmap.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/magicwatch_capability_growth_roadmap.md)
 - [magicwatch_long_term_roadmap.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/magicwatch_long_term_roadmap.md)
 - [current_decisions.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_decisions.md)
 - [lvgl_xml_watch_core_architecture.md](/D:/MY_Desk/watch/magic_watch/docs/10_architecture/lvgl_xml_watch_core_architecture.md)，仅在计划涉及 XML / `watch_core` / PC / F411 主线时补读。
 
 说明：
 
-- `magicwatch_long_term_roadmap.md` 是 V0-V3 的当前执行地图，包含阶段依赖图、V0 执行门、量化门槛、任务卡拆分和跨阶段复用规则。
+- `magicwatch_capability_growth_roadmap.md` 是当前长期方向和执行边界入口；当前唯一执行入口是 `MAINLINE-DATA-01`。
+- `magicwatch_long_term_roadmap.md` 保留旧 V0-V3 规划、阶段依赖图、量化门槛和历史任务拆分，用于追溯，不再以“三平台同时完成”约束当前执行。
 - 它是按需当前计划，不加入默认新会话入口。
 - 如果只是问项目当前定位，优先读更短的 `project_brief.md` 和 `current_decisions.md`。
 

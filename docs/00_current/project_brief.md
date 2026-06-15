@@ -16,6 +16,14 @@ LVGL XML UI 源
 -> F411 Lite UI 真机闭环验证
 ```
 
+当前长期方向与唯一执行入口见：
+
+- `docs/00_current/magicwatch_capability_growth_roadmap.md`
+
+该路线以能力成长和可运行证据为阶段门。当前只执行
+`MAINLINE-DATA-01` 动态电池闭环，不提前展开最小产品感、真实硬件或
+Nordic / Zephyr 阶段卡片。
+
 v0 的成功标准不是页面数量，而是：
 
 1. UI 资产、产品状态、平台硬件边界清楚。

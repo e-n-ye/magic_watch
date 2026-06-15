@@ -87,3 +87,13 @@ PC SDL 与 F411 LCD/Touch 的平台差异仍应尽量收敛在 display/input/tic
 ## D021: Power 合同止于 Core 决策，`V0.6` 从平台执行开始
 
 `watch_core` 当前只拥有最小 `PowerState / PowerRequest / PowerAction / commit` 合同。它负责给出决策，但不直接执行背光、亮灭屏或真实唤醒动作。后续 `V0.6` 的起点是平台 Action executor 和执行回路对齐，而不是继续新增 `SystemEvent`、新 Coordinator 或更多 Core 名词。
+
+## D022: 当前执行改由四阶段能力路线约束
+
+当前长期方向以 `magicwatch_capability_growth_roadmap.md` 为权威入口。
+
+旧 `V0.6` 三平台同时闭环方案保留为历史规划，但其“三平台同时完成”要求
+不再约束当前执行。当前唯一执行入口是 `MAINLINE-DATA-01`，允许登记
+`DATA-01-A/B/C/D` 作为执行拆分，不得登记阶段 2-4 卡片。
+
+PC Power executor 等 `MAINLINE-DATA-01` 验收后，再按最小闭环重新规划。

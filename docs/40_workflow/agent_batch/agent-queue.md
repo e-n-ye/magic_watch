@@ -201,6 +201,16 @@
 - 结论：当前必要边界是 Platform Runtime / XML View / UI Adapter /
   `watch_core`；Service、EventBus 和独立 ScreenManager 尚无实现证据。
 
+### MAINLINE-DATA-01 动态电池最小闭环
+
+- 状态：TODO
+- 卡片来源：cards/mainline-data-q21.md
+- 执行范围：卡片 `DATA-01-A` / `DATA-01-B` / `DATA-01-C` / `DATA-01-D`
+- 停止策略：每张卡后停止
+- 验收后处理：保留
+- 执行前条件：`CURRENT-WATCH-ARCH-AUDIT-PC` 已完成；当前唯一执行入口是
+  本队列项。允许执行四张子卡，但不得登记或执行能力路线阶段 2-4 卡片。
+
 ## 队列项格式
 
 ```text
