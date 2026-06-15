@@ -189,6 +189,18 @@
 - 执行前条件：`ARCH-LAB-05` 已冻结；本轮只验证“时间维度、系统事件与 dirty render”的最小闭环，不引入目标导航层、线程或队列。
 - 结论：事件分层和 dirty 状态压力已经成立，但当前仍是阻塞输入驱动的同步解释器；不继续 Stage 06B，转入真实 PC 工程架构审查。
 
+### CURRENT-WATCH-ARCH-AUDIT-PC PC XML 主链架构地图与必要性审查
+
+- 状态：DONE
+- 卡片来源：cards/current-watch-architecture-audit-q20.md
+- 执行范围：卡片 `ARCH-AUDIT-PC-01`
+- 停止策略：队列项完成后停止
+- 验收后处理：保留
+- 执行前条件：`ARCH-LAB-06` 已收口；只读审计当前 `magic_watch_xml_sim`，
+  不修改产品代码，不把旧 C++ 模拟器混入当前主线。
+- 结论：当前必要边界是 Platform Runtime / XML View / UI Adapter /
+  `watch_core`；Service、EventBus 和独立 ScreenManager 尚无实现证据。
+
 ## 队列项格式
 
 ```text

@@ -1143,3 +1143,21 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：没有把当前 Stage 06 写成完整时间片系统；明确记录其阻塞输入、直接 dispatch 和主动 render 限制；不继续创建 Stage 06B
 - 阻塞与待决：无；后续学习转入真实 PC 模拟器架构地图与必要性审查
 - 下一步：单独提交 Stage 06 收口，再创建真实工程审查卡
+
+### 会话 2026-06-15 PC XML 架构地图审计
+
+- 本轮范围：队列项 `CURRENT-WATCH-ARCH-AUDIT-PC`，卡片 `ARCH-AUDIT-PC-01`
+- 当前目标：只读追踪 `magic_watch_xml_sim` 的启动、输入、Core、页面和渲染链，
+  输出每层必要性判断
+- 边界：不修改产品代码，不审旧 C++ 模拟器，不进入 F411，不实施重构
+- 已发现线索：PC HAL 业务事件未注册到 XML 主链；XML 卡片回调 helper 当前未被
+  生成对象挂接；真实点击来自 Adapter 创建的透明 hit target
+- 完成：已新增当前 PC XML 事实地图、必要性矩阵和文档路由；卡片
+  `ARCH-AUDIT-PC-01` 标记 DONE
+- 自检：`cmake --build sim/lv_port_pc_vscode/build --config Debug` 通过；
+  `magic_watch_core_contract_test.exe` 输出 `watch_core contract tests passed.`；
+  `git diff --check` 通过；本轮中文文档乱码哨兵无命中
+- 风险回应：没有把旧 C++ 模拟器、F411 或目标蓝图写成当前运行事实；没有修改
+  任何产品代码；没有把未执行的手动 UI 写成通过
+- 阻塞与待决：未执行 `magic_watch_xml_sim` 手动 UI；下一条真实链路尚未落卡
+- 下一步：等待用户审阅地图，优先考虑系统时间/电池事件为何止于 HAL callback

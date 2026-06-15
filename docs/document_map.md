@@ -217,6 +217,19 @@
 - [current_architecture.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_architecture.md)
 - [current_decisions.md](/D:/MY_Desk/watch/magic_watch/docs/00_current/current_decisions.md)
 
+### 我想审查当前 PC XML 主链每一层是否必要
+
+先读：
+
+- [current_watch_architecture_map_and_necessity_audit.md](/D:/MY_Desk/watch/magic_watch/docs/30_testing/current_watch_architecture_map_and_necessity_audit.md)
+- [lvgl_xml_watch_core_architecture.md](/D:/MY_Desk/watch/magic_watch/docs/10_architecture/lvgl_xml_watch_core_architecture.md)，仅在需要对照目标蓝图时补读。
+
+说明：
+
+- 该审计只描述当前 `magic_watch_xml_sim` 的真实运行链。
+- 它区分活跃路径、未接通路径和未来候选层，不把旧 C++ 模拟器混入当前主线。
+- 下一步应先审系统事件如何从 PC HAL 进入共享状态，不直接扩建 EventBus 或 ScreenManager。
+
 ### 我想回到 F411 重新掌控架构蓝图
 
 先读：
