@@ -38,6 +38,12 @@ Current overlay note:
 
 - The current screen-off overlay has been manually rechecked to avoid click-through on the home health cards in the `PC-POWER-02` closure pass.
 
+Current timeout probe:
+
+- `PC-POWER-03` uses a PC-only inactivity probe of `8000 ms`.
+- With no input, the simulator requests screen off after the timeout window.
+- Input activity or debug wake actions reset the inactivity timer and can wake the screen through the existing power request path.
+
 Out of scope for this current entry: F411 build, real hardware validation, and PC Power executor behavior.
 
 [LVGL](https://github.com/lvgl/lvgl) is written mainly for microcontrollers and embedded systems, however you can run the library **on your PC** as well without any embedded hardware. The code written on PC can be simply copied when your are using an embedded system.

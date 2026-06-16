@@ -18,6 +18,8 @@
 
 namespace {
 
+constexpr std::uint32_t kPowerTimeoutProbeMs = 8000U;
+
 const char* power_request_name(WatchCorePowerRequest request)
 {
   switch (request) {
@@ -141,6 +143,19 @@ void log_power_request(WatchCorePowerRequest request, WatchCorePowerAction actio
   std::fflush(stdout);
 }
 
+bool is_input_activity_event(twsim::hal::EventKind kind)
+{
+  return kind == twsim::hal::EventKind::ButtonChanged ||
+         kind == twsim::hal::EventKind::CrownUpdated ||
+         kind == twsim::hal::EventKind::TouchUpdated;
+}
+
+void log_timeout_reset(const char* reason)
+{
+  std::printf("[power] inactivity_reset=%s\n", reason);
+  std::fflush(stdout);
+}
+
 }  // namespace
 
 #if defined(_WIN32)
@@ -185,8 +200,13 @@ int main(int argc, char ** argv)
   bool battery_dirty = false;
   bool pc_power_request_pending = false;
   WatchCorePowerRequest pending_power_request = WATCH_CORE_POWER_REQUEST_NONE;
+  std::uint32_t inactivity_elapsed_ms = 0U;
   device->set_event_callback(
-      [&watch_core, &battery_dirty, &pc_power_request_pending, &pending_power_request](
+      [&watch_core,
+       &battery_dirty,
+       &pc_power_request_pending,
+       &pending_power_request,
+       &inactivity_elapsed_ms](
           const twsim::hal::Event& event) {
         if (event.kind == twsim::hal::EventKind::BatteryChanged) {
           const auto* battery_sample = std::get_if<twsim::hal::BatterySample>(&event.payload);
@@ -207,6 +227,19 @@ int main(int argc, char ** argv)
           return;
         }
 
+        if (is_input_activity_event(event.kind)) {
+          inactivity_elapsed_ms = 0U;
+          log_timeout_reset("input");
+
+          WatchCorePowerState power_state = WATCH_CORE_POWER_STATE_SCREEN_ON;
+          watch_core_get_power_state(&watch_core, &power_state);
+          if (power_state == WATCH_CORE_POWER_STATE_SCREEN_OFF) {
+            pending_power_request = WATCH_CORE_POWER_REQUEST_WAKE;
+            pc_power_request_pending = true;
+          }
+          return;
+        }
+
         if (event.kind != twsim::hal::EventKind::DebugAction) {
           return;
         }
@@ -217,6 +250,8 @@ int main(int argc, char ** argv)
         }
 
         pending_power_request = map_debug_action_to_power_request(debug_sample->action);
+        inactivity_elapsed_ms = 0U;
+        log_timeout_reset("debug");
         std::printf(
             "[power] debug=%s mapped_request=%s\n",
             debug_action_name(debug_sample->action),
@@ -259,6 +294,23 @@ int main(int argc, char ** argv)
     previous_tick = now;
 
     device->tick(static_cast<std::uint32_t>(elapsed));
+    inactivity_elapsed_ms = static_cast<std::uint32_t>(
+        std::min<std::uint64_t>(
+            static_cast<std::uint64_t>(UINT32_MAX),
+            static_cast<std::uint64_t>(inactivity_elapsed_ms) + static_cast<std::uint64_t>(elapsed)));
+
+    WatchCorePowerState power_state = WATCH_CORE_POWER_STATE_SCREEN_ON;
+    watch_core_get_power_state(&watch_core, &power_state);
+    if (power_state == WATCH_CORE_POWER_STATE_SCREEN_ON &&
+        !pc_power_request_pending &&
+        inactivity_elapsed_ms >= kPowerTimeoutProbeMs) {
+      std::printf("[power] timeout_elapsed_ms=%u mapped_request=SCREEN_OFF\n", inactivity_elapsed_ms);
+      std::fflush(stdout);
+      pending_power_request = WATCH_CORE_POWER_REQUEST_SCREEN_OFF;
+      pc_power_request_pending = true;
+      inactivity_elapsed_ms = 0U;
+    }
+
     if (pc_power_request_pending) {
       const WatchCorePowerRequest request = pending_power_request;
       pending_power_request = WATCH_CORE_POWER_REQUEST_NONE;

@@ -224,7 +224,7 @@ Forbidden changes
 ## PC-POWER-03 PC 自动 timeout 探针
 
 - 批次：`PC-POWER-Q22`
-- 状态：TODO
+- 状态：DONE
 - 依赖：`PC-POWER-02` DONE，或用户明确接受暂缓输入门控后再规划执行
 - 自检：
   - `git status --short -uall`
@@ -294,4 +294,29 @@ Forbidden changes
 
 ### 执行记录
 
-- 尚未执行。
+- 2026-06-16：已完成 `PC-POWER-03` 的 PC-only timeout 探针。
+- 当前改动：`sim/lv_port_pc_vscode/src/xml_sim_main.cpp`、
+  `sim/lv_port_pc_vscode/README.md`、
+  `docs/40_workflow/agent_batch/cards/pc-power-q22.md`、
+  `docs/40_workflow/agent_batch/agent-progress.md`、
+  `docs/00_current/magicwatch_capability_growth_roadmap.md`
+- 当前自检：
+  - `cmake --build sim/lv_port_pc_vscode/build --config Debug` 通过
+  - `sim/lv_port_pc_vscode/build/out/magic_watch_core_contract_test.exe` 通过
+  - 运行态自动烟测已看到：
+    - `timeout_elapsed_ms=8005 mapped_request=SCREEN_OFF`
+    - `SCREEN_OFF -> TURN_SCREEN_OFF -> overlay_applied=true -> commit=true`
+    - `R` 调试动作唤醒：`SimRaiseToWake -> WAKE -> WAKE_SCREEN -> commit=true`
+    - 输入唤醒：`inactivity_reset=input -> WAKE -> WAKE_SCREEN -> commit=true`
+  - `git diff --check` 通过（仅 LF/CRLF 提示，无 diff 错误）
+  - 本轮实际改动中文文档乱码哨兵检查无命中
+- 运行结论：
+  - 无输入达到 `8000 ms` 后可复现 screen off request
+  - 输入或调试动作可唤醒
+  - timeout 与手动 `C/R` 调试动作复用同一 Power request 消费点，不冲突
+- 未执行项：
+  - 本轮未单独重跑人工四卡/详情/Back 路径
+  - F411 / LILYGO / 真实低功耗检查未执行
+- 风险回应：timeout 仅保存在 `xml_sim_main.cpp` 本地状态，不进入 Core API、
+  Adapter 或设置页；继续复用 `PC-POWER-01` 的单一 power request 消费点，
+  没有新增 Service、Scheduler 或其它抽象。
