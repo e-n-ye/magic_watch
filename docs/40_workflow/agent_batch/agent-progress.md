@@ -1187,3 +1187,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：本轮只在 `watch_core` 建最小 BatteryState 合同和测试，不修改 Adapter、XML、generated C、Simulator，不扩成 PMIC 模型，不进入 `DATA-01-B`
 - 阻塞与待决：无
 - 下一步：按队列“每张卡后停止”规则停止，等待用户验收；如通过，再进入 `DATA-01-B`
+
+### 会话 2026-06-16 进入 DATA-01-B
+
+- 本轮范围：队列项 `MAINLINE-DATA-01`，卡片 `DATA-01-B`
+- 完成：执行前检查完成；工作区干净；`DATA-01-B` 已完成并标记 DONE
+- 修改文件：`sim/lv_port_pc_vscode/src/xml_sim_main.cpp`、`docs/40_workflow/agent_batch/cards/mainline-data-q21.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`git status --short -uall` 启动时为空；`cmake --build sim/lv_port_pc_vscode/build --config Debug` 通过；`sim/lv_port_pc_vscode/build/out/magic_watch_core_contract_test.exe` 通过；`magic_watch_xml_sim` 短时运行日志先输出 `82`，约 5 秒后输出 `81`；`git diff --check` 通过（仅 LF/CRLF 提示，无 diff 错误）
+- 风险回应：本轮只在 `xml_sim_main.cpp` 接最小 BatteryChanged -> Core -> 单一 dirty 日志链，不修改 Adapter、XML、generated C、F411，不进入 `DATA-01-C`
+- 阻塞与待决：无
+- 下一步：按你的连续执行要求，可直接进入 `DATA-01-C`

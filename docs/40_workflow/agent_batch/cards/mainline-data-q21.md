@@ -89,7 +89,7 @@ Forbidden changes
 ## DATA-01-B Simulator Battery 进入 Core
 
 - 批次：`MAINLINE-DATA-01`
-- 状态：TODO
+- 状态：DONE
 - 依赖：`DATA-01-A` DONE
 - 自检：
   - `cmake --build sim/lv_port_pc_vscode/build --config Debug`
@@ -153,7 +153,18 @@ Forbidden changes
 
 ### 执行记录
 
-- 尚未执行。
+- 2026-06-16：已完成最小 Battery callback -> Core -> 单一 dirty 日志链。
+- 实际改动：`sim/lv_port_pc_vscode/src/xml_sim_main.cpp`、
+  `docs/40_workflow/agent_batch/cards/mainline-data-q21.md`、
+  `docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：
+  - `cmake --build sim/lv_port_pc_vscode/build --config Debug` 通过
+  - `sim/lv_port_pc_vscode/build/out/magic_watch_core_contract_test.exe` 通过
+  - `magic_watch_xml_sim` 短时运行日志先输出 `82`，约 5 秒后输出 `81`
+  - `git diff --check` 通过（仅 LF/CRLF 提示，无 diff 错误）
+- 风险回应：只消费 `BatteryChanged`，其他事件显式忽略；callback 只写 Core
+  并设置局部 `dirty`；主循环保留单一日志消费点；未修改 Adapter、XML、
+  generated C、F411，未进入 `DATA-01-C`。
 
 ## DATA-01-C XML 电池显示替换日志消费
 

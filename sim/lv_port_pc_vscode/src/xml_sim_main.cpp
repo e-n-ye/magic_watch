@@ -1,8 +1,10 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
+#include <cstdio>
 #include <string>
 #include <thread>
+#include <variant>
 
 #include "HAL/HAL.h"
 #include "XmlUi/watch_core_ui_adapter.h"
@@ -48,6 +50,29 @@ int main(int argc, char ** argv)
     return 1;
   }
 
+  bool battery_dirty = false;
+  device->set_event_callback([&watch_core, &battery_dirty](const twsim::hal::Event& event) {
+    if (event.kind != twsim::hal::EventKind::BatteryChanged) {
+      return;
+    }
+
+    const auto* battery_sample = std::get_if<twsim::hal::BatterySample>(&event.payload);
+    if (battery_sample == nullptr || battery_sample->percent < 0 ||
+        battery_sample->percent > 255) {
+      return;
+    }
+
+    const WatchCoreBatteryState battery_state {
+        battery_sample->present,
+        battery_sample->charging,
+        static_cast<std::uint8_t>(battery_sample->percent),
+    };
+
+    if (watch_core_set_battery_state(&watch_core, battery_state)) {
+      battery_dirty = true;
+    }
+  });
+
   auto previous_tick = std::chrono::steady_clock::now();
   while (true) {
     const auto now = std::chrono::steady_clock::now();
@@ -56,6 +81,16 @@ int main(int argc, char ** argv)
     previous_tick = now;
 
     device->tick(static_cast<std::uint32_t>(elapsed));
+    if (battery_dirty) {
+      WatchCoreUiModelSnapshot snapshot;
+      watch_core_get_ui_snapshot(&watch_core, &snapshot);
+      std::printf("[battery] present=%d charging=%d percent=%u\n",
+                  snapshot.battery.present ? 1 : 0,
+                  snapshot.battery.charging ? 1 : 0,
+                  static_cast<unsigned int>(snapshot.battery.percent));
+      std::fflush(stdout);
+      battery_dirty = false;
+    }
 
     std::uint32_t sleep_time_ms = lv_timer_handler();
     if (sleep_time_ms == LV_NO_TIMER_READY) {
