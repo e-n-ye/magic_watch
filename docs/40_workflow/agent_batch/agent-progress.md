@@ -1223,3 +1223,21 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：本轮只更新当前事实文档、运行 README、卡片和运行态记录，不修改任何产品代码；未把未执行的 F411/真机写成通过；未进入 PC Power executor
 - 阻塞与待决：无
 - 下一步：按 `MAINLINE-DATA-01` 完成后停止，等待用户决定是否单独规划 PC Power executor
+
+### 会话 2026-06-16 PC Power 卡片落库
+
+- 本轮范围：只落库 `PC-POWER-01/02/03` 三张 TODO 卡和队列入口，不实现 PC Power executor
+- 完成：已新增 `cards/pc-power-q22.md`；已把 `PC-POWER-Q22` 加入 `agent-queue.md`；
+  已把能力路线当前状态更新为下一执行入口 `PC-POWER-01`
+- 修改文件：`docs/40_workflow/agent_batch/cards/pc-power-q22.md`、
+  `docs/40_workflow/agent_batch/agent-queue.md`、
+  `docs/40_workflow/agent_batch/agent-progress.md`、
+  `docs/00_current/magicwatch_capability_growth_roadmap.md`
+- 自检：`git diff --check` 通过（仅 LF/CRLF 提示，无 diff 错误）；本轮实际改动
+  中文文档乱码哨兵检查无命中
+- 风险回应：三张卡一起落库，但队列停止策略是每张卡后停止；`PC-POWER-01`
+  只证明 executor 最小可视闭环，必须检查 overlay 点穿；点穿不阻塞 executor
+  通过，但必须记录为 `PC-POWER-02` 输入门控问题，未解决前不得宣称
+  screen-off 输入门控完成
+- 阻塞与待决：尚未实现 PC Power executor；尚未执行手工 overlay 验收
+- 下一步：等待用户验收本次落卡；下一轮只能先执行 `PC-POWER-01`

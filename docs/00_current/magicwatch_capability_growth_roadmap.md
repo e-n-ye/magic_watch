@@ -3,12 +3,13 @@
 > 状态：Current  
 > 更新日期：2026-06-16
 > 路由类型：长期能力路线  
-> 当前执行状态：`MAINLINE-DATA-01` 已完成，等待下一入口规划
+> 当前执行状态：`PC-POWER-01/02/03` 已规划落卡，下一执行入口为 `PC-POWER-01`
 
 本文件只定义长期能力门、项目主线约束与 AI 使用边界。
 
-`MAINLINE-DATA-01` 已完成。本文件当前不再指向新的自动执行入口；下一轮需先
-单独规划 PC Power executor 最小闭环，再决定是否建新卡。
+`MAINLINE-DATA-01` 已完成。PC Power executor 最小闭环已经拆成
+`PC-POWER-01/02/03` 三张卡；下一轮只能先执行 `PC-POWER-01`，并且每张卡后停下
+验收。
 
 四阶段是基于当前证据形成的方向假设，不是不可修改的版本承诺。
 每个阶段结束后，都必须根据运行、测试、真机或测量证据重新审查下一阶段。
@@ -30,8 +31,10 @@ Magic Watch 不以完成一款商业智能手表为目标，而是用于训练�
 依次完成：
 
 1. `MAINLINE-DATA-01` 动态电池闭环。
-2. `MAINLINE-DATA-01` 收口后，重新规划 PC Power executor 最小闭环。
-3. 形成三分钟演示路径和简短 README。
+2. `PC-POWER-01` PC Debug Power executor 最小可视闭环。
+3. `PC-POWER-02` PC screen-off 输入门控修正。
+4. `PC-POWER-03` PC 自动 timeout 探针。
+5. 形成三分钟演示路径和简短 README。
 
 阶段完成证据：
 
@@ -111,8 +114,15 @@ Nordic 实验与 Magic Watch 产品主线代码隔离，不移植完整手表，
 当前状态：
 
 - `DATA-01-A/B/C/D` 已全部完成。
-- 当前没有新的已登记执行入口。
-- PC Power executor 仍处于待规划，不提前落卡。
+- `PC-POWER-01/02/03` 已登记为下一组 PC Power executor 卡片。
+- 下一张执行入口只能是 `PC-POWER-01`；`PC-POWER-02/03` 是后续排队卡，
+  不代表阶段 2-4 已开始。
+
+`PC-POWER-Q22` 包含：
+
+- `PC-POWER-01`：PC Debug Power executor 最小可视闭环。
+- `PC-POWER-02`：PC screen-off 输入门控修正。
+- `PC-POWER-03`：PC 自动 timeout 探针。
 
 固定边界：
 
@@ -120,13 +130,21 @@ Nordic 实验与 Magic Watch 产品主线代码隔离，不移植完整手表，
 2. `DATA-01-C` 只能替换 `DATA-01-B` 的日志消费点，不得新增第二个 dirty 消费点。
 3. 首页创建或返回首页时，必须从当前 Snapshot 同步一次电池显示。
 4. XML 阻塞时允许保留日志验证，但禁止提交手改 generated C 或临时 UI 绕过。
-
-PC Power executor 等下一轮单独规划，不提前落卡。
+5. PC Power executor 使用 `pc_power_request_pending`，不得使用 `power_dirty`，避免
+   和 DATA-01 的 UI dirty 混淆。
+6. Power request 只有 `xml_sim_main.cpp` 主循环一个消费点；callback、Adapter 和
+   View 禁止直接执行 Power action。
+7. `action == NONE` 时只记录 no-op，不执行 overlay，不 commit。
+8. overlay helper 只做平台执行：`TURN_SCREEN_OFF` 显示 overlay，`WAKE_SCREEN`
+   隐藏 overlay。
+9. `PC-POWER-01` 必须检查 overlay 是否点穿；点穿不阻塞 executor 最小闭环通过，
+   但必须记录为 `PC-POWER-02` 输入门控问题。点穿未解决时，不得宣称
+   screen-off 输入门控完成。
 
 ## 关键硬约束
 
-1. 在新的执行入口被明确规划前，不得自动续写阶段 2-4 卡片或开始 PC Power
-   executor 实现。
+1. 不得自动续写能力路线阶段 2-4 卡片；当前只允许按 `PC-POWER-Q22` 执行
+   PC Power executor 小闭环。
 2. 阶段 2 每轮只增加一个用户可观察行为。
 3. F411 与 LILYGO 不同时承担完整产品闭环。
 4. 阶段 4 在阶段 3 至少完成一个真机闭环前不进入主队列。

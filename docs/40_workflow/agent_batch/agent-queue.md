@@ -211,6 +211,18 @@
 - 执行前条件：`CURRENT-WATCH-ARCH-AUDIT-PC` 已完成；当前唯一执行入口是
   本队列项。允许执行四张子卡，但不得登记或执行能力路线阶段 2-4 卡片。
 
+### PC-POWER-Q22 PC Power executor 最小闭环
+
+- 状态：TODO
+- 卡片来源：cards/pc-power-q22.md
+- 执行范围：卡片 `PC-POWER-01` / `PC-POWER-02` / `PC-POWER-03`
+- 停止策略：每张卡后停止
+- 验收后处理：保留
+- 执行前条件：`MAINLINE-DATA-01` 已完成；本队列项只登记 PC Power executor
+  最小闭环及其后续输入门控、timeout 探针，不创建能力路线阶段 2-4 卡片。
+  下一张执行入口只能是 `PC-POWER-01`；`PC-POWER-02/03` 必须等各自依赖满足后
+  才能执行。
+
 ## 队列项格式
 
 ```text
