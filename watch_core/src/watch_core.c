@@ -66,6 +66,37 @@ static bool watch_core_power_state_is_valid(WatchCorePowerState state)
            state == WATCH_CORE_POWER_STATE_SCREEN_OFF;
 }
 
+static WatchCoreBatteryState watch_core_make_absent_battery_state(void)
+{
+    WatchCoreBatteryState state;
+
+    state.present = false;
+    state.charging = false;
+    state.percent = 0U;
+    return state;
+}
+
+static bool watch_core_normalize_battery_state(
+    WatchCoreBatteryState input,
+    WatchCoreBatteryState * out_state)
+{
+    if (out_state == NULL) {
+        return false;
+    }
+
+    if (!input.present) {
+        *out_state = watch_core_make_absent_battery_state();
+        return true;
+    }
+
+    if (input.percent > 100U) {
+        return false;
+    }
+
+    *out_state = input;
+    return true;
+}
+
 static WatchCorePowerAction watch_core_make_none_power_action(WatchCorePowerState state)
 {
     WatchCorePowerAction action;
@@ -112,6 +143,7 @@ void watch_core_init(WatchCore * core)
     copy_metric_text(core->model.health_metric_text[WATCH_CORE_HEALTH_FEATURE_SPO2], "98 %");
     copy_metric_text(core->model.health_metric_text[WATCH_CORE_HEALTH_FEATURE_BREATHE], "18");
     copy_metric_text(core->model.health_metric_text[WATCH_CORE_HEALTH_FEATURE_STRESS], "34");
+    core->model.battery = watch_core_make_absent_battery_state();
 
     core->current_page.type = WATCH_CORE_PAGE_HEALTH_SHORTCUTS;
     core->current_page.feature = WATCH_CORE_HEALTH_FEATURE_INVALID;
@@ -155,6 +187,18 @@ bool watch_core_set_health_metric(
     }
 
     copy_metric_text(core->model.health_metric_text[feature], metric_text);
+    return true;
+}
+
+bool watch_core_set_battery_state(WatchCore * core, WatchCoreBatteryState state)
+{
+    WatchCoreBatteryState normalized_state;
+
+    if (core == NULL || !watch_core_normalize_battery_state(state, &normalized_state)) {
+        return false;
+    }
+
+    core->model.battery = normalized_state;
     return true;
 }
 

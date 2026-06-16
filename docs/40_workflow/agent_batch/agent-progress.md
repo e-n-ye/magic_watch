@@ -1177,3 +1177,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
   没有创建能力路线阶段 2-4 卡片
 - 阻塞与待决：无
 - 下一步：完成文档自检后停止；下一轮从 `DATA-01-A` 开始
+
+### 会话 2026-06-16 进入 DATA-01-A
+
+- 本轮范围：队列项 `MAINLINE-DATA-01`，卡片 `DATA-01-A`
+- 完成：执行前检查完成；工作区干净；`DATA-01-A` 已完成并标记 DONE
+- 修改文件：`watch_core/include/watch_core/watch_core.h`、`watch_core/src/watch_core.c`、`watch_core/tests/watch_core_contract_test.c`、`docs/40_workflow/agent_batch/cards/mainline-data-q21.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`git status --short -uall` 启动时为空；`cmake --build sim/lv_port_pc_vscode/build --config Debug` 通过；`sim/lv_port_pc_vscode/build/out/magic_watch_core_contract_test.exe` 通过；`git diff --check` 通过（仅 LF/CRLF 提示，无 diff 错误）；`rg -n "lvgl|SDL|HAL|CubeMX|malloc|free|new|delete|std::" watch_core` 仅命中既有测试名中的 `new` 子串；本轮实际改动中文文档乱码哨兵检查无命中
+- 风险回应：本轮只在 `watch_core` 建最小 BatteryState 合同和测试，不修改 Adapter、XML、generated C、Simulator，不扩成 PMIC 模型，不进入 `DATA-01-B`
+- 阻塞与待决：无
+- 下一步：按队列“每张卡后停止”规则停止，等待用户验收；如通过，再进入 `DATA-01-B`

@@ -6,7 +6,7 @@
 ## DATA-01-A Core 最小 BatteryState
 
 - 批次：`MAINLINE-DATA-01`
-- 状态：TODO
+- 状态：DONE
 - 依赖：无
 - 自检：
   - `cmake --build sim/lv_port_pc_vscode/build --config Debug`
@@ -71,7 +71,20 @@ Forbidden changes
 
 ### 执行记录
 
-- 尚未执行。
+- 2026-06-16：已完成 `watch_core` 最小 BatteryState 合同与合同测试。
+- 实际改动：`watch_core/include/watch_core/watch_core.h`、
+  `watch_core/src/watch_core.c`、`watch_core/tests/watch_core_contract_test.c`、
+  `docs/40_workflow/agent_batch/cards/mainline-data-q21.md`、
+  `docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：
+  - `cmake --build sim/lv_port_pc_vscode/build --config Debug` 通过
+  - `sim/lv_port_pc_vscode/build/out/magic_watch_core_contract_test.exe` 通过
+  - `git diff --check` 通过（仅 LF/CRLF 提示，无 diff 错误）
+  - `rg -n "lvgl|SDL|HAL|CubeMX|malloc|free|new|delete|std::" watch_core` 仅命中
+    既有测试名中的 `new` 子串，无平台依赖或动态内存命中
+- 风险回应：只增加最小 `BatteryState` 共享合同与 Snapshot 读取，不扩成 PMIC
+  模型，不使用 clamp，不修改 Adapter、XML、generated C、Simulator，不进入
+  `DATA-01-B`。
 
 ## DATA-01-B Simulator Battery 进入 Core
 
@@ -293,4 +306,3 @@ Forbidden changes
 ### 执行记录
 
 - 尚未执行。
-

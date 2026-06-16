@@ -27,6 +27,29 @@ static void expect_string_eq(const char *actual, const char *expected, const cha
     }
 }
 
+static void expect_battery_state_eq(
+    WatchCoreBatteryState actual,
+    bool expected_present,
+    bool expected_charging,
+    uint8_t expected_percent,
+    const char *message)
+{
+    if (actual.present != expected_present ||
+        actual.charging != expected_charging ||
+        actual.percent != expected_percent) {
+        ++s_failures;
+        fprintf(stderr,
+                "FAIL: %s (expected present=%d charging=%d percent=%u, actual present=%d charging=%d percent=%u)\n",
+                message,
+                expected_present ? 1 : 0,
+                expected_charging ? 1 : 0,
+                (unsigned int)expected_percent,
+                actual.present ? 1 : 0,
+                actual.charging ? 1 : 0,
+                (unsigned int)actual.percent);
+    }
+}
+
 static void expect_int_eq(int actual, int expected, const char *message)
 {
     if (actual != expected) {
@@ -346,6 +369,72 @@ static void test_snapshot_updates_are_readable(void)
     expect_string_eq(snapshot.health_metric_text[WATCH_CORE_HEALTH_FEATURE_HEART_RATE],
                      "101",
                      "snapshot should reflect latest metric");
+}
+
+static void test_battery_defaults_to_absent(void)
+{
+    WatchCore core;
+    WatchCoreUiModelSnapshot snapshot;
+
+    watch_core_init(&core);
+    watch_core_get_ui_snapshot(&core, &snapshot);
+
+    expect_battery_state_eq(snapshot.battery,
+                            false,
+                            false,
+                            0U,
+                            "battery after init should default to absent");
+}
+
+static void test_valid_battery_states_are_readable_from_snapshot(void)
+{
+    static const WatchCoreBatteryState cases[] = {
+        { true, false, 82U },
+        { true, false, 0U },
+        { true, false, 100U },
+        { true, true, 57U },
+        { false, true, 88U },
+    };
+    static const bool expected_present[] = { true, true, true, true, false };
+    static const bool expected_charging[] = { false, false, false, true, false };
+    static const uint8_t expected_percent[] = { 82U, 0U, 100U, 57U, 0U };
+    WatchCore core;
+    uint32_t i;
+
+    for (i = 0U; i < (sizeof(cases) / sizeof(cases[0])); ++i) {
+        WatchCoreUiModelSnapshot snapshot;
+
+        watch_core_init(&core);
+        expect_true(watch_core_set_battery_state(&core, cases[i]),
+                    "valid battery state should be accepted");
+        watch_core_get_ui_snapshot(&core, &snapshot);
+        expect_battery_state_eq(snapshot.battery,
+                                expected_present[i],
+                                expected_charging[i],
+                                expected_percent[i],
+                                "snapshot should reflect accepted battery state");
+    }
+}
+
+static void test_invalid_battery_percent_is_rejected_and_preserves_old_state(void)
+{
+    WatchCore core;
+    WatchCoreUiModelSnapshot snapshot;
+    WatchCoreBatteryState valid_state = { true, true, 64U };
+    WatchCoreBatteryState invalid_state = { true, false, 101U };
+
+    watch_core_init(&core);
+    expect_true(watch_core_set_battery_state(&core, valid_state),
+                "valid battery setup should succeed before rejection check");
+    expect_true(!watch_core_set_battery_state(&core, invalid_state),
+                "battery percent above 100 should be rejected");
+
+    watch_core_get_ui_snapshot(&core, &snapshot);
+    expect_battery_state_eq(snapshot.battery,
+                            true,
+                            true,
+                            64U,
+                            "rejected battery update should preserve old state");
 }
 
 static void test_metric_text_is_safely_truncated(void)
@@ -713,6 +802,9 @@ int main(void)
     test_fifo_preserves_order();
     test_ring_buffer_full_rejects_new_event_without_reordering();
     test_snapshot_updates_are_readable();
+    test_battery_defaults_to_absent();
+    test_valid_battery_states_are_readable_from_snapshot();
+    test_invalid_battery_percent_is_rejected_and_preserves_old_state();
     test_metric_text_is_safely_truncated();
     test_process_pending_events_drains_to_stable_state();
     test_pending_drain_continues_after_shortcut_back_no_op();

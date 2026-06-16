@@ -33,7 +33,14 @@ typedef struct {
 } WatchCoreUiEvent;
 
 typedef struct {
+    bool present;
+    bool charging;
+    uint8_t percent;
+} WatchCoreBatteryState;
+
+typedef struct {
     char health_metric_text[WATCH_CORE_HEALTH_CARD_COUNT][WATCH_CORE_METRIC_TEXT_MAX];
+    WatchCoreBatteryState battery;
 } WatchCoreUiModelSnapshot;
 
 typedef enum {
@@ -106,6 +113,8 @@ bool watch_core_set_health_metric(
     WatchCore * core,
     WatchCoreHealthFeature feature,
     const char * metric_text);
+
+bool watch_core_set_battery_state(WatchCore * core, WatchCoreBatteryState state);
 
 WatchCoreUiEvent watch_core_make_health_card_clicked_event(WatchCoreHealthFeature feature);
 
