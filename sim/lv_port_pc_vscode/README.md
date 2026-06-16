@@ -34,6 +34,10 @@ Current PC power debug keys:
 2. Press `R` to simulate raise to wake and hide the overlay.
 3. Press `F` to simulate raise dismiss; the current `PC-POWER-01` behavior is explicit no-op logging.
 
+Current overlay note:
+
+- The current screen-off overlay has been manually rechecked to avoid click-through on the home health cards in the `PC-POWER-02` closure pass.
+
 Out of scope for this current entry: F411 build, real hardware validation, and PC Power executor behavior.
 
 [LVGL](https://github.com/lvgl/lvgl) is written mainly for microcontrollers and embedded systems, however you can run the library **on your PC** as well without any embedded hardware. The code written on PC can be simply copied when your are using an embedded system.

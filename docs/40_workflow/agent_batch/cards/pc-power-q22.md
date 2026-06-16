@@ -131,7 +131,7 @@ Forbidden changes
 ## PC-POWER-02 PC screen-off 输入门控修正
 
 - 批次：`PC-POWER-Q22`
-- 状态：IN_PROGRESS
+- 状态：DONE
 - 依赖：`PC-POWER-01` DONE，且 `PC-POWER-01` 已记录 overlay 点穿检查结果
 - 自检：
   - `git status --short -uall`
@@ -202,7 +202,24 @@ Forbidden changes
 
 ### 执行记录
 
-- 尚未执行。
+- 2026-06-16：已按最小复核路径完成 `PC-POWER-02`，未新增产品代码改动。
+- 当前改动：`sim/lv_port_pc_vscode/README.md`、
+  `docs/40_workflow/agent_batch/cards/pc-power-q22.md`、
+  `docs/40_workflow/agent_batch/agent-progress.md`、
+  `docs/00_current/magicwatch_capability_growth_roadmap.md`
+- 当前自检：
+  - `cmake --build sim/lv_port_pc_vscode/build --config Debug` 通过
+  - `sim/lv_port_pc_vscode/build/out/magic_watch_core_contract_test.exe` 通过
+  - `git diff --check` 通过（仅 LF/CRLF 提示，无 diff 错误）
+  - 本轮实际改动中文文档乱码哨兵检查无命中
+- 人工复核：
+  - overlay 显示后点击健康卡，不会进入详情
+  - overlay 显示后普通 UI 点击未触发页面导航
+  - `R` 唤醒后页面状态保持
+  - 动态电池、四卡、详情与 `Back` 未退化
+- 风险回应：由于 `PC-POWER-01` 已确认 overlay 不点穿，本卡不再为挡点击引入
+  额外输入抽象，也不修改 `watch_core`、Adapter、XML 或 generated C；后续只保留
+  `PC-POWER-03` 的 timeout 探针。
 
 ## PC-POWER-03 PC 自动 timeout 探针
 
