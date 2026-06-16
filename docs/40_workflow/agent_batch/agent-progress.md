@@ -1241,3 +1241,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
   screen-off 输入门控完成
 - 阻塞与待决：尚未实现 PC Power executor；尚未执行手工 overlay 验收
 - 下一步：等待用户验收本次落卡；下一轮只能先执行 `PC-POWER-01`
+
+### 会话 2026-06-16 进入 PC-POWER-01
+
+- 本轮范围：队列项 `PC-POWER-Q22`，卡片 `PC-POWER-01`
+- 完成：执行前检查完成；已先提交 PC Power 卡片落库，再进入 `PC-POWER-01`；已实现最小 power executor overlay 和单一主循环消费点；人工 UI 验收已确认 overlay 显示/隐藏正常、无点穿、动态电池与导航未退化；`PC-POWER-01` 已标记 DONE
+- 修改文件：`sim/lv_port_pc_vscode/src/xml_sim_main.cpp`、`sim/lv_port_pc_vscode/README.md`、`docs/40_workflow/agent_batch/cards/pc-power-q22.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`git status --short -uall` 启动时为空；`cmake --build sim/lv_port_pc_vscode/build --config Debug` 通过；`sim/lv_port_pc_vscode/build/out/magic_watch_core_contract_test.exe` 通过；自动化 `C/R/F` 键烟测已看到 `SCREEN_OFF -> TURN_SCREEN_OFF -> overlay_applied=true -> commit=true`、`WAKE -> WAKE_SCREEN -> overlay_applied=true -> commit=true` 与 `SimRaiseDismiss -> mapped_request=NONE`；`git diff --check` 通过（仅 LF/CRLF 提示，无 diff 错误）；本轮实际改动中文文档乱码哨兵检查无命中
+- 风险回应：本轮只实现 PC debug power executor 最小可视闭环，不修改 `watch_core` API、PC Adapter、XML 或 generated C，不提前进入 `PC-POWER-02/03`
+- 阻塞与待决：无
+- 下一步：提交 `PC-POWER-01`；若用户要求继续，则进入 `PC-POWER-02` 做最小复核与记录

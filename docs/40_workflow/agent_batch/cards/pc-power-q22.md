@@ -9,7 +9,7 @@
 ## PC-POWER-01 PC Debug Power executor 最小可视闭环
 
 - 批次：`PC-POWER-Q22`
-- 状态：TODO
+- 状态：DONE
 - 依赖：`MAINLINE-DATA-01` DONE
 - 自检：
   - `git status --short -uall`
@@ -103,12 +103,35 @@ Forbidden changes
 
 ### 执行记录
 
-- 尚未执行。
+- 2026-06-16：已完成 `PC-POWER-01` 的最小 PC power request -> action ->
+  overlay -> commit 闭环，并完成人工 UI 验收。
+- 当前改动：`sim/lv_port_pc_vscode/src/xml_sim_main.cpp`、
+  `sim/lv_port_pc_vscode/README.md`、
+  `docs/40_workflow/agent_batch/cards/pc-power-q22.md`、
+  `docs/40_workflow/agent_batch/agent-progress.md`
+- 当前自检：
+  - `cmake --build sim/lv_port_pc_vscode/build --config Debug` 通过
+  - `sim/lv_port_pc_vscode/build/out/magic_watch_core_contract_test.exe` 通过
+  - 自动化 `C/R/F` 键烟测已看到：
+    - `SimCoverSleep -> SCREEN_OFF -> TURN_SCREEN_OFF -> overlay_applied=true -> commit=true`
+    - `SimRaiseToWake -> WAKE -> WAKE_SCREEN -> overlay_applied=true -> commit=true`
+    - `SimRaiseDismiss -> mapped_request=NONE`
+  - `git diff --check` 通过（仅 LF/CRLF 提示，无 diff 错误）
+  - 本轮实际改动中文文档乱码哨兵检查无命中
+- 人工验收：
+  - `C` 时确认出现黑色 overlay
+  - `R` 时确认 overlay 消失
+  - overlay 显示后点击首页健康卡，确认不会点穿进入详情
+  - 动态电池、四卡、详情与 `Back` 确认均未退化
+- 风险回应：当前只在 `xml_sim_main.cpp` 增加本地 overlay helper、pending power
+  request 和单一消费点日志；未修改 `watch_core` API、Adapter、XML 或 generated C，
+  未提前修改 `PC-POWER-02/03` 的实现范围；当前人工检查未发现点穿，因此
+  `PC-POWER-02` 应只做最小复核与记录，不必为挡点击新增抽象。
 
 ## PC-POWER-02 PC screen-off 输入门控修正
 
 - 批次：`PC-POWER-Q22`
-- 状态：TODO
+- 状态：IN_PROGRESS
 - 依赖：`PC-POWER-01` DONE，且 `PC-POWER-01` 已记录 overlay 点穿检查结果
 - 自检：
   - `git status --short -uall`

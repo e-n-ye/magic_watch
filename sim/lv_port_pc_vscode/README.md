@@ -28,6 +28,12 @@ Current 3-minute demo path:
 2. Click `Heart` to enter the detail page.
 3. Click `Back` to return home and confirm the battery text has kept updating.
 
+Current PC power debug keys:
+
+1. Press `C` to simulate cover sleep and show the screen-off overlay.
+2. Press `R` to simulate raise to wake and hide the overlay.
+3. Press `F` to simulate raise dismiss; the current `PC-POWER-01` behavior is explicit no-op logging.
+
 Out of scope for this current entry: F411 build, real hardware validation, and PC Power executor behavior.
 
 [LVGL](https://github.com/lvgl/lvgl) is written mainly for microcontrollers and embedded systems, however you can run the library **on your PC** as well without any embedded hardware. The code written on PC can be simply copied when your are using an embedded system.
