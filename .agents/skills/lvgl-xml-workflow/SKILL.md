@@ -28,7 +28,36 @@ Load `references/patterns.md` when designing or repairing components, styles, im
 3. Define component ownership before writing XML. The component owns internal structure, spacing, icon placement, text placement, base style, and scroll behavior. The screen owns page-level composition, high-level placement, and per-instance data/style overrides.
 4. Keep data-like variation in component API props: text, image names, subjects, IDs.
 5. Prefer direct widget/component attributes for standard LVGL properties such as `width`, `height`, `x`, `y`, `align`, `style_bg_color`, and `style_text_color`.
-6. Validate in the cheapest order: XML syntax/Editor preview, generated code inspection if available, then downstream simulator/build when the card requires it.
+6. If the task touches generated C, regenerate from XML using the formal Editor toolchain before touching downstream code. Do not hand-edit generated files.
+7. Validate in the cheapest order: XML syntax/Editor preview, generated code inspection if available, then downstream simulator/build when the card requires it.
+
+## Formal Generation Workflow
+
+When a card explicitly allows generated C changes, use the Editor/CLI generation path instead of patching `_gen.c` / `_gen.h` manually.
+
+Current validated local path:
+
+- CLI entry: `D:\lvgl_pro_cli\LVGL_Pro_CLI-1.2.1-windows\lved-cli.js`
+- Runtime: `node.exe` is available locally
+
+Validated command for this project:
+
+```powershell
+node "D:\lvgl_pro_cli\LVGL_Pro_CLI-1.2.1-windows\lved-cli.js" generate "D:\MY_Desk\watch\magic_watch\ui\lvgl_pro"
+```
+
+Expected behavior:
+
+- The CLI validates the XML project first.
+- It rewrites only the generated files that actually changed.
+- For the Magic Watch `DATA-01-C` case, `screen_health_shortcuts_gen.c` changed while
+  `magic_watch_ui_gen.c/.h` and `screen_health_shortcuts_gen.h` stayed unchanged.
+
+If the card depends on generated C but the CLI/Editor is missing or unusable:
+
+- Stop and verify whether a working `lved-cli.js` or Editor executable exists.
+- Do not hand-edit generated files as a fallback.
+- Mark the card BLOCKED if the formal generation chain is required by scope rules.
 
 ## Hard Rules
 
@@ -40,6 +69,7 @@ Load `references/patterns.md` when designing or repairing components, styles, im
 - Use PNG for Editor image resources unless a reference example proves another route in this project.
 - Avoid adding C callbacks in XML during preview-only cards unless the callback is already implemented and visible to the Editor preview runtime. Use `subject_*_event` or defer callback wiring to the integration card when possible.
 - Do not mark an XML card DONE from static inspection alone if the user-visible requirement is Editor preview behavior.
+- If a card forbids hand-editing generated C, respect that literally. Generated files may only change via the formal Editor/CLI generation path.
 
 ## Magic Watch Conventions
 
@@ -48,6 +78,8 @@ Load `references/patterns.md` when designing or repairing components, styles, im
 - Put shared dimensions, spacing, colors, and image registrations in `ui/lvgl_pro/globals.xml`.
 - If a value is meant for a designer/user to tune per instance, prefer a direct attribute visible at the component call site, such as `style_bg_color` or `metric_text`.
 - If a value is meant to preserve component geometry across all instances, keep it inside the component or a global token, not repeated on every screen instance.
+- For generated-screen integration tasks, prefer adding stable object names in XML and then exposing helper lookup functions in `magic_watch_ui.c/.h`, instead of relying on fragile child indexes when a label or widget must be rebound from adapter code.
+- For runtime text updates in the PC XML mainline, prefer LVGL subjects plus adapter-owned buffers, and keep the main loop to a single dirty consumption point.
 
 ## Current Known Trap
 
