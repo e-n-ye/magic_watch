@@ -203,7 +203,7 @@
 
 ### MAINLINE-DATA-01 动态电池最小闭环
 
-- 状态：TODO
+- 状态：DONE
 - 卡片来源：cards/mainline-data-q21.md
 - 执行范围：卡片 `DATA-01-A` / `DATA-01-B` / `DATA-01-C` / `DATA-01-D`
 - 停止策略：每张卡后停止

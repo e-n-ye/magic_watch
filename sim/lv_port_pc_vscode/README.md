@@ -1,5 +1,35 @@
 # VSCode Simulator project for LVGL
 
+## Magic Watch current entry
+
+For this repository, the current runnable target is `magic_watch_xml_sim`.
+
+Build from the repo root:
+
+```bash
+cmake --build sim/lv_port_pc_vscode/build --config Debug
+```
+
+Run from the repo root in PowerShell:
+
+```powershell
+.\sim\lv_port_pc_vscode\build\out\magic_watch_xml_sim.exe
+```
+
+Core contract test:
+
+```powershell
+.\sim\lv_port_pc_vscode\build\out\magic_watch_core_contract_test.exe
+```
+
+Current 3-minute demo path:
+
+1. Start on the health shortcuts home screen and observe the battery text changing over time.
+2. Click `Heart` to enter the detail page.
+3. Click `Back` to return home and confirm the battery text has kept updating.
+
+Out of scope for this current entry: F411 build, real hardware validation, and PC Power executor behavior.
+
 [LVGL](https://github.com/lvgl/lvgl) is written mainly for microcontrollers and embedded systems, however you can run the library **on your PC** as well without any embedded hardware. The code written on PC can be simply copied when your are using an embedded system.
 
 This project is pre-configured for VSCode and should work work on Windows, Linux and MacOs as well. FreeRTOS is also included and can be optionally enabled to better simulate embedded system's behavior. 

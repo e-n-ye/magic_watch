@@ -108,7 +108,9 @@ LVGL Back button
 
 ## 4. 当前真实数据链
 
-已接通的数据链只有初始化 Snapshot：
+当前已接通两条数据链：
+
+### 4.1 初始化 Snapshot
 
 ```text
 watch_core_init()
@@ -118,14 +120,30 @@ watch_core_init()
 -> apply_snapshot_to_subjects()
 ```
 
-当前 `magic_watch_xml_sim` 没有调用：
+### 4.2 动态电池链
+
+```text
+SimulatorDevice::tick()
+-> BatteryChanged
+-> xml_sim_main.cpp device callback
+-> WatchCoreBatteryState
+-> watch_core_set_battery_state()
+-> battery_dirty = true
+-> watch_core_ui_adapter_sync_snapshot()
+-> battery subject
+-> 首页 battery label
+```
+
+当前这条链已经证明：Simulator 电池样本可以进入 `watch_core` 权威 Snapshot，
+再通过 Adapter 同步到 XML 首页；详情页期间 Core 继续更新，返回首页后显示最新值。
+
+当前 `magic_watch_xml_sim` 仍然没有调用：
 
 - `watch_core_set_health_metric()`
 - `watch_core_request_power_action()`
 - `watch_core_commit_power_action()`
 
-因此时间、电池、传感器或 Power executor 还没有进入这条 PC XML 主链。
-文档中的：
+因此时间、活动数据和 Power executor 还没有进入这条 PC XML 主链。文档中的：
 
 ```text
 Hardware / Simulator -> Service -> watch_core ModelStore
@@ -147,8 +165,9 @@ Hardware / Simulator -> Service -> watch_core ModelStore
    - button / crown / touch 语义事件
    - notification / debug 事件
 
-`xml_sim_main.cpp` 没有调用 `Device::set_event_callback()`。所以第二类事件虽然由
-`device->tick()` 产生，但没有接收者，不会进入 `watch_core`。
+`xml_sim_main.cpp` 现在已经调用 `Device::set_event_callback()`，但当前只消费
+`BatteryChanged`。因此第二类事件里只有电池样本进入了 `watch_core`；time /
+activity / crown / touch / debug 等其它业务事件仍然没有接收者。
 
 当前甚至存在两条输入表示：
 
@@ -269,22 +288,22 @@ LVGL 做纯 PC 合同测试。
 
 本轮不建议立刻重构 Adapter，也不建议先清理 dormant callback。
 
-下一条最有学习价值的真实链路是：
+下一条最有学习价值的真实链路不再是“电池为何止于 HAL callback”，而是：
 
 ```text
-Simulator time/battery event
--> 当前为何止于 HAL callback
--> 如果接入，Service / Adapter / watch_core 谁应转换和拥有状态
--> View 应在什么时机获取新 Snapshot
+Power 请求
+-> `watch_core` 最小 Power 合同
+-> PC executor
+-> screen off/on 或等价可观察现象
+-> View / Runtime 在什么时机与 Core 同步
 ```
 
 这条链能直接回答 Stage 06 留下的问题：
 
-- 系统事件如何进入真实工程
-- 是否真的需要 Service
-- Core queue 是否只处理 UI 事件
-- Snapshot 更新如何触发 View 同步
-- 是否需要周期同步，还是事件驱动同步
+- Power 决策是否需要独立 executor
+- PC Runtime 和 `watch_core` 的职责边界在哪里
+- View 同步应由事件驱动还是运行时轮询触发
+- 在已有动态电池闭环后，下一条可观察系统行为应如何最小接入
 
 在这条链审清之前，不应先加入 EventBus、通用 Scheduler 或新的 Power 名词。
 
@@ -292,9 +311,17 @@ Simulator time/battery event
 
 ```text
                          当前未接通
-SimulatorDevice time/battery/crown/touch events
+SimulatorDevice battery event
                          |
-                         X  no set_event_callback()
+                         v
+                 xml_sim_main callback
+                         |
+                         v
+            watch_core_set_battery_state()
+
+SimulatorDevice time/activity/crown/touch events
+                         |
+                         X  no active consumer
 
 SDL window / LVGL indev
           |

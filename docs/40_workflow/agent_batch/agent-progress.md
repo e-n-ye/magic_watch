@@ -6,7 +6,7 @@
 
 ## 当前批次
 
-3
+4
 
 当前批次的所有卡片 DONE 后，由 Agent 按批次推进协议将此值加 1，并停止等待用户确认。
 
@@ -1213,3 +1213,13 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 阻塞与待决：无
 - 下一步：按你的要求，先提交 `DATA-01-C`，再把 CLI 生成流程沉到
   `lvgl-xml-workflow` skill
+
+### 会话 2026-06-16 进入 DATA-01-D
+
+- 本轮范围：队列项 `MAINLINE-DATA-01`，卡片 `DATA-01-D`
+- 完成：执行前检查完成；工作区干净；已完成 `DATA-01-D`，并按协议将当前批次从 3 推进到 4；队列项 `MAINLINE-DATA-01` 已标记 DONE
+- 修改文件：`docs/30_testing/current_watch_architecture_map_and_necessity_audit.md`、`docs/00_current/magicwatch_capability_growth_roadmap.md`、`sim/lv_port_pc_vscode/README.md`、`docs/40_workflow/agent_batch/cards/mainline-data-q21.md`、`docs/40_workflow/agent_batch/agent-queue.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`git status --short -uall` 启动时为空；`cmake --build sim/lv_port_pc_vscode/build --config Debug` 通过；`sim/lv_port_pc_vscode/build/out/magic_watch_core_contract_test.exe` 通过；人工回归沿用用户已确认结果：首页电池动态、点 Heart 进详情、Back 返回首页且电池继续更新；`git diff --check` 通过（仅 LF/CRLF 提示，无 diff 错误）；本轮实际改动中文文档乱码哨兵检查无命中
+- 风险回应：本轮只更新当前事实文档、运行 README、卡片和运行态记录，不修改任何产品代码；未把未执行的 F411/真机写成通过；未进入 PC Power executor
+- 阻塞与待决：无
+- 下一步：按 `MAINLINE-DATA-01` 完成后停止，等待用户决定是否单独规划 PC Power executor

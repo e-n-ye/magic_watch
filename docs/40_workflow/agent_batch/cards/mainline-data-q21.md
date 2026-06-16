@@ -279,7 +279,7 @@ Forbidden changes
 ## DATA-01-D 最小回归、演示和记录
 
 - 批次：`MAINLINE-DATA-01`
-- 状态：TODO
+- 状态：DONE
 - 依赖：`DATA-01-C` DONE
 - 自检：
   - `cmake --build sim/lv_port_pc_vscode/build --config Debug`
@@ -344,4 +344,25 @@ Forbidden changes
 
 ### 执行记录
 
-- 尚未执行。
+- 2026-06-16：已完成主卡收口记录、最小回归回填和演示路径登记。
+- 实际改动：`docs/30_testing/current_watch_architecture_map_and_necessity_audit.md`、
+  `docs/00_current/magicwatch_capability_growth_roadmap.md`、
+  `sim/lv_port_pc_vscode/README.md`、
+  `docs/40_workflow/agent_batch/cards/mainline-data-q21.md`、
+  `docs/40_workflow/agent_batch/agent-queue.md`、
+  `docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：
+  - `cmake --build sim/lv_port_pc_vscode/build --config Debug` 通过
+  - `sim/lv_port_pc_vscode/build/out/magic_watch_core_contract_test.exe` 通过
+  - 人工回归沿用本轮已确认结果：首页电池动态、点 Heart 进详情、Back 返回首页且电池继续更新
+  - `git diff --check` 通过（仅 LF/CRLF 提示，无 diff 错误）
+  - 本轮实际改动中文文档乱码哨兵检查无命中
+- 演示记录：
+  - 已在 `sim/lv_port_pc_vscode/README.md` 登记当前三分钟演示路径
+  - 本轮未新增录屏文件，未把录屏写成已完成证据
+- 未执行项：
+  - F411 Keil 编译未执行
+  - 真机回归未执行
+  - PC Power executor 未规划、未实现
+- 风险回应：只回填当前动态电池调用链、手动回归结论和运行入口；未修改产品代码，
+  未把未执行的 F411/真机写成通过，未创建阶段 2-4 卡片，未进入 PC Power executor。
