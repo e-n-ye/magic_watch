@@ -37,6 +37,10 @@ static void guarded_click_event_cb(lv_event_t * event);
 static void click_guard_handle_event(WatchCoreUiClickGuardState * guard, lv_event_t * event);
 static bool click_guard_allows(WatchCoreUiClickGuardState * guard);
 static void apply_snapshot_to_subjects(WatchCoreUiAdapter * adapter);
+static void format_battery_text(
+    WatchCoreBatteryState battery,
+    char * out_text,
+    uint32_t out_text_size);
 static void dispatch_event(WatchCoreUiAdapter * adapter, WatchCoreUiEvent event);
 static void sync_core_to_view(WatchCoreUiAdapter * adapter, WatchCorePageIntent last_intent);
 static void apply_page_state(WatchCoreUiAdapter * adapter, WatchCorePageState page_state);
@@ -65,6 +69,12 @@ bool watch_core_ui_adapter_init(WatchCoreUiAdapter * adapter, WatchCore * core)
             WATCH_CORE_METRIC_TEXT_MAX,
             snapshot.health_metric_text[i]);
     }
+    lv_subject_init_string(
+        &adapter->battery_subject,
+        adapter->battery_subject_buffer,
+        adapter->battery_subject_previous_buffer,
+        WATCH_CORE_UI_BATTERY_TEXT_MAX,
+        "--%");
 
     adapter->subjects_initialized = true;
     magic_watch_ui_set_health_card_event_handler(health_card_handler, adapter);
@@ -91,6 +101,16 @@ bool watch_core_ui_adapter_load_health_shortcuts(WatchCoreUiAdapter * adapter)
     bind_health_shortcut_screen(adapter, screen);
     apply_snapshot_to_subjects(adapter);
     load_screen(adapter, screen);
+    return true;
+}
+
+bool watch_core_ui_adapter_sync_snapshot(WatchCoreUiAdapter * adapter)
+{
+    if (adapter == NULL || adapter->core == NULL || !adapter->subjects_initialized) {
+        return false;
+    }
+
+    apply_snapshot_to_subjects(adapter);
     return true;
 }
 
@@ -135,6 +155,11 @@ static void bind_health_shortcut_screen(WatchCoreUiAdapter * adapter, lv_obj_t *
         if (metric_label != NULL) {
             lv_label_bind_text(metric_label, &adapter->health_metric_subjects[i], NULL);
         }
+    }
+
+    lv_obj_t * battery_label = magic_watch_ui_get_health_shortcuts_battery_label(screen);
+    if (battery_label != NULL) {
+        lv_label_bind_text(battery_label, &adapter->battery_subject, NULL);
     }
 
     create_health_card_hit_targets(adapter, screen);
@@ -284,10 +309,41 @@ static bool click_guard_allows(WatchCoreUiClickGuardState * guard)
 static void apply_snapshot_to_subjects(WatchCoreUiAdapter * adapter)
 {
     WatchCoreUiModelSnapshot snapshot;
+    char battery_text[WATCH_CORE_UI_BATTERY_TEXT_MAX];
+
     watch_core_get_ui_snapshot(adapter->core, &snapshot);
 
     for (uint32_t i = 0U; i < WATCH_CORE_HEALTH_CARD_COUNT; ++i) {
         lv_subject_copy_string(&adapter->health_metric_subjects[i], snapshot.health_metric_text[i]);
+    }
+
+    format_battery_text(snapshot.battery, battery_text, sizeof(battery_text));
+    lv_subject_copy_string(&adapter->battery_subject, battery_text);
+}
+
+static void format_battery_text(
+    WatchCoreBatteryState battery,
+    char * out_text,
+    uint32_t out_text_size)
+{
+    int written;
+
+    if (out_text == NULL || out_text_size == 0U) {
+        return;
+    }
+
+    if (!battery.present) {
+        written = lv_snprintf(out_text, out_text_size, "--%%");
+    }
+    else if (battery.charging) {
+        written = lv_snprintf(out_text, out_text_size, "%u%% +", (unsigned int)battery.percent);
+    }
+    else {
+        written = lv_snprintf(out_text, out_text_size, "%u%%", (unsigned int)battery.percent);
+    }
+
+    if (written < 0) {
+        out_text[0] = '\0';
     }
 }
 

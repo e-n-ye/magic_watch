@@ -169,7 +169,7 @@ Forbidden changes
 ## DATA-01-C XML 电池显示替换日志消费
 
 - 批次：`MAINLINE-DATA-01`
-- 状态：TODO
+- 状态：DONE
 - 依赖：`DATA-01-B` DONE
 - 自检：
   - 按 `lvgl-xml-workflow` 核对 XML 与本地参考
@@ -246,7 +246,35 @@ Forbidden changes
 
 ### 执行记录
 
-- 尚未执行。
+- 2026-06-16：执行前检查完成，依赖 `DATA-01-B` 已满足。
+- 已读现状：`screen_health_shortcuts.xml`、`screen_health_shortcuts_gen.c/.h`、
+  `magic_watch_ui.c/.h`、`watch_core_ui_adapter.c/.h`、`xml_sim_main.cpp`。
+- 已按 `lvgl-xml-workflow` 核对本地参考：
+  - `D:\MY_Desk\watch\exam\lvgl_xml\lvgl_editor-master\tutorials\6_data_binding\components\sliderbox.xml`
+    证明 `lv_label` 可用 `bind_text` 绑定 subject。
+  - `D:\MY_Desk\watch\exam\lvgl_xml\lvgl_editor-master\docs\cli.mdx`
+    说明正式生成路径应为 `lved-cli.js generate <project-path>`。
+- 2026-06-16：用户已提供可用 CLI 路径
+  `D:\lvgl_pro_cli\LVGL_Pro_CLI-1.2.1-windows\lved-cli.js`，本卡恢复执行。
+- 2026-06-16：已完成 XML 电池显示、正式生成、Adapter 同步链与主循环消费点替换。
+- 实际改动：`ui/lvgl_pro/screens/screen_health_shortcuts.xml`、
+  `ui/lvgl_pro/screens/screen_health_shortcuts_gen.c`、
+  `ui/lvgl_pro/magic_watch_ui.c`、`ui/lvgl_pro/magic_watch_ui.h`、
+  `sim/lv_port_pc_vscode/src/XmlUi/watch_core_ui_adapter.c`、
+  `sim/lv_port_pc_vscode/src/XmlUi/watch_core_ui_adapter.h`、
+  `sim/lv_port_pc_vscode/src/xml_sim_main.cpp`、
+  `docs/40_workflow/agent_batch/cards/mainline-data-q21.md`、
+  `docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：
+  - `node D:\lvgl_pro_cli\LVGL_Pro_CLI-1.2.1-windows\lved-cli.js generate D:\MY_Desk\watch\magic_watch\ui\lvgl_pro` 通过
+  - `cmake --build sim/lv_port_pc_vscode/build --config Debug` 通过
+  - `sim/lv_port_pc_vscode/build/out/magic_watch_core_contract_test.exe` 通过
+  - `magic_watch_xml_sim.exe` 7 秒运行态冒烟通过
+  - 用户人工确认：首页电池动态、点 Heart 进详情、Back 返回首页且电池继续更新
+  - `git diff --check` 通过（仅 LF/CRLF 提示，无 diff 错误）
+- 风险回应：generated C 仅通过 CLI 正式生成；未手改 `_gen.c/.h`；同步函数只更新
+  subject，不重建 screen；`xml_sim_main.cpp` 只保留一个 dirty 消费点；未新增
+  页面、Service、EventBus、Queue 或 Power 行为。
 
 ## DATA-01-D 最小回归、演示和记录
 

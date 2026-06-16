@@ -48,6 +48,15 @@ lv_obj_t * screen_health_shortcuts_create(void)
     lv_obj_set_style_text_color(lv_obj_0, FG_PRIMARY, 0);
     lv_obj_set_flag(lv_obj_0, LV_OBJ_FLAG_SCROLLABLE, false);
 
+    lv_obj_t * battery_label = lv_label_create(lv_obj_0);
+    lv_obj_set_name(battery_label, "battery_label");
+    lv_obj_set_x(battery_label, 170);
+    lv_obj_set_y(battery_label, 10);
+    lv_obj_set_width(battery_label, 58);
+    lv_label_set_text(battery_label, "--%");
+    lv_obj_set_style_text_align(battery_label, LV_TEXT_ALIGN_RIGHT, 0);
+    lv_obj_set_style_text_color(battery_label, FG_MUTED, 0);
+
     lv_obj_t * health_shortcut_card_0 = health_shortcut_card_create(lv_obj_0, "heart", health_heart_64, "--", FG_PRIMARY);
     lv_obj_set_x(health_shortcut_card_0, HEALTH_GRID_LEFT);
     lv_obj_set_y(health_shortcut_card_0, HEALTH_GRID_TOP);

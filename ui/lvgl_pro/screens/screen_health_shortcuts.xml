@@ -1,5 +1,15 @@
 <screen>
 	<view style_bg_color="#health_screen_bg" style_text_color="#fg_primary" scrollable="false">
+		<lv_label
+			name="battery_label"
+			x="170"
+			y="10"
+			width="58"
+			text="--%"
+			style_text_align="right"
+			style_text_color="#fg_muted"
+		/>
+
 		<health_shortcut_card
 			x="#health_grid_left"
 			y="#health_grid_top"

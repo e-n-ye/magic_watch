@@ -1,7 +1,6 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
-#include <cstdio>
 #include <string>
 #include <thread>
 #include <variant>
@@ -82,13 +81,7 @@ int main(int argc, char ** argv)
 
     device->tick(static_cast<std::uint32_t>(elapsed));
     if (battery_dirty) {
-      WatchCoreUiModelSnapshot snapshot;
-      watch_core_get_ui_snapshot(&watch_core, &snapshot);
-      std::printf("[battery] present=%d charging=%d percent=%u\n",
-                  snapshot.battery.present ? 1 : 0,
-                  snapshot.battery.charging ? 1 : 0,
-                  static_cast<unsigned int>(snapshot.battery.percent));
-      std::fflush(stdout);
+      (void)watch_core_ui_adapter_sync_snapshot(&ui_adapter);
       battery_dirty = false;
     }
 

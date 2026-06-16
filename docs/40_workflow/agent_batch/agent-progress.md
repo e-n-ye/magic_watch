@@ -1197,3 +1197,19 @@ Agent 启动时必读。记录已知失败、无效或被用户否决的尝试�
 - 风险回应：本轮只在 `xml_sim_main.cpp` 接最小 BatteryChanged -> Core -> 单一 dirty 日志链，不修改 Adapter、XML、generated C、F411，不进入 `DATA-01-C`
 - 阻塞与待决：无
 - 下一步：按你的连续执行要求，可直接进入 `DATA-01-C`
+
+### 会话 2026-06-16 进入 DATA-01-C
+
+- 本轮范围：队列项 `MAINLINE-DATA-01`，卡片 `DATA-01-C`
+- 完成：执行前检查完成；工作区干净；已完成 XML 电池显示、正式生成、
+  Adapter 同步链与主循环消费点替换；`DATA-01-C` 已标记 DONE
+- 修改文件：`ui/lvgl_pro/screens/screen_health_shortcuts.xml`、`ui/lvgl_pro/screens/screen_health_shortcuts_gen.c`、`ui/lvgl_pro/magic_watch_ui.c`、`ui/lvgl_pro/magic_watch_ui.h`、`sim/lv_port_pc_vscode/src/XmlUi/watch_core_ui_adapter.c`、`sim/lv_port_pc_vscode/src/XmlUi/watch_core_ui_adapter.h`、`sim/lv_port_pc_vscode/src/xml_sim_main.cpp`、`docs/40_workflow/agent_batch/cards/mainline-data-q21.md`、`docs/40_workflow/agent_batch/agent-progress.md`
+- 自检：`git status --short -uall` 启动时为空；已核对
+  `tutorials/6_data_binding/components/sliderbox.xml` 的 `bind_text` 模式；已从
+  `docs/cli.mdx` 确认正式生成路径应为 `lved-cli.js generate <project-path>`；
+  已确认系统有 `node.exe`，且用户提供了可用 CLI 路径；`node ...lved-cli.js generate D:\MY_Desk\watch\magic_watch\ui\lvgl_pro` 通过；`cmake --build sim/lv_port_pc_vscode/build --config Debug` 通过；`sim/lv_port_pc_vscode/build/out/magic_watch_core_contract_test.exe` 通过；`magic_watch_xml_sim.exe` 7 秒运行态冒烟通过；用户人工确认：首页电池动态、点 Heart 进详情、Back 返回首页且电池继续更新；`git diff --check` 通过（仅 LF/CRLF 提示，无 diff 错误）
+- 风险回应：继续保持“禁止手改 generated C”；这轮只在拿到正式生成链后恢复
+  `DATA-01-C`；同步函数只更新 subject，不重建 screen；不越界修改 skill
+- 阻塞与待决：无
+- 下一步：按你的要求，先提交 `DATA-01-C`，再把 CLI 生成流程沉到
+  `lvgl-xml-workflow` skill

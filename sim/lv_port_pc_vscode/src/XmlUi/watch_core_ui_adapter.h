@@ -10,6 +10,8 @@
 extern "C" {
 #endif
 
+#define WATCH_CORE_UI_BATTERY_TEXT_MAX 8U
+
 typedef struct {
     lv_point_t press_point;
     bool active;
@@ -40,6 +42,9 @@ typedef struct WatchCoreUiAdapter {
     lv_subject_t health_metric_subjects[WATCH_CORE_HEALTH_CARD_COUNT];
     char health_metric_subject_buffers[WATCH_CORE_HEALTH_CARD_COUNT][WATCH_CORE_METRIC_TEXT_MAX];
     char health_metric_subject_previous_buffers[WATCH_CORE_HEALTH_CARD_COUNT][WATCH_CORE_METRIC_TEXT_MAX];
+    lv_subject_t battery_subject;
+    char battery_subject_buffer[WATCH_CORE_UI_BATTERY_TEXT_MAX];
+    char battery_subject_previous_buffer[WATCH_CORE_UI_BATTERY_TEXT_MAX];
     WatchCoreHealthHitTarget health_hit_targets[WATCH_CORE_HEALTH_CARD_COUNT];
     WatchCoreUiGuardedClick back_click;
 } WatchCoreUiAdapter;
@@ -47,6 +52,8 @@ typedef struct WatchCoreUiAdapter {
 bool watch_core_ui_adapter_init(WatchCoreUiAdapter * adapter, WatchCore * core);
 
 bool watch_core_ui_adapter_load_health_shortcuts(WatchCoreUiAdapter * adapter);
+
+bool watch_core_ui_adapter_sync_snapshot(WatchCoreUiAdapter * adapter);
 
 #ifdef __cplusplus
 } /* extern "C" */

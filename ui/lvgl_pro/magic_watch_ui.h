@@ -48,6 +48,8 @@ lv_obj_t * magic_watch_ui_get_health_card(lv_obj_t * screen, uint32_t index);
 
 lv_obj_t * magic_watch_ui_get_health_card_metric_label(lv_obj_t * card);
 
+lv_obj_t * magic_watch_ui_get_health_shortcuts_battery_label(lv_obj_t * screen);
+
 /**
  * Placeholder click hook for health shortcut cards.
  * The component passes a string card id via user_data.
